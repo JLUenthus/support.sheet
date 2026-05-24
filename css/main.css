@@ -115,6 +115,80 @@ header {
 
 .logo-text span { color: var(--accent); }
 
+/* ── Header Search ───────────────────────────────────────── */
+.search-wrap {
+  flex: 1;
+  max-width: 420px;
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+#search-input {
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 72px 8px 34px;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: .85rem;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+#search-input::placeholder { color: var(--dim); }
+
+#search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* Ctrl+K Hint */
+.search-shortcut {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: .68rem;
+  font-family: var(--font-mono);
+  color: var(--dim);
+  background: rgba(255,255,255,.05);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: opacity .15s;
+}
+
+/* Hint ausblenden wenn Input fokussiert oder befüllt */
+#search-input:focus ~ .search-shortcut,
+#search-input:not(:placeholder-shown) ~ .search-shortcut { opacity: 0; }
+
+/* Mobile: Suchfeld unter dem Header in eigener Zeile */
+@media (max-width: 768px) {
+  header {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+  .search-wrap {
+    order: 3;
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
 /* ── Header Nav ──────────────────────────────────────────── */
 .header-nav {
   display: flex;
@@ -190,7 +264,7 @@ header {
   position: relative;
   z-index: 1;
   text-align: center;
-  padding: 52px 24px 40px;
+  padding: 40px 24px 28px;
 }
 
 .hero-badge {
