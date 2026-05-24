@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Render Test</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/recent.css">
+  <link rel="stylesheet" href="css/favorites.css">
+  <link rel="stylesheet" href="css/search.css">
+</head>
+<body>
+
+  <h1>Render Test</h1>
+
+  <!-- TEMPLATE: nicht sichtbar – nur Bauplan für JS -->
+  <template id="command-template">
+    <div class="command-card">
+      <div class="card-header">
+        <h3 data-field="name"></h3>
+        <button class="star-btn" data-action="star" aria-label="Zu Favoriten hinzufügen" aria-pressed="false">★</button>
+      </div>
+      <p data-field="desc"></p>
+      <code data-field="cmd"></code>
+      <div class="card-footer">
+        <div data-field="tags"></div>
+        <button class="copy-btn" data-action="copy">📋 Kopieren</button>
+      </div>
+    </div>
+  </template>
+
+  <!-- FAVORITES: ausgeblendet wenn leer -->
+  <section id="favorites-section" hidden>
+    <h2 class="section-title">⭐ Meine Favoriten</h2>
+    <div id="favorites-container"></div>
+  </section>
+
+  <!-- RECENT: ausgeblendet wenn leer -->
+  <section id="recent-section" hidden>
+    <h2 class="section-title">Zuletzt verwendet</h2>
+    <div id="recent-container"></div>
+  </section>
+
+  <!-- ALLE COMMANDS -->
+  <div id="commands-container"></div>
+
+  <!-- Fuse.js – muss vor search.js geladen sein -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/7.0.0/fuse.min.js"></script>
+
+  <script src="loader.js"></script>
+  <script src="toast.js"></script>
+  <script src="variables.js"></script>
+  <script src="recent.js"></script>
+  <script src="favorites.js"></script>
+  <script src="search.js"></script>
+  <script src="render.js"></script>
+
+</body>
+</html>
