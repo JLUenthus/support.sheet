@@ -1,0 +1,409 @@
+{
+  "version": "1.1",
+  "lastUpdated": "2026-05-24",
+  "rules": [
+    {
+      "id": "KERNEL_POWER_41",
+      "name": "Ungeplanter Neustart (Kernel-Power)",
+      "category": "Absturz",
+      "severity": "critical",
+      "eventIds": [41],
+      "sources": ["Microsoft-Windows-Kernel-Power"],
+      "minOccurrences": 1,
+      "description": "Das System wurde unerwartet neu gestartet. Ursachen: instabiler Treiber, Überhitzung, defekter RAM oder Netzteil.",
+      "recommendations": [
+        "Temperaturen prüfen: CPU/GPU Temp mit HWInfo64 kontrollieren",
+        "RAM testen: Windows-Speicherdiagnose oder memtest86 ausführen",
+        "Treiber aktualisieren: besonders Grafik- und Chipsatz-Treiber",
+        "Ereignis-Details prüfen: BugcheckCode zeigt genaue Absturzursache",
+        "Energieplan: Höchstleistung aktivieren (Set-PowerPlan-Win11.ps1)"
+      ],
+      "relatedEventIds": [1001, 1002, 6008],
+      "tags": ["crash", "bluescreen", "neustart"],
+      "communityCount": 0
+    },
+    {
+      "id": "APP_CRASH_1000",
+      "name": "Anwendungsabsturz",
+      "category": "Absturz",
+      "severity": "error",
+      "eventIds": [1000],
+      "sources": ["Application Error"],
+      "minOccurrences": 1,
+      "description": "Eine Anwendung ist unerwartet abgestürzt. Die Fehlermeldung enthält den Prozessnamen und die fehlerhafte Modul-DLL.",
+      "recommendations": [
+        "Anwendung neu installieren oder reparieren",
+        "Visual C++ Redistributables aktualisieren",
+        ".NET Framework Version prüfen",
+        "sfc /scannow ausführen um Systemdateien zu prüfen",
+        "DISM /Online /Cleanup-Image /RestoreHealth"
+      ],
+      "relatedEventIds": [1001, 1002],
+      "tags": ["absturz", "anwendung"],
+      "communityCount": 0
+    },
+    {
+      "id": "WLAN_DISCONNECT_10317",
+      "name": "WLAN-Verbindungsverlust nach Standby",
+      "category": "Netzwerk",
+      "severity": "warning",
+      "eventIds": [10317, 10314, 10315],
+      "sources": ["Microsoft-Windows-WLAN-AutoConfig"],
+      "minOccurrences": 2,
+      "timeWindowMinutes": 480,
+      "description": "WLAN-Adapter verliert die Verbindung, häufig nach dem Aufwachen aus dem Standby. Ursache: Energiesparmodus des Adapters.",
+      "recommendations": [
+        "Energiesparmodus deaktivieren: Gerätemanager → Netzwerkadapter → Eigenschaften → Energieverwaltung",
+        "Set-PowerPlan-Win11.ps1 Block 3+4 ausführen (VPN/Adapter Einstellungen)",
+        "WLAN-Treiber aktualisieren",
+        "Schnellstart deaktivieren: powercfg /h off"
+      ],
+      "relatedEventIds": [10000, 10001],
+      "tags": ["wlan", "netzwerk", "standby"],
+      "communityCount": 0
+    },
+    {
+      "id": "DNS_FAIL_1014",
+      "name": "DNS-Auflösung fehlgeschlagen",
+      "category": "Netzwerk",
+      "severity": "warning",
+      "eventIds": [1014],
+      "sources": ["Microsoft-Windows-DNS-Client"],
+      "minOccurrences": 3,
+      "timeWindowMinutes": 60,
+      "description": "DNS-Abfragen schlagen wiederholt fehl. Netzwerkverbindung oder DNS-Server nicht erreichbar.",
+      "recommendations": [
+        "DNS-Cache leeren: ipconfig /flushdns",
+        "DNS-Server testen: nslookup google.com 8.8.8.8",
+        "Netzwerkverbindung prüfen: ipconfig /all",
+        "Alternativen DNS setzen: 8.8.8.8 / 1.1.1.1 testen",
+        "DNS-Dienst neu starten: Restart-Service -Name 'DNS Client'"
+      ],
+      "tags": ["dns", "netzwerk"],
+      "communityCount": 0
+    },
+    {
+      "id": "SERVICE_CRASH",
+      "name": "Dienst abgestürzt / nicht startbar",
+      "category": "System",
+      "severity": "error",
+      "eventIds": [7000, 7001, 7009, 7011, 7023, 7024, 7031, 7034],
+      "sources": ["Service Control Manager"],
+      "minOccurrences": 1,
+      "description": "Ein Windows-Dienst konnte nicht gestartet werden oder ist unerwartet beendet worden.",
+      "recommendations": [
+        "Dienststatus prüfen: Get-Service | Where-Object Status -eq 'Stopped'",
+        "Dienst manuell starten: sc start Dienstname",
+        "Abhängigkeiten prüfen: sc qc Dienstname",
+        "Dienstkonto prüfen: Passwort abgelaufen oder Konto gesperrt?",
+        "Event-Details prüfen: Fehlermeldung enthält genauen Dienstnamen"
+      ],
+      "tags": ["dienst", "system"],
+      "communityCount": 0
+    },
+    {
+      "id": "DISK_ERROR",
+      "name": "Festplatten / I/O Fehler",
+      "category": "Hardware",
+      "severity": "critical",
+      "eventIds": [9, 11, 51, 52, 55, 153],
+      "sources": ["disk", "Ntfs", "volmgr"],
+      "minOccurrences": 1,
+      "description": "Fehler beim Lesen/Schreiben auf der Festplatte. Kann auf defekte Sektoren oder eine failing Festplatte hinweisen.",
+      "recommendations": [
+        "SMART-Status prüfen: CrystalDiskInfo herunterladen",
+        "chkdsk /f /r ausführen (beim nächsten Neustart)",
+        "Kabelverbindungen und SATA-Anschlüsse prüfen",
+        "Sofort Datensicherung erstellen!",
+        "Get-PhysicalDisk: HealthStatus prüfen"
+      ],
+      "tags": ["festplatte", "hardware", "daten"],
+      "communityCount": 0
+    },
+    {
+      "id": "ACCOUNT_LOCKOUT_4740",
+      "name": "Konto gesperrt",
+      "category": "Sicherheit",
+      "severity": "warning",
+      "eventIds": [4740],
+      "sources": ["Microsoft-Windows-Security-Auditing"],
+      "minOccurrences": 1,
+      "description": "Ein Benutzerkonto wurde durch zu viele fehlgeschlagene Anmeldeversuche gesperrt.",
+      "recommendations": [
+        "Konto entsperren: Unlock-ADAccount -Identity Benutzername",
+        "Ursache ermitteln: Event 4625 nach dem Benutzernamen filtern",
+        "Gespeicherte Kennwörter prüfen: Outlook, VPN, geplante Tasks",
+        "Alte Sitzungen trennen: query user / logoff SESSION-ID",
+        "Passwort auf allen Geräten aktualisieren"
+      ],
+      "tags": ["sicherheit", "konto", "ad"],
+      "communityCount": 0
+    },
+    {
+      "id": "UNEXPECTED_SHUTDOWN_6008",
+      "name": "Unerwartetes Herunterfahren",
+      "category": "Absturz",
+      "severity": "error",
+      "eventIds": [6008],
+      "sources": ["EventLog"],
+      "minOccurrences": 1,
+      "description": "Windows wurde nicht ordnungsgemäß heruntergefahren. Häufig Stromausfall, Kernel-Panic oder Hardware-Fehler.",
+      "recommendations": [
+        "USV prüfen: Stromversorgung stabil?",
+        "Temperaturen kontrollieren: Überhitzung?",
+        "Kernel-Power Event 41 suchen: gibt genauere Absturzursache",
+        "RAM testen: Windows-Speicherdiagnose ausführen"
+      ],
+      "relatedEventIds": [41],
+      "tags": ["absturz", "strom", "neustart"],
+      "communityCount": 0
+    },
+    {
+      "id": "RDS_SESSION_FAIL",
+      "name": "RDS Verbindungsproblem",
+      "category": "RDS",
+      "severity": "warning",
+      "eventIds": [1149, 261, 263, 1158],
+      "sources": ["Microsoft-Windows-TerminalServices-RemoteConnectionManager"],
+      "minOccurrences": 3,
+      "timeWindowMinutes": 60,
+      "description": "Mehrere fehlgeschlagene RDS-Verbindungsversuche. Ursachen: Lizenzproblem, Zertifikat abgelaufen oder Netzwerkproblem.",
+      "recommendations": [
+        "RDS-Lizenzserver prüfen: licmgr.exe",
+        "RDS-Zertifikat prüfen: Eigenschaften des RD-Gateway",
+        "Firewall-Regel prüfen: Port 3389 (RDP) offen?",
+        "SharedComputerActivation prüfen: HKLM:\\Software\\Microsoft\\Office\\ClickToRun\\Configuration",
+        "Dienste prüfen: Remote Desktop Services, RD Licensing"
+      ],
+      "tags": ["rds", "rdp", "remotedesktop"],
+      "serverOnly": true,
+      "communityCount": 0
+    },
+    {
+      "id": "VSS_ERROR",
+      "name": "VSS / Schattenkopie Fehler",
+      "category": "Backup",
+      "severity": "error",
+      "eventIds": [12289, 8193, 8194],
+      "sources": ["VSS", "volsnap"],
+      "minOccurrences": 1,
+      "description": "Volume Shadow Copy Service Fehler. Betrifft Backups, Systemwiederherstellung und Datei-Snapshots.",
+      "recommendations": [
+        "VSS-Diagnose: vssadmin list writers",
+        "VSS neu starten: net stop vss && net start vss",
+        "Freien Speicherplatz prüfen: mindestens 10% frei für Schattenkopien",
+        "vssadmin list shadows: bestehende Schattenkopien anzeigen",
+        "Windows Backup neu konfigurieren"
+      ],
+      "tags": ["backup", "vss", "schattenkopie"],
+      "serverOnly": true,
+      "communityCount": 0
+    },
+    {
+      "id": "OFFICE_RDS_LICENSE",
+      "name": "Office Aktivierung auf Terminalserver fehlgeschlagen",
+      "category": "RDS",
+      "severity": "error",
+      "eventIds": [1000],
+      "sources": ["Application Error"],
+      "messageContains": ["winword.exe", "excel.exe", "outlook.exe", "mso.dll", "mso20win32client.dll"],
+      "minOccurrences": 1,
+      "description": "Office-Anwendung stürzt auf einem RDS/Terminalserver ab – häufig durch falsche Lizenz oder fehlende SharedComputerActivation. Microsoft 365 Apps for Business ist NICHT für Terminalserver lizenziert, nur Apps for Enterprise.",
+      "recommendations": [
+        "SharedComputerLicensing prüfen: reg query HKLM\\SOFTWARE\\Microsoft\\Office\\ClickToRun\\Configuration /v SharedComputerLicensing",
+        "SharedComputerLicensing aktivieren: reg add HKLM\\SOFTWARE\\Microsoft\\Office\\ClickToRun\\Configuration /v SharedComputerLicensing /t REG_SZ /d 1 /f",
+        "Lizenztyp prüfen: Apps for Business funktioniert NICHT auf RDS – Apps for Enterprise benötigt",
+        "Token-Cache leeren: %localappdata%\\Microsoft\\Office\\16.0\\Licensing Ordner löschen",
+        "Office-Aktivierung testen: cscript 'C:\\Program Files\\Microsoft Office\\Office16\\ospp.vbs' /act"
+      ],
+      "tags": ["rds", "office", "lizenz"],
+      "serverOnly": true,
+      "communityCount": 0
+    },
+    {
+      "id": "RDS_LICENSE_SERVER",
+      "name": "RDS Lizenzserver nicht erreichbar",
+      "category": "RDS",
+      "severity": "error",
+      "eventIds": [1058, 1130, 4105, 4106],
+      "sources": ["Microsoft-Windows-TerminalServices-Licensing", "TermServLicensing"],
+      "minOccurrences": 1,
+      "description": "Der RDS-Lizenzserver ist nicht erreichbar oder die RDS-Lizenzen sind abgelaufen. Benutzer können sich nach der Karenzzeit (120 Tage) nicht mehr einloggen.",
+      "recommendations": [
+        "Lizenzserver prüfen: licmgr.exe auf dem Lizenzserver öffnen",
+        "Lizenzserver-Erreichbarkeit testen: ping LIZENZSERVER, Port 135 (RPC) offen?",
+        "Lizenzserver in GPO prüfen: Computer Config → Windows-Einstellungen → RD Licensing → Lizenzserver angeben",
+        "RD Licensing Dienst neu starten: Restart-Service -Name 'Remote Desktop Licensing'",
+        "Lizenzanzahl prüfen: genug CALs für alle Benutzer vorhanden?"
+      ],
+      "tags": ["rds", "lizenz", "server"],
+      "serverOnly": true,
+      "communityCount": 0
+    },
+    {
+      "id": "ACCOUNT_LOCKOUT_REPEATED",
+      "name": "Wiederholte Kontosperrungen (selber Account)",
+      "category": "Sicherheit",
+      "severity": "error",
+      "eventIds": [4740, 4625],
+      "sources": ["Microsoft-Windows-Security-Auditing"],
+      "minOccurrences": 3,
+      "timeWindowMinutes": 120,
+      "description": "Dasselbe Konto wird wiederholt gesperrt. Typische Ursachen: gespeichertes altes Passwort in Outlook/VPN/geplanten Tasks, aktive Sessions auf anderem Gerät oder tatsächlicher Angriff.",
+      "recommendations": [
+        "Gespeicherte Anmeldedaten prüfen: Systemsteuerung → Anmeldeinformationsverwaltung",
+        "Outlook Passwort prüfen: alle Profile auf altes Passwort durchsuchen",
+        "Aktive Sessions suchen: query user /server:SERVERNAME auf allen Servern",
+        "Geplante Tasks mit Dienstkonto prüfen: Get-ScheduledTask | Where-Object { $_.Principal.UserId -like '*USERNAME*' }",
+        "VPN-Client Passwort aktualisieren",
+        "Konto entsperren: Unlock-ADAccount -Identity USERNAME"
+      ],
+      "tags": ["sicherheit", "konto", "ad", "gesperrt"],
+      "communityCount": 0
+    },
+    {
+      "id": "DISK_SPACE_CRITICAL",
+      "name": "Festplatte kritisch voll (Backup/SQL Partition)",
+      "category": "Hardware",
+      "severity": "critical",
+      "eventIds": [2013, 105, 1534],
+      "sources": ["Microsoft-Windows-Resource-Exhaustion-Detector", "Application"],
+      "minOccurrences": 1,
+      "description": "Eine Partition ist kritisch voll – besonders gefährlich bei SQL-Backup- oder Log-Partitionen. VSS-Schattenkopien, SQL-Backups und Transaktionslogs können fehlschlagen.",
+      "recommendations": [
+        "Freien Speicher prüfen: Get-PSDrive -PSProvider FileSystem | Select Name,Used,Free",
+        "Größte Ordner finden: Get-ChildItem C:\\ -Recurse -ErrorAction SilentlyContinue | Sort-Object Length -Descending | Select -First 20 FullName,Length",
+        "Alte SQL-Backups löschen: nur die letzten 3-7 Tage behalten",
+        "SQL-Backup-Komprimierung aktivieren: spart 50-70% Speicher",
+        "Partition erweitern: im vSphere/Hyper-V-Client Festplatte vergrößern, dann Datenträgerverwaltung → Volume erweitern",
+        "Windows Update Cache leeren: cleanmgr /sageset:1 && cleanmgr /sagerun:1"
+      ],
+      "tags": ["hardware", "speicher", "backup", "sql"],
+      "serverOnly": true,
+      "communityCount": 0
+    },
+    {
+      "id": "ONEDRIVE_AUTH_FAIL",
+      "name": "OneDrive / M365 Authentifizierungsfehler",
+      "category": "Netzwerk",
+      "severity": "warning",
+      "eventIds": [4625],
+      "sources": ["Microsoft-Windows-Security-Auditing"],
+      "messageContains": ["OneDrive", "onedrive", "Microsoft.AAD", "MicrosoftOfficeHub"],
+      "minOccurrences": 2,
+      "timeWindowMinutes": 60,
+      "description": "OneDrive oder M365-Dienste können sich nicht authentifizieren. Häufig abgelaufener Token, Proxy-Probleme oder Conditional Access-Richtlinien.",
+      "recommendations": [
+        "OneDrive zurücksetzen: %localappdata%\\Microsoft\\OneDrive\\onedrive.exe /reset",
+        "Token-Cache leeren: %localappdata%\\Microsoft\\Office\\16.0\\Licensing löschen",
+        "Neu anmelden: OneDrive-Symbol → Einstellungen → Konto → Diesen PC trennen → neu verbinden",
+        "Proxy prüfen: netsh winhttp show proxy",
+        "Microsoft 365 Admin Center: Conditional Access Richtlinien prüfen ob Gerät konform ist",
+        "OneDrive neu installieren: aktuelle Version von onedrive.com herunterladen"
+      ],
+      "tags": ["onedrive", "m365", "authentifizierung", "netzwerk"],
+      "communityCount": 0
+    },
+    {
+      "id": "NETLOGON_DOMAIN",
+      "name": "Domänenkontroller nicht erreichbar / Netlogon-Fehler",
+      "category": "Netzwerk",
+      "severity": "error",
+      "eventIds": [5719, 5722, 5723, 5783, 5807],
+      "sources": ["NETLOGON", "Microsoft-Windows-Security-Auditing"],
+      "minOccurrences": 2,
+      "timeWindowMinutes": 30,
+      "description": "Der Client kann keine Verbindung zum Domänenkontroller aufbauen. Logins schlagen fehl, GPOs werden nicht angewendet, Kerberos-Tickets können nicht erneuert werden.",
+      "recommendations": [
+        "DC-Erreichbarkeit testen: ping DOMAINCONTROLLER, Test-ComputerSecureChannel",
+        "Sicheren Kanal zurücksetzen: Test-ComputerSecureChannel -Repair -Credential (Get-Credential)",
+        "Netlogon-Dienst neu starten: Restart-Service Netlogon",
+        "DNS prüfen: nslookup DOMAINNAME – DC-IPs müssen auflösbar sein",
+        "Computerkonto prüfen: Get-ADComputer COMPUTERNAME – ist das Konto noch aktiv?",
+        "Zeitabweichung prüfen: w32tm /query /status – max. 5 Minuten Abweichung erlaubt"
+      ],
+      "tags": ["ad", "netzwerk", "domäne", "kerberos"],
+      "communityCount": 0
+    },
+    {
+      "id": "MEMORY_EXHAUSTION",
+      "name": "RAM-Mangel / Speicher erschöpft",
+      "category": "System",
+      "severity": "error",
+      "eventIds": [2004, 2013, 2019, 2020],
+      "sources": ["Microsoft-Windows-Resource-Exhaustion-Detector", "srv"],
+      "minOccurrences": 1,
+      "description": "Das System hat nicht genug freien Arbeitsspeicher oder der nicht-ausgelagerte Pool ist erschöpft. Führt zu Performance-Einbrüchen, Dienst-Abstürzen und kann zu BSOD führen.",
+      "recommendations": [
+        "RAM-Auslastung prüfen: Get-Process | Sort-Object WorkingSet64 -Descending | Select -First 10 Name,@{N='RAM_MB';E={[math]::Round($_.WorkingSet64/1MB,1)}}",
+        "Pagefile prüfen: System → Erweitert → Leistung → Virtueller Arbeitsspeicher",
+        "Speicherleck suchen: Ressourcenmonitor → Arbeitsspeicher → Seitenresidente Treiber",
+        "Treiber aktualisieren: defekte Treiber sind häufige Ursache für Pool-Erschöpfung",
+        "RAM aufrüsten wenn dauerhaft >85% Auslastung"
+      ],
+      "tags": ["ram", "speicher", "performance", "system"],
+      "communityCount": 0
+    },
+    {
+      "id": "WINDOWS_UPDATE_FAIL",
+      "name": "Windows Update fehlgeschlagen",
+      "category": "System",
+      "severity": "warning",
+      "eventIds": [20, 24, 25, 31, 34, 35],
+      "sources": ["Microsoft-Windows-WindowsUpdateClient"],
+      "minOccurrences": 2,
+      "timeWindowMinutes": 1440,
+      "description": "Windows Update schlägt wiederholt fehl. Kann auf beschädigte Update-Komponenten, Speichermangel oder Netzwerkprobleme hinweisen.",
+      "recommendations": [
+        "Windows Update Troubleshooter ausführen: Einstellungen → System → Problembehandlung",
+        "Update-Cache leeren: net stop wuauserv && rd /s /q C:\\Windows\\SoftwareDistribution\\Download && net start wuauserv",
+        "DISM reparieren: DISM /Online /Cleanup-Image /RestoreHealth",
+        "Systemdateien prüfen: sfc /scannow",
+        "Freien Speicherplatz prüfen: mindestens 10 GB für Updates benötigt"
+      ],
+      "tags": ["update", "windows", "system"],
+      "communityCount": 0
+    },
+    {
+      "id": "PRINT_SPOOLER",
+      "name": "Druckspooler abgestürzt",
+      "category": "System",
+      "severity": "warning",
+      "eventIds": [7031, 7034],
+      "sources": ["Service Control Manager"],
+      "messageContains": ["Print Spooler", "Druckwarteschlange"],
+      "minOccurrences": 1,
+      "description": "Der Druckspooler-Dienst ist abgestürzt oder wurde unerwartet beendet. Alle Druckaufträge werden blockiert bis der Dienst neu gestartet wird.",
+      "recommendations": [
+        "Spooler neu starten: net stop spooler && del /Q /F /S \"%SystemRoot%\\System32\\spool\\PRINTERS\\*.*\" && net start spooler",
+        "Hängende Druckjobs löschen: Get-PrintJob -PrinterName * | Remove-PrintJob",
+        "Defekten Treiber identifizieren: Ereignisanzeige → System → Quelle: PrintService",
+        "Treiber neu installieren: Druckverwaltung → Treiber → defekten Treiber entfernen",
+        "Täglichen Spooler-Neustart als Task einrichten (Set-PowerPlan-Win11.ps1 nicht zuständig, manuell via Aufgabenplanung)"
+      ],
+      "tags": ["drucker", "spooler", "dienst"],
+      "communityCount": 0
+    },
+    {
+      "id": "TASKBAR_EXPLORER_CRASH",
+      "name": "Windows Explorer / Taskleiste abgestürzt",
+      "category": "Absturz",
+      "severity": "warning",
+      "eventIds": [1000, 1002],
+      "sources": ["Application Error"],
+      "messageContains": ["explorer.exe", "ShellExperienceHost.exe", "SearchHost.exe", "StartMenuExperienceHost.exe"],
+      "minOccurrences": 2,
+      "timeWindowMinutes": 60,
+      "description": "Windows Explorer oder Taskleisten-Komponenten stürzen wiederholt ab. Häufig nach fehlgeschlagenen Windows Updates oder durch defekte Shell-Erweiterungen.",
+      "recommendations": [
+        "Explorer neu starten: taskkill /f /im explorer.exe && start explorer.exe",
+        "Windows-Suche zurücksetzen: Get-AppXPackage -Name Microsoft.Windows.Search | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register \"$($_.InstallLocation)\\AppXManifest.xml\"}",
+        "Systemdateien prüfen: sfc /scannow",
+        "Update-Rollback prüfen: Einstellungen → Windows Update → Updateverlauf",
+        "Shell-Erweiterungen prüfen: ShellExView (NirSoft) – defekte Drittanbieter-Erweiterungen deaktivieren"
+      ],
+      "tags": ["explorer", "taskleiste", "absturz"],
+      "communityCount": 0
+    }
+  ]
+}
