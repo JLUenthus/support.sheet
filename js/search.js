@@ -88,14 +88,21 @@ function updateResultCount(count, isAll) {
  * Kein innerHTML – alles via createElement.
  */
 function initSearchUI() {
+  // Input schon im Header vorhanden? Nur Events verdrahten.
+  const existing = document.getElementById('search-input');
+  if (existing) {
+    _wireSearchInput(existing);
+    _ensureResultCount();
+    return;
+  }
+
+  // Fallback: Suchfeld vor commands-container erstellen
   const container = document.getElementById('commands-container');
-  if (!container || document.getElementById('search-wrap')) return;
+  if (!container) return;
 
-  // Wrapper
-  const wrap = document.createElement('div');
-  wrap.id = 'search-wrap';
+  const wrap  = document.createElement('div');
+  wrap.id     = 'search-wrap';
 
-  // Input
   const input = document.createElement('input');
   input.type        = 'text';
   input.id          = 'search-input';
@@ -104,11 +111,13 @@ function initSearchUI() {
   input.autocomplete = 'off';
   input.spellcheck   = false;
 
-  // Treffer-Count
-  const count = document.createElement('span');
-  count.id     = 'search-result-count';
-  count.hidden = true;
+  wrap.appendChild(input);
+  _ensureResultCount(wrap);
+  container.insertAdjacentElement('beforebegin', wrap);
+  _wireSearchInput(input);
+}
 
+function _wireSearchInput(input) {
   // Debounced Input-Handler
   input.addEventListener('input', e => {
     clearTimeout(_searchTimeout);
@@ -123,8 +132,13 @@ function initSearchUI() {
       input.blur();
     }
   });
+}
 
-  wrap.appendChild(input);
-  wrap.appendChild(count);
-  container.insertAdjacentElement('beforebegin', wrap);
+function _ensureResultCount(parent) {
+  if (document.getElementById('search-result-count')) return;
+  const count  = document.createElement('span');
+  count.id     = 'search-result-count';
+  count.hidden = true;
+  const target = parent || document.getElementById('search-wrap');
+  if (target) target.appendChild(count);
 }
