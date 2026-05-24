@@ -9,7 +9,7 @@
  * @returns {Promise<Array>} Array aller Commands
  */
 async function loadCommands() {
-  const response = await fetch('./commands.json');
+  const response = await fetch('./data/commands.json');
 
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
