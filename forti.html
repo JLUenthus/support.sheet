@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <title>support.sheet – Fortinet Cheatsheet</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/toast.css">
+</head>
+<body>
+
+  <!-- ── HEADER ──────────────────────────────────────────── -->
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-icon">🔥</div>
+      <div class="logo-text">support<span>.sheet</span></div>
+    </a>
+    <div class="header-right">
+      <div class="pill pill-count">Fortinet Cheatsheet</div>
+    </div>
+  </header>
+
+  <!-- ── HERO ────────────────────────────────────────────── -->
+  <div class="hero">
+    <div class="hero-badge">🔥 Fortinet Cheatsheet</div>
+    <h1>FortiGate, FortiManager<br>&amp; FortiAnalyzer.</h1>
+    <p>CLI-Referenz für Fortinet-Produkte – FortiGate, FortiManager und FortiAnalyzer. Filter nach Produkt, Kategorie und Tag.</p>
+  </div>
+
+
+  <main>
+    <div id="forti-app">
+      <p style="text-align:center;color:var(--muted);padding:60px 0;font-size:.9rem;">
+        Inhalte folgen in Kürze.
+      </p>
+    </div>
+  </main>
+
+  <!-- ── FOOTER ──────────────────────────────────────────── -->
+  <footer>
+    <p class="footer-copy">support.sheet · <span>Fortinet Cheatsheet</span> · Klick kopiert den Befehl</p>
+  </footer>
+
+  <!-- PWA Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+
+  <!-- nav.js – Tab-Bar, Logo-Dropdown, Ctrl+K, Scroll-to-Top, Updates -->
+  <script src="nav.js"></script>
+
+</body>
+</html>
