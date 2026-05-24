@@ -115,6 +115,52 @@ header {
 
 .logo-text span { color: var(--accent); }
 
+/* ── Header Nav ──────────────────────────────────────────── */
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.header-nav::-webkit-scrollbar { display: none; }
+
+.header-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+
+.header-nav-link:hover { color: var(--text); background: var(--panel2); }
+
+.header-nav-link--amber  { border-color: rgba(232,179,57,.35);  background: rgba(232,179,57,.08);  color: #e8b339; }
+.header-nav-link--orange { border-color: rgba(251,113,36,.35);  background: rgba(251,113,36,.08);  color: var(--orange); }
+.header-nav-link--green  { border-color: rgba(74,222,128,.35);  background: rgba(74,222,128,.08);  color: var(--green); }
+.header-nav-link--purple { border-color: rgba(167,139,250,.35); background: rgba(167,139,250,.08); color: var(--accent2); }
+
+.header-nav-link--amber:hover  { background: rgba(232,179,57,.18); }
+.header-nav-link--orange:hover { background: rgba(251,113,36,.18); }
+.header-nav-link--green:hover  { background: rgba(74,222,128,.18); }
+.header-nav-link--purple:hover { background: rgba(167,139,250,.18); }
+
+/* Mobile: Nav-Links ausblenden, Platz für Logo + Pill */
+@media (max-width: 768px) {
+  .header-nav { display: none; }
+}
+
 /* ── Header Right ────────────────────────────────────────── */
 .header-right {
   display: flex;
