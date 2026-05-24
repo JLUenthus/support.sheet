@@ -1,39 +1,44 @@
 /* ============================================================
-   search.css – Search Input & Result Count
+   search.css – Header Search & Result Count
+   Kein margin/positioning das den Header bricht
    ============================================================ */
 
-/* ── Wrapper ─────────────────────────────────────────────── */
-#search-wrap {
-  position: relative;
-  margin-bottom: 16px;
-}
+/* ── Header Search Wrapper ───────────────────────────────── */
+/* .header-search sitzt als flex-Kind im Header              */
+/* Styling in main.css → hier nur Input + Zähler             */
 
 /* ── Input ───────────────────────────────────────────────── */
 #search-input {
   width: 100%;
-  background: #1a1d2e;
-  border: 1px solid #2a2d3e;
-  border-radius: 9px;
-  padding: 10px 16px;
-  color: #e0e4f0;
-  font-family: system-ui, sans-serif;
-  font-size: 0.88rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 60px 8px 34px; /* links: icon, rechts: shortcut */
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: .85rem;
   outline: none;
-  transition: border-color .15s, box-shadow .15s;
+  transition: border-color .2s, box-shadow .2s;
 }
 
-#search-input::placeholder  { color: #555a70; }
+#search-input::placeholder { color: var(--dim); }
 
 #search-input:focus {
-  border-color: #7c8cf8;
-  box-shadow: 0 0 0 3px rgba(124, 140, 248, .15);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* Shortcut ausblenden wenn Input aktiv oder befüllt */
+#search-input:focus ~ .search-shortcut,
+#search-input:not(:placeholder-shown) ~ .search-shortcut {
+  opacity: 0;
 }
 
 /* ── Treffer-Anzeige ─────────────────────────────────────── */
+/* Sitzt als Block unter dem Header-Search in main          */
 #search-result-count {
   display: block;
-  font-size: 0.72rem;
-  color: #555a70;
-  margin-top: 6px;
-  padding-left: 4px;
+  font-size: .72rem;
+  color: var(--dim);
+  padding: 6px 4px 0;
 }

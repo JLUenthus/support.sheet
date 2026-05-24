@@ -116,43 +116,26 @@ header {
 .logo-text span { color: var(--accent); }
 
 /* ── Header Search ───────────────────────────────────────── */
-.search-wrap {
+.header-search {
   flex: 1;
   max-width: 420px;
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .search-icon {
   position: absolute;
-  left: 12px;
+  left: 11px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--muted);
   font-size: 14px;
   pointer-events: none;
+  z-index: 1;
 }
 
-#search-input {
-  width: 100%;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 72px 8px 34px;
-  color: var(--text);
-  font-family: var(--font-ui);
-  font-size: .85rem;
-  outline: none;
-  transition: border-color .2s, box-shadow .2s;
-}
-
-#search-input::placeholder { color: var(--dim); }
-
-#search-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-}
-
-/* Ctrl+K Hint */
+/* Ctrl+K Shortcut Chip */
 .search-shortcut {
   position: absolute;
   right: 10px;
@@ -170,11 +153,7 @@ header {
   transition: opacity .15s;
 }
 
-/* Hint ausblenden wenn Input fokussiert oder befüllt */
-#search-input:focus ~ .search-shortcut,
-#search-input:not(:placeholder-shown) ~ .search-shortcut { opacity: 0; }
-
-/* Mobile: Suchfeld unter dem Header in eigener Zeile */
+/* Mobile: Nav ausblenden, Suchfeld bleibt nutzbar */
 @media (max-width: 768px) {
   header {
     flex-wrap: wrap;
@@ -182,11 +161,12 @@ header {
     padding: 10px 14px;
     gap: 10px;
   }
-  .search-wrap {
+  .header-search {
     order: 3;
     max-width: 100%;
-    width: 100%;
+    flex: 1 1 100%;
   }
+  .header-nav { display: none; }
 }
 
 /* ── Header Nav ──────────────────────────────────────────── */
