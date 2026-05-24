@@ -1,19 +1,16 @@
 /* ============================================================
-   search.css – Header Search & Result Count
-   Kein margin/positioning das den Header bricht
+   search.css – Header Search Input Design
+   Kein Layout, kein Positioning – nur Input-Styling
+   Layout-Wrapper (.header-search) gehört in main.css
    ============================================================ */
 
-/* ── Header Search Wrapper ───────────────────────────────── */
-/* .header-search sitzt als flex-Kind im Header              */
-/* Styling in main.css → hier nur Input + Zähler             */
-
 /* ── Input ───────────────────────────────────────────────── */
-#search-input {
+.header-search #search-input {
   width: 100%;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 8px 60px 8px 34px; /* links: icon, rechts: shortcut */
+  padding: 8px 60px 8px 34px;
   color: var(--text);
   font-family: var(--font-ui);
   font-size: .85rem;
@@ -21,24 +18,22 @@
   transition: border-color .2s, box-shadow .2s;
 }
 
-#search-input::placeholder { color: var(--dim); }
+.header-search #search-input::placeholder { color: var(--dim); }
 
-#search-input:focus {
+.header-search #search-input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-/* Shortcut ausblenden wenn Input aktiv oder befüllt */
-#search-input:focus ~ .search-shortcut,
-#search-input:not(:placeholder-shown) ~ .search-shortcut {
+/* ── Shortcut Chip Visibility ────────────────────────────── */
+.header-search #search-input:focus ~ .search-shortcut,
+.header-search #search-input:not(:placeholder-shown) ~ .search-shortcut {
   opacity: 0;
 }
 
 /* ── Treffer-Anzeige ─────────────────────────────────────── */
-/* Sitzt als Block unter dem Header-Search in main          */
 #search-result-count {
-  display: block;
   font-size: .72rem;
   color: var(--dim);
-  padding: 6px 4px 0;
+  padding: 4px 24px;
 }
