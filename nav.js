@@ -64,16 +64,6 @@
     .as-tab.active { color:var(--as-tab-color,#7c8cf8); border-bottom-color:var(--as-tab-color,#7c8cf8); }
     .as-tab-icon { font-size:14px; }
 
-    /* Ctrl+K hint */
-    .as-search-hint {
-      position:absolute; right:12px; top:50%; transform:translateY(-50%);
-      font-size:.68rem; color:#555a70; font-family:monospace;
-      background:rgba(255,255,255,.06); border:1px solid #2a2d3e;
-      border-radius:4px; padding:1px 5px; pointer-events:none;
-    }
-    #search-input:focus ~ .as-search-hint,
-    #search-input:not(:placeholder-shown) ~ .as-search-hint { display:none; }
-
     /* Update bar */
     .as-update-bar {
       position:fixed; top:0; left:0; right:0; z-index:1000;
@@ -252,23 +242,18 @@
       const s = document.getElementById('search-input');
       if (s) { s.focus(); s.select(); }
     }
+    // Escape only if search-input is focused
     if (e.key === 'Escape') {
       const s = document.getElementById('search-input');
       if (s && document.activeElement === s) {
-        s.blur(); s.value = '';
-        s.dispatchEvent(new Event('input'));
+        s.value = '';
+        s.dispatchEvent(new Event('input')); // triggers runSearch('')
+        s.blur();
       }
     }
   });
 
-  // Ctrl+K hint in search field
-  const searchEl = document.getElementById('search-input');
-  if (searchEl && !searchEl.parentNode.querySelector('.as-search-hint')) {
-    const hint = document.createElement('span');
-    hint.className = 'as-search-hint';
-    hint.textContent = 'Ctrl K';
-    searchEl.insertAdjacentElement('afterend', hint);
-  }
+  // Ctrl+K shortcut chip is in HTML (.search-shortcut) – no extra injection needed
 
   // ── UPDATE BANNER ─────────────────────────────────────────
   if ('serviceWorker' in navigator) {
