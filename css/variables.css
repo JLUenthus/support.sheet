@@ -1,0 +1,116 @@
+/* ============================================================
+   variables.css – Variable Modal Komponente
+   ============================================================ */
+
+/* ── Overlay ─────────────────────────────────────────────── */
+.var-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .6);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  transition: opacity .2s;
+}
+
+.var-modal-overlay--visible { opacity: 1; }
+
+/* ── Modal Box ───────────────────────────────────────────── */
+.var-modal {
+  background: #1a1d2e;
+  border: 1px solid #343860;
+  border-radius: 14px;
+  padding: 22px;
+  width: 100%;
+  max-width: 420px;
+  transform: translateY(8px) scale(.97);
+  transition: transform .2s;
+}
+
+.var-modal-overlay--visible .var-modal { transform: translateY(0) scale(1); }
+
+/* ── Titel & Preview ─────────────────────────────────────── */
+.var-modal-title {
+  font-size: .95rem;
+  font-weight: 700;
+  color: #e0e4f0;
+  margin-bottom: 10px;
+}
+
+.var-modal-preview {
+  display: block;
+  font-family: monospace;
+  font-size: .75rem;
+  color: #7c8cf8;
+  background: #0d1117;
+  border: 1px solid #2a2d3e;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 14px;
+  word-break: break-all;
+}
+
+.var-modal-divider { border: none; border-top: 1px solid #2a2d3e; margin: 0 0 14px; }
+
+/* ── Input Gruppe ────────────────────────────────────────── */
+.var-modal-group { margin-bottom: 12px; }
+
+.var-modal-label {
+  display: block;
+  font-size: .75rem;
+  font-weight: 600;
+  color: #8890aa;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.var-modal-input {
+  width: 100%;
+  background: #0d1117;
+  border: 1px solid #2a2d3e;
+  border-radius: 7px;
+  padding: 8px 12px;
+  color: #e0e4f0;
+  font-family: monospace;
+  font-size: .85rem;
+  outline: none;
+  transition: border-color .15s;
+}
+
+.var-modal-input:focus       { border-color: #7c8cf8; }
+.var-modal-input--error      { border-color: #f87171 !important; }
+
+.var-modal-hint {
+  display: block;
+  font-size: .7rem;
+  color: #f87171;
+  margin-top: 4px;
+  min-height: .9rem;
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.var-modal-btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+.var-modal-btn {
+  padding: 7px 18px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.var-modal-btn--cancel          { background: transparent; border: 1px solid #2a2d3e; color: #8890aa; }
+.var-modal-btn--cancel:hover    { color: #e0e4f0; border-color: #343860; }
+.var-modal-btn--confirm         { background: rgba(124, 140, 248, .12); border: 1px solid rgba(124, 140, 248, .35); color: #7c8cf8; }
+.var-modal-btn--confirm:hover   { background: rgba(124, 140, 248, .22); }
