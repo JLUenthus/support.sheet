@@ -193,6 +193,55 @@ header {
   color: var(--accent);
 }
 
+/* ── Quick Links ─────────────────────────────────────────── */
+.quick-links {
+  position: sticky;
+  top: 58px;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 24px;
+  background: rgba(15, 17, 23, .92);
+  border-bottom: 1px solid var(--border);
+}
+
+.quick-link {
+  padding: 5px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.quick-link--amber  {
+  border-color: rgba(232,179,57,.35);
+  background: rgba(232,179,57,.08);
+  color: #e8b339;
+}
+
+.quick-link--orange {
+  border-color: rgba(251,113,36,.35);
+  background: rgba(251,113,36,.08);
+  color: var(--orange);
+}
+
+.quick-link--green  {
+  border-color: rgba(74,222,128,.35);
+  background: rgba(74,222,128,.08);
+  color: var(--green);
+}
+
+.quick-link--purple {
+  border-color: rgba(167,139,250,.35);
+  background: rgba(167,139,250,.08);
+  color: var(--accent2);
+}
+
 /* ── Hero ────────────────────────────────────────────────── */
 .hero {
   position: relative;
