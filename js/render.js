@@ -160,6 +160,9 @@ function renderCommands(commands, containerId = 'commands-container') {
   container.replaceChildren(fragment);
   console.log(`✅ ${commands.length} Commands gerendert`);
 
+  // Zähler in Hero + Header aktualisieren
+  if (typeof updateCommandCount === 'function') updateCommandCount(commands.length);
+
   // Favoriten-Section nach der Hauptliste rendern
   if (typeof renderFavorites === 'function') renderFavorites(commands);
 }
