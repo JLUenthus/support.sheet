@@ -154,7 +154,7 @@ header {
   transition: opacity .15s;
 }
 
-/* Mobile: Nav ausblenden, Suchfeld bleibt nutzbar */
+/* Mobile: Nav scrollbar, Suchfeld bleibt nutzbar */
 @media (max-width: 768px) {
   header {
     flex-wrap: wrap;
@@ -167,15 +167,25 @@ header {
     max-width: 100%;
     flex: 1 1 100%;
   }
-  .header-nav { display: none; }
+  .header-nav {
+    top: auto; /* kein sticky auf Mobile */
+    padding: 6px 14px;
+  }
 }
 
-/* ── Header Nav ──────────────────────────────────────────── */
+/* ── Header Nav Row (below header) ──────────────────────── */
 .header-nav {
+  position: sticky;
+  top: 58px; /* header height */
+  z-index: 99;
+  background: rgba(15, 17, 23, .95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 6px 24px;
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   overflow-x: auto;
   scrollbar-width: none;
 }
