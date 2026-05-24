@@ -2,7 +2,15 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Render Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <title>AdminSheet – Windows Admin Cheatsheet</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- CSS: Reihenfolge – main zuerst, dann Komponenten -->
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
   <link rel="stylesheet" href="css/variables.css">
@@ -12,14 +20,46 @@
 </head>
 <body>
 
-  <h1>Render Test</h1>
+  <!-- ── HEADER ──────────────────────────────────────────── -->
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-icon">⚡</div>
+      <div class="logo-text">Admin<span>Sheet</span></div>
+    </a>
+    <div class="header-right">
+      <div class="pill pill-count" id="cmd-count">0 Befehle</div>
+    </div>
+  </header>
 
-  <!-- TEMPLATE: nicht sichtbar – nur Bauplan für JS -->
+  <!-- ── HERO ────────────────────────────────────────────── -->
+  <div class="hero">
+    <div class="hero-badge">⚡ Windows Admin Cheatsheet</div>
+    <h1>Alle Befehle.<br>Sofort zur Hand.</h1>
+    <p>Professionelle Referenz für Windows-Administratoren. Einmal klicken – direkt in die Zwischenablage.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-num" id="stat-total">–</span>
+        <span class="hero-stat-label">Befehle</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">Win 10/11</span>
+        <span class="hero-stat-label">kompatibel</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">Server</span>
+        <span class="hero-stat-label">2019/2022</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TEMPLATE: Bauplan für JS, nicht sichtbar ────────── -->
   <template id="command-template">
     <div class="command-card">
       <div class="card-header">
         <h3 data-field="name"></h3>
-        <button class="star-btn" data-action="star" aria-label="Zu Favoriten hinzufügen" aria-pressed="false">★</button>
+        <button class="star-btn" data-action="star"
+                aria-label="Zu Favoriten hinzufügen"
+                aria-pressed="false">★</button>
       </div>
       <p data-field="desc"></p>
       <code data-field="cmd"></code>
@@ -30,24 +70,44 @@
     </div>
   </template>
 
-  <!-- FAVORITES: ausgeblendet wenn leer -->
-  <section id="favorites-section" hidden>
-    <h2 class="section-title">⭐ Meine Favoriten</h2>
-    <div id="favorites-container"></div>
-  </section>
+  <!-- ── MAIN ────────────────────────────────────────────── -->
+  <main>
 
-  <!-- RECENT: ausgeblendet wenn leer -->
-  <section id="recent-section" hidden>
-    <h2 class="section-title">Zuletzt verwendet</h2>
-    <div id="recent-container"></div>
-  </section>
+    <!-- Favoriten: ausgeblendet wenn leer -->
+    <section id="favorites-section" hidden>
+      <h2 class="section-title">⭐ Meine Favoriten</h2>
+      <div id="favorites-container"></div>
+    </section>
 
-  <!-- ALLE COMMANDS -->
-  <div id="commands-container"></div>
+    <!-- Zuletzt verwendet: ausgeblendet wenn leer -->
+    <section id="recent-section" hidden>
+      <h2 class="section-title">🕐 Zuletzt verwendet</h2>
+      <div id="recent-container"></div>
+    </section>
 
+    <!-- Alle Commands -->
+    <div id="commands-container"></div>
+
+  </main>
+
+  <!-- ── FOOTER ──────────────────────────────────────────── -->
+  <footer>
+    <div class="footer-links">
+      <a href="eventlog.html" class="footer-mitmachen footer-mitmachen--amber">📋 Log Analyzer</a>
+      <a href="exchange.html" class="footer-mitmachen footer-mitmachen--amber">📧 Exchange</a>
+      <a href="forti.html"    class="footer-mitmachen footer-mitmachen--orange">🔥 Fortinet</a>
+      <a href="scripts.html"  class="footer-mitmachen footer-mitmachen--green">💚 PS Scripts</a>
+      <a href="mitmachen.html" class="footer-mitmachen">🤝 Mitmachen</a>
+      <a href="mitmachen.html#offline" class="footer-mitmachen footer-mitmachen--green">📲 Offline / App</a>
+    </div>
+    <p class="footer-copy">AdminSheet · <span>Windows 10/11 & Server 2019/2022</span> · Klick kopiert den Befehl</p>
+  </footer>
+
+  <!-- ── SCRIPTS ─────────────────────────────────────────── -->
   <!-- Fuse.js – muss vor search.js geladen sein -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/7.0.0/fuse.min.js"></script>
 
+  <!-- Reihenfolge: jedes Modul baut auf dem vorherigen auf -->
   <script src="loader.js"></script>
   <script src="toast.js"></script>
   <script src="variables.js"></script>
@@ -55,6 +115,35 @@
   <script src="favorites.js"></script>
   <script src="search.js"></script>
   <script src="render.js"></script>
+
+  <!-- PWA Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+
+  <!-- Globale Initialisierung -->
+  <script>
+    // Befehlszähler in Hero + Header aktualisieren wenn Commands geladen
+    document.addEventListener('DOMContentLoaded', () => {
+      const origRender = window.renderCommands;
+      if (typeof origRender === 'function') return; // render.js übernimmt
+    });
+
+    // Befehlszähler nach Render aktualisieren
+    function updateCommandCount(n) {
+      const stat  = document.getElementById('stat-total');
+      const count = document.getElementById('cmd-count');
+      if (stat)  stat.textContent  = n;
+      if (count) count.textContent = n + ' Befehle';
+    }
+  </script>
+
+  <!-- nav.js – Tab-Bar, Logo-Dropdown, Ctrl+K, Scroll-to-Top, Updates -->
+  <script src="nav.js"></script>
 
 </body>
 </html>
