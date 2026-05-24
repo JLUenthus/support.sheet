@@ -1,21 +1,19 @@
 // ============================================================
-// AdminSheet – Fuse.js Search
-// Vanilla JS, kein Framework
-// Nutzt renderCommands() – kein eigener Renderer
+// support.sheet – Fuse.js Search
+// Nutzt #search-input aus dem Header – kein eigener DOM-Build
+// Nutzt renderCommands() – keine eigene Renderlogik
 // ============================================================
-
-// Fuse.js wird via CDN in test.html geladen (vor search.js)
 
 let _fuseInstance  = null;
 let _searchTimeout = null;
 
 const FUSE_OPTIONS = {
-  threshold:         0.3,  // 0 = exakt, 1 = alles
+  threshold:          0.3,
   minMatchCharLength: 2,
   keys: [
-    { name: 'cmd',  weight: 0.6 },  // höchste Gewichtung
-    { name: 'tags', weight: 0.3 },  // mittel
-    { name: 'desc', weight: 0.1 },  // niedrig
+    { name: 'cmd',  weight: 0.6 },
+    { name: 'tags', weight: 0.3 },
+    { name: 'desc', weight: 0.1 },
   ]
 };
 
@@ -24,7 +22,7 @@ const FUSE_OPTIONS = {
 
 /**
  * Initialisiert Fuse.js mit den geladenen Commands.
- * Muss nach loadCommands() aufgerufen werden.
+ * Wird von render.js nach loadCommands() aufgerufen.
  * @param {Object[]} commands
  */
 function initSearch(commands) {
@@ -44,27 +42,21 @@ function runSearch(query) {
 
   if (trimmed.length === 0) {
     renderCommands(_allCommands);
-    updateResultCount(_allCommands.length, true);
+    _updateResultCount(_allCommands.length, true);
     return;
   }
 
   if (!_fuseInstance) return;
 
   const results = _fuseInstance.search(trimmed).map(r => r.item);
-
   renderCommands(results);
-  updateResultCount(results.length, false);
+  _updateResultCount(results.length, false);
 }
 
 
 // ── Treffer-Anzeige ───────────────────────────────────────
 
-/**
- * Aktualisiert die Treffer-Anzeige unter dem Suchfeld.
- * @param {number} count
- * @param {boolean} isAll
- */
-function updateResultCount(count, isAll) {
+function _updateResultCount(count, isAll) {
   const el = document.getElementById('search-result-count');
   if (!el) return;
 
@@ -74,71 +66,43 @@ function updateResultCount(count, isAll) {
     return;
   }
 
-  el.textContent = count === 0
-    ? 'Keine Treffer'
-    : `${count} ${count === 1 ? 'Treffer' : 'Treffer'}`;
+  el.textContent = count === 0 ? 'Keine Treffer' : `${count} Treffer`;
   el.hidden = false;
 }
 
 
-// ── Search Input aufbauen ─────────────────────────────────
+// ── Events verdrahten ─────────────────────────────────────
 
 /**
- * Erstellt das Search-UI und fügt es vor dem Container ein.
- * Kein innerHTML – alles via createElement.
+ * Hängt Input-Handler an das vorhandene #search-input.
+ * Erstellt keinen neuen DOM-Node.
+ * Wird von render.js via initSearchUI() aufgerufen.
  */
 function initSearchUI() {
-  // Input schon im Header vorhanden? Nur Events verdrahten.
-  const existing = document.getElementById('search-input');
-  if (existing) {
-    _wireSearchInput(existing);
-    _ensureResultCount();
-    return;
-  }
+  const input = document.getElementById('search-input');
+  if (!input) return; // kein Input im DOM → nichts tun
 
-  // Fallback: Suchfeld vor commands-container erstellen
-  const container = document.getElementById('commands-container');
-  if (!container) return;
-
-  const wrap  = document.createElement('div');
-  wrap.id     = 'search-wrap';
-
-  const input = document.createElement('input');
-  input.type        = 'text';
-  input.id          = 'search-input';
-  input.placeholder = 'Commands durchsuchen…';
-  input.setAttribute('aria-label', 'Commands durchsuchen');
-  input.autocomplete = 'off';
-  input.spellcheck   = false;
-
-  wrap.appendChild(input);
-  _ensureResultCount(wrap);
-  container.insertAdjacentElement('beforebegin', wrap);
-  _wireSearchInput(input);
-}
-
-function _wireSearchInput(input) {
   // Debounced Input-Handler
   input.addEventListener('input', e => {
     clearTimeout(_searchTimeout);
     _searchTimeout = setTimeout(() => runSearch(e.target.value), 150);
   });
 
-  // ESC leert das Suchfeld
+  // ESC: leeren + alle Commands zeigen
   input.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      input.value = '';
-      runSearch('');
-      input.blur();
-    }
+    if (e.key !== 'Escape') return;
+    input.value = '';
+    input.dispatchEvent(new Event('input')); // runSearch('')
+    input.blur();
   });
-}
 
-function _ensureResultCount(parent) {
-  if (document.getElementById('search-result-count')) return;
-  const count  = document.createElement('span');
-  count.id     = 'search-result-count';
-  count.hidden = true;
-  const target = parent || document.getElementById('search-wrap');
-  if (target) target.appendChild(count);
+  // Treffer-Count unter dem Header einfügen falls noch nicht vorhanden
+  if (!document.getElementById('search-result-count')) {
+    const count  = document.createElement('div');
+    count.id     = 'search-result-count';
+    count.hidden = true;
+    // Nach dem Header einfügen, vor dem Hero
+    const header = document.querySelector('header');
+    if (header) header.insertAdjacentElement('afterend', count);
+  }
 }
