@@ -40,17 +40,27 @@ function initSearch(commands) {
 function runSearch(query) {
   const trimmed = query.trim();
 
+  // Base: all commands or current filter
+  const base = (typeof _activeFilter !== 'undefined' && _activeFilter !== 'all' && typeof getPrimaryTag === 'function')
+    ? _allCommands.filter(c => getPrimaryTag(c) === _activeFilter)
+    : _allCommands;
+
   if (trimmed.length === 0) {
-    renderCommands(_allCommands);
-    _updateResultCount(_allCommands.length, true);
+    renderCommandGroups(base);
+    _updateResultCount(base.length, true);
     return;
   }
 
   if (!_fuseInstance) return;
 
   const results = _fuseInstance.search(trimmed).map(r => r.item);
-  renderCommands(results);
-  _updateResultCount(results.length, false);
+  // Apply active filter on top of search
+  const filtered = (typeof _activeFilter !== 'undefined' && _activeFilter !== 'all' && typeof getPrimaryTag === 'function')
+    ? results.filter(c => getPrimaryTag(c) === _activeFilter)
+    : results;
+
+  renderCommandGroups(filtered);
+  _updateResultCount(filtered.length, false);
 }
 
 

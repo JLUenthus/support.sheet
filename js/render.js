@@ -1,90 +1,86 @@
 // ============================================================
-// AdminSheet – Command Renderer
-// Nutzt loadCommands() – kein eigener fetch()
-// Vanilla JS, kein Framework
+// support.sheet – Command Renderer v3
+// Kategorien + Filter-Bar + 3-spaltige Grid
 // ============================================================
 
+// ── Kategorie-Definitionen ────────────────────────────────
+// Primärer Tag → Label + Farbe für Filter-Bar und Section-Header
+const CATEGORY_MAP = {
+  'msc':              { label: 'MMC-Konsolen',     dot: '#7c8cf8', icon: '🖥️'  },
+  'system':           { label: 'Systeminfo',        dot: '#4ade80', icon: '⚙️'  },
+  'network':          { label: 'Netzwerk',          dot: '#2dd4bf', icon: '🌐'  },
+  'powershell':       { label: 'PowerShell',        dot: '#a78bfa', icon: '💚'  },
+  'users':            { label: 'Benutzer',          dot: '#fbbf24', icon: '👥'  },
+  'disk':             { label: 'Datenträger',       dot: '#f87171', icon: '💾'  },
+  'process':          { label: 'Prozesse',          dot: '#f472b6', icon: '⚡'  },
+  'remote':           { label: 'Remote & Support',  dot: '#2dd4bf', icon: '🖥️'  },
+  'gpo':              { label: 'GPO & Richtlinien', dot: '#4ade80', icon: '📋'  },
+  'eventlog':         { label: 'Event Logs',        dot: '#fbbf24', icon: '📋'  },
+  'active-directory': { label: 'Active Directory',  dot: '#7c8cf8', icon: '🏢'  },
+  'printer':          { label: 'Drucker & Spooler', dot: '#fb7124', icon: '🖨️'  },
+  'quick':            { label: 'Schnellbefehle',    dot: '#fbbf24', icon: '⚡'  },
+  // Exchange
+  'exchange':         { label: 'Exchange',          dot: '#e8b339', icon: '📧'  },
+  'on-premises':      { label: 'On-Premises',       dot: '#e8b339', icon: '🏢'  },
+  'exo':              { label: 'Exchange Online',   dot: '#2dd4bf', icon: '☁️'  },
+  // Fortinet
+  'fortigate':        { label: 'FortiGate',         dot: '#fb7124', icon: '🔥'  },
+  'fortimanager':     { label: 'FortiManager',      dot: '#f87171', icon: '🖥️'  },
+  'fortianalyzer':    { label: 'FortiAnalyzer',     dot: '#a78bfa', icon: '📊'  },
+};
 
-// ── Copy Button ──────────────────────────────────────────
+// Welcher Tag ist der primäre Kategorie-Tag?
+// Erster Tag aus CATEGORY_MAP gewinnt
+function getPrimaryTag(cmd) {
+  if (!Array.isArray(cmd.tags)) return null;
+  return cmd.tags.find(t => CATEGORY_MAP[t]) || cmd.tags[0] || null;
+}
 
-/**
- * Kopiert Text in die Zwischenablage.
- * Fallback für http / ältere Browser über execCommand.
- * @param {string} text
- * @param {HTMLElement} btn
- */
+
+// ── Copy Button ───────────────────────────────────────────
+
 function copyToClipboard(text, btn, command) {
   const onSuccess = () => {
     btn.classList.add('copied');
     setTimeout(() => btn.classList.remove('copied'), 1500);
     if (typeof showToast === 'function') showToast('Kopiert!', 'success');
-    // Recent tracken – nur wenn Command-Objekt übergeben wurde
-    if (command && typeof addRecent === 'function') {
-      addRecent(command, text);
-    }
+    if (command && typeof addRecent === 'function') addRecent(command, text);
   };
-
   const onError = err => {
     console.warn('Kopieren fehlgeschlagen', err);
     btn.classList.add('copy-error');
     setTimeout(() => btn.classList.remove('copy-error'), 1500);
     if (typeof showToast === 'function') showToast('Kopieren fehlgeschlagen', 'error');
   };
-
-  // Clipboard API – funktioniert nur auf https
   if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(text).then(onSuccess).catch(() => {
-      execCommandFallback(text, onSuccess, onError);
-    });
+    navigator.clipboard.writeText(text).then(onSuccess).catch(() => execCommandFallback(text, onSuccess, onError));
   } else {
-    // Fallback: execCommand für http / ältere Browser
     execCommandFallback(text, onSuccess, onError);
   }
 }
 
-/**
- * Fallback-Kopieren via execCommand (deprecated, aber breite Unterstützung).
- * readonly verhindert mobile Keyboard-Popup.
- * try/catch weil execCommand in manchen Browsern wirft statt false zurückzugeben.
- * @param {string} text
- * @param {Function} onSuccess
- * @param {Function} onError
- */
 function execCommandFallback(text, onSuccess, onError) {
-  const textarea = document.createElement('textarea');
-  textarea.value = text;
-  textarea.setAttribute('readonly', '');
-  textarea.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none';
-
-  document.body.appendChild(textarea);
-  textarea.select();
-  textarea.setSelectionRange(0, textarea.value.length); // iOS
-
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none';
+  document.body.appendChild(ta);
+  ta.select();
+  ta.setSelectionRange(0, ta.value.length);
   try {
-    const ok = document.execCommand('copy');
-    ok ? onSuccess() : onError(new Error('execCommand returned false'));
-  } catch (err) {
+    document.execCommand('copy') ? onSuccess() : onError(new Error('execCommand returned false'));
+  } catch(err) {
     onError(err);
   } finally {
-    document.body.removeChild(textarea); // immer aufräumen
+    document.body.removeChild(ta);
   }
 }
 
 
 // ── Single Command Card ───────────────────────────────────
 
-/**
- * Klont das Template und befüllt es mit Command-Daten.
- * QuerySelectors einmal pro Card – alle Referenzen gecacht.
- * Nur textContent – kein innerHTML.
- * @param {HTMLTemplateElement} template
- * @param {Object} cmd
- * @returns {DocumentFragment}
- */
 function createCommandCard(template, cmd) {
   const clone = template.content.cloneNode(true);
-
-  // Alle Referenzen einmal holen
   const nameEl       = clone.querySelector('[data-field="name"]');
   const descEl       = clone.querySelector('[data-field="desc"]');
   const cmdEl        = clone.querySelector('[data-field="cmd"]');
@@ -93,26 +89,21 @@ function createCommandCard(template, cmd) {
   const starBtn      = clone.querySelector('[data-action="star"]');
   const card         = clone.querySelector('.command-card');
 
-  // data-cmd-id für refreshStarButtons()
   if (card) card.dataset.cmdId = cmd.id;
 
-  // Inhalte setzen – nur textContent
   nameEl.textContent = cmd.name;
   descEl.textContent = cmd.desc;
   cmdEl.textContent  = cmd.cmd;
 
-  // Tags
   (Array.isArray(cmd.tags) ? cmd.tags : []).forEach(tag => {
     const span = document.createElement('span');
-    span.className = 'tag';
+    span.className   = 'tag';
     span.textContent = tag;
     tagContainer.appendChild(span);
   });
 
-  // Copy Button
   copyBtn.addEventListener('click', () => copyWithVariables(cmd, copyBtn));
 
-  // Star Button – defensiv falls favorites.js nicht geladen
   if (starBtn && typeof isFavorite === 'function') {
     updateStarBtn(starBtn, isFavorite(cmd));
     starBtn.addEventListener('click', () => {
@@ -121,50 +112,154 @@ function createCommandCard(template, cmd) {
       if (typeof renderFavorites === 'function') renderFavorites(_allCommands);
     });
   }
-
   return clone;
 }
 
 
-// ── Render All Commands ───────────────────────────────────
+// ── Filter Bar ────────────────────────────────────────────
 
-/**
- * Rendert alle Commands in das Container-Element.
- * DocumentFragment: ein einziger DOM-Write am Ende.
- * @param {Array} commands
- * @param {string} containerId
- */
-// Globale Referenz – wird von createCommandCard für renderFavorites gebraucht
-let _allCommands = [];
+let _activeFilter = 'all';
 
-function renderCommands(commands, containerId = 'commands-container') {
+function renderFilterBar(commands) {
+  const bar = document.getElementById('filter-bar');
+  if (!bar) return;
+
+  // Collect categories that actually appear in the dataset
+  const usedTags = new Set(commands.map(getPrimaryTag).filter(Boolean));
+  bar.replaceChildren();
+
+  // "Alle" button
+  const allBtn = document.createElement('button');
+  allBtn.className   = 'filter-btn active';
+  allBtn.dataset.tag = 'all';
+  const allDot       = document.createElement('span');
+  allDot.className   = 'filter-dot';
+  allDot.style.background = '#7c8cf8';
+  allBtn.appendChild(allDot);
+  allBtn.appendChild(document.createTextNode('Alle'));
+  bar.appendChild(allBtn);
+
+  // One button per category (in CATEGORY_MAP order to be consistent)
+  Object.entries(CATEGORY_MAP).forEach(([tag, meta]) => {
+    if (!usedTags.has(tag)) return;
+    const btn = document.createElement('button');
+    btn.className   = 'filter-btn';
+    btn.dataset.tag = tag;
+    const dot       = document.createElement('span');
+    dot.className   = 'filter-dot';
+    dot.style.background = meta.dot;
+    btn.appendChild(dot);
+    btn.appendChild(document.createTextNode(meta.label));
+    bar.appendChild(btn);
+  });
+
+  // Click handler
+  bar.addEventListener('click', e => {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    _activeFilter = btn.dataset.tag;
+    bar.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+    applyFilter();
+  });
+}
+
+function applyFilter() {
+  const filtered = _activeFilter === 'all'
+    ? _allCommands
+    : _allCommands.filter(c => getPrimaryTag(c) === _activeFilter);
+  renderCommandGroups(filtered);
+  if (typeof runSearch === 'function') {
+    const input = document.getElementById('search-input');
+    if (input && input.value.trim()) runSearch(input.value);
+  }
+}
+
+
+// ── Grouped Render ────────────────────────────────────────
+
+function renderCommandGroups(commands, containerId = 'commands-container') {
   const container = document.getElementById(containerId);
-  if (!container) {
-    console.error(`renderCommands: Container #${containerId} nicht gefunden`);
-    return;
-  }
-
+  if (!container) return;
   const template = document.getElementById('command-template');
-  if (!template) {
-    console.error('renderCommands: #command-template nicht gefunden');
-    return;
-  }
-
-  _allCommands = commands; // für Star-Buttons und renderFavorites zugänglich
+  if (!template) return;
 
   const fragment = document.createDocumentFragment();
+
+  // Group by primary tag
+  const groups = {};
   commands.forEach(cmd => {
-    fragment.appendChild(createCommandCard(template, cmd));
+    const tag = getPrimaryTag(cmd) || 'other';
+    if (!groups[tag]) groups[tag] = [];
+    groups[tag].push(cmd);
+  });
+
+  Object.entries(groups).forEach(([tag, cmds]) => {
+    const meta = CATEGORY_MAP[tag] || { label: tag, dot: '#7c8cf8', icon: '📋' };
+
+    // Section wrapper
+    const section = document.createElement('div');
+    section.className       = 'cmd-section';
+    section.dataset.category = tag;
+
+    // Section header
+    const header = document.createElement('div');
+    header.className = 'section-header';
+
+    const iconEl = document.createElement('div');
+    iconEl.className   = 'section-icon';
+    iconEl.style.background = meta.dot + '20';
+    iconEl.style.borderColor = meta.dot + '50';
+    iconEl.textContent = meta.icon;
+
+    const labelEl = document.createElement('span');
+    labelEl.className   = 'section-label';
+    labelEl.textContent = meta.label;
+
+    const countEl = document.createElement('span');
+    countEl.className   = 'section-count';
+    countEl.textContent = cmds.length;
+
+    header.appendChild(iconEl);
+    header.appendChild(labelEl);
+    header.appendChild(countEl);
+    section.appendChild(header);
+
+    // Card grid
+    const grid = document.createElement('div');
+    grid.className = 'cmd-grid';
+    const gridFrag = document.createDocumentFragment();
+    cmds.forEach(cmd => gridFrag.appendChild(createCommandCard(template, cmd)));
+    grid.appendChild(gridFrag);
+    section.appendChild(grid);
+
+    fragment.appendChild(section);
   });
 
   container.replaceChildren(fragment);
-  console.log(`✅ ${commands.length} Commands gerendert`);
-
-  // Zähler in Hero + Header aktualisieren
   if (typeof updateCommandCount === 'function') updateCommandCount(commands.length);
+  if (typeof renderFavorites    === 'function') renderFavorites(_allCommands);
+}
 
-  // Favoriten-Section nach der Hauptliste rendern
-  if (typeof renderFavorites === 'function') renderFavorites(commands);
+
+// ── renderCommands (public API, used by search.js etc.) ──
+
+let _allCommands = [];
+
+function renderCommands(commands, containerId = 'commands-container') {
+  if (containerId !== 'commands-container') {
+    // Favorites/recent container – flat render without category headers
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const template = document.getElementById('command-template');
+    if (!template) return;
+    const frag = document.createDocumentFragment();
+    commands.forEach(cmd => frag.appendChild(createCommandCard(template, cmd)));
+    container.replaceChildren(frag);
+    return;
+  }
+
+  _allCommands = commands;
+  renderCommandGroups(commands);
 }
 
 
@@ -172,9 +267,12 @@ function renderCommands(commands, containerId = 'commands-container') {
 document.addEventListener('DOMContentLoaded', () => {
   loadCommands()
     .then(commands => {
-      renderCommands(commands);
-      if (typeof initSearch    === 'function') initSearch(commands);
-      if (typeof initSearchUI  === 'function') initSearchUI();
+      _allCommands = commands;
+      renderFilterBar(commands);
+      renderCommandGroups(commands);
+      if (typeof updateCommandCount === 'function') updateCommandCount(commands.length);
+      if (typeof initSearch   === 'function') initSearch(commands);
+      if (typeof initSearchUI === 'function') initSearchUI();
     })
     .catch(err => console.error('❌ Fehler:', err.message));
 });
