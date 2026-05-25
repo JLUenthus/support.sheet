@@ -94,6 +94,7 @@
       <h2 class="section-title">🕐 Zuletzt verwendet</h2>
       <div id="recent-container"></div>
     </section>
+    <div id="filter-bar"></div>
     <div id="commands-container"></div>
   </main>
 
@@ -153,7 +154,7 @@
           const filtered = product === 'all'
             ? _allCommands
             : _allCommands.filter(c => c.product === product);
-          renderCommands(filtered);
+          renderCommandGroups(filtered);
         });
       });
     });
