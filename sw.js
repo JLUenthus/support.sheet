@@ -1,7 +1,7 @@
 // ============================================================
 // AdminSheet – Service Worker v2
 // ============================================================
-const CACHE_VERSION = '20260525-0942';
+const CACHE_VERSION = '20260525-1002';
 const CACHE_NAME = `adminsheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -13,6 +13,8 @@ const ASSETS = [
   './eventlog.html',
   './data/eventlog-rules.json',
   './data/commands.json',
+  './data/forti-commands.json',
+  './data/exchange-commands.json',
   './nav.js',
   './sw.js',
   './manifest.json',
