@@ -20,42 +20,164 @@
       <div class="logo-text">support<span>.sheet</span></div>
     </a>
     <div class="header-right">
-      <div class="pill pill-count">Mitmachen</div>
+      <div class="pill pill-count" style="border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.08);color:#a78bfa;">🤝 Mitmachen</div>
     </div>
   </header>
 
   <!-- ── HERO ────────────────────────────────────────────── -->
   <div class="hero">
-    <div class="hero-badge">🤝 Mitmachen</div>
+    <div class="hero-badge" style="border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.08);color:#a78bfa;">🤝 Mitmachen</div>
     <h1>Befehle einreichen.<br>Gemeinsam wachsen.</h1>
-    <p>Eigene Befehle, Scripts und Ideen einreichen – per Outlook-Mail direkt an das Team. Kein GitHub-Account nötig.</p>
+    <p>Eigene Befehle, Skripte und Ideen einreichen – direkt per Mail. Kein GitHub-Account nötig, keine technischen Vorkenntnisse erforderlich.</p>
   </div>
 
-
   <main>
-    <div id="mitmachen-app">
-      <p style="text-align:center;color:var(--muted);padding:60px 0;font-size:.9rem;">
-        Inhalte folgen in Kürze.
-      </p>
-    </div>
+
+    <!-- ── BEFEHL EINREICHEN ─────────────────────────────── -->
+    <section class="contribute-section">
+      <h2 class="section-title">💡 Befehl oder Skript einreichen</h2>
+      <div class="contribute-card">
+        <p class="contribute-intro">Einen Befehl der fehlt, einen besseren Tipp, ein nützliches Skript? Einfach per Mail schicken – wird geprüft und eingebaut.</p>
+
+        <div class="contribute-fields">
+          <div class="cf-row">
+            <label class="cf-label">Befehl / Skript</label>
+            <input type="text" class="cf-input" id="c-cmd" placeholder="z.B. Get-ADUser -Filter * | Export-Csv ...">
+          </div>
+          <div class="cf-row">
+            <label class="cf-label">Kategorie</label>
+            <select class="cf-input" id="c-cat">
+              <option>Windows / System</option>
+              <option>Active Directory</option>
+              <option>Exchange / EXO</option>
+              <option>Fortinet</option>
+              <option>PowerShell Script</option>
+              <option>Netzwerk</option>
+              <option>Event Log</option>
+              <option>Sonstiges</option>
+            </select>
+          </div>
+          <div class="cf-row">
+            <label class="cf-label">Kurze Beschreibung</label>
+            <textarea class="cf-input cf-textarea" id="c-desc" placeholder="Was macht der Befehl? Wann ist er nützlich?"></textarea>
+          </div>
+        </div>
+
+        <button class="submit-btn" id="submit-btn">📧 Per Mail einreichen</button>
+        <p class="submit-hint">Öffnet deinen E-Mail-Client mit vorausgefüllter Nachricht.</p>
+      </div>
+    </section>
+
+    <!-- ── IDEEN & FEEDBACK ───────────────────────────────── -->
+    <section class="contribute-section">
+      <h2 class="section-title">💬 Ideen & Feedback</h2>
+      <div class="idea-grid">
+        <div class="idea-card">
+          <div class="idea-icon">🐛</div>
+          <div class="idea-title">Fehler melden</div>
+          <div class="idea-desc">Falscher Befehl, Tippfehler, kaputtes Feature – kurze Mail genügt.</div>
+          <a href="mailto:?subject=support.sheet%20Bug%3A%20" class="idea-btn idea-btn--red">Bug melden</a>
+        </div>
+        <div class="idea-card">
+          <div class="idea-icon">✨</div>
+          <div class="idea-title">Feature-Wunsch</div>
+          <div class="idea-desc">Neue Kategorie, andere Seite, nützliche Funktion – einfach beschreiben.</div>
+          <a href="mailto:?subject=support.sheet%20Feature%3A%20" class="idea-btn">Idee einreichen</a>
+        </div>
+        <div class="idea-card">
+          <div class="idea-icon">📖</div>
+          <div class="idea-title">Beschreibung verbessern</div>
+          <div class="idea-desc">Beschreibung unvollständig oder missverständlich? Bessere Version vorschlagen.</div>
+          <a href="mailto:?subject=support.sheet%20Verbesserung%3A%20" class="idea-btn">Verbesserung schicken</a>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- ── FOOTER ──────────────────────────────────────────── -->
   <footer>
-    <p class="footer-copy">support.sheet · <span>Mitmachen</span> · Klick kopiert den Befehl</p>
+    <div class="footer-links">
+      <a href="index.html"    class="footer-mitmachen">⚡ Windows</a>
+      <a href="exchange.html" class="footer-mitmachen footer-mitmachen--amber">📧 Exchange</a>
+      <a href="forti.html"    class="footer-mitmachen footer-mitmachen--orange">🔥 Fortinet</a>
+      <a href="scripts.html"  class="footer-mitmachen footer-mitmachen--green">💚 PS Scripts</a>
+      <a href="eventlog.html" class="footer-mitmachen footer-mitmachen--amber">📋 Log Analyzer</a>
+    </div>
+    <p class="footer-copy">support.sheet · <span>Gemeinsam besser werden</span></p>
   </footer>
 
-  <!-- PWA Service Worker -->
+  <style>
+    .contribute-section { margin-bottom: 40px; }
+
+    .contribute-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 24px;
+    }
+
+    .contribute-intro { color: var(--muted); font-size: .88rem; margin-bottom: 20px; }
+
+    .contribute-fields { display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; }
+    .cf-row   { display: flex; flex-direction: column; gap: 5px; }
+    .cf-label { font-size: .72rem; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
+    .cf-input {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 9px 12px; color: var(--text); font-family: var(--font-ui); font-size: .85rem;
+      outline: none; transition: border-color .15s; width: 100%;
+    }
+    .cf-input:focus { border-color: var(--accent); }
+    .cf-textarea    { min-height: 80px; resize: vertical; }
+
+    .submit-btn {
+      padding: 10px 24px; border-radius: 9px;
+      border: 1px solid rgba(167,139,250,.4); background: rgba(167,139,250,.1);
+      color: #a78bfa; font-family: var(--font-ui); font-size: .85rem; font-weight: 700;
+      cursor: pointer; transition: all .15s;
+    }
+    .submit-btn:hover { background: rgba(167,139,250,.2); }
+    .submit-hint { font-size: .72rem; color: var(--dim); margin-top: 8px; }
+
+    .idea-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+    .idea-card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 20px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .idea-icon  { font-size: 1.6rem; }
+    .idea-title { font-size: .88rem; font-weight: 700; color: var(--text); }
+    .idea-desc  { font-size: .78rem; color: var(--muted); flex: 1; }
+    .idea-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 7px 14px; border-radius: 7px; font-size: .78rem; font-weight: 600;
+      text-decoration: none; margin-top: auto;
+      border: 1px solid var(--border2); background: var(--panel2); color: var(--muted);
+      transition: all .15s;
+    }
+    .idea-btn:hover       { color: var(--text); border-color: var(--accent); }
+    .idea-btn--red        { border-color: rgba(248,113,113,.3); background: rgba(248,113,113,.06); color: var(--red); }
+    .idea-btn--red:hover  { background: rgba(248,113,113,.15); }
+  </style>
+
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch(() => {});
       });
     }
+
+    document.getElementById('submit-btn').addEventListener('click', () => {
+      const cmd  = document.getElementById('c-cmd').value.trim();
+      const cat  = document.getElementById('c-cat').value;
+      const desc = document.getElementById('c-desc').value.trim();
+      if (!cmd) { alert('Bitte einen Befehl eingeben.'); return; }
+      const body = encodeURIComponent(
+        `Kategorie: ${cat}\n\nBefehl:\n${cmd}\n\nBeschreibung:\n${desc || '(keine)'}`
+      );
+      window.location.href = `mailto:?subject=support.sheet%20Beitrag%3A%20${encodeURIComponent(cat)}&body=${body}`;
+    });
   </script>
 
-  <!-- nav.js – Tab-Bar, Logo-Dropdown, Ctrl+K, Scroll-to-Top, Updates -->
   <script src="nav.js"></script>
-
 </body>
 </html>
