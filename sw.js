@@ -1,7 +1,7 @@
 // ============================================================
 // AdminSheet – Service Worker v2
 // ============================================================
-const CACHE_VERSION = '20260524-1246';
+const CACHE_VERSION = '20260525-0942';
 const CACHE_NAME = `adminsheet-${CACHE_VERSION}`;
 
 const ASSETS = [
