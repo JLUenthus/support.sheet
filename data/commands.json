@@ -1,48 +1,1482 @@
 {
-  "version": "1.1",
-  "lastUpdated": "2026-05-24",
+  "version": "2.0",
+  "lastUpdated": "2026-05-25",
   "commands": [
     {
-      "id": "ad-user-add",
-      "name": "AD-Benutzer anlegen",
-      "cmd": "net user {username} {password} /add /domain",
-      "desc": "Neuen Benutzer im Active Directory anlegen. Username und Passwort werden beim Kopieren abgefragt.",
-      "tags": ["active-directory", "windows"]
+      "id": "msc-computerverwaltung",
+      "name": "Computerverwaltung",
+      "cmd": "%SystemRoot%\\system32\\compmgmt.msc /s",
+      "desc": "Alles in einer Konsole: Datenträger, Dienste, Ereignisanzeige, lokale Benutzer. Der Einstiegspunkt für fast alles.",
+      "tags": [
+        "msc",
+        "windows",
+        "admin",
+        "info"
+      ]
     },
     {
-      "id": "net-use-connect",
-      "name": "Netzlaufwerk verbinden",
-      "cmd": "net use Z: \\\\SERVER\\FREIGABE /persistent:yes",
-      "desc": "Netzlaufwerk dauerhaft als Laufwerksbuchstabe einbinden. /persistent:yes bleibt nach Neustart. Buchstabe frei wählbar.",
-      "tags": ["network", "windows"]
+      "id": "msc-datentr-gerverwaltung",
+      "name": "Datenträgerverwaltung",
+      "cmd": "%SystemRoot%\\system32\\diskmgmt.msc",
+      "desc": "Partitionen erstellen, löschen, formatieren und Laufwerksbuchstaben vergeben. Kein Neustart nötig für hot-plug Datenträger.",
+      "tags": [
+        "msc",
+        "windows",
+        "admin"
+      ]
     },
     {
-      "id": "ipconfig-all",
+      "id": "msc-defragmentierung",
+      "name": "Defragmentierung",
+      "cmd": "%SystemRoot%\\system32\\dfrg.msc",
+      "desc": "Optimiert HDD-Fragmentierung. Tipp: Bei SSDs stattdessen \"Optimieren\" nutzen – das löst TRIM aus, kein Defrag.",
+      "tags": [
+        "msc",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "msc-dienste",
+      "name": "Dienste",
+      "cmd": "%SystemRoot%\\system32\\services.msc /s",
+      "desc": "Alle Windows-Dienste starten, stoppen, deaktivieren oder auf Autostart setzen. Basis für Server-Administration.",
+      "tags": [
+        "msc",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "msc-ereignisanzeige",
+      "name": "Ereignisanzeige",
+      "cmd": "%SystemRoot%\\system32\\eventvwr.msc /s",
+      "desc": "System-, Anwendungs- und Sicherheitslogs. Erste Anlaufstelle bei Fehlern – System-Log nach kritischen Events filtern.",
+      "tags": [
+        "msc",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "msc-geraete-manager",
+      "name": "Geräte-Manager",
+      "cmd": "%SystemRoot%\\system32\\devmgmt.msc",
+      "desc": "Hardware, Treiber und Gerätekonflikte. Gelbe Ausrufezeichen = Problem. Rechtsklick → Treiber aktualisieren.",
+      "tags": [
+        "msc",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "msc-gruppenrichtlinien-editor",
+      "name": "Gruppenrichtlinien-Editor",
+      "cmd": "%SystemRoot%\\system32\\gpedit.msc",
+      "desc": "Nur auf Pro/Enterprise. Richtlinien für Computer und Benutzer konfigurieren. Nach Änderungen: gpupdate /force.",
+      "tags": [
+        "msc",
+        "windows",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "msc-komponentendienste",
+      "name": "Komponentendienste",
+      "cmd": "%SystemRoot%\\system32\\Com\\comexp.msc",
+      "desc": "COM/COM+-Anwendungen und DCOM-Konfiguration. Wird bei verteilten Anwendungen und IIS-Problemen benötigt.",
+      "tags": [
+        "msc",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "msc-leistungsueberwachung",
+      "name": "Leistungsüberwachung",
+      "cmd": "%SystemRoot%\\system32\\perfmon.msc /s",
+      "desc": "CPU, RAM, Disk I/O und Netzwerk in Echtzeit. Datenkollektoren für langfristiges Monitoring konfigurierbar.",
+      "tags": [
+        "msc",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "msc-lokale-sicherheitsrichtlinie",
+      "name": "Lokale Sicherheitsrichtlinie",
+      "cmd": "%SystemRoot%\\system32\\secpol.msc /s",
+      "desc": "Passwort-Richtlinien, Kontosperrung, Audit-Richtlinien und Benutzerrechte. Gilt nur für lokale Konten.",
+      "tags": [
+        "msc",
+        "windows",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "msc-lokale-benutzer-gruppen",
+      "name": "Lokale Benutzer & Gruppen",
+      "cmd": "%SystemRoot%\\system32\\lusrmgr.msc /s",
+      "desc": "Lokale Konten und Gruppen verwalten. Benutzer deaktivieren, Kennwort zurücksetzen, Gruppenmitig.schaften ändern.",
+      "tags": [
+        "msc",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "msc-zertifikate-benutzer",
+      "name": "Zertifikate (Benutzer)",
+      "cmd": "certmgr.msc",
+      "desc": "Persönlicher Zertifikat-Store des aktuellen Benutzers. SSL-Zertifikate, Code-Signing, E-Mail-Verschlüsselung.",
+      "tags": [
+        "msc",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "msc-zertifikate-computer",
+      "name": "Zertifikate (Computer)",
+      "cmd": "certlm.msc",
+      "desc": "Maschinenweiter Zertifikat-Store. Für Server-Zertifikate und maschinenweite VPN/WLAN-Konfiguration.",
+      "tags": [
+        "msc",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "msc-aufgabenplanung",
+      "name": "Aufgabenplanung",
+      "cmd": "taskschd.msc",
+      "desc": "Geplante Tasks erstellen und verwalten. Trigger: Zeit, Ereignis, Anmeldung. Mächtiger als der alte at-Befehl.",
+      "tags": [
+        "msc",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "msc-drucker-verwaltung",
+      "name": "Drucker-Verwaltung",
+      "cmd": "printmanagement.msc",
+      "desc": "Alle Drucker, Treiber und Ports zentral verwalten. Auch Remote-Drucker auf anderen Servern einsehbar.",
+      "tags": [
+        "msc",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "system-systeminfo-desktop",
+      "name": "Systeminfo → Desktop speichern",
+      "cmd": "systeminfo > \\\"%USERPROFILE%\\Desktop\\systeminfo.txt\\\"",
+      "desc": "Ausgabe in Textdatei umleiten. Ideal um Systeminfo an Kollegen oder Support zu schicken ohne Remote-Zugriff.",
+      "tags": [
+        "system",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "system-dxdiag-desktop",
+      "name": "DirectX-Diagnose → Desktop",
+      "cmd": "dxdiag /t \\\"%USERPROFILE%\\Desktop\\dxdiag.txt\\\"",
+      "desc": "Detaillierter Report zu Grafik, Sound und DirectX-Version. Hilfreich bei Multimedia- und Treiberproblemen.",
+      "tags": [
+        "system",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "system-systeminfo-dxdiag-kombiniert",
+      "name": "Systeminfo + DXDiag kombiniert",
+      "cmd": "systeminfo > \\\"%USERPROFILE%\\Desktop\\systeminfo.txt\\\" && dxdiag /t \\\"%USERPROFILE%\\Desktop\\dxdiag.txt\\\"",
+      "desc": "Beide Reports auf einmal erstellen. Perfekt für vollständige System-Dokumentation in einem Schritt.",
+      "tags": [
+        "system",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "system-systeminfo-gui",
+      "name": "Systeminfo GUI",
+      "cmd": "msinfo32",
+      "desc": "Grafische Alternative zu systeminfo. Zeigt Hardware-Ressourcen, IRQ-Konflikte, Software-Umgebung. Exportierbar als .nfo-Datei.",
+      "tags": [
+        "system",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "system-computername",
+      "name": "Computername",
+      "cmd": "wmic computersystem get name",
+      "desc": "Gibt nur den Computernamen aus – ideal für Skripte. Alternativ: hostname (noch kürzer).",
+      "tags": [
+        "system",
+        "windows",
+        "info",
+        "ps"
+      ]
+    },
+    {
+      "id": "system-azure-ad-domain-status",
+      "name": "Azure AD / Domain-Status",
+      "cmd": "dsregcmd /status",
+      "desc": "Zeigt ob Gerät Domain-joined, Azure AD joined oder Hybrid-joined ist. Join-Timestamp und Tenant-ID ebenfalls sichtbar.",
+      "tags": [
+        "system",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "system-windows-version-gui",
+      "name": "Windows-Version (GUI)",
+      "cmd": "winver",
+      "desc": "Zeigt Windows-Build und Version grafisch. Build-Nummer wichtig für Feature-Support und Update-Kompatibilität.",
+      "tags": [
+        "system",
+        "windows",
+        "info",
+        "quick"
+      ]
+    },
+    {
+      "id": "system-umgebungsvariablen-anzeigen",
+      "name": "Umgebungsvariablen anzeigen",
+      "cmd": "set",
+      "desc": "Alle Systemvariablen wie PATH, TEMP, USERNAME in der Konsole. Für Skript-Debugging oft entscheidend.",
+      "tags": [
+        "system",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "system-windows-aktivierungsstatus",
+      "name": "Windows-Aktivierungsstatus",
+      "cmd": "slmgr /dlv",
+      "desc": "Lizenzstatus, Lizenztyp und verbleibende Aktivierungsversuche. /xpr zeigt nur Ablaufdatum – schneller.",
+      "tags": [
+        "system",
+        "windows",
+        "admin",
+        "info"
+      ]
+    },
+    {
+      "id": "system-ressourcenmonitor",
+      "name": "Ressourcenmonitor",
+      "cmd": "resmon",
+      "desc": "Detailliertere Echtzeit-Ansicht als Task-Manager: CPU, RAM, Disk und Netzwerk pro Prozess. Perfekt für Performance-Analyse.",
+      "tags": [
+        "system",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "system-directx-diagnose-gui",
+      "name": "DirectX-Diagnose (GUI)",
+      "cmd": "dxdiag",
+      "desc": "Grafische DirectX-Diagnose. Tabs für System, Anzeige, Sound. Fehlerberichte unter \"Hinweise\" beachten.",
+      "tags": [
+        "system",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "network-ipconfig-all",
       "name": "IP-Konfiguration vollständig",
       "cmd": "ipconfig /all",
       "desc": "Alle Adapter mit IP, Maske, Gateway, DNS, DHCP-Lease, MAC-Adresse. Erste Anlaufstelle bei Netzwerkproblemen.",
-      "tags": ["network", "troubleshooting", "windows"]
+      "tags": [
+        "network",
+        "windows",
+        "info"
+      ]
     },
     {
-      "id": "ad-user-unlock",
-      "name": "AD-Konto entsperren",
-      "cmd": "Unlock-ADAccount -Identity 'benutzername'",
-      "desc": "Gesperrtes Konto entsperren. Vorher mit Get-ADUser prüfen ob LockedOut=True.",
-      "tags": ["active-directory", "powershell", "windows"]
-    },
-    {
-      "id": "get-eventlog-errors",
-      "name": "System-Fehler letzte 24h",
-      "cmd": "Get-WinEvent -FilterHashtable @{LogName='System'; Level=1,2; StartTime=(Get-Date).AddHours(-24)}",
-      "desc": "Kritische Fehler und Fehler aus dem System-Log. Level 1=Kritisch, 2=Fehler.",
-      "tags": ["troubleshooting", "powershell", "eventlog", "windows"]
-    },
-    {
-      "id": "dns-flush",
+      "id": "network-dns-cache-leeren",
       "name": "DNS-Cache leeren",
       "cmd": "ipconfig /flushdns",
-      "desc": "Lokalen DNS-Cache verwerfen. Nötig nach DNS-Änderungen oder bei falscher Seite.",
-      "tags": ["network", "troubleshooting", "windows", "quick"]
+      "desc": "Lokalen DNS-Cache verwerfen. Nötig nach DNS-Änderungen oder bei \"falsche Seite\" Problemen. Schnell und sicher.",
+      "tags": [
+        "network",
+        "windows",
+        "quick"
+      ]
+    },
+    {
+      "id": "network-ip-erneuern",
+      "name": "IP erneuern",
+      "cmd": "ipconfig /release && ipconfig /renew",
+      "desc": "DHCP-Lease freigeben und neu beziehen. Bei IP-Konflikten oder nach DHCP-Server-Wechsel.",
+      "tags": [
+        "network",
+        "windows",
+        "caution"
+      ]
+    },
+    {
+      "id": "network-offene-verbindungen",
+      "name": "Offene Verbindungen",
+      "cmd": "netstat -ano",
+      "desc": "Alle TCP/UDP-Verbindungen mit PID. PID im Task-Manager nachschlagen um den Prozess zu identifizieren. -b zeigt direkt den Prozessnamen (Admin nötig).",
+      "tags": [
+        "network",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "network-routing-tabelle",
+      "name": "Routing-Tabelle",
+      "cmd": "route print",
+      "desc": "Alle Routen des Systems. Prüfen ob Standard-Gateway stimmt und ob spezifische Routen gesetzt sind.",
+      "tags": [
+        "network",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "network-wlan-profile-anzeigen",
+      "name": "WLAN-Profile anzeigen",
+      "cmd": "netsh wlan show profiles",
+      "desc": "Alle gespeicherten WLAN-Netzwerke. Für jedes Profil kann separat das Passwort ausgelesen werden.",
+      "tags": [
+        "network",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "network-wlan-passwort-anzeigen",
+      "name": "WLAN-Passwort anzeigen",
+      "cmd": "netsh wlan show profile name=\\\"NETZWERKNAME\\\" key=clear",
+      "desc": "Zeigt das Klartext-Passwort unter \"Schlüsselinhalt\". NETZWERKNAME durch echten SSID ersetzen. Nur Admin.",
+      "tags": [
+        "network",
+        "windows",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "network-firewall-status-alle-profile",
+      "name": "Firewall-Status alle Profile",
+      "cmd": "netsh advfirewall show allprofiles",
+      "desc": "Status der Windows-Firewall für Domäne, Privat und Öffentlich. Schnell prüfen ob Firewall aktiv ist.",
+      "tags": [
+        "network",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "network-netzwerkverbindungen-gui",
+      "name": "Netzwerkverbindungen GUI",
+      "cmd": "ncpa.cpl",
+      "desc": "Netzwerkadapter grafisch verwalten. Adapter deaktivieren, IP manuell setzen, Adapter-Eigenschaften öffnen.",
+      "tags": [
+        "network",
+        "windows",
+        "quick"
+      ]
+    },
+    {
+      "id": "network-ping-dauerhaft",
+      "name": "Ping dauerhaft",
+      "cmd": "ping -t HOSTNAME",
+      "desc": "Fortlaufender Ping – Strg+C zum Stoppen, Strg+Pause für Statistik zwischendurch. Für Verbindungsüberwachung.",
+      "tags": [
+        "network",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "network-traceroute",
+      "name": "Traceroute",
+      "cmd": "tracert HOSTNAME",
+      "desc": "Route zum Ziel mit Latenz pro Hop. Hilft Flaschenhälse oder Ausfälle im Netzwerkpfad zu lokalisieren.",
+      "tags": [
+        "network",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "network-dns-abfrage",
+      "name": "DNS-Abfrage",
+      "cmd": "nslookup HOSTNAME",
+      "desc": "DNS-Auflösung testen. Im interaktiven Modus (nslookup ohne Argument) auch bestimmte Server abfragen: server 8.8.8.8",
+      "tags": [
+        "network",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "network-netsh-reset",
+      "name": "Netzwerkstatistik zurücksetzen",
+      "cmd": "netsh int ip reset && netsh winsock reset",
+      "desc": "TCP/IP-Stack und Winsock-Katalog zurücksetzen. Letztes Mittel bei hartnäckigen Netzwerkproblemen. Neustart nötig!",
+      "tags": [
+        "network",
+        "windows",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "ps-ps-als-admin-starten",
+      "name": "PS als Admin starten",
+      "cmd": "Start-Process powershell -Verb runAs",
+      "desc": "Öffnet neue erhöhte PowerShell-Instanz. UAC-Prompt erscheint. Aus bestehender PS-Session heraus nutzbar.",
+      "tags": [
+        "powershell",
+        "windows",
+        "ps",
+        "admin"
+      ]
+    },
+    {
+      "id": "ps-execution-policy-setzen",
+      "name": "Execution Policy setzen",
+      "cmd": "Set-ExecutionPolicy RemoteSigned -Scope CurrentUser",
+      "desc": "RemoteSigned: Lokale Skripte laufen, heruntergeladene müssen signiert sein. Scope CurrentUser = kein Admin nötig.",
+      "tags": [
+        "powershell",
+        "windows",
+        "ps",
+        "info"
+      ]
+    },
+    {
+      "id": "ps-execution-policy-anzeigen",
+      "name": "Execution Policy anzeigen",
+      "cmd": "Get-ExecutionPolicy -List",
+      "desc": "Alle Scopes: MachinePolicy, UserPolicy, Process, CurrentUser, LocalMachine. Höchste Priorität gewinnt.",
+      "tags": [
+        "powershell",
+        "windows",
+        "ps",
+        "info"
+      ]
+    },
+    {
+      "id": "ps-prozesse-nach-cpu-sortiert",
+      "name": "Prozesse nach CPU sortiert",
+      "cmd": "Get-Process | Sort-Object CPU -Descending | Select -First 20",
+      "desc": "Top 20 CPU-Fresser. Kombinierbar: | Out-GridView für grafische Darstellung, | Stop-Process für Beenden.",
+      "tags": [
+        "powershell",
+        "windows",
+        "ps",
+        "info"
+      ]
+    },
+    {
+      "id": "ps-dienst-neu-starten",
+      "name": "Dienst neu starten",
+      "cmd": "Restart-Service -Name \\\"Dienstname\\\"",
+      "desc": "Sicherer als sc stop/start da auf Stopp gewartet wird. -Force wenn abhängige Dienste vorhanden. -PassThru zeigt Status.",
+      "tags": [
+        "powershell",
+        "windows",
+        "ps",
+        "admin"
+      ]
+    },
+    {
+      "id": "ps-alle-dienste-anzeigen",
+      "name": "Alle Dienste anzeigen",
+      "cmd": "Get-Service | Where-Object {$_.Status -eq \\\"Running\\\"}",
+      "desc": "Nur laufende Dienste. Status \"Stopped\" für gestoppte. Pipe zu | Select Name,Status,StartType für kompakte Ansicht.",
+      "tags": [
+        "powershell",
+        "windows",
+        "ps",
+        "info"
+      ]
+    },
+    {
+      "id": "ps-installierte-updates",
+      "name": "Installierte Updates",
+      "cmd": "Get-HotFix | Sort-Object InstalledOn -Descending | Select -First 20",
+      "desc": "Letzte 20 installierte Updates mit Datum. KB-Nummer für Details auf Microsoft Update-Katalog suchen.",
+      "tags": [
+        "powershell",
+        "windows",
+        "ps",
+        "info"
+      ]
+    },
+    {
+      "id": "ps-installierte-software",
+      "name": "Installierte Software",
+      "cmd": "Get-ItemProperty HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* | Select DisplayName,DisplayVersion",
+      "desc": "Alle installierten Programme aus der Registry. Für 32-Bit-Programme auch ...Wow6432Node\\Uninstall\\* abfragen.",
+      "tags": [
+        "powershell",
+        "windows",
+        "ps",
+        "info"
+      ]
+    },
+    {
+      "id": "ps-laufwerke-anzeigen",
+      "name": "Laufwerke anzeigen",
+      "cmd": "Get-PSDrive -PSProvider FileSystem",
+      "desc": "Alle Laufwerke mit genutztem und freiem Speicher. Einfacher als WMI für Kapazitätsübersicht.",
+      "tags": [
+        "powershell",
+        "windows",
+        "ps",
+        "info"
+      ]
+    },
+    {
+      "id": "ps-festplatteninfo",
+      "name": "Festplatteninfo",
+      "cmd": "Get-PhysicalDisk",
+      "desc": "Physische Datenträger: Größe, Medientyp (SSD/HDD), Status. HealthStatus zeigt OK, Warning oder Unhealthy.",
+      "tags": [
+        "powershell",
+        "windows",
+        "ps",
+        "info"
+      ]
+    },
+    {
+      "id": "ps-ordnergroesse",
+      "name": "Ordnergröße berechnen",
+      "cmd": "Get-ChildItem \\\"C:\\Ordner\\\" -Recurse | Measure-Object -Property Length -Sum",
+      "desc": "Gesamtgröße eines Ordners inkl. Unterordner. .Sum ist in Bytes – durch 1GB teilen für lesbare Ausgabe.",
+      "tags": [
+        "powershell",
+        "windows",
+        "ps",
+        "info"
+      ]
+    },
+    {
+      "id": "ps-remote-invoke",
+      "name": "Remote-Befehl ausführen",
+      "cmd": "Invoke-Command -ComputerName HOSTNAME -ScriptBlock { Get-Process }",
+      "desc": "Befehl auf Remote-PC ausführen. WinRM muss aktiv sein. -Credential für andere Anmeldedaten. Mehrere PCs möglich.",
+      "tags": [
+        "powershell",
+        "windows",
+        "ps",
+        "admin",
+        "remote"
+      ]
+    },
+    {
+      "id": "ps-pssession-open",
+      "name": "PSSession öffnen",
+      "cmd": "Enter-PSSession -ComputerName HOSTNAME",
+      "desc": "Interaktive Remote-PowerShell-Sitzung. Prompt wechselt auf Remote-PC. Exit-PSSession zum Beenden.",
+      "tags": [
+        "powershell",
+        "windows",
+        "ps",
+        "admin",
+        "remote"
+      ]
+    },
+    {
+      "id": "users-benutzerdetails",
+      "name": "Benutzerdetails",
+      "cmd": "net user BENUTZERNAME",
+      "desc": "Detailinfo: Letzter Login, Passwort-Ablauf, Gruppen, Anmeldestunden. Domain-User: net user BENUTZERNAME /domain",
+      "tags": [
+        "users",
+        "windows",
+        "admin",
+        "info"
+      ]
+    },
+    {
+      "id": "users-lokale-gruppen-anzeigen",
+      "name": "Lokale Gruppen anzeigen",
+      "cmd": "net localgroup",
+      "desc": "Alle lokalen Gruppen. Die wichtigsten: Administratoren, Remotedesktopbenutzer, Benutzer.",
+      "tags": [
+        "users",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "users-gruppe-anzeigen",
+      "name": "Gruppe anzeigen",
+      "cmd": "net localgroup Administratoren",
+      "desc": "Mitglieder einer lokalen Gruppe. Für andere Gruppen Namen anpassen. Zeigt auch Domain-Konten als Mitglieder.",
+      "tags": [
+        "users",
+        "windows",
+        "admin",
+        "info"
+      ]
+    },
+    {
+      "id": "users-gruppe-hinzufuegen",
+      "name": "Benutzer zu Gruppe hinzufügen",
+      "cmd": "net localgroup Administratoren BENUTZERNAME /add",
+      "desc": "Benutzer zur lokalen Admin-Gruppe hinzufügen. Domain-User: DOMÄNE\\BENUTZERNAME. Wirksam nach Neuanmeldung.",
+      "tags": [
+        "users",
+        "windows",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "users-benutzer-aus-gruppe-entfernen",
+      "name": "Benutzer aus Gruppe entfernen",
+      "cmd": "net localgroup Administratoren BENUTZERNAME /delete",
+      "desc": "Benutzer aus lokaler Gruppe entfernen. Vorsicht: sich selbst aus Admins entfernen sperrt aus!",
+      "tags": [
+        "users",
+        "windows",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "users-aktueller-benutzer-rechte",
+      "name": "Aktueller Benutzer & Rechte",
+      "cmd": "whoami /all",
+      "desc": "Vollständige Info: Benutzername, SID, Gruppen und Berechtigungen. Zeigt ob elevated (erhöhte Rechte) aktiv.",
+      "tags": [
+        "users",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "users-benutzer-sessions-anzeigen",
+      "name": "Benutzer-Sessions anzeigen",
+      "cmd": "query user",
+      "desc": "Aktive und getrennte Sessions mit Session-ID, Status und Idle-Zeit. Basis für logoff-Befehl.",
+      "tags": [
+        "users",
+        "windows",
+        "admin",
+        "info"
+      ]
+    },
+    {
+      "id": "users-benutzer-abmelden",
+      "name": "Benutzer abmelden",
+      "cmd": "logoff SESSION-ID",
+      "desc": "Session per ID abmelden. Session-ID aus \"query user\" entnehmen. Ungespeicherte Daten gehen verloren!",
+      "tags": [
+        "users",
+        "windows",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "users-angemeldete-user-ps",
+      "name": "Angemeldete User (PS)",
+      "cmd": "Get-CimInstance -ClassName Win32_ComputerSystem | Select Username",
+      "desc": "Aktuell interaktiv angemeldeter Benutzer per WMI. Funktioniert auch remote mit -ComputerName.",
+      "tags": [
+        "users",
+        "windows",
+        "ps",
+        "info"
+      ]
+    },
+    {
+      "id": "disk-sfc-scannow",
+      "name": "Systemdateiprüfung",
+      "cmd": "sfc /scannow",
+      "desc": "Prüft alle geschützten Windows-Systemdateien und ersetzt fehlerhafte. Admin nötig. Dauer: 5-15 Minuten.",
+      "tags": [
+        "disk",
+        "windows",
+        "admin",
+        "repair"
+      ]
+    },
+    {
+      "id": "disk-dism-checkhealth",
+      "name": "DISM – Image prüfen",
+      "cmd": "DISM /Online /Cleanup-Image /CheckHealth",
+      "desc": "Schnelle Prüfung ob Beschädigungen im Windows-Image bekannt sind. Keine Reparatur, nur Statusabfrage.",
+      "tags": [
+        "disk",
+        "windows",
+        "admin",
+        "info"
+      ]
+    },
+    {
+      "id": "disk-dism-scanhealth",
+      "name": "DISM – Image scannen",
+      "cmd": "DISM /Online /Cleanup-Image /ScanHealth",
+      "desc": "Vollständiger Scan des Windows-Images auf Beschädigungen. Dauert länger als CheckHealth. Keine Reparatur.",
+      "tags": [
+        "disk",
+        "windows",
+        "admin",
+        "repair"
+      ]
+    },
+    {
+      "id": "disk-dism-restorehealth",
+      "name": "DISM – Image reparieren",
+      "cmd": "DISM /Online /Cleanup-Image /RestoreHealth",
+      "desc": "Lädt fehlende/beschädigte Dateien von Windows Update herunter und repariert das Image. Internetverbindung nötig.",
+      "tags": [
+        "disk",
+        "windows",
+        "admin",
+        "repair"
+      ]
+    },
+    {
+      "id": "disk-laufwerke-auflisten-ps",
+      "name": "Laufwerke auflisten (PS)",
+      "cmd": "Get-PSDrive -PSProvider FileSystem",
+      "desc": "Übersicht aller Laufwerke mit freiem und genutztem Speicher. Schneller als Datei-Explorer für Skripte.",
+      "tags": [
+        "disk",
+        "windows",
+        "ps",
+        "info"
+      ]
+    },
+    {
+      "id": "disk-festplatteninfo-ps",
+      "name": "Festplatteninfo (PS)",
+      "cmd": "Get-PhysicalDisk",
+      "desc": "Physische Platten: Typ (SSD/HDD/NVMe), Größe, Gesundheitsstatus. FriendlyName = Modellname.",
+      "tags": [
+        "disk",
+        "windows",
+        "ps",
+        "info"
+      ]
+    },
+    {
+      "id": "disk-winre-enable",
+      "name": "WinRE aktivieren",
+      "cmd": "reagentc /enable",
+      "desc": "Windows Recovery Environment aktivieren. Notwendig für \"Beim Start\" Reparaturoptionen. Status: reagentc /info",
+      "tags": [
+        "disk",
+        "windows",
+        "admin",
+        "repair"
+      ]
+    },
+    {
+      "id": "disk-systemwiederherstellung",
+      "name": "Systemwiederherstellung öffnen",
+      "cmd": "rstrui.exe",
+      "desc": "Windows zu einem früheren Wiederherstellungspunkt zurücksetzen. Nur verfügbar wenn Schutz aktiviert war.",
+      "tags": [
+        "disk",
+        "windows",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "proc-prozess-beenden-pid",
+      "name": "Prozess beenden (PID)",
+      "cmd": "taskkill /PID 1234 /F",
+      "desc": "PID aus tasklist oder Task-Manager entnehmen. Präziser als Name, da mehrere Instanzen haben gleichen Namen.",
+      "tags": [
+        "process",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "proc-alle-prozesse-auflisten",
+      "name": "Alle Prozesse auflisten",
+      "cmd": "tasklist",
+      "desc": "Name, PID, Sitzung, Speicherverbrauch. /FI \"STATUS eq RUNNING\" filtert. /FO CSV für Weiterverarbeitung.",
+      "tags": [
+        "process",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "proc-prozess-mit-netzwerk-pid",
+      "name": "Prozess mit Netzwerk-PID",
+      "cmd": "tasklist /FI \\\"PID eq 1234\\\"",
+      "desc": "Prozessname zu einer PID aus netstat ermitteln. Kombiniere mit netstat -ano um Verbindungen zuzuordnen.",
+      "tags": [
+        "process",
+        "windows",
+        "info",
+        "network"
+      ]
+    },
+    {
+      "id": "proc-dienst-starten",
+      "name": "Dienst starten",
+      "cmd": "sc start Dienstname",
+      "desc": "Dienst starten. \"sc start\" wartet nicht auf vollständigen Start. Für Skripte besser: net start oder PowerShell.",
+      "tags": [
+        "process",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "proc-dienst-stoppen",
+      "name": "Dienst stoppen",
+      "cmd": "sc stop Dienstname",
+      "desc": "Dienst anhalten. Abhängige Dienste werden nicht automatisch gestoppt – erst prüfen mit sc qc Dienstname.",
+      "tags": [
+        "process",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "proc-dienst-autostart-konfigurieren",
+      "name": "Dienst-Autostart konfigurieren",
+      "cmd": "sc config Dienstname start= auto",
+      "desc": "Starttyp: auto, demand (manuell), disabled. Leerzeichen nach = ist Pflicht! delayed-auto für verzögerten Start.",
+      "tags": [
+        "process",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "proc-dienst-abfragen",
+      "name": "Dienst abfragen",
+      "cmd": "sc query Dienstname",
+      "desc": "Aktueller Status eines Dienstes: RUNNING, STOPPED, PAUSED. sc qc für Konfiguration (Pfad, Starttyp, Abhängigkeiten).",
+      "tags": [
+        "process",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "proc-alle-gestoppten-dienste",
+      "name": "Alle gestoppten Dienste",
+      "cmd": "sc query type= all state= inactive",
+      "desc": "Nur gestoppte Dienste auflisten. Nützlich um deaktivierte oder abgestürzte Dienste schnell zu finden.",
+      "tags": [
+        "process",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "remote-rdp-zu-host-verbinden",
+      "name": "RDP zu Host verbinden",
+      "cmd": "mstsc /v:HOSTNAME",
+      "desc": "Direkt zu Host verbinden. /v:HOST:PORT für nicht-Standard-Port. /f für Vollbild. /w:1920 /h:1080 für Auflösung.",
+      "tags": [
+        "remote",
+        "windows"
+      ]
+    },
+    {
+      "id": "remote-quick-assist-win-11",
+      "name": "Quick Assist (Win 11)",
+      "cmd": "quickassist",
+      "desc": "Microsoft Quick Assist für Remoteunterstützung. Kein VPN nötig, nur Internet. Sicher über Microsoft-Infrastruktur.",
+      "tags": [
+        "remote",
+        "windows",
+        "quick"
+      ]
+    },
+    {
+      "id": "remote-remoteunterstuetzung",
+      "name": "Remoteunterstützung (Win 10)",
+      "cmd": "msra",
+      "desc": "Klassische Windows-Remoteunterstützung. Einladungsdatei erstellen oder E-Mail senden. Ohne Admin-Rechte nutzbar.",
+      "tags": [
+        "remote",
+        "windows"
+      ]
+    },
+    {
+      "id": "remote-rdp-aktivieren-ps",
+      "name": "RDP aktivieren (PS)",
+      "cmd": "Set-ItemProperty -Path \\\"HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server\\\" -Name \\\"fDenyTSConnections\\\" -Value 0",
+      "desc": "Fernzugriff per Registry aktivieren. Danach Firewall-Regel: netsh advfirewall firewall set rule \"Remote Desktop\" new enable=yes",
+      "tags": [
+        "remote",
+        "windows",
+        "ps",
+        "admin"
+      ]
+    },
+    {
+      "id": "remote-winrm-aktivieren",
+      "name": "WinRM aktivieren",
+      "cmd": "Enable-PSRemoting -Force",
+      "desc": "PowerShell-Remoting aktivieren. Nötig für Invoke-Command und Enter-PSSession. Erstellt WinRM-Listener auf Port 5985.",
+      "tags": [
+        "remote",
+        "windows",
+        "ps",
+        "admin"
+      ]
+    },
+    {
+      "id": "remote-systemeigenschaften-remote-tab",
+      "name": "Systemeigenschaften (Remote-Tab)",
+      "cmd": "sysdm.cpl",
+      "desc": "Systemeigenschaften öffnen. Remote-Tab: RDP-Einstellungen, Remoteunterstützung aktivieren/deaktivieren.",
+      "tags": [
+        "remote",
+        "windows",
+        "quick"
+      ]
+    },
+    {
+      "id": "remote-ping-mit-timestamp-ps",
+      "name": "Ping mit Timestamp (PS)",
+      "cmd": "ping -t HOSTNAME | Foreach{\\\"$(Get-Date -f HH:mm:ss): $_\\\"}",
+      "desc": "Ping mit Uhrzeit je Zeile – ideal für Verbindungsüberwachung und Protokollierung von Ausfallzeiten.",
+      "tags": [
+        "remote",
+        "windows",
+        "ps",
+        "network",
+        "info"
+      ]
+    },
+    {
+      "id": "gpo-gpo-status-anzeigen",
+      "name": "GPO-Status anzeigen",
+      "cmd": "gpresult /r",
+      "desc": "Welche GPOs wirklich angewendet wurden. /scope computer oder /scope user für gezielten Scope.",
+      "tags": [
+        "gpo",
+        "windows",
+        "admin",
+        "info"
+      ]
+    },
+    {
+      "id": "gpo-gpo-report-als-html",
+      "name": "GPO-Report als HTML",
+      "cmd": "gpresult /h \\\"%USERPROFILE%\\Desktop\\gpo.html\\\"",
+      "desc": "Vollständiger GPO-Report als HTML-Datei. Zeigt alle angewendeten Richtlinien mit Quelle und Wert. Für Audits ideal.",
+      "tags": [
+        "gpo",
+        "windows",
+        "admin",
+        "info"
+      ]
+    },
+    {
+      "id": "gpo-gpo-remote-report",
+      "name": "GPO Remote-Report",
+      "cmd": "gpresult /h \\\"%USERPROFILE%\\Desktop\\gpo.html\\\" /s HOSTNAME /u DOMAIN\\USER",
+      "desc": "GPO-Report für Remote-Rechner erstellen. Nützlich wenn kein direkter Zugriff auf den PC möglich ist.",
+      "tags": [
+        "gpo",
+        "windows",
+        "admin",
+        "remote"
+      ]
+    },
+    {
+      "id": "gpo-richtlinien-editor-lokal",
+      "name": "Richtlinien-Editor (lokal)",
+      "cmd": "%SystemRoot%\\system32\\gpedit.msc",
+      "desc": "Nur Pro/Enterprise. Lokale Richtlinien für Computer und Benutzer. Änderungen gelten nach gpupdate /force.",
+      "tags": [
+        "gpo",
+        "windows",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "gpo-lokale-sicherheitsrichtlinie",
+      "name": "Lokale Sicherheitsrichtlinie",
+      "cmd": "secpol.msc",
+      "desc": "Subset des Gruppenrichtlinien-Editors – nur sicherheitsrelevante Einstellungen. Auch auf Home-Versionen nicht verfügbar.",
+      "tags": [
+        "gpo",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "quick-autostart-alle-benutzer",
+      "name": "Autostart (alle Benutzer)",
+      "cmd": "shell:common startup",
+      "desc": "Gemeinsamer Autostart für alle Benutzer. Admin nötig. Programme hier für systemweiten Autostart.",
+      "tags": [
+        "quick",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "quick-umgebungsvariablen-gui",
+      "name": "Umgebungsvariablen GUI",
+      "cmd": "SystemPropertiesAdvanced",
+      "desc": "Öffnet erweiterte Systemeigenschaften mit Button \"Umgebungsvariablen\". PATH und andere Variablen ändern.",
+      "tags": [
+        "quick",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "quick-hosts-datei-bearbeiten",
+      "name": "Hosts-Datei bearbeiten",
+      "cmd": "notepad %SystemRoot%\\System32\\drivers\\etc\\hosts",
+      "desc": "Hosts-Datei in Notepad öffnen. Admin nötig zum Speichern. Einträge: IP HOSTNAME – überschreibt DNS lokal.",
+      "tags": [
+        "quick",
+        "windows",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "quick-programme-entfernen",
+      "name": "Programme hinzufügen/entfernen",
+      "cmd": "appwiz.cpl",
+      "desc": "Klassische Deinstallations-Übersicht. Zeigt alle installierten Programme. Schneller als Einstellungen-App.",
+      "tags": [
+        "quick",
+        "windows"
+      ]
+    },
+    {
+      "id": "quick-energieoptionen",
+      "name": "Energieoptionen",
+      "cmd": "powercfg.cpl",
+      "desc": "Energiesparpläne verwalten. powercfg /energy für Energie-Diagnose, powercfg /batteryreport für Akkubericht.",
+      "tags": [
+        "quick",
+        "windows"
+      ]
+    },
+    {
+      "id": "quick-datum-uhrzeit",
+      "name": "Datum & Uhrzeit",
+      "cmd": "timedate.cpl",
+      "desc": "Zeit und Zeitzone einstellen. Bei Domain-Clients wird Zeit automatisch synchronisiert (W32TM).",
+      "tags": [
+        "quick",
+        "windows"
+      ]
+    },
+    {
+      "id": "quick-soundeinstellungen",
+      "name": "Soundeinstellungen",
+      "cmd": "mmsys.cpl",
+      "desc": "Audio-Geräte, Lautstärke, Aufnahme und Soundeffekte konfigurieren. Schneller als über Taskbar-Icon.",
+      "tags": [
+        "quick",
+        "windows"
+      ]
+    },
+    {
+      "id": "quick-registrierungseditor",
+      "name": "Registrierungseditor",
+      "cmd": "regedit",
+      "desc": "Registry bearbeiten. Immer Backup erstellen! Datei → Exportieren vor Änderungen. HKLM = Maschine, HKCU = User.",
+      "tags": [
+        "quick",
+        "windows",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "quick-task-manager",
+      "name": "Task-Manager",
+      "cmd": "taskmgr",
+      "desc": "Prozesse, Performance, Autostart, Benutzer und Dienste überwachen. Strg+Shift+Esc als Tastenkürzel.",
+      "tags": [
+        "quick",
+        "windows"
+      ]
+    },
+    {
+      "id": "quick-bildschirmaufloesung",
+      "name": "Bildschirmauflösung",
+      "cmd": "desk.cpl",
+      "desc": "Anzeigeeinstellungen öffnen. Auflösung, Refresh-Rate, Mehrmonitor-Setup und Skalierung konfigurieren.",
+      "tags": [
+        "quick",
+        "windows"
+      ]
+    },
+    {
+      "id": "quick-netzwerkverbindungen",
+      "name": "Netzwerkverbindungen",
+      "cmd": "ncpa.cpl",
+      "desc": "Alle Netzwerkadapter: aktivieren/deaktivieren, IP setzen, Adapter diagnostizieren. Schneller als Einstellungen.",
+      "tags": [
+        "quick",
+        "windows",
+        "network"
+      ]
+    },
+    {
+      "id": "quick-systemsteuerung",
+      "name": "Systemsteuerung",
+      "cmd": "control",
+      "desc": "Klassische Systemsteuerung öffnen. Viele Optionen fehlen in den modernen Einstellungen noch. Zeitloses Tool.",
+      "tags": [
+        "quick",
+        "windows"
+      ]
+    },
+    {
+      "id": "quick-windows-features",
+      "name": "Windows-Features",
+      "cmd": "optionalfeatures",
+      "desc": "Windows-Features aktivieren/deaktivieren: IIS, Hyper-V, .NET Framework, Telnet-Client, TFTP-Client etc.",
+      "tags": [
+        "quick",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "eventlog-system-fehler-24h",
+      "name": "System-Fehler letzte 24h",
+      "cmd": "Get-WinEvent -FilterHashtable @{LogName='System'; Level=1,2; StartTime=(Get-Date).AddHours(-24)} | Select TimeCreated, Id, ProviderName, Message | Format-List",
+      "desc": "Kritische Fehler und Fehler aus dem System-Log der letzten 24 Stunden. Level 1=Kritisch, 2=Fehler.",
+      "tags": [
+        "eventlog",
+        "powershell",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "eventlog-application-fehler-24h",
+      "name": "Application-Fehler letzte 24h",
+      "cmd": "Get-WinEvent -FilterHashtable @{LogName='Application'; Level=1,2; StartTime=(Get-Date).AddHours(-24)} | Select TimeCreated, Id, ProviderName, Message | Format-List",
+      "desc": "Anwendungsfehler der letzten 24h. Gut für Diagnose nach Abstürzen oder wenn Programme nicht starten.",
+      "tags": [
+        "eventlog",
+        "powershell",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "eventlog-absturz-events",
+      "name": "Absturz-Events",
+      "cmd": "Get-WinEvent -FilterHashtable @{LogName='Application','System'; Id=1001,1000,1002,6008,41} -MaxEvents 50 | Select TimeCreated, Id, ProviderName, Message | Sort-Object TimeCreated -Descending",
+      "desc": "Klassische Absturz-EventIDs: 1000=App-Crash, 1001=WER, 6008=unerwarteter Shutdown, 41=Kernel-Power.",
+      "tags": [
+        "eventlog",
+        "powershell",
+        "windows",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "eventlog-csv-export",
+      "name": "Event Log → CSV exportieren",
+      "cmd": "Get-WinEvent -FilterHashtable @{LogName='System','Application'; Level=1,2,3; StartTime=(Get-Date).AddDays(-7)} | Select TimeCreated,Id,LevelDisplayName,ProviderName,Message | Export-Csv 'C:\\Temp\\eventlog.csv' -NoTypeInformation -Encoding UTF8 -Delimiter ';'",
+      "desc": "Fehler und Warnungen der letzten 7 Tage als CSV. Semikolon als Trennzeichen für Excel.",
+      "tags": [
+        "eventlog",
+        "powershell",
+        "windows",
+        "info",
+        "quick"
+      ]
+    },
+    {
+      "id": "eventlog-neustart-ereignisse",
+      "name": "Neustart-Ereignisse",
+      "cmd": "Get-WinEvent -FilterHashtable @{LogName='System'; Id=6005,6006,6008,1074,41} | Select TimeCreated, Id, Message | Sort-Object TimeCreated -Descending | Select -First 20",
+      "desc": "6005=Start, 6006=Stop, 6008=unerwarteter Shutdown, 1074=Neustart eingeleitet, 41=Kernel-Power.",
+      "tags": [
+        "eventlog",
+        "powershell",
+        "windows",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "eventlog-log-groesse",
+      "name": "Event Log Größe erhöhen",
+      "cmd": "wevtutil sl System /ms:524288000\nwevtutil sl Application /ms:524288000",
+      "desc": "System- und Application-Log auf 500 MB vergrößern (Standard: 20 MB). Wichtig auf Servern.",
+      "tags": [
+        "eventlog",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "eventlog-alle-logs",
+      "name": "Alle Event Logs auflisten",
+      "cmd": "Get-WinEvent -ListLog * | Where-Object {$_.RecordCount -gt 0} | Select LogName, RecordCount, MaximumSizeInBytes | Sort-Object RecordCount -Descending | Select -First 30",
+      "desc": "Alle Logs mit Einträgen sortiert nach Anzahl. Zeigt auch app-spezifische Logs.",
+      "tags": [
+        "eventlog",
+        "powershell",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "eventlog-memory-fehler",
+      "name": "Memory-Fehler anzeigen",
+      "cmd": "Get-WinEvent -FilterHashtable @{LogName='System'; Id=2004,2013,2019,2020} -ErrorAction SilentlyContinue | Select TimeCreated, Id, Message",
+      "desc": "RAM-Probleme: 2004=RAM-Mangel, 2019/2020=Pool erschöpft. Hilfreich bei Performance-Problemen.",
+      "tags": [
+        "eventlog",
+        "powershell",
+        "windows",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "ad-benutzer-anzeigen",
+      "name": "Benutzer anzeigen",
+      "cmd": "Get-ADUser -Identity 'benutzername' | Select Name, UserPrincipalName, Enabled, LockedOut, PasswordExpired, LastLogonDate",
+      "desc": "Vollständige Benutzerinfo: Status, UPN, gesperrt, Passwort abgelaufen, letzter Login.",
+      "tags": [
+        "active-directory",
+        "powershell",
+        "windows",
+        "admin",
+        "info"
+      ]
+    },
+    {
+      "id": "ad-benutzer-suchen",
+      "name": "Benutzer suchen",
+      "cmd": "Get-ADUser -Filter {DisplayName -like '*Mustermann*'} | Select Name, SamAccountName, Enabled, UserPrincipalName",
+      "desc": "Benutzer nach Name suchen. Wildcard * möglich.",
+      "tags": [
+        "active-directory",
+        "powershell",
+        "windows",
+        "admin",
+        "info"
+      ]
+    },
+    {
+      "id": "ad-passwort-reset",
+      "name": "Passwort zurücksetzen",
+      "cmd": "Set-ADAccountPassword -Identity 'benutzername' -Reset -NewPassword (ConvertTo-SecureString 'NeuesPasswort!123' -AsPlainText -Force)\nSet-ADUser -Identity 'benutzername' -ChangePasswordAtLogon $true",
+      "desc": "Passwort zurücksetzen, Benutzer muss es beim nächsten Login ändern.",
+      "tags": [
+        "active-directory",
+        "powershell",
+        "windows",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "ad-konto-entsperren",
+      "name": "Konto entsperren",
+      "cmd": "Unlock-ADAccount -Identity 'benutzername'",
+      "desc": "Gesperrtes Konto entsperren. Vorher prüfen: Get-ADUser ob LockedOut=True.",
+      "tags": [
+        "active-directory",
+        "powershell",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "ad-konto-aktivieren-deaktivieren",
+      "name": "Konto aktivieren / deaktivieren",
+      "cmd": "Enable-ADAccount -Identity 'benutzername'\nDisable-ADAccount -Identity 'benutzername'",
+      "desc": "Konto aktivieren oder deaktivieren. AD Connect synchronisiert deaktivierte Konten nicht zu M365!",
+      "tags": [
+        "active-directory",
+        "powershell",
+        "windows",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "ad-gruppen-eines-benutzers",
+      "name": "Gruppen eines Benutzers",
+      "cmd": "Get-ADPrincipalGroupMembership -Identity 'benutzername' | Select Name, GroupCategory | Sort-Object Name",
+      "desc": "Alle Gruppen eines Benutzers. Wichtig bei Berechtigungsproblemen.",
+      "tags": [
+        "active-directory",
+        "powershell",
+        "windows",
+        "admin",
+        "info"
+      ]
+    },
+    {
+      "id": "ad-alle-gesperrten-konten",
+      "name": "Alle gesperrten Konten",
+      "cmd": "Search-ADAccount -LockedOut | Select Name, SamAccountName, LockedOut | Sort Name",
+      "desc": "Alle aktuell gesperrten Konten. Gut beim Montagmorgen-Support oder nach Brute-Force.",
+      "tags": [
+        "active-directory",
+        "powershell",
+        "windows",
+        "admin",
+        "info"
+      ]
+    },
+    {
+      "id": "ad-abgelaufene-passwoerter",
+      "name": "Abgelaufene Passwörter",
+      "cmd": "Search-ADAccount -PasswordExpired | Select Name, SamAccountName | Sort Name",
+      "desc": "Alle Konten mit abgelaufenem Passwort. Erklärt viele Login-Probleme.",
+      "tags": [
+        "active-directory",
+        "powershell",
+        "windows",
+        "admin",
+        "info"
+      ]
+    },
+    {
+      "id": "ad-sync-anstoessen",
+      "name": "AD-Sync anstoßen",
+      "cmd": "Start-ADSyncSyncCycle",
+      "desc": "Entra ID Connect Sync manuell starten. Auf dem AAD-Connect-Server ausführen. Delta: -PolicyType Delta",
+      "tags": [
+        "active-directory",
+        "powershell",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "ad-dienste-domaenenkonten",
+      "name": "Dienste mit Domänenkonten",
+      "cmd": "Get-CimInstance Win32_Service | Where-Object {$_.StartName -match '\\\\' -and $_.StartName -notmatch 'NT AUTHORITY|NT SERVICE'} | Select Name, State, StartName | Sort-Object State",
+      "desc": "Dienste die mit Domänenkonten laufen. Bei Passwortänderungen müssen diese aktualisiert werden!",
+      "tags": [
+        "active-directory",
+        "powershell",
+        "windows",
+        "admin",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "printer-spooler-reset",
+      "name": "Druckspooler zurücksetzen",
+      "cmd": "net stop spooler\ndel /Q /F /S \"%SystemRoot%\\system32\\spool\\PRINTERS\\*.*\"\nnet start spooler",
+      "desc": "Klassischer Fix bei Druckproblemen. Löscht hängende Jobs und startet den Spooler neu.",
+      "tags": [
+        "printer",
+        "windows",
+        "admin",
+        "quick"
+      ]
+    },
+    {
+      "id": "printer-auflisten",
+      "name": "Drucker auflisten",
+      "cmd": "Get-Printer | Select Name, DriverName, PortName, PrinterStatus, Shared | Sort-Object Name",
+      "desc": "Alle installierten Drucker mit Treiber, Port und Status. PrinterStatus 0=OK, 3=Fehler.",
+      "tags": [
+        "printer",
+        "powershell",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "printer-warteschlange",
+      "name": "Druckerwarteschlange anzeigen",
+      "cmd": "Get-PrintJob -PrinterName 'DRUCKERNAME' | Select Id, JobStatus, UserName, Document, TotalPages",
+      "desc": "Aktive Druckjobs eines Druckers. DRUCKERNAME anpassen.",
+      "tags": [
+        "printer",
+        "powershell",
+        "windows",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "printer-jobs-loeschen",
+      "name": "Druckjobs löschen",
+      "cmd": "Get-PrintJob -PrinterName 'DRUCKERNAME' | Remove-PrintJob",
+      "desc": "Alle hängenden Druckjobs eines Druckers löschen.",
+      "tags": [
+        "printer",
+        "powershell",
+        "windows",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "printer-per-ip",
+      "name": "Drucker per IP hinzufügen",
+      "cmd": "Add-PrinterPort -Name 'IP_10.0.0.1' -PrinterHostAddress '10.0.0.1'\nAdd-Printer -Name 'Drucker Name' -DriverName 'HP Universal Printing PCL 6' -PortName 'IP_10.0.0.1'",
+      "desc": "Drucker per TCP/IP-Port hinzufügen. Treiber muss bereits installiert sein.",
+      "tags": [
+        "printer",
+        "powershell",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "printer-treiber-anzeigen",
+      "name": "Druckertreiber anzeigen",
+      "cmd": "Get-PrinterDriver | Select Name, Manufacturer, DriverVersion | Sort-Object Name",
+      "desc": "Alle installierten Druckertreiber. Gut vor der Installation neuer Treiber.",
+      "tags": [
+        "printer",
+        "powershell",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "printer-tcp-ip-ports",
+      "name": "TCP/IP Druckerports anzeigen",
+      "cmd": "Get-PrinterPort | Where-Object {$_.Description -like '*TCP*'} | Select Name, PrinterHostAddress, PortNumber | Sort-Object PrinterHostAddress",
+      "desc": "Alle TCP/IP-Druckerports mit IP-Adressen. Gut um Drucker einer IP zuzuordnen.",
+      "tags": [
+        "printer",
+        "powershell",
+        "windows",
+        "info"
+      ]
     }
   ]
 }
