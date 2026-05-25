@@ -193,8 +193,6 @@ header {
   color: var(--accent);
 }
 
-
-
 /* ── Hero ────────────────────────────────────────────────── */
 .hero {
   position: relative;
@@ -441,3 +439,35 @@ footer span { color: var(--muted); }
   main   { padding: 0 14px 60px; }
   .hero h1 { font-size: 1.6rem; }
 }
+
+/* ── Produkt-Filter (exchange.html, forti.html) ──────────── */
+.product-filter-wrap {
+  position: sticky;
+  top: 58px;
+  z-index: 98;
+  background: rgba(15,17,23,.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 24px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.product-btn {
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: var(--panel);
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.product-btn:hover        { color: var(--text); border-color: var(--accent); }
+.product-btn.active       { background: var(--accent-bg); border-color: rgba(124,140,248,.5); color: var(--accent); }
