@@ -1,0 +1,1099 @@
+[
+  {
+    "id": "fg-basics-in-vdom-wechseln",
+    "name": "In VDOM wechseln",
+    "cmd": "config vdom\\\n  edit VDOM-NAME\\\n  next\\\nend",
+    "desc": "In eine bestimmte VDOM wechseln. \\\"root\\\" ist die Standard-VDOM. Alle nachfolgenden Befehle gelten dann im Kontext dieser VDOM.",
+    "tags": [
+      "fortigate",
+      "basics",
+      "cli",
+      "fg"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-basics-aktuelle-vdom-anzeigen",
+    "name": "Aktuelle VDOM anzeigen",
+    "cmd": "get system vdom-list",
+    "desc": "Alle konfigurierten VDOMs mit ID und Status. Zeigt ob VDOM-Modus aktiv ist.",
+    "tags": [
+      "fortigate",
+      "basics",
+      "cli",
+      "fg",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-basics-system-status-anzeigen",
+    "name": "System-Status anzeigen",
+    "cmd": "get system status",
+    "desc": "FortiOS-Version, Seriennummer, Build, Uptime, HA-Status und Lizenzinfo in einer Ausgabe. Erste Anlaufstelle.",
+    "tags": [
+      "fortigate",
+      "basics",
+      "cli",
+      "fg",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-basics-laufende-konfiguration-anzei",
+    "name": "Laufende Konfiguration anzeigen",
+    "cmd": "show full-configuration",
+    "desc": "Komplette Konfiguration ausgeben inkl. Standardwerte. Ohne \\\"full\\\" nur Änderungen vom Default. Für Audits.",
+    "tags": [
+      "fortigate",
+      "basics",
+      "cli",
+      "fg",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-basics-konfiguration-speichern",
+    "name": "Konfiguration speichern",
+    "cmd": "execute backup config ftp DATEINAME FTP-IP",
+    "desc": "Config per FTP sichern. Alternativ: execute backup config tftp DATEINAME TFTP-IP oder über GUI (System → Backup).",
+    "tags": [
+      "fortigate",
+      "basics",
+      "cli",
+      "fg",
+      "caution"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-basics-konfiguration-auf-festplatte",
+    "name": "Konfiguration auf Festplatte",
+    "cmd": "execute backup config flash DATEINAME",
+    "desc": "Backup auf internem Flash-Speicher des FortiGate ablegen. execute restore config flash DATEINAME zum Einspielen.",
+    "tags": [
+      "fortigate",
+      "basics",
+      "cli",
+      "fg"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-basics-fortigate-neu-starten",
+    "name": "FortiGate neu starten",
+    "cmd": "execute reboot",
+    "desc": "Gerät nach Bestätigung neu starten. Änderungen vorher mit execute backup config sichern! HA-Failover beachten.",
+    "tags": [
+      "fortigate",
+      "basics",
+      "cli",
+      "fg",
+      "caution"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-network-firmware-version",
+    "name": "Firmware-Version",
+    "cmd": "get system status | grep Version",
+    "desc": "Nur die Firmware-Version filtern. Vollständig: get system status zeigt Build-Nummer und Patch-Level.",
+    "tags": [
+      "fortigate",
+      "network",
+      "cli",
+      "fg",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-network-interface-details",
+    "name": "Interface-Details",
+    "cmd": "diagnose hardware deviceinfo nic PORT1",
+    "desc": "Hardware-Details eines Interfaces: Treiber, Duplex, Autoneg, RX/TX-Counters, Fehler. PORT1 durch Interface-Name ersetzen.",
+    "tags": [
+      "fortigate",
+      "network",
+      "cli",
+      "fg",
+      "diag"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-network-routing-tabelle",
+    "name": "Routing-Tabelle",
+    "cmd": "get router info routing-table all",
+    "desc": "Komplette Routing-Tabelle mit Protokoll, Next-Hop, Interface und Metrik. \\\"details\\\" anhängen für mehr Info.",
+    "tags": [
+      "fortigate",
+      "network",
+      "cli",
+      "fg",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-network-arp-tabelle",
+    "name": "ARP-Tabelle",
+    "cmd": "get system arp",
+    "desc": "ARP-Cache mit IP, MAC, Interface und Alter. Hilfreich bei Verbindungsproblemen im lokalen Segment.",
+    "tags": [
+      "fortigate",
+      "network",
+      "cli",
+      "fg",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-network-aktive-sessions-anzeigen",
+    "name": "Aktive Sessions anzeigen",
+    "cmd": "diagnose sys session list",
+    "desc": "Alle aktiven Firewall-Sessions. Kombinieren mit: | grep \\\"proto=6\\\" für TCP, | grep SRCIP für bestimmte IP.",
+    "tags": [
+      "fortigate",
+      "network",
+      "cli",
+      "fg",
+      "diag"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-network-session-statistik",
+    "name": "Session-Statistik",
+    "cmd": "diagnose sys session stat",
+    "desc": "Session-Tabellen-Auslastung: aktuell, Maximum, Setup-Rate. Wichtig für Kapazitätsplanung.",
+    "tags": [
+      "fortigate",
+      "network",
+      "cli",
+      "fg",
+      "diag",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-network-dns-abfrage-testen",
+    "name": "DNS-Abfrage testen",
+    "cmd": "execute ping-options source INTERFACE-IP\\\nexecute ping HOSTNAME",
+    "desc": "Ping mit bestimmter Quell-IP. Vorher source setzen um richtiges Interface zu verwenden. Auch FQDN möglich.",
+    "tags": [
+      "fortigate",
+      "network",
+      "cli",
+      "fg",
+      "diag"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-network-traceroute",
+    "name": "Traceroute",
+    "cmd": "execute traceroute ZIEL-IP",
+    "desc": "Routenverfolgung zum Ziel. Zeigt Hops und Latenzen. execute traceroute-options view-settings für Optionen.",
+    "tags": [
+      "fortigate",
+      "network",
+      "cli",
+      "fg",
+      "diag"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-network-interface-traffic-counter",
+    "name": "Interface Traffic-Counter",
+    "cmd": "diagnose netlink interface list PORT1",
+    "desc": "RX/TX-Bytes, Pakete, Fehler und Drops pro Interface. Hilfreich zur Fehlersuche bei Paketverlust.",
+    "tags": [
+      "fortigate",
+      "network",
+      "cli",
+      "fg",
+      "diag"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-policy-sd-wan-status",
+    "name": "SD-WAN Status",
+    "cmd": "diagnose sys virtual-wan-link health-check",
+    "desc": "SD-WAN Performance-Checks: Latenz, Jitter, Paketverlust und Status je ISP-Link. Basis für SLA-Monitoring.",
+    "tags": [
+      "fortigate",
+      "policy",
+      "cli",
+      "fg",
+      "info",
+      "diag"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-policy-policy-details-anzeigen",
+    "name": "Policy-Details anzeigen",
+    "cmd": "show firewall policy POLICY-ID",
+    "desc": "Detailkonfiguration einer bestimmten Policy-ID. Alle gesetzten Parameter inkl. Profile und Log-Einstellungen.",
+    "tags": [
+      "fortigate",
+      "policy",
+      "cli",
+      "fg"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-policy-policy-hit-counter",
+    "name": "Policy-Hit-Counter",
+    "cmd": "diagnose firewall iprope show 00100004 0",
+    "desc": "Hit-Counter aller Policies anzeigen. 00100004 = Policy-Table-ID für IPv4. Nützlich für unused-Policy-Suche.",
+    "tags": [
+      "fortigate",
+      "policy",
+      "cli",
+      "fg",
+      "diag"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-policy-policy-lookup-traffic-test",
+    "name": "Policy-Lookup (Traffic-Test)",
+    "cmd": "diagnose firewall iprope lookup SRCIP DSTIP PROTO SPORT DPORT",
+    "desc": "Welche Policy greift für einen bestimmten Traffic? Gibt Policy-ID und Action zurück. Ideal zum Debuggen.",
+    "tags": [
+      "fortigate",
+      "policy",
+      "cli",
+      "fg",
+      "diag"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-policy-policy-counter-zur-u00fcckse",
+    "name": "Policy-Counter zurücksetzen",
+    "cmd": "diagnose firewall iprope flush 00100004",
+    "desc": "Alle Policy-Byte/Paket-Counter zurücksetzen. Nützlich um seit einem Zeitpunkt Traffic zu messen.",
+    "tags": [
+      "fortigate",
+      "policy",
+      "cli",
+      "fg",
+      "caution"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-policy-address-objekte-anzeigen",
+    "name": "Address-Objekte anzeigen",
+    "cmd": "show firewall address",
+    "desc": "Alle Adressobjekte: Name, Typ (Subnet, FQDN, Range) und Wert. Für Gruppen: show firewall addrgrp",
+    "tags": [
+      "fortigate",
+      "policy",
+      "cli",
+      "fg",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-vpn-services-anzeigen",
+    "name": "Services anzeigen",
+    "cmd": "show firewall service custom",
+    "desc": "Benutzerdefinierte Service-Objekte. Vordefinierte: show firewall service predefined | grep \\\"set name\\\"",
+    "tags": [
+      "fortigate",
+      "vpn",
+      "cli",
+      "fg",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-vpn-ipsec-tunnel-u2013-details",
+    "name": "IPSec Tunnel – Details",
+    "cmd": "diagnose vpn tunnel list name TUNNEL-NAME",
+    "desc": "Detaillierter Status eines Tunnels: SA, Algorithmen, SPI, Traffic-Zähler und Lifetime.",
+    "tags": [
+      "fortigate",
+      "vpn",
+      "cli",
+      "fg",
+      "diag"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-vpn-ike-informationen",
+    "name": "IKE Informationen",
+    "cmd": "diagnose vpn ike gateway list",
+    "desc": "IKE Phase-1 Gateways: Status, Algorithmen, DH-Gruppe, lokale/remote IP und SA-Informationen.",
+    "tags": [
+      "fortigate",
+      "vpn",
+      "cli",
+      "fg",
+      "diag"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-vpn-ipsec-debug-aktivieren",
+    "name": "IPSec Debug aktivieren",
+    "cmd": "diagnose debug application ike -1\\\ndiagnose debug enable",
+    "desc": "IKE-Debug für Tunnel-Troubleshooting. Erzeugt viele Logs – nach Analyse mit: diagnose debug disable deaktivieren!",
+    "tags": [
+      "fortigate",
+      "vpn",
+      "cli",
+      "fg",
+      "diag",
+      "caution"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-vpn-tunnel-neu-aufbauen",
+    "name": "Tunnel neu aufbauen",
+    "cmd": "diagnose vpn tunnel reset name TUNNEL-NAME",
+    "desc": "IPSec-Tunnel zurücksetzen und neu aufbauen. Alle SAs werden gelöscht. Kurze Verbindungsunterbrechung.",
+    "tags": [
+      "fortigate",
+      "vpn",
+      "cli",
+      "fg",
+      "caution"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-vpn-ssl-vpn-sessions",
+    "name": "SSL-VPN Sessions",
+    "cmd": "get vpn ssl monitor",
+    "desc": "Aktive SSL-VPN Verbindungen: Benutzer, IP, Verbindungszeit, Tunnel-Typ und zugewiesene IP.",
+    "tags": [
+      "fortigate",
+      "vpn",
+      "cli",
+      "fg",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-vpn-ssl-vpn-benutzer-trennen",
+    "name": "SSL-VPN Benutzer trennen",
+    "cmd": "diagnose vpn ssl del-tunnel vd root name BENUTZERNAME",
+    "desc": "Einzelnen SSL-VPN Benutzer trennen. Hilfreich wenn Sitzung hängt oder Benutzer gesperrt werden soll.",
+    "tags": [
+      "fortigate",
+      "vpn",
+      "cli",
+      "fg",
+      "caution"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-diag-bgp-nachbarn-anzeigen",
+    "name": "BGP-Nachbarn anzeigen",
+    "cmd": "get router info bgp summary",
+    "desc": "BGP-Peering-Status, empfangene/gesendete Prefixe und Uptime. Für SDWAN und Provider-Anbindungen.",
+    "tags": [
+      "fortigate",
+      "diag",
+      "cli",
+      "fg",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-diag-debug-deaktivieren",
+    "name": "Debug deaktivieren",
+    "cmd": "diagnose debug disable\\\ndiagnose debug reset",
+    "desc": "Alle Debug-Ausgaben stoppen und Filter zurücksetzen. Immer ausführen nach Diagnose – Debug kostet Performance!",
+    "tags": [
+      "fortigate",
+      "diag",
+      "cli",
+      "fg"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-diag-cpu-auslastung",
+    "name": "CPU-Auslastung",
+    "cmd": "get system performance status",
+    "desc": "CPU, RAM, Sessions, Uptime und Network-Utilization in Echtzeit. Wichtig für Performance-Analyse.",
+    "tags": [
+      "fortigate",
+      "diag",
+      "cli",
+      "fg",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-diag-top-prozesse",
+    "name": "Top-Prozesse",
+    "cmd": "diagnose sys top 3 20",
+    "desc": "Top-Prozesse nach CPU-Nutzung. Erstes Argument = Intervall in Sekunden, zweites = Anzahl Prozesse.",
+    "tags": [
+      "fortigate",
+      "diag",
+      "cli",
+      "fg"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-diag-hardware-nic-status",
+    "name": "Hardware-NIC Status",
+    "cmd": "diagnose hardware deviceinfo nic PORT1",
+    "desc": "Detaillierter NIC-Status: Link, Speed, Duplex, RX/TX-Fehler. Port-Name anpassen (z.B. wan1, internal).",
+    "tags": [
+      "fortigate",
+      "diag",
+      "cli",
+      "fg"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-diag-sniffer-paketmitschnitt",
+    "name": "Sniffer / Paketmitschnitt",
+    "cmd": "diagnose sniffer packet PORT1 \\\"host 1.2.3.4\\\" 4 0 l",
+    "desc": "Eingebauter Paket-Sniffer. Filter in tcpdump-Syntax. Level 4 = mit Ethernet-Header. 0 = unbegrenzt. l = verbose.",
+    "tags": [
+      "fortigate",
+      "diag",
+      "cli",
+      "fg"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-diag-fortiguard-verbindung-testen",
+    "name": "FortiGuard Verbindung testen",
+    "cmd": "execute ping update.fortiguard.net",
+    "desc": "Erreichbarkeit von FortiGuard prüfen. Für Lizenz-/Update-Probleme. Alternativ: diagnose debug application update -1",
+    "tags": [
+      "fortigate",
+      "diag",
+      "cli",
+      "fg"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-diag-ntp-status",
+    "name": "NTP-Status",
+    "cmd": "diagnose sys ntp status",
+    "desc": "NTP-Synchronisationsstatus, konfigurierte Server, Offset und Stratumebene. Falsche Zeit = VPN/Zertifikatsprobleme.",
+    "tags": [
+      "fortigate",
+      "diag",
+      "cli",
+      "fg",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-diag-ha-status-anzeigen",
+    "name": "HA-Status anzeigen",
+    "cmd": "get system ha status",
+    "desc": "HA-Cluster-Status: Master/Slave, Sync-Status, Failover-Zähler, Uptime und Synchronisationsinformationen.",
+    "tags": [
+      "fortigate",
+      "diag",
+      "cli",
+      "fg",
+      "ha",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-diag-ha-sync-status",
+    "name": "HA Sync-Status",
+    "cmd": "diagnose sys ha showcsum",
+    "desc": "Prüft ob Konfigurationen zwischen HA-Mitgliedern synchron sind. Unterschiedliche Checksummen = Sync-Problem.",
+    "tags": [
+      "fortigate",
+      "diag",
+      "cli",
+      "fg",
+      "ha"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-log-ha-failover-erzwingen",
+    "name": "HA Failover erzwingen",
+    "cmd": "diagnose sys ha reset-uptime",
+    "desc": "Erzwingt HA-Failover indem Uptime zurückgesetzt wird. Der andere Node wird Master. Nur in Wartungsfenstern!",
+    "tags": [
+      "fortigate",
+      "log",
+      "cli",
+      "fg",
+      "ha",
+      "caution"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-log-log-filter-setzen",
+    "name": "Log-Filter setzen",
+    "cmd": "execute log filter start-line 1\\\nexecute log filter view-lines 50\\\nexecute log filter device 0",
+    "desc": "Filteroptionen für Logs: Startzeile, Anzahl Zeilen und Gerät (0=disk, 1=flash). Immer vor execute log display.",
+    "tags": [
+      "fortigate",
+      "log",
+      "cli",
+      "fg"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-log-event-logs",
+    "name": "Event-Logs",
+    "cmd": "execute log filter category 1\\\nexecute log display",
+    "desc": "System-Events: Admin-Logins, Config-Änderungen, HA-Events, VPN-Events. Kategorie 1 = Event-Log.",
+    "tags": [
+      "fortigate",
+      "log",
+      "cli",
+      "fg",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-log-log-disk-status",
+    "name": "Log-Disk-Status",
+    "cmd": "diagnose log test\\\ndiagnose log device",
+    "desc": "Log-Gerät und Status anzeigen. diagnose log test schreibt Test-Log-Einträge zum Prüfen ob Logging funktioniert.",
+    "tags": [
+      "fortigate",
+      "log",
+      "cli",
+      "fg",
+      "diag"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-log-syslog-konfiguration",
+    "name": "Syslog-Konfiguration",
+    "cmd": "show log syslogd setting",
+    "desc": "Konfigurierte Syslog-Server anzeigen. Für FortiAnalyzer: show log fortianalyzer setting",
+    "tags": [
+      "fortigate",
+      "log",
+      "cli",
+      "fg",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-user-fortianalyzer-verbindung",
+    "name": "FortiAnalyzer Verbindung",
+    "cmd": "diagnose test application oftpd 2",
+    "desc": "Verbindungsstatus zum FortiAnalyzer prüfen. Zeigt ob FAZ erreichbar und Logs werden gesendet.",
+    "tags": [
+      "fortigate",
+      "user",
+      "cli",
+      "fg",
+      "log",
+      "faz",
+      "diag"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-user-angemeldete-admins",
+    "name": "Angemeldete Admins",
+    "cmd": "get system session | grep admin",
+    "desc": "Aktive Admin-Sessions anzeigen. Für vollständige Info: diagnose sys session filter proto 443",
+    "tags": [
+      "fortigate",
+      "user",
+      "cli",
+      "fg",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-user-ldap-verbindung-testen",
+    "name": "LDAP-Verbindung testen",
+    "cmd": "diagnose test authserver ldap LDAP-SERVER BENUTZERNAME PASSWORT",
+    "desc": "LDAP-Authentication testen ohne GUI. Gibt Gruppen zurück wenn erfolgreich. Passwort wird im Klartext gesendet – nur in sicherer Umgebung!",
+    "tags": [
+      "fortigate",
+      "user",
+      "cli",
+      "fg",
+      "diag",
+      "caution"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-user-radius-verbindung-testen",
+    "name": "RADIUS-Verbindung testen",
+    "cmd": "diagnose test authserver radius RADIUS-SERVER pap BENUTZERNAME PASSWORT",
+    "desc": "RADIUS-Auth testen. Protokoll: pap, chap, mschapv2. Zeigt Accept/Reject und Attribute zurück.",
+    "tags": [
+      "fortigate",
+      "user",
+      "cli",
+      "fg",
+      "diag",
+      "caution"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fg-user-lokale-benutzer-anzeigen",
+    "name": "Lokale Benutzer anzeigen",
+    "cmd": "show user local",
+    "desc": "Lokale Benutzerkonten: Name, Typ, Status und 2FA-Einstellungen. Für Gruppen: show user group",
+    "tags": [
+      "fortigate",
+      "user",
+      "cli",
+      "fg",
+      "info"
+    ],
+    "product": "fg"
+  },
+  {
+    "id": "fmg-basics-firewall-authentifizierung",
+    "name": "Firewall-Authentifizierung",
+    "cmd": "diagnose firewall auth list",
+    "desc": "Aktiv authentifizierte Benutzer an der Firewall: IP, Benutzer, Gruppe, Timeout. Für Captive Portal und aktive Auth.",
+    "tags": [
+      "fortimanager",
+      "basics",
+      "cli",
+      "fg",
+      "info",
+      "diag"
+    ],
+    "product": "fmg"
+  },
+  {
+    "id": "fmg-basics-verwaltete-ger-u00e4te-anzei",
+    "name": "Verwaltete Geräte anzeigen",
+    "cmd": "diagnose dvm device list",
+    "desc": "Alle verwalteten FortiGates: Name, IP, Status (managed/unmanaged), OS-Version und letzte Verbindung.",
+    "tags": [
+      "fortimanager",
+      "basics",
+      "cli",
+      "fmg",
+      "info"
+    ],
+    "product": "fmg"
+  },
+  {
+    "id": "fmg-basics-adom-liste",
+    "name": "ADOM-Liste",
+    "cmd": "diagnose dvm adom list",
+    "desc": "Alle konfigurierten ADOMs (Administrative Domains): Name, ID, FortiOS-Version und Geräteanzahl.",
+    "tags": [
+      "fortimanager",
+      "basics",
+      "cli",
+      "fmg",
+      "info"
+    ],
+    "product": "fmg"
+  },
+  {
+    "id": "fmg-basics-verbindung-zu-fgt-pr-u00fcfe",
+    "name": "Verbindung zu FGT prüfen",
+    "cmd": "diagnose dvm device detail GERÄTENAME",
+    "desc": "Detaillierter Verbindungsstatus eines verwalteten FortiGate: IP, Version, HA-Status, Tunnel-Status.",
+    "tags": [
+      "fortimanager",
+      "basics",
+      "cli",
+      "fmg",
+      "diag",
+      "info"
+    ],
+    "product": "fmg"
+  },
+  {
+    "id": "fmg-basics-fgfm-tunnel-status",
+    "name": "FGFM Tunnel Status",
+    "cmd": "diagnose fgfm session-list",
+    "desc": "Aktive FGFM-Management-Tunnel zu allen verwalteten Geräten. Zeigt ob Verbindung aktiv und in Sync ist.",
+    "tags": [
+      "fortimanager",
+      "basics",
+      "cli",
+      "fmg",
+      "diag",
+      "info"
+    ],
+    "product": "fmg"
+  },
+  {
+    "id": "fmg-basics-fmg-neu-starten",
+    "name": "FMG neu starten",
+    "cmd": "execute reboot",
+    "desc": "FortiManager nach Bestätigung neu starten. Verbindungen zu allen FGTs werden kurz unterbrochen. Wartungsfenster einplanen!",
+    "tags": [
+      "fortimanager",
+      "basics",
+      "cli",
+      "fmg",
+      "caution"
+    ],
+    "product": "fmg"
+  },
+  {
+    "id": "fmg-policy-datenbank-backup",
+    "name": "Datenbank-Backup",
+    "cmd": "execute backup all-settings ftp DATEINAME FTP-IP",
+    "desc": "Vollbackup aller FMG-Einstellungen inkl. ADOM-Daten per FTP. Regelmäßig ausführen vor großen Änderungen.",
+    "tags": [
+      "fortimanager",
+      "policy",
+      "cli",
+      "fmg",
+      "caution"
+    ],
+    "product": "fmg"
+  },
+  {
+    "id": "fmg-policy-installationsqueue-anzeigen",
+    "name": "Installationsqueue anzeigen",
+    "cmd": "diagnose dvm task list",
+    "desc": "Aktive und abgeschlossene Tasks: Install, Import, Script-Execution. Status und Fehlermeldungen einsehbar.",
+    "tags": [
+      "fortimanager",
+      "policy",
+      "cli",
+      "fmg",
+      "info"
+    ],
+    "product": "fmg"
+  },
+  {
+    "id": "fmg-policy-config-diff-anzeigen",
+    "name": "Config-Diff anzeigen",
+    "cmd": "diagnose dvm device diff GERÄTENAME",
+    "desc": "Unterschiede zwischen FMG-Konfiguration und aktueller Gerätekonfiguration anzeigen. Vor Installation prüfen.",
+    "tags": [
+      "fortimanager",
+      "policy",
+      "cli",
+      "fmg",
+      "diag"
+    ],
+    "product": "fmg"
+  },
+  {
+    "id": "fmg-policy-auto-link-ger-u00e4t",
+    "name": "Auto-Link Gerät",
+    "cmd": "diagnose dvm device auto-link",
+    "desc": "Nicht zugewiesene Geräte automatisch einem ADOM zuordnen. Hilfreich bei Massenregistrierung neuer FortiGates.",
+    "tags": [
+      "fortimanager",
+      "policy",
+      "cli",
+      "fmg"
+    ],
+    "product": "fmg"
+  },
+  {
+    "id": "fmg-policy-script-auf-fgt-ausf-u00fchre",
+    "name": "Script auf FGT ausführen",
+    "cmd": "diagnose dvm script run SKRIPT-NAME GERÄTENAME",
+    "desc": "CLI-Skript aus FMG-Bibliothek auf einem verwalteten FortiGate ausführen. Log-Output in Task-Monitor sichtbar.",
+    "tags": [
+      "fortimanager",
+      "policy",
+      "cli",
+      "fmg",
+      "caution"
+    ],
+    "product": "fmg"
+  },
+  {
+    "id": "fmg-diag-objekte-importieren",
+    "name": "Objekte importieren",
+    "cmd": "diagnose dvm import-device GERÄTENAME",
+    "desc": "Aktuelle Konfiguration eines FortiGate in FMG importieren. Überschreibt bestehende FMG-Objekte für dieses Gerät!",
+    "tags": [
+      "fortimanager",
+      "diag",
+      "cli",
+      "fmg",
+      "caution"
+    ],
+    "product": "fmg"
+  },
+  {
+    "id": "fmg-diag-logs-anzeigen",
+    "name": "Logs anzeigen",
+    "cmd": "diagnose debug application dnsproxy -1\\\nexecute log display",
+    "desc": "Interne FMG-Logs anzeigen. Kategorie und Filter mit execute log filter setzen wie bei FortiGate.",
+    "tags": [
+      "fortimanager",
+      "diag",
+      "cli",
+      "fmg",
+      "log"
+    ],
+    "product": "fmg"
+  },
+  {
+    "id": "fmg-diag-datenbank-integrit-u00e4t",
+    "name": "Datenbank-Integrität",
+    "cmd": "diagnose dvm check-integrity all",
+    "desc": "Alle ADOMs auf Datenbank-Inkonsistenzen prüfen. Kann bei Problemen nach Upgrades oder Crashes helfen.",
+    "tags": [
+      "fortimanager",
+      "diag",
+      "cli",
+      "fmg"
+    ],
+    "product": "fmg"
+  },
+  {
+    "id": "fmg-diag-hintergrundprozesse",
+    "name": "Hintergrundprozesse",
+    "cmd": "diagnose sys top 3 20",
+    "desc": "Prozesse nach CPU-Verbrauch. Gleiche Syntax wie FortiGate. fgfmd = Management-Daemon, sqldb = Datenbank.",
+    "tags": [
+      "fortimanager",
+      "diag",
+      "cli",
+      "fmg",
+      "info"
+    ],
+    "product": "fmg"
+  },
+  {
+    "id": "faz-basics-workspace-modus-status",
+    "name": "Workspace-Modus Status",
+    "cmd": "diagnose dvm adom workspace list",
+    "desc": "Zeigt welche ADOMs im Workspace-/Lock-Modus sind und wer gerade welchen ADOM gesperrt hat.",
+    "tags": [
+      "fortianalyzer",
+      "basics",
+      "cli",
+      "fmg",
+      "info"
+    ],
+    "product": "faz"
+  },
+  {
+    "id": "faz-basics-registrierte-ger-u00e4te",
+    "name": "Registrierte Geräte",
+    "cmd": "diagnose dvm device list",
+    "desc": "Alle beim FAZ registrierten Log-Sender: Name, IP, Status und letzte Log-Aktivität.",
+    "tags": [
+      "fortianalyzer",
+      "basics",
+      "cli",
+      "faz",
+      "info"
+    ],
+    "product": "faz"
+  },
+  {
+    "id": "faz-basics-log-empfang-status",
+    "name": "Log-Empfang Status",
+    "cmd": "diagnose test application logd 4",
+    "desc": "Log-Daemon-Status: Empfangsrate, Queue-Größe und ob Logs verarbeitet werden. Wichtig bei fehlenden Logs.",
+    "tags": [
+      "fortianalyzer",
+      "basics",
+      "cli",
+      "faz",
+      "diag",
+      "log"
+    ],
+    "product": "faz"
+  },
+  {
+    "id": "faz-basics-disk-auslastung",
+    "name": "Disk-Auslastung",
+    "cmd": "diagnose system df",
+    "desc": "Festplattenauslastung: Log-Partition, System-Partition. Volle Log-Partition = keine neuen Logs gespeichert!",
+    "tags": [
+      "fortianalyzer",
+      "basics",
+      "cli",
+      "faz",
+      "info",
+      "diag"
+    ],
+    "product": "faz"
+  },
+  {
+    "id": "faz-basics-log-queue-anzeigen",
+    "name": "Log-Queue anzeigen",
+    "cmd": "diagnose log device",
+    "desc": "Log-Geräte und deren Status. Zeigt ob Puffer läuft oder Logs verworfen werden.",
+    "tags": [
+      "fortianalyzer",
+      "basics",
+      "cli",
+      "faz",
+      "log",
+      "diag"
+    ],
+    "product": "faz"
+  },
+  {
+    "id": "faz-basics-adom-quota-anzeigen",
+    "name": "ADOM-Quota anzeigen",
+    "cmd": "diagnose dvm adom list",
+    "desc": "ADOMs mit zugewiesenem Speicher, genutztem Speicher und Retention-Policy. Für Speicherplanung.",
+    "tags": [
+      "fortianalyzer",
+      "basics",
+      "cli",
+      "faz",
+      "info"
+    ],
+    "product": "faz"
+  },
+  {
+    "id": "faz-diag-faz-neu-starten",
+    "name": "FAZ neu starten",
+    "cmd": "execute reboot",
+    "desc": "FortiAnalyzer neu starten. Logs werden während Neustart nicht empfangen. FAZ am besten mit FortiGate-Puffer.",
+    "tags": [
+      "fortianalyzer",
+      "diag",
+      "cli",
+      "faz",
+      "caution"
+    ],
+    "product": "faz"
+  },
+  {
+    "id": "faz-diag-log-datenbankstatus",
+    "name": "Log-Datenbankstatus",
+    "cmd": "diagnose sql status worker",
+    "desc": "SQL-Worker-Prozesse und deren Status. Hängender Worker = Logs werden nicht indiziert = keine Reports.",
+    "tags": [
+      "fortianalyzer",
+      "diag",
+      "cli",
+      "faz",
+      "log"
+    ],
+    "product": "faz"
+  },
+  {
+    "id": "faz-diag-reports-neu-generieren",
+    "name": "Reports neu generieren",
+    "cmd": "diagnose test application reportd 1",
+    "desc": "Report-Daemon neu starten. Hilfreich wenn Reports nicht generiert werden oder fehlerhaft aussehen.",
+    "tags": [
+      "fortianalyzer",
+      "diag",
+      "cli",
+      "faz"
+    ],
+    "product": "faz"
+  },
+  {
+    "id": "faz-diag-debug-log-empfang",
+    "name": "Debug Log-Empfang",
+    "cmd": "diagnose debug application logd 255\\\ndiagnose debug enable",
+    "desc": "Ausführliches Logging des Log-Daemons. Zeigt jede Verbindung und Log-Paket. Sehr verbose – nach Diagnose deaktivieren!",
+    "tags": [
+      "fortianalyzer",
+      "diag",
+      "cli",
+      "faz",
+      "caution"
+    ],
+    "product": "faz"
+  },
+  {
+    "id": "faz-diag-verbindung-von-fgt-pr-u00fcf",
+    "name": "Verbindung von FGT prüfen",
+    "cmd": "diagnose dvm device detail GERÄTENAME",
+    "desc": "Verbindungsstatus eines bestimmten Log-Senders: IP, Version, letzter Log-Eingang, Status.",
+    "tags": [
+      "fortianalyzer",
+      "diag",
+      "cli",
+      "faz",
+      "info"
+    ],
+    "product": "faz"
+  },
+  {
+    "id": "faz-diag-archivierte-logs-anzeigen",
+    "name": "Archivierte Logs anzeigen",
+    "cmd": "execute log-index list",
+    "desc": "Übersicht der Log-Archive nach Datum und Gerät. execute log-index retrieve zum Zugriff auf archivierte Logs.",
+    "tags": [
+      "fortianalyzer",
+      "diag",
+      "cli",
+      "faz",
+      "log",
+      "info"
+    ],
+    "product": "faz"
+  },
+  {
+    "id": "faz-diag-retention-policy-anzeigen",
+    "name": "Retention-Policy anzeigen",
+    "cmd": "show system log-forward",
+    "desc": "Log-Weiterleitungsregeln und Aufbewahrungsrichtlinien. show system global für globale Log-Einstellungen.",
+    "tags": [
+      "fortianalyzer",
+      "diag",
+      "cli",
+      "faz",
+      "info",
+      "log"
+    ],
+    "product": "faz"
+  },
+  {
+    "id": "faz-diag-backup-erstellen",
+    "name": "Backup erstellen",
+    "cmd": "execute backup all-settings ftp DATEINAME FTP-IP",
+    "desc": "Vollbackup des FortiAnalyzer (Konfiguration, keine Log-Daten). Log-Daten separates Backup-Konzept erforderlich.",
+    "tags": [
+      "fortianalyzer",
+      "diag",
+      "cli",
+      "faz",
+      "caution"
+    ],
+    "product": "faz"
+  }
+]
