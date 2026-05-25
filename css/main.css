@@ -471,3 +471,108 @@ footer span { color: var(--muted); }
 
 .product-btn:hover        { color: var(--text); border-color: var(--accent); }
 .product-btn.active       { background: var(--accent-bg); border-color: rgba(124,140,248,.5); color: var(--accent); }
+
+
+/* ── Filter Bar ──────────────────────────────────────────── */
+#filter-bar {
+  position: sticky;
+  top: 98px; /* header 58px + tab-bar ~40px */
+  z-index: 97;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 10px 24px 12px;
+  background: rgba(15, 17, 23, .95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  max-width: 100%;
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: .75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+
+.filter-btn:hover  { color: var(--text); border-color: var(--border2); }
+.filter-btn.active { background: var(--panel2); border-color: var(--border2); color: var(--text); }
+
+.filter-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Section Header ──────────────────────────────────────── */
+.cmd-section { margin-bottom: 28px; }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.section-label {
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.section-count {
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--dim);
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1px 8px;
+  margin-left: 2px;
+}
+
+/* ── Command Grid – 3 Spalten ────────────────────────────── */
+.cmd-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+/* Command cards in grid: margin-bottom entfernen (gap übernimmt) */
+.cmd-grid .command-card {
+  margin-bottom: 0;
+}
+
+@media (max-width: 1024px) {
+  .cmd-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .cmd-grid { grid-template-columns: 1fr; }
+  #filter-bar { top: auto; position: relative; }
+}
