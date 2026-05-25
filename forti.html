@@ -8,8 +8,13 @@
   <title>support.sheet – Fortinet Cheatsheet</title>
 
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/recent.css">
+  <link rel="stylesheet" href="css/favorites.css">
+  <link rel="stylesheet" href="css/search.css">
 </head>
 <body>
 
@@ -19,8 +24,16 @@
       <div class="logo-icon">🔥</div>
       <div class="logo-text">support<span>.sheet</span></div>
     </a>
+    <div class="header-search" id="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="search-input"
+             placeholder="Fortinet-Befehle suchen…"
+             autocomplete="off" spellcheck="false"
+             aria-label="Commands durchsuchen">
+      <span class="search-shortcut">Ctrl K</span>
+    </div>
     <div class="header-right">
-      <div class="pill pill-count">Fortinet Cheatsheet</div>
+      <div class="pill pill-count" id="cmd-count">0 Befehle</div>
     </div>
   </header>
 
@@ -28,34 +41,124 @@
   <div class="hero">
     <div class="hero-badge">🔥 Fortinet Cheatsheet</div>
     <h1>FortiGate, FortiManager<br>&amp; FortiAnalyzer.</h1>
-    <p>CLI-Referenz für Fortinet-Produkte – FortiGate, FortiManager und FortiAnalyzer. Filter nach Produkt, Kategorie und Tag.</p>
+    <p>CLI-Referenz für Fortinet-Produkte. FortiGate Firewall/VPN, FortiManager Zentralverwaltung und FortiAnalyzer Logging.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-num" id="stat-total">–</span>
+        <span class="hero-stat-label">Befehle</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">FortiOS</span>
+        <span class="hero-stat-label">7.x / 6.x</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">FG · FMG</span>
+        <span class="hero-stat-label">FAZ</span>
+      </div>
+    </div>
   </div>
 
+  <!-- ── PRODUKT-FILTER ───────────────────────────────────── -->
+  <div class="product-filter-wrap">
+    <button class="product-btn active" data-product="all">Alle</button>
+    <button class="product-btn" data-product="fg">🔥 FortiGate</button>
+    <button class="product-btn" data-product="fmg">🖥️ FortiManager</button>
+    <button class="product-btn" data-product="faz">📊 FortiAnalyzer</button>
+  </div>
 
-  <main>
-    <div id="forti-app">
-      <p style="text-align:center;color:var(--muted);padding:60px 0;font-size:.9rem;">
-        Inhalte folgen in Kürze.
-      </p>
+  <!-- ── TEMPLATE ────────────────────────────────────────── -->
+  <template id="command-template">
+    <div class="command-card">
+      <div class="card-header">
+        <h3 data-field="name"></h3>
+        <button class="star-btn" data-action="star"
+                aria-label="Zu Favoriten hinzufügen"
+                aria-pressed="false">★</button>
+      </div>
+      <p data-field="desc"></p>
+      <code data-field="cmd"></code>
+      <div class="card-footer">
+        <div data-field="tags"></div>
+        <button class="copy-btn" data-action="copy">📋 Kopieren</button>
+      </div>
     </div>
+  </template>
+
+  <!-- ── MAIN ────────────────────────────────────────────── -->
+  <main>
+    <section id="favorites-section" hidden>
+      <h2 class="section-title">⭐ Meine Favoriten</h2>
+      <div id="favorites-container"></div>
+    </section>
+    <section id="recent-section" hidden>
+      <h2 class="section-title">🕐 Zuletzt verwendet</h2>
+      <div id="recent-container"></div>
+    </section>
+    <div id="commands-container"></div>
   </main>
 
   <!-- ── FOOTER ──────────────────────────────────────────── -->
   <footer>
-    <p class="footer-copy">support.sheet · <span>Fortinet Cheatsheet</span> · Klick kopiert den Befehl</p>
+    <div class="footer-links">
+      <a href="index.html"    class="footer-mitmachen">⚡ Windows</a>
+      <a href="exchange.html" class="footer-mitmachen footer-mitmachen--amber">📧 Exchange</a>
+      <a href="scripts.html"  class="footer-mitmachen footer-mitmachen--green">💚 PS Scripts</a>
+      <a href="eventlog.html" class="footer-mitmachen footer-mitmachen--amber">📋 Log Analyzer</a>
+      <a href="mitmachen.html" class="footer-mitmachen">🤝 Mitmachen</a>
+    </div>
+    <p class="footer-copy">support.sheet · <span>FortiGate · FortiManager · FortiAnalyzer</span></p>
   </footer>
 
-  <!-- PWA Service Worker -->
+  <!-- ── SCRIPTS ─────────────────────────────────────────── -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/7.0.0/fuse.min.js"></script>
+  <script src="js/loader.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/variables.js"></script>
+  <script src="js/recent.js"></script>
+  <script src="js/favorites.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/render.js"></script>
+
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch(() => {});
       });
     }
+
+    // Override loadCommands to use forti-specific JSON
+    async function loadCommands() {
+      const response = await fetch('./data/forti-commands.json');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const commands = await response.json();
+      return Array.isArray(commands)
+        ? commands.map(c => ({...c, tags: Array.isArray(c.tags) ? c.tags : []}))
+        : [];
+    }
+
+    function updateCommandCount(n) {
+      const stat  = document.getElementById('stat-total');
+      const count = document.getElementById('cmd-count');
+      if (stat)  stat.textContent  = n;
+      if (count) count.textContent = n + ' Befehle';
+    }
+
+    // Product filter
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.product-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const product = btn.dataset.product;
+          document.querySelectorAll('.product-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const filtered = product === 'all'
+            ? _allCommands
+            : _allCommands.filter(c => c.product === product);
+          renderCommands(filtered);
+        });
+      });
+    });
   </script>
 
-  <!-- nav.js – Tab-Bar, Logo-Dropdown, Ctrl+K, Scroll-to-Top, Updates -->
   <script src="nav.js"></script>
-
 </body>
 </html>

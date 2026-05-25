@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0f1117">
   <link rel="manifest" href="manifest.json">
-  <title>support.sheet – PowerShell Scripts</title>
+  <title>support.sheet – PS Script-Bibliothek</title>
 
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
 </head>
@@ -20,32 +21,168 @@
       <div class="logo-text">support<span>.sheet</span></div>
     </a>
     <div class="header-right">
-      <div class="pill pill-count">PowerShell Scripts</div>
+      <div class="pill pill-count" style="border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.08);color:#4ade80;">💚 PS Scripts</div>
     </div>
   </header>
 
   <!-- ── HERO ────────────────────────────────────────────── -->
   <div class="hero">
-    <div class="hero-badge">💚 PS Script-Bibliothek</div>
+    <div class="hero-badge" style="border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.08);color:#4ade80;">💚 PS Script-Bibliothek</div>
     <h1>Fertige Skripte.<br>Direkt einsatzbereit.</h1>
-    <p>Geprüfte PowerShell-Skripte für Windows-Administratoren. Beschreibung lesen, Parameter anpassen, herunterladen und loslegen.</p>
+    <p>Geprüfte PowerShell-Skripte für Windows-Administratoren. Beschreibung lesen, Parameter anpassen, herunterladen.</p>
   </div>
 
-
+  <!-- ── MAIN ────────────────────────────────────────────── -->
   <main>
-    <div id="scripts-app">
-      <p style="text-align:center;color:var(--muted);padding:60px 0;font-size:.9rem;">
-        Inhalte folgen in Kürze.
-      </p>
+    <div class="scripts-grid" id="scripts-container">
+
+      <!-- Get-SystemInventory -->
+      <div class="script-card">
+        <div class="script-header">
+          <div class="script-icon">📋</div>
+          <div>
+            <div class="script-name">Get-SystemInventory.ps1</div>
+            <div class="script-desc">Vollständiges System-Inventar: Hardware, OS, Netzwerk, installierte Software.</div>
+          </div>
+        </div>
+        <div class="script-tags">
+          <span class="tag">inventory</span>
+          <span class="tag">system</span>
+          <span class="tag">info</span>
+        </div>
+        <a href="powershell/Get-SystemInventory.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+      </div>
+
+      <!-- Get-LocalAdmins -->
+      <div class="script-card">
+        <div class="script-header">
+          <div class="script-icon">👤</div>
+          <div>
+            <div class="script-name">Get-LocalAdmins.ps1</div>
+            <div class="script-desc">Alle lokalen Administratoren auf dem System auflisten. Gut für Security-Audits.</div>
+          </div>
+        </div>
+        <div class="script-tags">
+          <span class="tag">admin</span>
+          <span class="tag">security</span>
+          <span class="tag">audit</span>
+        </div>
+        <a href="powershell/Get-LocalAdmins.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+      </div>
+
+      <!-- Test-NetworkConnectivity -->
+      <div class="script-card">
+        <div class="script-header">
+          <div class="script-icon">🌐</div>
+          <div>
+            <div class="script-name">Test-NetworkConnectivity.ps1</div>
+            <div class="script-desc">Netzwerkkonnektivität zu mehreren Zielen testen. DNS, Gateway, Internet, interne Server.</div>
+          </div>
+        </div>
+        <div class="script-tags">
+          <span class="tag">network</span>
+          <span class="tag">diag</span>
+          <span class="tag">quick</span>
+        </div>
+        <a href="powershell/Test-NetworkConnectivity.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+      </div>
+
+      <!-- Get-InstalledSoftware -->
+      <div class="script-card">
+        <div class="script-header">
+          <div class="script-icon">📦</div>
+          <div>
+            <div class="script-name">Get-InstalledSoftware.ps1</div>
+            <div class="script-desc">Alle installierten Programme aus 32-Bit und 64-Bit Registry exportieren. CSV-Export möglich.</div>
+          </div>
+        </div>
+        <div class="script-tags">
+          <span class="tag">inventory</span>
+          <span class="tag">software</span>
+          <span class="tag">audit</span>
+        </div>
+        <a href="powershell/Get-InstalledSoftware.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+      </div>
+
+      <!-- Set-PowerPlan-Win11 -->
+      <div class="script-card">
+        <div class="script-header">
+          <div class="script-icon">⚡</div>
+          <div>
+            <div class="script-name">Set-PowerPlan-Win11.ps1</div>
+            <div class="script-desc">Windows 11 Energieplan optimieren. Höchstleistung aktivieren, Standby deaktivieren, WLAN-Adapter konfigurieren.</div>
+          </div>
+        </div>
+        <div class="script-tags">
+          <span class="tag">power</span>
+          <span class="tag">windows11</span>
+          <span class="tag">performance</span>
+        </div>
+        <a href="powershell/Set-PowerPlan-Win11.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+      </div>
+
+      <!-- Get-EventLogCollector-Client -->
+      <div class="script-card">
+        <div class="script-header">
+          <div class="script-icon">📋</div>
+          <div>
+            <div class="script-name">Get-EventLogCollector-Client.ps1</div>
+            <div class="script-desc">Event Logs eines Windows-Clients sammeln und als JSON exportieren. Für den Log Analyzer gedacht. Zeitraum interaktiv wählbar.</div>
+          </div>
+        </div>
+        <div class="script-tags">
+          <span class="tag">eventlog</span>
+          <span class="tag">client</span>
+          <span class="tag">diag</span>
+        </div>
+        <a href="powershell/Get-EventLogCollector-Client.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+      </div>
+
+      <!-- Get-EventLogCollector-Server -->
+      <div class="script-card">
+        <div class="script-header">
+          <div class="script-icon">🖥️</div>
+          <div>
+            <div class="script-name">Get-EventLogCollector-Server.ps1</div>
+            <div class="script-desc">Event Logs eines Windows Servers sammeln. Erkennt installierte Rollen automatisch (AD, DNS, DHCP, RDS, Hyper-V). JSON-Export für Log Analyzer.</div>
+          </div>
+        </div>
+        <div class="script-tags">
+          <span class="tag">eventlog</span>
+          <span class="tag">server</span>
+          <span class="tag">diag</span>
+        </div>
+        <a href="powershell/Get-EventLogCollector-Server.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+      </div>
+
     </div>
   </main>
 
   <!-- ── FOOTER ──────────────────────────────────────────── -->
   <footer>
-    <p class="footer-copy">support.sheet · <span>PowerShell Scripts</span> · Klick kopiert den Befehl</p>
+    <div class="footer-links">
+      <a href="index.html"    class="footer-mitmachen">⚡ Windows</a>
+      <a href="exchange.html" class="footer-mitmachen footer-mitmachen--amber">📧 Exchange</a>
+      <a href="forti.html"    class="footer-mitmachen footer-mitmachen--orange">🔥 Fortinet</a>
+      <a href="eventlog.html" class="footer-mitmachen footer-mitmachen--amber">📋 Log Analyzer</a>
+      <a href="mitmachen.html" class="footer-mitmachen">🤝 Mitmachen</a>
+    </div>
+    <p class="footer-copy">support.sheet · <span>PS Script-Bibliothek</span></p>
   </footer>
 
-  <!-- PWA Service Worker -->
+  <style>
+    .scripts-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; padding-top:8px; }
+    .script-card  { background:var(--panel); border:1px solid var(--border); border-radius:var(--r); padding:16px; display:flex; flex-direction:column; gap:12px; transition:border-color .15s,background .15s; }
+    .script-card:hover { border-color:var(--border2); background:var(--panel2); }
+    .script-header { display:flex; gap:12px; align-items:flex-start; }
+    .script-icon   { font-size:1.6rem; flex-shrink:0; line-height:1; }
+    .script-name   { font-size:.88rem; font-weight:700; color:var(--text); margin-bottom:4px; }
+    .script-desc   { font-size:.78rem; color:var(--muted); line-height:1.45; }
+    .script-tags   { display:flex; gap:6px; flex-wrap:wrap; }
+    .script-dl-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; margin-top:auto; padding:7px 14px; border-radius:7px; border:1px solid rgba(74,222,128,.35); background:rgba(74,222,128,.08); color:#4ade80; font-size:.78rem; font-weight:600; text-decoration:none; transition:all .15s; }
+    .script-dl-btn:hover { background:rgba(74,222,128,.18); }
+  </style>
+
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -53,9 +190,6 @@
       });
     }
   </script>
-
-  <!-- nav.js – Tab-Bar, Logo-Dropdown, Ctrl+K, Scroll-to-Top, Updates -->
   <script src="nav.js"></script>
-
 </body>
 </html>

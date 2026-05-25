@@ -8,6 +8,7 @@
   <title>support.sheet – Event Log Analyzer</title>
 
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
 </head>
@@ -20,42 +21,267 @@
       <div class="logo-text">support<span>.sheet</span></div>
     </a>
     <div class="header-right">
-      <div class="pill pill-count">Event Log Analyzer</div>
+      <div class="pill pill-count" style="border-color:rgba(232,179,57,.3);background:rgba(232,179,57,.08);color:#e8b339;">📋 Log Analyzer</div>
     </div>
   </header>
 
   <!-- ── HERO ────────────────────────────────────────────── -->
   <div class="hero">
-    <div class="hero-badge">📋 Event Log Analyzer</div>
+    <div class="hero-badge" style="border-color:rgba(232,179,57,.35);background:rgba(232,179,57,.08);color:#e8b339;">📋 Event Log Analyzer</div>
     <h1>Log hochladen.<br>Problem erkannt.</h1>
-    <p>Collector-Script ausführen, JSON hochladen – automatische Analyse erkennt bekannte Muster. Für unbekannte Fehler: optionale KI-Analyse.</p>
+    <p>Collector-Script ausführen, JSON hochladen – automatische Analyse erkennt bekannte Fehler-Muster und gibt konkrete Handlungsempfehlungen.</p>
   </div>
 
-
+  <!-- ── SCHRITT 1: COLLECTOR ────────────────────────────── -->
   <main>
-    <div id="eventlog-app">
-      <p style="text-align:center;color:var(--muted);padding:60px 0;font-size:.9rem;">
-        Inhalte folgen in Kürze.
-      </p>
-    </div>
+
+    <section class="analyzer-section">
+      <h2 class="section-title">Schritt 1 – Collector-Script ausführen</h2>
+      <div class="collector-cards">
+        <div class="collector-card">
+          <div class="collector-header">
+            <span class="collector-icon">💻</span>
+            <div>
+              <div class="collector-name">Windows Client</div>
+              <div class="collector-sub">Windows 10 / 11</div>
+            </div>
+          </div>
+          <div class="collector-cmd"><code>powershell.exe -ExecutionPolicy Bypass -File "C:\Temp\Get-EventLogCollector-Client.ps1"</code></div>
+          <a href="powershell/Get-EventLogCollector-Client.ps1" class="collector-dl" download>⬇️ Client-Script herunterladen</a>
+        </div>
+        <div class="collector-card">
+          <div class="collector-header">
+            <span class="collector-icon">🖥️</span>
+            <div>
+              <div class="collector-name">Windows Server</div>
+              <div class="collector-sub">2016 / 2019 / 2022</div>
+            </div>
+          </div>
+          <div class="collector-cmd"><code>powershell.exe -ExecutionPolicy Bypass -File "C:\Temp\Get-EventLogCollector-Server.ps1"</code></div>
+          <a href="powershell/Get-EventLogCollector-Server.ps1" class="collector-dl" download>⬇️ Server-Script herunterladen</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SCHRITT 2: UPLOAD ──────────────────────────────── -->
+    <section class="analyzer-section">
+      <h2 class="section-title">Schritt 2 – JSON-Datei hochladen</h2>
+      <div class="upload-zone" id="upload-zone">
+        <div class="upload-icon">📂</div>
+        <div class="upload-text">JSON-Datei hier ablegen oder klicken</div>
+        <div class="upload-sub">Erwartet: EventLog_Client_*.json oder EventLog_Server_*.json</div>
+        <input type="file" id="file-input" accept=".json" style="display:none">
+      </div>
+    </section>
+
+    <!-- ── ERGEBNIS ───────────────────────────────────────── -->
+    <section class="analyzer-section" id="result-section" hidden>
+      <h2 class="section-title">Analyseergebnis</h2>
+      <div id="meta-bar" class="meta-bar"></div>
+      <div id="findings-container"></div>
+    </section>
+
   </main>
 
   <!-- ── FOOTER ──────────────────────────────────────────── -->
   <footer>
-    <p class="footer-copy">support.sheet · <span>Event Log Analyzer</span> · Klick kopiert den Befehl</p>
+    <div class="footer-links">
+      <a href="index.html"    class="footer-mitmachen">⚡ Windows</a>
+      <a href="exchange.html" class="footer-mitmachen footer-mitmachen--amber">📧 Exchange</a>
+      <a href="forti.html"    class="footer-mitmachen footer-mitmachen--orange">🔥 Fortinet</a>
+      <a href="scripts.html"  class="footer-mitmachen footer-mitmachen--green">💚 PS Scripts</a>
+      <a href="mitmachen.html" class="footer-mitmachen">🤝 Mitmachen</a>
+    </div>
+    <p class="footer-copy">support.sheet · <span>Event Log Analyzer</span></p>
   </footer>
 
-  <!-- PWA Service Worker -->
+  <!-- ── ANALYZER STYLES ─────────────────────────────────── -->
+  <style>
+    .analyzer-section { margin-bottom: 36px; }
+
+    /* Collector cards */
+    .collector-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+    .collector-card  { background:var(--panel); border:1px solid var(--border); border-radius:var(--r); padding:16px; display:flex; flex-direction:column; gap:12px; }
+    .collector-header { display:flex; gap:12px; align-items:center; }
+    .collector-icon  { font-size:1.8rem; }
+    .collector-name  { font-size:.9rem; font-weight:700; color:var(--text); }
+    .collector-sub   { font-size:.72rem; color:var(--muted); }
+    .collector-cmd   { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:8px 10px; }
+    .collector-cmd code { font-family:var(--font-mono); font-size:.72rem; color:var(--accent); word-break:break-all; }
+    .collector-dl    { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:7px; border:1px solid var(--border2); background:var(--panel2); color:var(--muted); font-size:.78rem; font-weight:600; text-decoration:none; transition:all .15s; }
+    .collector-dl:hover { color:var(--text); border-color:rgba(124,140,248,.4); }
+
+    /* Upload zone */
+    .upload-zone { border:2px dashed var(--border2); border-radius:var(--r-lg); padding:48px 24px; text-align:center; cursor:pointer; transition:border-color .2s,background .2s; }
+    .upload-zone:hover, .upload-zone.drag-over { border-color:var(--accent); background:var(--accent-bg); }
+    .upload-icon { font-size:2.5rem; margin-bottom:12px; }
+    .upload-text { font-size:.95rem; font-weight:600; color:var(--text); margin-bottom:6px; }
+    .upload-sub  { font-size:.78rem; color:var(--muted); }
+
+    /* Meta bar */
+    .meta-bar { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+    .meta-pill { padding:4px 12px; border-radius:20px; font-size:.72rem; font-weight:600; background:var(--panel); border:1px solid var(--border); color:var(--muted); }
+    .meta-pill.critical { border-color:rgba(248,113,113,.4); color:var(--red); background:var(--red-bg); }
+    .meta-pill.warning  { border-color:rgba(251,191,36,.4);  color:var(--amber); background:var(--amber-bg); }
+
+    /* Findings */
+    .finding { background:var(--panel); border:1px solid var(--border); border-radius:var(--r); padding:16px; margin-bottom:10px; border-left:3px solid var(--border); }
+    .finding.critical { border-left-color:var(--red); }
+    .finding.error    { border-left-color:#fb923c; }
+    .finding.warning  { border-left-color:var(--amber); }
+    .finding-head     { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .finding-sev      { font-size:.65rem; font-weight:700; padding:2px 8px; border-radius:4px; text-transform:uppercase; letter-spacing:.04em; }
+    .finding-sev.critical { background:var(--red-bg);   color:var(--red);  border:1px solid rgba(248,113,113,.3); }
+    .finding-sev.error    { background:rgba(251,146,60,.1); color:#fb923c; border:1px solid rgba(251,146,60,.3); }
+    .finding-sev.warning  { background:var(--amber-bg); color:var(--amber);border:1px solid rgba(251,191,36,.3); }
+    .finding-name  { font-size:.88rem; font-weight:700; color:var(--text); }
+    .finding-desc  { font-size:.78rem; color:var(--muted); margin-bottom:10px; }
+    .finding-recs  { list-style:none; display:flex; flex-direction:column; gap:4px; }
+    .finding-recs li { font-size:.75rem; color:var(--text); padding:5px 10px; background:rgba(124,140,248,.05); border-radius:5px; border-left:2px solid var(--accent); }
+    .no-findings   { text-align:center; padding:40px; color:var(--muted); }
+  </style>
+
+  <!-- ── ANALYZER LOGIC ───────────────────────────────────── -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch(() => {});
       });
     }
+
+    let RULES = [];
+
+    // Load rules
+    fetch('./data/eventlog-rules.json')
+      .then(r => r.json())
+      .then(d => { RULES = d.rules || []; })
+      .catch(() => {});
+
+    // Upload zone
+    const zone  = document.getElementById('upload-zone');
+    const input = document.getElementById('file-input');
+
+    zone.addEventListener('click',     () => input.click());
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop',      e => { e.preventDefault(); zone.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
+    input.addEventListener('change',   e => handleFile(e.target.files[0]));
+
+    function handleFile(file) {
+      if (!file || !file.name.endsWith('.json')) {
+        alert('Bitte eine .json Datei hochladen.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = JSON.parse(e.target.result);
+          analyzeLog(data);
+        } catch {
+          alert('Ungültige JSON-Datei.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function analyzeLog(data) {
+      const events = data.Events || data.events || [];
+      const meta   = data.Metadata || data.metadata || {};
+      const sum    = data.Summary  || data.summary  || {};
+
+      // Meta bar
+      const metaBar = document.getElementById('meta-bar');
+      metaBar.replaceChildren();
+      const pills = [
+        meta.ComputerName && `💻 ${meta.ComputerName}`,
+        meta.OS           && meta.OS.replace('Microsoft Windows ', ''),
+        meta.TimeRangeLabel && `🕐 ${meta.TimeRangeLabel}`,
+        sum.Total         && `${sum.Total} Ereignisse`,
+        sum.Critical      && `${sum.Critical} Kritisch`,
+        sum.Error         && `${sum.Error} Fehler`,
+        sum.Warning       && `${sum.Warning} Warnungen`,
+      ].filter(Boolean);
+      pills.forEach(text => {
+        const p = document.createElement('div');
+        p.className = 'meta-pill';
+        if (text.includes('Kritisch') && parseInt(text) > 0) p.classList.add('critical');
+        if (text.includes('Warnungen') && parseInt(text) > 0) p.classList.add('warning');
+        p.textContent = text;
+        metaBar.appendChild(p);
+      });
+
+      // Match rules
+      const findings = [];
+      RULES.forEach(rule => {
+        const matched = events.filter(e => {
+          const idMatch  = !rule.eventIds || rule.eventIds.includes(Number(e.Id));
+          const srcMatch = !rule.sources  || rule.sources.some(s => (e.ProviderName||'').toLowerCase().includes(s.toLowerCase()));
+          const msgMatch = !rule.messageContains || rule.messageContains.some(m => (e.Message||'').toLowerCase().includes(m.toLowerCase()));
+          return idMatch && srcMatch && msgMatch;
+        });
+
+        const min = rule.minOccurrences || 1;
+        if (matched.length >= min) {
+          findings.push({ rule, count: matched.length });
+        }
+      });
+
+      // Sort by severity
+      const sevOrder = { critical:0, error:1, warning:2, info:3 };
+      findings.sort((a,b) => (sevOrder[a.rule.severity]||9) - (sevOrder[b.rule.severity]||9));
+
+      // Render findings
+      const container = document.getElementById('findings-container');
+      container.replaceChildren();
+
+      if (findings.length === 0) {
+        const msg = document.createElement('div');
+        msg.className = 'no-findings';
+        msg.textContent = '✅ Keine bekannten Muster gefunden.';
+        container.appendChild(msg);
+      } else {
+        findings.forEach(({ rule, count }) => {
+          const card = document.createElement('div');
+          card.className = `finding ${rule.severity}`;
+
+          const head = document.createElement('div');
+          head.className = 'finding-head';
+
+          const sev = document.createElement('span');
+          sev.className = `finding-sev ${rule.severity}`;
+          sev.textContent = rule.severity;
+
+          const name = document.createElement('span');
+          name.className = 'finding-name';
+          name.textContent = `${rule.name} (${count}×)`;
+
+          head.appendChild(sev);
+          head.appendChild(name);
+
+          const desc = document.createElement('p');
+          desc.className = 'finding-desc';
+          desc.textContent = rule.description;
+
+          const recs = document.createElement('ul');
+          recs.className = 'finding-recs';
+          (rule.recommendations || []).forEach(rec => {
+            const li = document.createElement('li');
+            li.textContent = rec;
+            recs.appendChild(li);
+          });
+
+          card.appendChild(head);
+          card.appendChild(desc);
+          card.appendChild(recs);
+          container.appendChild(card);
+        });
+      }
+
+      document.getElementById('result-section').hidden = false;
+      document.getElementById('result-section').scrollIntoView({ behavior:'smooth' });
+    }
   </script>
 
-  <!-- nav.js – Tab-Bar, Logo-Dropdown, Ctrl+K, Scroll-to-Top, Updates -->
   <script src="nav.js"></script>
-
 </body>
 </html>
