@@ -1,0 +1,565 @@
+[
+  {
+    "id": "op-connect-ems",
+    "name": "Exchange Management Shell öffnen",
+    "cmd": "Add-PSSnapin Microsoft.Exchange.Management.PowerShell.SnapIn",
+    "desc": "Exchange PowerShell-Snapin laden wenn direkt am Server. Alternativ: Exchange Management Shell (EMS) Verknüpfung nutzen.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "connect"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-connect-remote",
+    "name": "Remote-Session zu Exchange",
+    "cmd": "$Session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri http://EXCHANGE-SERVER/PowerShell/ -Authentication Kerberos\nImport-PSSession $Session -DisableNameChecking",
+    "desc": "Exchange-Session von einem anderen PC aus aufbauen. EXCHANGE-SERVER durch den Hostnamen ersetzen. Kerberos-Auth für interne Nutzung.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "connect"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-connect-close",
+    "name": "Session beenden",
+    "cmd": "Remove-PSSession $Session",
+    "desc": "Geöffnete Remote-Session sauber beenden. Wichtig um Ressourcen freizugeben – Exchange limitiert gleichzeitige Sessions.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "connect"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-mailbox-get",
+    "name": "Postfach anzeigen",
+    "cmd": "Get-Mailbox -Identity 'user@domain.de' | Select Name, RecipientTypeDetails, Database, PrimarySmtpAddress",
+    "desc": "Grundlegende Postfach-Infos. RecipientTypeDetails zeigt ob UserMailbox, SharedMailbox oder RemoteMailbox. Database zeigt wo das Postfach liegt.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "mailbox",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-mailbox-list",
+    "name": "Alle Postfächer auflisten",
+    "cmd": "Get-Mailbox -ResultSize Unlimited | Select Name, RecipientTypeDetails, Database | Sort-Object Database",
+    "desc": "Alle Postfächer sortiert nach Datenbank. ResultSize Unlimited wichtig – Standard gibt nur 1000 zurück.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "mailbox",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-mailbox-size",
+    "name": "Postfachgröße prüfen",
+    "cmd": "Get-MailboxStatistics -Identity 'user@domain.de' | Select DisplayName, TotalItemSize, ItemCount, LastLogonTime",
+    "desc": "Postfachgröße, Anzahl Elemente und letzter Login. Gut für Kapazitätsplanung und Diagnose bei vollen Postfächern.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "mailbox",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-mailbox-enable",
+    "name": "Postfach anlegen (UserMailbox)",
+    "cmd": "Enable-Mailbox -Identity 'user@domain.de'",
+    "desc": "Vorhandenen AD-User mit Postfach verknüpfen. Der User muss bereits im AD existieren. Für neue User: New-Mailbox.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "mailbox"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-mailbox-shared",
+    "name": "Shared Mailbox anlegen",
+    "cmd": "New-Mailbox -Shared -Name 'Shared Mailbox' -Alias 'shared.mailbox' -UserPrincipalName 'shared@domain.de'",
+    "desc": "Freigegebenes Postfach anlegen. Shared Mailboxen benötigen keine Lizenz unter 50 GB.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "mailbox"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-mailbox-remote",
+    "name": "RemoteMailbox anlegen (Hybrid → EXO)",
+    "cmd": "Enable-RemoteMailbox -Identity 'user@domain.de' -RemoteRoutingAddress 'user@domain.mail.onmicrosoft.com' -PrimarySmtpAddress 'user@domain.de' -Alias 'vorname.nachname'",
+    "desc": "User für Exchange Online (Hybrid) anlegen. RemoteRoutingAddress ist die onmicrosoft.com Adresse. Nach dem Befehl AD-Sync anstoßen.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "mailbox",
+      "migration"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-mailbox-alias",
+    "name": "E-Mail-Adresse hinzufügen",
+    "cmd": "Set-Mailbox -Identity 'user@domain.de' -EmailAddresses @{add='alias@domain.de'}",
+    "desc": "Zusätzliche SMTP-Adresse/Alias hinzufügen. Bestehende Adressen bleiben erhalten.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "mailbox"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-tracking-recipient",
+    "name": "Mailfluss für Empfänger prüfen",
+    "cmd": "Get-MessageTrackingLog -Recipient 'user@domain.de' -Start '04/01/2026 00:00:00' -End '04/01/2026 23:59:59' -ResultSize Unlimited | Select Timestamp, EventId, Sender, Recipients, MessageSubject",
+    "desc": "Alle Mails die an eine Adresse zugestellt wurden. Datum im US-Format MM/DD/YYYY! ResultSize Unlimited – Standard liefert nur 1000 Einträge.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "tracking",
+      "diag"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-tracking-sender",
+    "name": "Mailfluss für Absender prüfen",
+    "cmd": "Get-MessageTrackingLog -Sender 'user@domain.de' -Start '04/01/2026 00:00:00' -End '04/01/2026 23:59:59' -ResultSize Unlimited | Select Timestamp, EventId, Recipients, MessageSubject",
+    "desc": "Gesendete Mails eines Absenders. EventIDs: RECEIVE=Eingang, DELIVER=Zustellung, SEND=weitergeleitet, FAIL=Fehler.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "tracking",
+      "diag"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-tracking-export",
+    "name": "Tracking-Log exportieren (CSV)",
+    "cmd": "Get-MessageTrackingLog -Recipient 'user@domain.de' -Start '04/01/2026 00:00:00' -End '04/01/2026 23:59:59' -ResultSize Unlimited | Export-Csv -Path 'C:\\tracking.csv' -NoTypeInformation -Encoding UTF8",
+    "desc": "Tracking-Ergebnis als CSV exportieren. Für Auswertung in Excel. UTF8-Encoding für Umlaute.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "tracking",
+      "diag"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-tracking-subject",
+    "name": "Betreff suchen",
+    "cmd": "Get-MessageTrackingLog -MessageSubject 'Betreff' -Start '04/01/2026 00:00:00' -End '04/01/2026 23:59:59' -ResultSize Unlimited | Select Timestamp, EventId, Sender, Recipients",
+    "desc": "Mails nach Betreff suchen. Teilsuche möglich. Gut wenn Absender oder Empfänger unbekannt.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "tracking",
+      "diag"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-perms-fullaccess",
+    "name": "FullAccess vergeben",
+    "cmd": "Add-MailboxPermission -Identity 'postfach@domain.de' -User 'user@domain.de' -AccessRights FullAccess -AutoMapping $true",
+    "desc": "Vollzugriff auf ein Postfach. AutoMapping $true = erscheint automatisch in Outlook. AutoMapping $false = manuell hinzufügen.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "permissions"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-perms-sendas",
+    "name": "SendAs vergeben",
+    "cmd": "Add-ADPermission -Identity 'postfach' -User 'user@domain.de' -ExtendedRights 'Send As'",
+    "desc": "Berechtigung im Namen des Postfachs zu senden. On-Prem wird über AD-Berechtigungen gesetzt.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "permissions"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-perms-sendonbehalf",
+    "name": "SendOnBehalf vergeben",
+    "cmd": "Set-Mailbox -Identity 'postfach@domain.de' -GrantSendOnBehalfTo @{add='user@domain.de'}",
+    "desc": "Im Auftrag von senden. Mail zeigt 'Gesendet von user im Auftrag von postfach'.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "permissions"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-perms-show",
+    "name": "Postfachberechtigungen anzeigen",
+    "cmd": "Get-MailboxPermission -Identity 'postfach@domain.de' | Where-Object {$_.IsInherited -eq $false} | Select User, AccessRights",
+    "desc": "Explizit gesetzte Berechtigungen anzeigen (ohne Standardberechtigungen).",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "permissions",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-mig-adsync",
+    "name": "AD-Sync anstoßen",
+    "cmd": "Start-ADSyncSyncCycle -PolicyType Delta",
+    "desc": "Entra ID Connect Sync manuell starten (nur Änderungen). Auf dem AAD Connect Server ausführen. Danach ca. 5 Min warten.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "migration"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-mig-moverequest",
+    "name": "Move Request anlegen (→ EXO)",
+    "cmd": "New-MoveRequest -Identity 'user@domain.de' -Remote -RemoteHostName 'outlook.office365.com' -TargetDeliveryDomain 'domain.mail.onmicrosoft.com' -RemoteCredential (Get-Credential)",
+    "desc": "Postfach von On-Prem nach Exchange Online migrieren (Hybrid). MRS Proxy muss aktiv sein.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "migration",
+      "caution"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-mig-movestate",
+    "name": "Move Request Status",
+    "cmd": "Get-MoveRequest -Mailbox 'user@domain.de' | Select DisplayName, Status, PercentComplete",
+    "desc": "Status einer laufenden Postfach-Migration. Status: Queued, InProgress, Completed, Failed.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "migration",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-mig-mrsproxy",
+    "name": "MRS Proxy aktivieren",
+    "cmd": "Set-WebServicesVirtualDirectory -Identity 'EX01\\EWS (Default Web Site)' -MRSProxyEnabled $true\niisreset /noforce",
+    "desc": "MRS Proxy für Hybrid-Migrationen aktivieren. Ohne MRS Proxy schlägt New-MoveRequest fehl.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "migration"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "exo-connect-main",
+    "name": "Mit Exchange Online verbinden",
+    "cmd": "Connect-ExchangeOnline -UserPrincipalName admin@domain.de",
+    "desc": "Verbindung zu Exchange Online herstellen. ExchangeOnlineManagement Modul muss installiert sein. MFA-Login öffnet Browser.",
+    "tags": [
+      "exchange",
+      "exo",
+      "connect"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-connect-install",
+    "name": "Modul installieren",
+    "cmd": "Install-Module -Name ExchangeOnlineManagement -Force\nImport-Module ExchangeOnlineManagement",
+    "desc": "EXO PowerShell Modul installieren und laden. Einmalig nötig. -Force überschreibt ältere Versionen.",
+    "tags": [
+      "exchange",
+      "exo",
+      "connect"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-connect-close",
+    "name": "Session beenden",
+    "cmd": "Disconnect-ExchangeOnline -Confirm:$false",
+    "desc": "EXO-Session sauber beenden. Immer ausführen nach Fertigstellung – EXO limitiert gleichzeitige Sessions.",
+    "tags": [
+      "exchange",
+      "exo",
+      "connect"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-connect-compliance",
+    "name": "Security & Compliance verbinden",
+    "cmd": "Connect-IPPSSession -UserPrincipalName admin@domain.de",
+    "desc": "Für Compliance-Befehle wie New-ComplianceSearch. Separates Modul – zusätzlich zu Connect-ExchangeOnline.",
+    "tags": [
+      "exchange",
+      "exo",
+      "connect"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-mailbox-get",
+    "name": "Postfach prüfen",
+    "cmd": "Get-Mailbox -Identity 'user@domain.de' | Select DisplayName, RecipientTypeDetails, IsDirSynced, PrimarySmtpAddress",
+    "desc": "Postfach-Info in EXO. IsDirSynced=True = kommt aus AD-Sync. False = direkt in EXO angelegt.",
+    "tags": [
+      "exchange",
+      "exo",
+      "mailbox",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-mailbox-shared",
+    "name": "Shared Mailbox anlegen (EXO)",
+    "cmd": "New-Mailbox -Shared -Name 'Shared Name' -Alias 'shared.alias' -PrimarySmtpAddress 'shared@domain.de'",
+    "desc": "Shared Mailbox direkt in Exchange Online anlegen. In Hybrid-Umgebungen besser On-Prem anlegen und syncen.",
+    "tags": [
+      "exchange",
+      "exo",
+      "mailbox"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-mailbox-convert",
+    "name": "In Shared Mailbox konvertieren",
+    "cmd": "Set-Mailbox -Identity 'user@domain.de' -Type Shared",
+    "desc": "Reguläres Postfach in Shared Mailbox umwandeln. Lizenz kann danach entfernt werden (unter 50 GB).",
+    "tags": [
+      "exchange",
+      "exo",
+      "mailbox",
+      "caution"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-mailbox-alias",
+    "name": "E-Mail-Adresse hinzufügen",
+    "cmd": "Set-Mailbox -Identity 'user@domain.de' -EmailAddresses @{add='alias@domain.de'}",
+    "desc": "Alias/SMTP-Adresse hinzufügen. Bestehende Adressen bleiben erhalten.",
+    "tags": [
+      "exchange",
+      "exo",
+      "mailbox"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-perms-fullaccess",
+    "name": "FullAccess vergeben",
+    "cmd": "Add-MailboxPermission -Identity 'shared@domain.de' -User 'user@domain.de' -AccessRights FullAccess -AutoMapping $true",
+    "desc": "Vollzugriff auf Postfach. AutoMapping $true = erscheint automatisch in Outlook.",
+    "tags": [
+      "exchange",
+      "exo",
+      "permissions"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-perms-sendas",
+    "name": "SendAs vergeben (EXO)",
+    "cmd": "Add-RecipientPermission -Identity 'shared@domain.de' -Trustee 'user@domain.de' -AccessRights SendAs",
+    "desc": "Im Namen der Adresse senden. In EXO über Add-RecipientPermission (nicht Add-ADPermission wie On-Prem).",
+    "tags": [
+      "exchange",
+      "exo",
+      "permissions"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-perms-sendonbehalf",
+    "name": "SendOnBehalf vergeben",
+    "cmd": "Set-Mailbox -Identity 'shared@domain.de' -GrantSendOnBehalfTo @{add='user@domain.de'}",
+    "desc": "Im Auftrag von senden. Unterschied: Absender ist sichtbar.",
+    "tags": [
+      "exchange",
+      "exo",
+      "permissions"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-perms-show",
+    "name": "FullAccess Berechtigungen anzeigen",
+    "cmd": "Get-MailboxPermission -Identity 'shared@domain.de' | Where-Object {$_.IsInherited -eq $false} | Select User, AccessRights",
+    "desc": "Explizit gesetzte FullAccess-Berechtigungen anzeigen.",
+    "tags": [
+      "exchange",
+      "exo",
+      "permissions",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-perms-sendas-show",
+    "name": "SendAs Berechtigungen anzeigen",
+    "cmd": "Get-RecipientPermission -Identity 'shared@domain.de' | Select Trustee, AccessRights",
+    "desc": "Wer darf SendAs nutzen? In EXO über Get-RecipientPermission.",
+    "tags": [
+      "exchange",
+      "exo",
+      "permissions",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-trace-recipient",
+    "name": "Nachrichtenfluss prüfen (EXO)",
+    "cmd": "Get-MessageTraceV2 -RecipientAddress 'user@domain.de' -StartDate (Get-Date).AddDays(-7) -EndDate (Get-Date) | Select Received, SenderAddress, RecipientAddress, Status, Subject",
+    "desc": "Mailfluss der letzten 7 Tage. Status: Delivered, Failed, Pending, FilteredAsSpam.",
+    "tags": [
+      "exchange",
+      "exo",
+      "tracking",
+      "diag"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-trace-sender",
+    "name": "Gesendete Mails prüfen",
+    "cmd": "Get-MessageTraceV2 -SenderAddress 'user@domain.de' -StartDate (Get-Date).AddDays(-3) -EndDate (Get-Date) | Select Received, RecipientAddress, Status, Subject",
+    "desc": "Gesendete Mails eines Absenders in EXO prüfen.",
+    "tags": [
+      "exchange",
+      "exo",
+      "tracking",
+      "diag"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-trace-historical",
+    "name": "Historische Suche starten (>10 Tage)",
+    "cmd": "Start-HistoricalSearch -ReportTitle 'Suche' -StartDate 01/01/2026 -EndDate 01/31/2026 -ReportType MessageTrace -RecipientAddress 'user@domain.de' -NotifyAddress 'admin@domain.de'",
+    "desc": "Für Logs älter als 10 Tage. Ergebnis per Mail zugesandt. Datum im US-Format.",
+    "tags": [
+      "exchange",
+      "exo",
+      "tracking",
+      "diag"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-compliance-sir",
+    "name": "Single Item Recovery aktivieren",
+    "cmd": "Set-Mailbox -Identity 'user@domain.de' -SingleItemRecoveryEnabled $true -RetainDeletedItemsFor 30",
+    "desc": "Aktivieren mit 30 Tagen Aufbewahrung (Maximum). Für alle Postfächer: Get-Mailbox -ResultSize Unlimited | Set-Mailbox ...",
+    "tags": [
+      "exchange",
+      "exo",
+      "compliance",
+      "caution"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-compliance-litighold",
+    "name": "Litigation Hold aktivieren",
+    "cmd": "Set-Mailbox -Identity 'user@domain.de' -LitigationHoldEnabled $true -LitigationHoldDuration 365",
+    "desc": "Alle Postfachdaten für 365 Tage einfrieren. User kann Mails löschen aber sie bleiben in Recoverable Items.",
+    "tags": [
+      "exchange",
+      "exo",
+      "compliance",
+      "caution"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-compliance-search",
+    "name": "Compliance Search erstellen",
+    "cmd": "New-ComplianceSearch -Name 'Suche-Name' -ExchangeLocation 'user@domain.de' -ContentMatchQuery 'kind:email'\nStart-ComplianceSearch -Identity 'Suche-Name'",
+    "desc": "Inhaltssuche im Postfach anlegen und starten. Benötigt Connect-IPPSSession.",
+    "tags": [
+      "exchange",
+      "exo",
+      "compliance",
+      "caution"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-groups-get",
+    "name": "Verteilergruppe anzeigen",
+    "cmd": "Get-DistributionGroup -Identity 'gruppe@domain.de' | Select Name, PrimarySmtpAddress, ManagedBy",
+    "desc": "Infos zur Verteilergruppe. ManagedBy = wer darf Mitglieder verwalten.",
+    "tags": [
+      "exchange",
+      "exo",
+      "groups",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-groups-members",
+    "name": "Mitglieder anzeigen",
+    "cmd": "Get-DistributionGroupMember -Identity 'gruppe@domain.de' | Select Name, PrimarySmtpAddress, RecipientType",
+    "desc": "Alle Mitglieder einer Verteilergruppe.",
+    "tags": [
+      "exchange",
+      "exo",
+      "groups",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-groups-add",
+    "name": "Mitglied hinzufügen",
+    "cmd": "Add-DistributionGroupMember -Identity 'gruppe@domain.de' -Member 'user@domain.de'",
+    "desc": "User zu Verteilergruppe hinzufügen. Funktioniert für Distribution Groups und Mail-enabled Security Groups.",
+    "tags": [
+      "exchange",
+      "exo",
+      "groups"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-groups-external",
+    "name": "Externe Absender erlauben",
+    "cmd": "Set-DistributionGroup -Identity 'gruppe@domain.de' -RequireSenderAuthenticationEnabled $false",
+    "desc": "Verteilergruppe erlaubt externe Absender. Standard ist True (nur interne).",
+    "tags": [
+      "exchange",
+      "exo",
+      "groups"
+    ],
+    "product": "exo"
+  }
+]
