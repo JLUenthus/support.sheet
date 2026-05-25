@@ -9,6 +9,7 @@
     { id:'scripts',  href:'scripts.html',  label:'PS Scripts',   icon:'💚', color:'#4ade80', desc:'Fertige .ps1 Skripte' },
     { id:'eventlog', href:'eventlog.html', label:'Log Analyzer', icon:'📋', color:'#e8b339', desc:'Event Logs analysieren' },
     { id:'mitmachen',href:'mitmachen.html',label:'Mitmachen',    icon:'🤝', color:'#a78bfa', desc:'Ideen & Befehle einreichen' },
+    { id:'tools',     href:'tools.html',     label:'support.tools', icon:'⚙️',  color:'#94a3b8', desc:'App installieren · Offline · Einstellungen', tools:true },
   ];
 
   const currentFile = location.pathname.split('/').pop() || 'index.html';
@@ -63,6 +64,9 @@
     .as-tab:hover { color:#e0e4f0; }
     .as-tab.active { color:var(--as-tab-color,#7c8cf8); border-bottom-color:var(--as-tab-color,#7c8cf8); }
     .as-tab-icon { font-size:14px; }
+    .as-tab--tools { color:var(--dim,#555a70); font-size:.72rem; }
+    .as-tab--tools.active { color:#94a3b8; border-bottom-color:#94a3b8; }
+    .as-tab--tools:hover  { color:var(--text,#e0e4f0); }
 
     /* Update bar */
     .as-update-bar {
@@ -168,8 +172,14 @@
     tabBar.className = 'as-tab-bar';
     tabBar.setAttribute('aria-label', 'Seitennavigation');
     PAGES.forEach(p => {
+      // Spacer pushes tools tab to the right edge
+      if (p.tools) {
+        const spacer = document.createElement('div');
+        spacer.style.cssText = 'flex:1';
+        tabBar.appendChild(spacer);
+      }
       const a = document.createElement('a');
-      a.className = 'as-tab' + (p.id === currentId ? ' active' : '');
+      a.className = 'as-tab' + (p.id === currentId ? ' active' : '') + (p.tools ? ' as-tab--tools' : '');
       a.href = p.href;
       a.style.setProperty('--as-tab-color', p.color);
       a.innerHTML = `<span class="as-tab-icon">${p.icon}</span>${p.label}`;
