@@ -25,6 +25,30 @@
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
+/* ── Clear Button ────────────────────────────────────────── */
+.search-clear {
+  position: absolute;
+  right: 68px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,.08);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: .7rem;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: all .15s;
+}
+
+.search-clear:hover { color: var(--text); background: rgba(255,255,255,.14); }
+
 /* ── Shortcut Chip Visibility ────────────────────────────── */
 .header-search #search-input:focus ~ .search-shortcut,
 .header-search #search-input:not(:placeholder-shown) ~ .search-shortcut {
