@@ -23,7 +23,22 @@ const CATEGORY_MAP = {
   'exchange':         { label: 'Exchange',          dot: '#e8b339', icon: '📧'  },
   'on-premises':      { label: 'On-Premises',       dot: '#e8b339', icon: '🏢'  },
   'exo':              { label: 'Exchange Online',   dot: '#2dd4bf', icon: '☁️'  },
-  // Fortinet
+  // Exchange On-Prem
+  'connect':    { label: 'Verbinden',         dot: '#7c8cf8', icon: '🔌' },
+  'mailbox':    { label: 'Postfächer',         dot: '#e8b339', icon: '📬' },
+  'tracking':   { label: 'Message Tracking',   dot: '#2dd4bf', icon: '🔍' },
+  'permissions':{ label: 'Berechtigungen',     dot: '#f472b6', icon: '🔑' },
+  'migration':  { label: 'Migration',          dot: '#fb7124', icon: '📦' },
+  'compliance': { label: 'Compliance',         dot: '#f87171', icon: '🛡️' },
+  'groups':     { label: 'Verteilergruppen',   dot: '#4ade80', icon: '👥' },
+  // Fortinet subcategories
+  'basics':  { label: 'Grundbefehle',   dot: '#fb7124', icon: '⚡' },
+  'policy':  { label: 'Policies',        dot: '#f87171', icon: '📋' },
+  'vpn':     { label: 'VPN',             dot: '#a78bfa', icon: '🔒' },
+  'diag':    { label: 'Diagnose',        dot: '#fbbf24', icon: '🔍' },
+  'log':     { label: 'Logging',         dot: '#4ade80', icon: '📜' },
+  'user':    { label: 'Benutzer & Auth', dot: '#2dd4bf', icon: '👤' },
+  // Fortinet products
   'fortigate':        { label: 'FortiGate',         dot: '#fb7124', icon: '🔥'  },
   'fortimanager':     { label: 'FortiManager',      dot: '#f87171', icon: '🖥️'  },
   'fortianalyzer':    { label: 'FortiAnalyzer',     dot: '#a78bfa', icon: '📊'  },
