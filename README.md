@@ -1,224 +1,139 @@
 # support.sheet
 
-Weiterentwicklung meines IT-Admin Cheatsheets für Troubleshooting, Scripts, Eventlog-Analyse und tägliche Support-Aufgaben.
+Interaktives Nachschlagewerk für IT-Admins und MSP-Techniker.  
+Befehle suchen, filtern, per Klick kopieren – komplett im Browser, kein Backend, kein Login.
 
-support.sheet ist eine modulare Web-App für den IT-Alltag.  
-Entstanden aus persönlichen OneNote-Notizen und typischen Support-Workflows im MSP-Umfeld.
+🔗 **[→ https://jluenthus.github.io/support.sheet](https://jluenthus.github.io/support.sheet)**
 
-Der Fokus liegt auf:
-- schneller Fehlersuche
-- wiederverwendbaren Befehlen
-- strukturiertem Troubleshooting
-- Eventlog-Analyse
-- Offline-Nutzung
-- einfacher Erweiterbarkeit
+---
+
+## Was ist drin?
+
+| Seite | Inhalt | Commands |
+|-------|--------|----------|
+| [Windows](index.html) | CMD, PowerShell, MSC-Konsolen, AD, Event Logs, Drucker | 127 |
+| [Exchange](exchange.html) | On-Premises 2016/2019 & Exchange Online | 45 |
+| [Fortinet](forti.html) | FortiGate, FortiManager, FortiAnalyzer CLI | 78 |
+| [PS Scripts](scripts.html) | Fertige .ps1 Skripte zum Download | 7 |
+| [Log Analyzer](eventlog.html) | Event Log JSON hochladen → automatische Analyse | – |
+| [Mitmachen](mitmachen.html) | Commands einreichen, Feedback geben | – |
+| [support.tools](tools.html) | Einstellungen, Backup/Restore, PWA, Cache | – |
 
 ---
 
 ## Features
 
-- Fuzzy Search mit Fuse.js
-- Favoriten-System
-- Recently Used Commands
-- One-Click Copy
-- Variable Commands
-- Offline nutzbar als PWA
-- Eventlog-Analyse
-- JSON-basierte Datenstruktur
-- Kein Framework notwendig
+- **Suche** – Fuzzy-Suche über alle Commands (Ctrl+K)
+- **Kategorie-Filter** – Filter-Bar mit einem Klick
+- **Favoriten** – Stern klicken, bleibt gespeichert
+- **Zuletzt verwendet** – automatisch als Filter-Tag verfügbar
+- **Variable Commands** – `{domain}`, `{server}`, `{username}` werden per Dialog ersetzt
+- **Einstellungen** – Default-Werte einmalig speichern, werden automatisch vorbelegt
+- **Backup/Restore** – Favoriten und Einstellungen als JSON exportieren/importieren
+- **PWA** – als App installierbar, funktioniert offline
+- **Event Log Analyzer** – Collector-Script ausführen, JSON hochladen, Fehlermuster werden automatisch erkannt
 
 ---
 
-## Tech Stack
+## Lokal starten
 
-| Bereich | Technologie |
-|---|---|
-| Frontend | Vanilla JavaScript |
-| Suche | Fuse.js |
-| Storage | localStorage |
-| Offline Support | Service Worker / PWA |
-| Rendering | HTML Templates |
-| Datenstruktur | JSON |
+Kein Build-System, kein npm. Nur ein lokaler Webserver:
 
----
-
-## Projektstruktur
-
-```text
-/css
-  main.css
-  toast.css
-  variables.css
-  recent.css
-  favorites.css
-  search.css
-
-/js
-  loader.js
-  render.js
-  toast.js
-  variables.js
-  recent.js
-  favorites.js
-  search.js
-
-commands.json
-sw.js
-manifest.json
-index.html
+```bash
+python -m http.server 8080
 ```
 
----
+Dann im Browser: `http://localhost:8080`
 
-## Suche
-
-Die Suche basiert auf Fuse.js und unterstützt:
-- Tippfehler-Toleranz
-- Live-Suche
-- Suche über:
-  - Commands
-  - Beschreibungen
-  - Tags
+> Ein Webserver ist nötig weil die JSON-Dateien per `fetch()` geladen werden – `file://` blockiert das.
 
 ---
 
-## Favoriten
+## Commands ergänzen
 
-Commands können als Favoriten gespeichert werden.
+Alle Commands liegen in `/data/*.json`. Einfach einen Eintrag hinzufügen:
 
-- Speicherung via localStorage
-- Eigene Favoriten-Sektion
-- Schneller Zugriff auf häufig genutzte Befehle
+```json
+{
+  "id": "network-dns-flush",
+  "name": "DNS-Cache leeren",
+  "cmd": "ipconfig /flushdns",
+  "desc": "Lokalen DNS-Cache verwerfen. Nötig nach DNS-Änderungen.",
+  "tags": ["network", "windows", "quick"]
+}
+```
 
----
+| Datei | Inhalt |
+|-------|--------|
+| `data/commands.json` | Windows-Commands |
+| `data/exchange-commands.json` | Exchange-Commands |
+| `data/forti-commands.json` | Fortinet-Commands |
+| `data/eventlog-rules.json` | Log Analyzer Erkennungsregeln |
 
-## Recently Used
-
-Zuletzt verwendete Commands werden automatisch gespeichert:
-- maximal 5 Einträge
-- keine Duplikate
-- neueste oben
+Mehr dazu in [docs/adding-commands.md](docs/adding-commands.md).
 
 ---
 
 ## Variable Commands
 
-Commands mit Variablen werden dynamisch ausgefüllt.
-
-Beispiel:
-
-```powershell
-net user {username} /add
-```
-
-Beim Kopieren erscheint ein kleines Modal zur Eingabe der Werte.
-
----
-
-## Progressive Web App (PWA)
-
-support.sheet kann offline genutzt und installiert werden.
-
-Features:
-- Offline verfügbar
-- Service Worker Cache
-- Installierbar unter Chrome/Edge
-- Optimiert für schnelle Nutzung im Support-Alltag
-
----
-
-## Eventlog Analyzer
-
-Der integrierte Eventlog Analyzer erkennt bekannte Windows-Probleme anhand definierter Regeln und gibt passende Lösungsvorschläge aus.
-
-Beispiele:
-- Kernel-Power Abstürze
-- DNS Probleme
-- AD / Netlogon Fehler
-- RDS Lizenzprobleme
-- VSS Fehler
-- RAM / Disk Probleme
-
----
-
-## Commands hinzufügen
-
-Neue Commands werden zentral über `commands.json` verwaltet.
-
-Beispiel:
+Platzhalter in geschweiften Klammern werden beim Kopieren per Dialog ersetzt:
 
 ```json
-{
-  "id": "dns-flush",
-  "name": "DNS Cache leeren",
-  "cmd": "ipconfig /flushdns",
-  "desc": "Leert den lokalen DNS Cache.",
-  "tags": ["network", "troubleshooting", "windows"]
-}
+"cmd": "Unlock-ADAccount -Identity '{username}'"
 ```
 
----
-
-## Security
-
-Fokus auf sichere Frontend-Struktur:
-
-- kein unsicheres innerHTML
-- dynamische Inhalte via textContent
-- JSON Validierung
-- sichere externe Links
-- defensive localStorage Nutzung
+`{domain}`, `{server}` und `{username}` werden automatisch aus den gespeicherten Einstellungen vorbelegt (support.tools).
 
 ---
 
-## Deployment
+## Deployen
 
-### GitHub Pages
+Nach jedem Push auf `main` aktualisiert sich GitHub Pages automatisch.
 
-1. Repository erstellen
-2. Dateien hochladen
-3. GitHub Pages aktivieren:
-   - Settings
-   - Pages
-   - Branch: main
-   - Root auswählen
-
-Danach erreichbar unter:
-
-```text
-https://USERNAME.github.io/support-sheet
-```
-
----
-
-## Service Worker Updates
-
-Nach Änderungen an gecachten Dateien:
+Wichtig: nach Änderungen die `CACHE_VERSION` in `sw.js` aktualisieren damit Nutzer mit gecachter Version den Update-Hinweis bekommen:
 
 ```js
-const CACHE_VERSION = '20260524-1200';
+const CACHE_VERSION = '20260526-0900';
 ```
-
-in `sw.js` erhöhen.
-
-Dadurch werden alte Caches automatisch ersetzt.
 
 ---
 
-## Ziel des Projekts
+## Projektstruktur
 
-support.sheet entstand ursprünglich aus persönlichen IT-Notizen und einem OneNote-Cheatsheet.
+```
+support.sheet/
+├── index.html / exchange.html / forti.html / scripts.html
+├── eventlog.html / mitmachen.html / tools.html
+├── nav.js              ← Navigation (alle Seiten)
+├── sw.js               ← Service Worker (Offline-Cache)
+├── css/                ← Styles
+├── js/                 ← Feature-Module
+│   ├── settings-store.js   ← getSettings() – geteilt
+│   ├── loader.js / render.js / search.js
+│   ├── variables.js / favorites.js / recent.js
+│   ├── toast.js / tools.js
+├── data/               ← Commands als JSON
+├── powershell/         ← .ps1 Skripte
+└── docs/               ← Projektdokumentation
+```
 
-Das Ziel:
-- häufige Support-Aufgaben schneller lösen
-- Wissen zentral bündeln
-- Troubleshooting vereinfachen
-- wiederkehrende Abläufe standardisieren
+Ausführlichere Dokumentation: [docs/](docs/)
+
+---
+
+## localStorage
+
+| Key | Inhalt |
+|-----|--------|
+| `adminsheet_favorites` | Gespeicherte Favoriten |
+| `adminsheet_recent_commands` | Zuletzt verwendete Commands |
+| `supportsheet_settings` | Einstellungen (Domain, Server, Username) |
+
+Alle Daten bleiben lokal auf dem Gerät. Kein Backend, kein Cloud-Sync.
 
 ---
 
 ## Lizenz
 
-Frei nutzbar für private und interne Zwecke.
-
-Keine Gewähr für die Korrektheit der Inhalte – Befehle und Scripts immer zuerst in einer Testumgebung prüfen.
+Frei verwendbar für private und kommerzielle Zwecke.  
+Kein Gewähr für die Korrektheit der Befehle – immer in einer Testumgebung prüfen.
