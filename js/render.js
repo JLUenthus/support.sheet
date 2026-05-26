@@ -231,12 +231,118 @@ function applyFilter() {
 
 function applyRecentFilter() {
   if (typeof getRecent !== 'function') return;
-  const recentIds = getRecent().map(r => r.id);
-  // Commands aus _allCommands die in Recent vorkommen – in Recent-Reihenfolge
-  const recentCmds = recentIds
-    .map(id => _allCommands.find(c => c.id === id))
-    .filter(Boolean);
-  renderCommandGroups(recentCmds);
+  const recentEntries = getRecent();
+
+  // Page-Farben für dezenten Akzent
+  const PAGE_COLORS = {
+    'index':    '#7c8cf8',
+    'exchange': '#e8b339',
+    'forti':    '#fb7124',
+    'scripts':  '#4ade80',
+    'eventlog': '#e8b339',
+    'mitmachen':'#a78bfa',
+  };
+
+  // Commands aufbauen: aus _allCommands wenn vorhanden, sonst aus Entry-Daten
+  const recentCmds = recentEntries.map(entry => {
+    const found = _allCommands.find(c => c.id === entry.id);
+    if (found) return { ...found, _recentPage: entry.page };
+    // Nicht auf dieser Seite → aus Entry rekonstruieren
+    return {
+      id:    entry.id,
+      name:  entry.name,
+      cmd:   entry.cmd || entry.resolved,
+      desc:  entry.desc || '',
+      tags:  entry.tags || [],
+      _recentPage: entry.page,   // Herkunfts-Seite
+    };
+  });
+
+  // Rendern – mit Page-Info für Farbgebung
+  renderCommandGroupsRecent(recentCmds, PAGE_COLORS);
+}
+
+// Spezielles Render für Recent: flach, mit Page-Badge je Card
+function renderCommandGroupsRecent(commands, pageColors) {
+  const container = document.getElementById('commands-container');
+  if (!container) return;
+  const template = document.getElementById('command-template');
+  if (!template) return;
+
+  const section = document.createElement('div');
+  section.className = 'cmd-section';
+
+  // Section header
+  const header = document.createElement('div');
+  header.className = 'section-header';
+  const iconEl  = document.createElement('div');
+  iconEl.className = 'section-icon';
+  iconEl.style.cssText = 'background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.35)';
+  iconEl.textContent = '🕐';
+  const labelEl = document.createElement('span'); labelEl.className = 'section-label'; labelEl.textContent = 'Zuletzt verwendet';
+  const countEl = document.createElement('span'); countEl.className = 'section-count'; countEl.textContent = commands.length;
+  header.appendChild(iconEl); header.appendChild(labelEl); header.appendChild(countEl);
+  section.appendChild(header);
+
+  const grid = document.createElement('div');
+  grid.className = 'cmd-grid';
+  const currentPage = (location.pathname.split('/').pop() || 'index.html').replace('.html','');
+
+  commands.forEach(cmd => {
+    const clone        = template.content.cloneNode(true);
+    const nameEl       = clone.querySelector('[data-field="name"]');
+    const descEl       = clone.querySelector('[data-field="desc"]');
+    const cmdEl        = clone.querySelector('[data-field="cmd"]');
+    const tagContainer = clone.querySelector('[data-field="tags"]');
+    const copyBtn      = clone.querySelector('[data-action="copy"]');
+    const starBtn      = clone.querySelector('[data-action="star"]');
+    const card         = clone.querySelector('.command-card');
+
+    if (card) {
+      card.dataset.cmdId = cmd.id;
+      const pageColor = (pageColors?.[cmd._recentPage]) || '#7c8cf8';
+      card.style.setProperty('--recent-page-color', pageColor);
+      card.classList.add('recent-page-card');
+
+      // Page-Badge wenn Command von anderer Seite
+      if (cmd._recentPage && cmd._recentPage !== currentPage) {
+        const badge = document.createElement('span');
+        badge.className = 'recent-page-badge';
+        badge.textContent = cmd._recentPage;
+        badge.style.cssText = `background:${pageColor}22;color:${pageColor};border-color:${pageColor}55`;
+        card.appendChild(badge);
+      }
+    }
+
+    nameEl.textContent = cmd.name;
+    descEl.textContent = cmd.desc;
+    cmdEl.textContent  = cmd.cmd;
+
+    (Array.isArray(cmd.tags) ? cmd.tags : []).forEach(tag => {
+      const span = document.createElement('span');
+      span.className = 'tag'; span.textContent = tag;
+      tagContainer.appendChild(span);
+    });
+
+    copyBtn.addEventListener('click', () => copyWithVariables(cmd, copyBtn));
+
+    if (starBtn && typeof isFavorite === 'function') {
+      updateStarBtn(starBtn, isFavorite(cmd));
+      starBtn.addEventListener('click', () => {
+        const isNow = toggleFavorite(cmd);
+        updateStarBtn(starBtn, isNow);
+        if (typeof renderFavorites === 'function') renderFavorites(_allCommands);
+      });
+    }
+
+    grid.appendChild(clone);
+  });
+
+  section.appendChild(grid);
+  const frag = document.createDocumentFragment();
+  frag.appendChild(section);
+  container.replaceChildren(frag);
+  if (typeof updateCommandCount === 'function') updateCommandCount(commands.length);
 }
 
 

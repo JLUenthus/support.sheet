@@ -45,15 +45,20 @@ function saveRecent(list) {
  */
 function addRecent(command, resolvedCommand) {
   const list = getRecent();
-
-  // Duplikat entfernen – selbe id raus egal wo sie steht
   const filtered = list.filter(entry => entry.id !== command.id);
 
-  // Neuen Eintrag oben einfügen
+  // Aktuelle Seite ermitteln
+  const pageFile = location.pathname.split('/').pop() || 'index.html';
+  const pageId   = pageFile.replace('.html', '');
+
   const entry = {
     id:       command.id,
     name:     command.name,
-    resolved: resolvedCommand,
+    cmd:      command.cmd || resolvedCommand, // Original-Template (mit {variablen})
+    resolved: resolvedCommand,                // Fertiger Command
+    tags:     Array.isArray(command.tags) ? command.tags : [],
+    desc:     command.desc || '',
+    page:     pageId,                         // Herkunfts-Seite
     usedAt:   new Date().toISOString(),
   };
 
