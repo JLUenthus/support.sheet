@@ -30,14 +30,33 @@
     <div class="hero-badge" style="border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.08);color:#4ade80;">💚 PS Script-Bibliothek</div>
     <h1>Fertige Skripte.<br>Direkt einsatzbereit.</h1>
     <p>Geprüfte PowerShell-Skripte für Windows-Administratoren. Beschreibung lesen, Parameter anpassen, herunterladen.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-num" id="stat-scripts">7</span>
+        <span class="hero-stat-label">Skripte</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num" id="stat-cats">–</span>
+        <span class="hero-stat-label">Kategorien</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">PS 5.1+</span>
+        <span class="hero-stat-label">kompatibel</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">Win 10/11</span>
+        <span class="hero-stat-label">Server 2019/22</span>
+      </div>
+    </div>
   </div>
 
   <!-- ── MAIN ────────────────────────────────────────────── -->
   <main>
+    <div id="scripts-filter-bar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;"></div>
     <div class="scripts-grid" id="scripts-container">
 
       <!-- Get-SystemInventory -->
-      <div class="script-card">
+      <div class="script-card" data-category="inventory">
         <div class="script-header">
           <div class="script-icon">📋</div>
           <div>
@@ -54,7 +73,7 @@
       </div>
 
       <!-- Get-LocalAdmins -->
-      <div class="script-card">
+      <div class="script-card" data-category="security">
         <div class="script-header">
           <div class="script-icon">👤</div>
           <div>
@@ -71,7 +90,7 @@
       </div>
 
       <!-- Test-NetworkConnectivity -->
-      <div class="script-card">
+      <div class="script-card" data-category="network">
         <div class="script-header">
           <div class="script-icon">🌐</div>
           <div>
@@ -88,7 +107,7 @@
       </div>
 
       <!-- Get-InstalledSoftware -->
-      <div class="script-card">
+      <div class="script-card" data-category="inventory">
         <div class="script-header">
           <div class="script-icon">📦</div>
           <div>
@@ -105,7 +124,7 @@
       </div>
 
       <!-- Set-PowerPlan-Win11 -->
-      <div class="script-card">
+      <div class="script-card" data-category="system">
         <div class="script-header">
           <div class="script-icon">⚡</div>
           <div>
@@ -122,7 +141,7 @@
       </div>
 
       <!-- Get-EventLogCollector-Client -->
-      <div class="script-card">
+      <div class="script-card" data-category="eventlog">
         <div class="script-header">
           <div class="script-icon">📋</div>
           <div>
@@ -139,7 +158,7 @@
       </div>
 
       <!-- Get-EventLogCollector-Server -->
-      <div class="script-card">
+      <div class="script-card" data-category="eventlog">
         <div class="script-header">
           <div class="script-icon">🖥️</div>
           <div>
@@ -190,6 +209,56 @@
       });
     }
   </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const cards = document.querySelectorAll('.script-card[data-category]');
+      const bar   = document.getElementById('scripts-filter-bar');
+      const catStat = document.getElementById('stat-cats');
+
+      // Collect categories
+      const cats = [...new Set([...cards].map(c => c.dataset.category))].sort();
+      if (catStat) catStat.textContent = cats.length;
+
+      // Category labels
+      const CAT_LABELS = {
+        inventory: '📋 Inventar', security: '🔒 Security',
+        network: '🌐 Netzwerk', system: '⚙️ System', eventlog: '📋 Event Log'
+      };
+
+      // Build filter buttons
+      const makeBtn = (tag, label) => {
+        const btn = document.createElement('button');
+        btn.className   = 'filter-btn' + (tag === 'all' ? ' active' : '');
+        btn.dataset.tag = tag;
+        if (tag !== 'all') {
+          const dot = document.createElement('span');
+          dot.className = 'filter-dot';
+          dot.style.background = '#4ade80';
+          btn.appendChild(dot);
+        }
+        btn.appendChild(document.createTextNode(label));
+        return btn;
+      };
+
+      bar.appendChild(makeBtn('all', 'Alle'));
+      cats.forEach(cat => bar.appendChild(makeBtn(cat, CAT_LABELS[cat] || cat)));
+
+      bar.addEventListener('click', e => {
+        const btn = e.target.closest('.filter-btn');
+        if (!btn) return;
+        bar.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+        const tag = btn.dataset.tag;
+        cards.forEach(card => {
+          card.style.display = (tag === 'all' || card.dataset.category === tag) ? '' : 'none';
+        });
+        // Update count
+        const visible = tag === 'all' ? cards.length
+          : [...cards].filter(c => c.dataset.category === tag).length;
+        document.getElementById('stat-scripts').textContent = visible;
+      });
+    });
+  </script>
+
   <script src="nav.js"></script>
 </body>
 </html>
