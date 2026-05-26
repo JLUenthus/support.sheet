@@ -89,12 +89,15 @@ function _updateResultCount(count, isAll) {
  * Wird von render.js via initSearchUI() aufgerufen.
  */
 function initSearchUI() {
-  const input = document.getElementById('search-input');
-  if (!input) return; // kein Input im DOM → nichts tun
+  const input    = document.getElementById('search-input');
+  if (!input) return;
 
-  // Debounced Input-Handler
+  const clearBtn = document.getElementById('search-clear');
+
+  // Debounced Input-Handler + Clear-Button Sichtbarkeit
   input.addEventListener('input', e => {
     clearTimeout(_searchTimeout);
+    if (clearBtn) clearBtn.hidden = !e.target.value;
     _searchTimeout = setTimeout(() => runSearch(e.target.value), 150);
   });
 
@@ -102,16 +105,26 @@ function initSearchUI() {
   input.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     input.value = '';
-    input.dispatchEvent(new Event('input')); // runSearch('')
+    if (clearBtn) clearBtn.hidden = true;
+    input.dispatchEvent(new Event('input'));
     input.blur();
   });
+
+  // Clear-Button klick
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      clearBtn.hidden = true;
+      input.dispatchEvent(new Event('input'));
+      input.focus();
+    });
+  }
 
   // Treffer-Count unter dem Header einfügen falls noch nicht vorhanden
   if (!document.getElementById('search-result-count')) {
     const count  = document.createElement('div');
     count.id     = 'search-result-count';
     count.hidden = true;
-    // Nach dem Header einfügen, vor dem Hero
     const header = document.querySelector('header');
     if (header) header.insertAdjacentElement('afterend', count);
   }
