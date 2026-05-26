@@ -1,7 +1,7 @@
 // ============================================================
 // support.sheet – Service Worker v2
 // ============================================================
-const CACHE_VERSION = '20260526-1128';
+const CACHE_VERSION = '20260526-1159';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -25,6 +25,7 @@ const ASSETS = [
   './css/recent.css',
   './css/favorites.css',
   './css/search.css',
+  './css/tools.css',
   './js/loader.js',
   './js/toast.js',
   './js/variables.js',
@@ -32,6 +33,8 @@ const ASSETS = [
   './js/favorites.js',
   './js/search.js',
   './js/render.js',
+  './js/settings-store.js',
+  './js/tools.js',
   './powershell/Get-SystemInventory.ps1',
   './powershell/Get-LocalAdmins.ps1',
   './powershell/Test-NetworkConnectivity.ps1',

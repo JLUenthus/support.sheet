@@ -5,15 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0f1117">
   <link rel="manifest" href="manifest.json">
-  <title>support.tools – App & Offline</title>
-
+  <title>support.tools – Einstellungen & Backup</title>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/tools.css">
 </head>
 <body>
 
-  <!-- ── HEADER ──────────────────────────────────────────── -->
   <header>
     <a href="index.html" class="logo">
       <div class="logo-icon">⚙️</div>
@@ -24,315 +23,347 @@
     </div>
   </header>
 
-  <!-- ── HERO ────────────────────────────────────────────── -->
   <div class="hero">
     <div class="hero-badge" style="border-color:rgba(148,163,184,.3);background:rgba(148,163,184,.08);color:#94a3b8;">⚙️ support.tools</div>
-    <h1>App installieren.<br>Offline nutzen.</h1>
-    <p>support.sheet als App auf dem Gerät installieren, offline nutzen oder als ZIP-Archiv herunterladen.</p>
+    <h1>Einstellungen.<br>Backup. Offline.</h1>
+    <p>Lokale Einstellungen verwalten, Daten sichern und die App installieren. Alles bleibt auf deinem Gerät.</p>
   </div>
 
   <main>
 
-    <!-- ── APP INSTALLIEREN ──────────────────────────────── -->
+    <!-- ── 1. LOKALE EINSTELLUNGEN ───────────────────────── -->
+    <section class="tools-section">
+      <h2 class="section-title">⚙️ Lokale Einstellungen</h2>
+      <div class="tools-card">
+        <p class="tools-intro">
+          Häufig verwendete Werte speichern – werden automatisch in Variablen-Felder
+          eingetragen wenn ein Befehl <code>{domain}</code>, <code>{server}</code>
+          oder <code>{username}</code> enthält. Jederzeit überschreibbar.
+        </p>
+
+        <div class="settings-grid">
+          <div class="settings-field">
+            <label class="settings-label" for="setting-domain">Default Domain</label>
+            <input class="settings-input" id="setting-domain" type="text"
+                   placeholder="z.B. firma.local" autocomplete="off" spellcheck="false">
+            <span class="settings-hint">Wird in {domain} Felder eingetragen</span>
+          </div>
+          <div class="settings-field">
+            <label class="settings-label" for="setting-server">Default Server</label>
+            <input class="settings-input" id="setting-server" type="text"
+                   placeholder="z.B. SRV01" autocomplete="off" spellcheck="false">
+            <span class="settings-hint">Wird in {server} Felder eingetragen</span>
+          </div>
+          <div class="settings-field">
+            <label class="settings-label" for="setting-username">Default Username</label>
+            <input class="settings-input" id="setting-username" type="text"
+                   placeholder="z.B. max.muster" autocomplete="off" spellcheck="false">
+            <span class="settings-hint">Wird in {username} Felder eingetragen</span>
+          </div>
+          <div class="settings-field">
+            <label class="settings-label" for="setting-tags">Bevorzugte Tags</label>
+            <input class="settings-input" id="setting-tags" type="text"
+                   placeholder="z.B. admin, powershell, network" autocomplete="off">
+            <span class="settings-hint">Kommagetrennt – für spätere Filter-Vorauswahl</span>
+          </div>
+        </div>
+
+        <div class="settings-saved-row">
+          Zuletzt gespeichert: <span id="settings-saved-at">–</span>
+        </div>
+
+        <div class="tools-btn-row">
+          <button class="tools-btn tools-btn--primary" id="settings-save-btn">💾 Speichern</button>
+          <button class="tools-btn" id="settings-reset-btn">↺ Zurücksetzen</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 2. LOKALE DATEN ───────────────────────────────── -->
+    <section class="tools-section">
+      <h2 class="section-title">📊 Lokale Daten</h2>
+      <div class="tools-card">
+        <div class="overview-grid">
+          <div class="overview-item">
+            <div class="overview-label">⭐ Favoriten</div>
+            <div class="overview-value" id="overview-favorites">–</div>
+          </div>
+          <div class="overview-item">
+            <div class="overview-label">🕐 Zuletzt verwendet</div>
+            <div class="overview-value" id="overview-recent">–</div>
+          </div>
+          <div class="overview-item">
+            <div class="overview-label">⚙️ Einstellungen</div>
+            <div class="overview-value" id="overview-settings">–</div>
+          </div>
+          <div class="overview-item">
+            <div class="overview-label">📲 PWA</div>
+            <div class="overview-value" id="overview-pwa">–</div>
+          </div>
+          <div class="overview-item">
+            <div class="overview-label">🔄 Service Worker</div>
+            <div class="overview-value" id="overview-sw">–</div>
+          </div>
+          <div class="overview-item">
+            <div class="overview-label">🌐 Verbindung</div>
+            <div class="overview-value" id="overview-online">–</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 3. BACKUP / RESTORE ──────────────────────────── -->
+    <section class="tools-section">
+      <h2 class="section-title">💾 Backup & Restore</h2>
+      <div class="tools-card">
+        <p class="tools-intro">
+          Einstellungen, Favoriten und zuletzt verwendete Commands in eine JSON-Datei
+          exportieren und auf einem anderen Gerät oder nach einem Browser-Reset importieren.
+        </p>
+
+        <div class="backup-row">
+          <button class="tools-btn tools-btn--green" id="export-btn">⬇️ Backup exportieren</button>
+          <button class="tools-btn" id="import-btn">⬆️ Backup importieren</button>
+          <input type="file" id="import-file" accept=".json" style="display:none">
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 4. DATEN LÖSCHEN ──────────────────────────────── -->
+    <section class="tools-section">
+      <h2 class="section-title">🗑️ Lokale Daten löschen</h2>
+      <div class="tools-card">
+        <p class="tools-intro">
+          Ausgewählte lokale Daten dauerhaft löschen. Tipp: vorher ein Backup erstellen.
+        </p>
+        <div class="clear-options">
+          <label class="clear-label">
+            <input type="checkbox" class="clear-check" value="settings">
+            Einstellungen (defaultDomain, defaultServer, defaultUsername, Tags)
+          </label>
+          <label class="clear-label">
+            <input type="checkbox" class="clear-check" value="favorites">
+            Favoriten
+          </label>
+          <label class="clear-label">
+            <input type="checkbox" class="clear-check" value="recent">
+            Zuletzt verwendete Commands
+          </label>
+        </div>
+        <div class="tools-btn-row">
+          <button class="tools-btn tools-btn--danger" id="clear-btn">🗑️ Ausgewähltes löschen</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 5. APP INSTALLIEREN ───────────────────────────── -->
     <section class="tools-section">
       <h2 class="section-title">📲 Als App installieren (PWA)</h2>
       <div class="tools-card">
-        <p class="tools-intro">support.sheet kann als Progressive Web App (PWA) auf dem Gerät installiert werden – ohne App Store, direkt aus dem Browser. Funktioniert offline, öffnet wie eine native App.</p>
+        <p class="tools-intro">
+          support.sheet als Progressive Web App installieren – ohne App Store,
+          direkt aus dem Browser. Funktioniert offline, öffnet wie eine native App.
+        </p>
 
         <div class="pwa-platforms">
           <div class="pwa-platform">
             <div class="pwa-icon">🖥️</div>
             <div class="pwa-name">Desktop (Chrome / Edge)</div>
             <div class="pwa-steps">
-              <div class="pwa-step">1. Seite in Chrome oder Edge öffnen</div>
-              <div class="pwa-step">2. Adressleiste → Install-Icon (⊕) klicken</div>
-              <div class="pwa-step">3. „Installieren" bestätigen</div>
+              <div class="pwa-step">1. Adressleiste → Install-Icon (⊕) klicken</div>
+              <div class="pwa-step">2. „Installieren" bestätigen</div>
             </div>
           </div>
           <div class="pwa-platform">
             <div class="pwa-icon">📱</div>
             <div class="pwa-name">Android (Chrome)</div>
             <div class="pwa-steps">
-              <div class="pwa-step">1. Seite in Chrome öffnen</div>
-              <div class="pwa-step">2. Menü (⋮) → „Zum Startbildschirm"</div>
-              <div class="pwa-step">3. Namen bestätigen und hinzufügen</div>
+              <div class="pwa-step">1. Menü (⋮) → „Zum Startbildschirm"</div>
+              <div class="pwa-step">2. Namen bestätigen</div>
             </div>
           </div>
           <div class="pwa-platform">
             <div class="pwa-icon">🍎</div>
             <div class="pwa-name">iPhone / iPad (Safari)</div>
             <div class="pwa-steps">
-              <div class="pwa-step">1. Seite in Safari öffnen</div>
-              <div class="pwa-step">2. Teilen-Symbol → „Zum Home-Bildschirm"</div>
-              <div class="pwa-step">3. Namen bestätigen und hinzufügen</div>
+              <div class="pwa-step">1. Teilen-Symbol → „Zum Home-Bildschirm"</div>
+              <div class="pwa-step">2. Namen bestätigen</div>
             </div>
           </div>
         </div>
 
-        <button class="install-btn" id="install-btn" hidden>
+        <button class="tools-btn tools-btn--primary" id="install-btn" hidden>
           ⊕ Jetzt als App installieren
         </button>
-        <div class="install-status" id="install-status" hidden></div>
+        <div id="install-status" style="font-size:.8rem;color:var(--green)" hidden></div>
       </div>
     </section>
 
-    <!-- ── OFFLINE-CACHE ─────────────────────────────────── -->
+    <!-- ── 6. CACHE / DEBUG ──────────────────────────────── -->
     <section class="tools-section">
-      <h2 class="section-title">📶 Offline-Cache</h2>
+      <h2 class="section-title">🔧 Cache & App-Info</h2>
       <div class="tools-card">
-        <p class="tools-intro">Der Service Worker cached alle Seiten und Daten automatisch. Die App funktioniert vollständig ohne Internetverbindung – solange der Cache aktuell ist.</p>
 
-        <div class="cache-status" id="cache-status">
-          <div class="cache-indicator" id="cache-indicator">
-            <span class="cache-dot" id="cache-dot"></span>
-            <span id="cache-label">Cache wird geprüft…</span>
+        <div class="app-info-grid">
+          <div class="app-info-row">
+            <span class="app-info-label">App-Name</span>
+            <span class="app-info-value">support.sheet</span>
+          </div>
+          <div class="app-info-row">
+            <span class="app-info-label">Cache-Version</span>
+            <span class="app-info-value" id="sw-version">–</span>
+          </div>
+          <div class="app-info-row">
+            <span class="app-info-label">Browser</span>
+            <span class="app-info-value" id="browser-info">–</span>
+          </div>
+          <div class="app-info-row">
+            <span class="app-info-label">PWA-Modus</span>
+            <span class="app-info-value" id="pwa-mode">–</span>
+          </div>
+          <div class="app-info-row">
+            <span class="app-info-label">Service Worker</span>
+            <span class="app-info-value" id="sw-status">–</span>
+          </div>
+          <div class="app-info-row">
+            <span class="app-info-label">Online</span>
+            <span class="app-info-value" id="online-status">–</span>
           </div>
         </div>
 
-        <div class="cache-actions">
-          <button class="cache-btn" id="cache-refresh-btn">↻ Cache aktualisieren</button>
-          <button class="cache-btn cache-btn--danger" id="cache-clear-btn">🗑 Cache leeren</button>
+        <div class="tools-btn-row" style="margin-top:4px">
+          <button class="tools-btn" id="cache-refresh-btn">↻ Cache prüfen</button>
+          <button class="tools-btn tools-btn--danger" id="cache-clear-btn">🗑 Cache leeren</button>
         </div>
-        <p class="cache-hint" id="cache-hint"></p>
+        <p style="font-size:.72rem;color:var(--dim);margin-top:4px" id="cache-hint"></p>
+
       </div>
     </section>
 
-    <!-- ── ZIP DOWNLOAD ──────────────────────────────────── -->
+    <!-- ── 7. ZIP DOWNLOAD ───────────────────────────────── -->
     <section class="tools-section">
       <h2 class="section-title">📦 Als ZIP herunterladen</h2>
       <div class="tools-card">
-        <p class="tools-intro">Die komplette support.sheet App als ZIP-Archiv herunterladen und lokal auf einem eigenen Webserver oder intern hosten.</p>
-
-        <div class="zip-info">
-          <div class="zip-info-row"><span class="zip-label">Inhalt</span><span class="zip-value">HTML, CSS, JS, JSON, PS1-Skripte</span></div>
-          <div class="zip-info-row"><span class="zip-label">Webserver</span><span class="zip-value">Kein Backend nötig – reine statische Dateien</span></div>
-          <div class="zip-info-row"><span class="zip-label">Hosting</span><span class="zip-value">GitHub Pages, IIS, nginx, Apache – alles möglich</span></div>
+        <p class="tools-intro">
+          Die komplette support.sheet App als ZIP-Archiv für lokales Hosting oder
+          interne Bereitstellung.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
+          <div style="display:flex;gap:12px;font-size:.8rem;">
+            <span style="color:var(--dim);min-width:90px;font-weight:700;text-transform:uppercase;font-size:.68rem;letter-spacing:.05em;">Inhalt</span>
+            <span style="color:var(--muted);">HTML, CSS, JS, JSON, PS1-Skripte</span>
+          </div>
+          <div style="display:flex;gap:12px;font-size:.8rem;">
+            <span style="color:var(--dim);min-width:90px;font-weight:700;text-transform:uppercase;font-size:.68rem;letter-spacing:.05em;">Webserver</span>
+            <span style="color:var(--muted);">Kein Backend – reine statische Dateien</span>
+          </div>
         </div>
-
-        <a href="https://github.com/jluenthus/Cheatsheet/archive/refs/heads/main.zip"
-           class="zip-dl-btn" target="_blank" rel="noopener noreferrer">
+        <a href="https://github.com/jluenthus/support.sheet/archive/refs/heads/main.zip"
+           class="tools-btn tools-btn--green" target="_blank" rel="noopener noreferrer"
+           style="text-decoration:none;width:fit-content">
           ⬇️ ZIP von GitHub herunterladen
         </a>
       </div>
     </section>
 
-    <!-- ── APP INFO ───────────────────────────────────────── -->
-    <section class="tools-section">
-      <h2 class="section-title">ℹ️ App-Informationen</h2>
-      <div class="tools-card">
-        <div class="app-info-grid" id="app-info-grid">
-          <div class="app-info-row"><span class="app-info-label">App-Name</span><span class="app-info-value">support.sheet</span></div>
-          <div class="app-info-row"><span class="app-info-label">SW-Version</span><span class="app-info-value" id="sw-version">–</span></div>
-          <div class="app-info-row"><span class="app-info-label">Browser</span><span class="app-info-value" id="browser-info">–</span></div>
-          <div class="app-info-row"><span class="app-info-label">PWA-Modus</span><span class="app-info-value" id="pwa-mode">–</span></div>
-          <div class="app-info-row"><span class="app-info-label">Service Worker</span><span class="app-info-value" id="sw-status">–</span></div>
-          <div class="app-info-row"><span class="app-info-label">Online</span><span class="app-info-value" id="online-status">–</span></div>
-        </div>
-      </div>
-    </section>
-
   </main>
 
-  <!-- ── FOOTER ──────────────────────────────────────────── -->
   <footer>
     <div class="footer-links">
-      <a href="index.html"     class="footer-mitmachen">⚡ Windows</a>
-      <a href="exchange.html"  class="footer-mitmachen footer-mitmachen--amber">📧 Exchange</a>
-      <a href="forti.html"     class="footer-mitmachen footer-mitmachen--orange">🔥 Fortinet</a>
-      <a href="scripts.html"   class="footer-mitmachen footer-mitmachen--green">💚 PS Scripts</a>
+      <a href="index.html"    class="footer-mitmachen">⚡ Windows</a>
+      <a href="exchange.html" class="footer-mitmachen footer-mitmachen--amber">📧 Exchange</a>
+      <a href="forti.html"    class="footer-mitmachen footer-mitmachen--orange">🔥 Fortinet</a>
+      <a href="scripts.html"  class="footer-mitmachen footer-mitmachen--green">💚 PS Scripts</a>
       <a href="mitmachen.html" class="footer-mitmachen">🤝 Mitmachen</a>
     </div>
-    <p class="footer-copy">support.sheet · <span>support.tools</span></p>
+    <p class="footer-copy">support.sheet · <span>support.tools · Daten bleiben lokal</span></p>
   </footer>
 
-  <!-- ── STYLES ─────────────────────────────────────────── -->
-  <style>
-    .tools-section  { margin-bottom: 36px; }
-    .tools-card     { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 22px; display: flex; flex-direction: column; gap: 18px; }
-    .tools-intro    { color: var(--muted); font-size: .86rem; line-height: 1.55; }
+  <!-- toast.js für showToolsToast-Fallback -->
+  <script src="js/toast.js"></script>
+  <script src="js/tools.js"></script>
 
-    /* PWA platforms */
-    .pwa-platforms  { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-    .pwa-platform   { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; display: flex; flex-direction: column; gap: 8px; }
-    .pwa-icon       { font-size: 1.5rem; }
-    .pwa-name       { font-size: .82rem; font-weight: 700; color: var(--text); }
-    .pwa-steps      { display: flex; flex-direction: column; gap: 4px; }
-    .pwa-step       { font-size: .75rem; color: var(--muted); padding: 3px 0; border-bottom: 1px solid var(--border); }
-    .pwa-step:last-child { border-bottom: none; }
-
-    .install-btn {
-      padding: 10px 22px; border-radius: 9px; align-self: flex-start;
-      border: 1px solid rgba(124,140,248,.4); background: rgba(124,140,248,.1);
-      color: var(--accent); font-family: var(--font-ui); font-size: .85rem; font-weight: 700;
-      cursor: pointer; transition: all .15s;
-    }
-    .install-btn:hover { background: rgba(124,140,248,.2); }
-    .install-status    { font-size: .8rem; color: var(--green); }
-
-    /* Cache */
-    .cache-indicator { display: flex; align-items: center; gap: 10px; font-size: .85rem; color: var(--text); }
-    .cache-dot       { width: 10px; height: 10px; border-radius: 50%; background: var(--dim); flex-shrink: 0; transition: background .3s; }
-    .cache-dot.active { background: var(--green); box-shadow: 0 0 6px rgba(74,222,128,.5); }
-    .cache-dot.warn   { background: var(--amber); }
-    .cache-dot.off    { background: var(--red); }
-    .cache-actions    { display: flex; gap: 10px; flex-wrap: wrap; }
-    .cache-btn {
-      padding: 8px 18px; border-radius: 8px; font-family: var(--font-ui); font-size: .8rem; font-weight: 600;
-      cursor: pointer; transition: all .15s;
-      border: 1px solid var(--border2); background: var(--panel2); color: var(--muted);
-    }
-    .cache-btn:hover            { color: var(--text); border-color: var(--accent); }
-    .cache-btn--danger          { border-color: rgba(248,113,113,.3); color: var(--red); background: rgba(248,113,113,.06); }
-    .cache-btn--danger:hover    { background: rgba(248,113,113,.15); }
-    .cache-hint                 { font-size: .72rem; color: var(--dim); min-height: 1em; }
-
-    /* ZIP */
-    .zip-info        { display: flex; flex-direction: column; gap: 8px; }
-    .zip-info-row    { display: flex; gap: 12px; align-items: baseline; }
-    .zip-label       { font-size: .72rem; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: .05em; flex-shrink: 0; min-width: 90px; }
-    .zip-value       { font-size: .82rem; color: var(--muted); }
-    .zip-dl-btn {
-      display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
-      padding: 10px 22px; border-radius: 9px; font-size: .85rem; font-weight: 700;
-      text-decoration: none; transition: all .15s;
-      border: 1px solid rgba(74,222,128,.4); background: rgba(74,222,128,.08); color: var(--green);
-    }
-    .zip-dl-btn:hover { background: rgba(74,222,128,.18); }
-
-    /* App info */
-    .app-info-grid   { display: flex; flex-direction: column; gap: 0; }
-    .app-info-row    { display: flex; gap: 16px; padding: 8px 0; border-bottom: 1px solid var(--border); align-items: baseline; }
-    .app-info-row:last-child { border-bottom: none; }
-    .app-info-label  { font-size: .72rem; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: .05em; flex-shrink: 0; min-width: 130px; }
-    .app-info-value  { font-size: .82rem; color: var(--muted); font-family: var(--font-mono); }
-  </style>
-
-  <!-- ── LOGIC ───────────────────────────────────────────── -->
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
-      });
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
     }
 
-    // ── PWA Install ────────────────────────────────────────
+    // PWA Install
     let _installPrompt = null;
     window.addEventListener('beforeinstallprompt', e => {
-      e.preventDefault();
-      _installPrompt = e;
+      e.preventDefault(); _installPrompt = e;
       const btn = document.getElementById('install-btn');
-      btn.hidden = false;
+      if (btn) btn.hidden = false;
     });
-
-    document.getElementById('install-btn').addEventListener('click', async () => {
+    document.getElementById('install-btn')?.addEventListener('click', async () => {
       if (!_installPrompt) return;
       _installPrompt.prompt();
-      const result = await _installPrompt.userChoice;
-      const status = document.getElementById('install-status');
-      if (result.outcome === 'accepted') {
-        status.textContent = '✅ App wird installiert…';
-        status.hidden = false;
+      const r = await _installPrompt.userChoice;
+      if (r.outcome === 'accepted') {
+        const st = document.getElementById('install-status');
+        if (st) { st.textContent = '✅ App wird installiert…'; st.hidden = false; }
         document.getElementById('install-btn').hidden = true;
       }
       _installPrompt = null;
     });
 
-    // ── Cache Status ───────────────────────────────────────
+    // Cache
     async function checkCache() {
-      const dot   = document.getElementById('cache-dot');
-      const label = document.getElementById('cache-label');
-      const hint  = document.getElementById('cache-hint');
-
-      if (!('serviceWorker' in navigator)) {
-        dot.className = 'cache-dot off';
-        label.textContent = 'Service Worker nicht unterstützt';
-        return;
-      }
-
+      const hint = document.getElementById('cache-hint');
       try {
-        const reg = await navigator.serviceWorker.ready;
         const keys = await caches.keys();
-        if (keys.length > 0) {
-          dot.className = 'cache-dot active';
-          label.textContent = `Cache aktiv (${keys.length} Cache${keys.length > 1 ? 's' : ''})`;
-          // Get cache version from key name
-          const version = keys.find(k => k.startsWith('adminsheet-')) || keys[0];
-          hint.textContent = `Cache-Version: ${version}`;
-        } else {
-          dot.className = 'cache-dot warn';
-          label.textContent = 'Cache leer – Seite neu laden zum Befüllen';
-        }
-      } catch {
-        dot.className = 'cache-dot off';
-        label.textContent = 'Cache-Status nicht verfügbar';
-      }
+        const ver  = keys.find(k => k.startsWith('support.sheet-')) || keys[0];
+        if (hint) hint.textContent = ver ? `Cache: ${ver}` : 'Cache leer';
+        document.getElementById('sw-version').textContent = ver?.replace('support.sheet-','') || '–';
+      } catch { if (hint) hint.textContent = 'Cache nicht verfügbar'; }
     }
 
-    document.getElementById('cache-refresh-btn').addEventListener('click', async () => {
+    document.getElementById('cache-refresh-btn')?.addEventListener('click', async () => {
       const hint = document.getElementById('cache-hint');
-      hint.textContent = 'Prüfe auf Updates…';
+      if (hint) hint.textContent = 'Prüfe…';
       try {
         const reg = await navigator.serviceWorker.ready;
         await reg.update();
-        hint.textContent = 'Update-Check abgeschlossen.';
-        setTimeout(checkCache, 1500);
-      } catch {
-        hint.textContent = 'Fehler beim Update-Check.';
-      }
+        if (hint) hint.textContent = 'Update-Check abgeschlossen.';
+        setTimeout(checkCache, 1000);
+      } catch { if (hint) hint.textContent = 'Fehler.'; }
     });
 
-    document.getElementById('cache-clear-btn').addEventListener('click', async () => {
-      if (!confirm('Cache wirklich leeren? Die App benötigt danach eine Internetverbindung.')) return;
+    document.getElementById('cache-clear-btn')?.addEventListener('click', async () => {
+      if (!confirm('Cache leeren? Die App benötigt danach eine Internetverbindung.')) return;
       const hint = document.getElementById('cache-hint');
       try {
         const keys = await caches.keys();
         await Promise.all(keys.map(k => caches.delete(k)));
-        hint.textContent = `${keys.length} Cache(s) gelöscht.`;
+        if (hint) hint.textContent = `${keys.length} Cache(s) gelöscht.`;
         checkCache();
-      } catch {
-        hint.textContent = 'Fehler beim Leeren des Caches.';
-      }
+      } catch { if (hint) hint.textContent = 'Fehler.'; }
     });
 
-    // ── App Info ───────────────────────────────────────────
-    function loadAppInfo() {
+    // App Info
+    document.addEventListener('DOMContentLoaded', () => {
+      const ua = navigator.userAgent;
       document.getElementById('pwa-mode').textContent =
         window.matchMedia('(display-mode: standalone)').matches ? '✅ Standalone (App)' : '🌐 Browser';
-      document.getElementById('online-status').textContent =
-        navigator.onLine ? '✅ Online' : '📴 Offline';
+      document.getElementById('online-status').textContent = navigator.onLine ? '✅ Online' : '📴 Offline';
       document.getElementById('sw-status').textContent =
         'serviceWorker' in navigator ? '✅ Unterstützt' : '❌ Nicht verfügbar';
-
-      const ua = navigator.userAgent;
-      const browser = ua.includes('Edg/') ? 'Microsoft Edge'
-                    : ua.includes('Chrome/') ? 'Google Chrome'
-                    : ua.includes('Firefox/') ? 'Mozilla Firefox'
-                    : ua.includes('Safari/') ? 'Apple Safari'
-                    : 'Unbekannt';
-      document.getElementById('browser-info').textContent = browser;
-    }
-
-    // Get SW version from cache name
-    async function loadSwVersion() {
-      try {
-        const keys = await caches.keys();
-        const ver = keys.find(k => k.startsWith('adminsheet-'));
-        document.getElementById('sw-version').textContent = ver
-          ? ver.replace('adminsheet-', '')
-          : 'Nicht gecacht';
-      } catch {
-        document.getElementById('sw-version').textContent = '–';
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('browser-info').textContent =
+        ua.includes('Edg/') ? 'Microsoft Edge' :
+        ua.includes('Chrome/') ? 'Google Chrome' :
+        ua.includes('Firefox/') ? 'Mozilla Firefox' :
+        ua.includes('Safari/') ? 'Apple Safari' : 'Unbekannt';
       checkCache();
-      loadAppInfo();
-      loadSwVersion();
     });
 
-    window.addEventListener('online',  () => { document.getElementById('online-status').textContent = '✅ Online'; });
-    window.addEventListener('offline', () => { document.getElementById('online-status').textContent = '📴 Offline'; });
+    window.addEventListener('online',  () => {
+      document.getElementById('online-status').textContent = '✅ Online';
+      updateDataOverview();
+    });
+    window.addEventListener('offline', () => {
+      document.getElementById('online-status').textContent = '📴 Offline';
+      updateDataOverview();
+    });
   </script>
 
   <script src="nav.js"></script>

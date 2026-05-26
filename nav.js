@@ -220,6 +220,41 @@
     setTimeout(() => checkUpdate(false), 2500);
   }
 
+  // ── PROFIL-STATUS ─────────────────────────────────────────
+  if (headerRight) {
+    const profileLink = document.createElement('a');
+    profileLink.href      = 'tools.html';
+    profileLink.className = 'as-profile-status';
+    profileLink.title     = 'Einstellungen / support.tools';
+
+    const dot = document.createElement('span');
+    dot.className = 'as-profile-dot';
+
+    const label = document.createElement('span');
+    label.id = 'as-profile-label';
+
+    profileLink.appendChild(dot);
+    profileLink.appendChild(label);
+    // Insert BEFORE refresh btn (→ leftmost in header-right)
+    headerRight.insertBefore(profileLink, headerRight.firstChild);
+
+    // Initaler Status + globale Update-Funktion
+    window.updateProfileStatus = function() {
+      try {
+        const raw = localStorage.getItem('supportsheet_settings');
+        const hasProfile = raw && (() => {
+          const s = JSON.parse(raw);
+          return !!(s.defaultDomain || s.defaultServer || s.defaultUsername || s.preferredTags?.length);
+        })();
+        profileLink.classList.toggle('saved', !!hasProfile);
+        label.textContent = hasProfile ? 'Profil gespeichert' : 'Profil nicht gespeichert';
+      } catch {
+        label.textContent = 'Profil nicht gespeichert';
+      }
+    };
+    window.updateProfileStatus();
+  }
+
   async function checkUpdate(manual) {
     const btn = document.querySelector('.as-refresh-btn');
     if (!btn || !navigator.serviceWorker.controller) return;
