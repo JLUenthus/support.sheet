@@ -16,6 +16,9 @@
   const currentPage = PAGES.find(p => p.href === currentFile) || PAGES[0];
   const currentId   = currentPage.id;
 
+  // Body-Klasse für seitenspezifisches Styling (z.B. H1-Farbe)
+  document.body.classList.add(`page-${currentId}`);
+
   // ── CSS ───────────────────────────────────────────────────
   const style = document.createElement('style');
   style.textContent = `
