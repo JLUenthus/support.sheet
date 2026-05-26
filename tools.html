@@ -266,6 +266,51 @@
       </div>
     </section>
 
+    <!-- ── 8. DOKUMENTATION ─────────────────────────────── -->
+    <section class="tools-section">
+      <h2 class="section-title">📖 Dokumentation</h2>
+      <div class="tools-card">
+        <p class="tools-intro">Projektdokumentation direkt hier lesen – ohne die Seite zu verlassen.</p>
+        <div class="doc-cards">
+          <button class="doc-card"
+                  data-doc="docs/getting-started.md"
+                  data-doc-title="Erste Schritte">
+            <span class="doc-card-icon">🚀</span>
+            <span class="doc-card-title">Erste Schritte</span>
+            <span class="doc-card-desc">Was ist support.sheet, lokal starten, GitHub Pages</span>
+          </button>
+          <button class="doc-card"
+                  data-doc="docs/project-structure.md"
+                  data-doc-title="Projektstruktur">
+            <span class="doc-card-icon">📁</span>
+            <span class="doc-card-title">Projektstruktur</span>
+            <span class="doc-card-desc">Ordner, Dateien, was liegt wo</span>
+          </button>
+          <button class="doc-card"
+                  data-doc="docs/adding-commands.md"
+                  data-doc-title="Commands hinzufügen">
+            <span class="doc-card-icon">➕</span>
+            <span class="doc-card-title">Commands hinzufügen</span>
+            <span class="doc-card-desc">JSON-Format, Tags, Variable Commands</span>
+          </button>
+          <button class="doc-card"
+                  data-doc="docs/architecture.md"
+                  data-doc-title="Architektur">
+            <span class="doc-card-icon">⚙️</span>
+            <span class="doc-card-title">Architektur</span>
+            <span class="doc-card-desc">JS-Module, Datenfluss, localStorage</span>
+          </button>
+          <button class="doc-card"
+                  data-doc="docs/contributing.md"
+                  data-doc-title="Mitmachen">
+            <span class="doc-card-icon">🤝</span>
+            <span class="doc-card-title">Mitmachen</span>
+            <span class="doc-card-desc">Regeln, was man anfassen darf, was nicht</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <footer>
@@ -280,6 +325,7 @@
   </footer>
 
   <!-- toast.js für showToolsToast-Fallback -->
+  <script src="js/settings-store.js"></script>
   <script src="js/toast.js"></script>
   <script src="js/tools.js"></script>
 
@@ -365,6 +411,17 @@
       updateDataOverview();
     });
   </script>
+
+  <!-- ── DOC MODAL ────────────────────────────────────────── -->
+  <div id="doc-overlay" class="doc-overlay" role="dialog" aria-modal="true" aria-labelledby="doc-modal-title">
+    <div class="doc-modal" id="doc-modal">
+      <div class="doc-modal-header">
+        <h2 class="doc-modal-title" id="doc-modal-title"></h2>
+        <button class="doc-close-btn" id="doc-close-btn" aria-label="Dokumentation schließen">✕</button>
+      </div>
+      <div class="doc-modal-content" id="doc-modal-content"></div>
+    </div>
+  </div>
 
   <script src="nav.js"></script>
 </body>
