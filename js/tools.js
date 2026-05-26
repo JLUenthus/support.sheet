@@ -294,3 +294,233 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('online',  () => updateDataOverview());
   window.addEventListener('offline', () => updateDataOverview());
 });
+
+// ============================================================
+// Dokumentations-Modal
+// ============================================================
+
+// Whitelist – nur diese Pfade dürfen geladen werden
+const DOC_WHITELIST = [
+  'docs/getting-started.md',
+  'docs/project-structure.md',
+  'docs/adding-commands.md',
+  'docs/architecture.md',
+  'docs/contributing.md',
+];
+
+// ── Markdown → DOM (kein innerHTML mit rohen Daten) ────────
+function renderMarkdown(text) {
+  const container = document.createElement('div');
+  container.className = 'doc-content';
+
+  const lines = text.split('\n');
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Leerzeile
+    if (line.trim() === '') { i++; continue; }
+
+    // Code-Block (```)
+    if (line.startsWith('```')) {
+      const pre  = document.createElement('pre');
+      const code = document.createElement('code');
+      i++;
+      const codeLines = [];
+      while (i < lines.length && !lines[i].startsWith('```')) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      code.textContent = codeLines.join('\n');
+      pre.appendChild(code);
+      container.appendChild(pre);
+      i++; // skip closing ```
+      continue;
+    }
+
+    // HR (---)
+    if (/^-{3,}$/.test(line.trim())) {
+      container.appendChild(document.createElement('hr'));
+      i++; continue;
+    }
+
+    // Überschriften
+    const h3 = line.match(/^### (.+)/);
+    const h2 = line.match(/^## (.+)/);
+    const h1 = line.match(/^# (.+)/);
+    if (h1 || h2 || h3) {
+      const level  = h1 ? 1 : h2 ? 2 : 3;
+      const el     = document.createElement(`h${level}`);
+      el.textContent = (h1 || h2 || h3)[1];
+      container.appendChild(el);
+      i++; continue;
+    }
+
+    // Tabellen (| col | col |)
+    if (line.startsWith('|')) {
+      const table  = document.createElement('table');
+      table.className = 'doc-table';
+      let isHeader = true;
+      while (i < lines.length && lines[i].startsWith('|')) {
+        const row = lines[i];
+        // Trennzeile (| --- | --- |)
+        if (/^\|[\s\-:|]+\|/.test(row)) { isHeader = false; i++; continue; }
+        const tr   = document.createElement('tr');
+        const cells = row.split('|').filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
+        cells.forEach(cell => {
+          const td = document.createElement(isHeader ? 'th' : 'td');
+          td.textContent = cell.trim();
+          tr.appendChild(td);
+        });
+        table.appendChild(tr);
+        i++;
+      }
+      container.appendChild(table);
+      continue;
+    }
+
+    // Ungeordnete Liste (- item)
+    if (/^(\s*[-*+] )/.test(line)) {
+      const ul = document.createElement('ul');
+      while (i < lines.length && /^(\s*[-*+] )/.test(lines[i])) {
+        const li = document.createElement('li');
+        li.textContent = lines[i].replace(/^\s*[-*+] /, '');
+        ul.appendChild(li);
+        i++;
+      }
+      container.appendChild(ul);
+      continue;
+    }
+
+    // Geordnete Liste (1. item)
+    if (/^\d+\. /.test(line)) {
+      const ol = document.createElement('ol');
+      while (i < lines.length && /^\d+\. /.test(lines[i])) {
+        const li = document.createElement('li');
+        li.textContent = lines[i].replace(/^\d+\. /, '');
+        ol.appendChild(li);
+        i++;
+      }
+      container.appendChild(ol);
+      continue;
+    }
+
+    // Blockquote (> text)
+    if (line.startsWith('> ')) {
+      const bq = document.createElement('blockquote');
+      bq.textContent = line.slice(2);
+      container.appendChild(bq);
+      i++; continue;
+    }
+
+    // Normaler Absatz – Inline-Formatting (`, **bold**)
+    const p = document.createElement('p');
+    applyInline(p, line);
+    container.appendChild(p);
+    i++;
+  }
+
+  return container;
+}
+
+// Inline-Formatting: `code` und **bold** ohne innerHTML
+function applyInline(el, text) {
+  // Teile bei `code` und **bold** auf
+  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
+  parts.forEach(part => {
+    if (part.startsWith('`') && part.endsWith('`')) {
+      const code = document.createElement('code');
+      code.className = 'doc-inline-code';
+      code.textContent = part.slice(1, -1);
+      el.appendChild(code);
+    } else if (part.startsWith('**') && part.endsWith('**')) {
+      const strong = document.createElement('strong');
+      strong.textContent = part.slice(2, -2);
+      el.appendChild(strong);
+    } else {
+      el.appendChild(document.createTextNode(part));
+    }
+  });
+}
+
+
+// ── Modal öffnen / schließen ───────────────────────────────
+
+function openDocModal(docPath, title) {
+  // Whitelist prüfen
+  if (!DOC_WHITELIST.includes(docPath)) {
+    console.warn('Doc not in whitelist:', docPath);
+    return;
+  }
+
+  const overlay   = document.getElementById('doc-overlay');
+  const titleEl   = document.getElementById('doc-modal-title');
+  const contentEl = document.getElementById('doc-modal-content');
+
+  if (!overlay || !titleEl || !contentEl) return;
+
+  titleEl.textContent = title;
+  contentEl.replaceChildren();
+
+  // Ladeindikator
+  const loader = document.createElement('div');
+  loader.className = 'doc-loader';
+  loader.textContent = 'Lädt…';
+  contentEl.appendChild(loader);
+
+  overlay.classList.add('doc-overlay--open');
+  document.body.classList.add('doc-modal-open');
+
+  loadDoc(docPath).then(domContent => {
+    contentEl.replaceChildren(domContent);
+    contentEl.scrollTop = 0;
+  }).catch(err => {
+    contentEl.replaceChildren();
+    const errEl = document.createElement('p');
+    errEl.className = 'doc-error';
+    errEl.textContent = 'Dokument konnte nicht geladen werden: ' + err.message;
+    contentEl.appendChild(errEl);
+  });
+}
+
+function closeDocModal() {
+  const overlay = document.getElementById('doc-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('doc-overlay--open');
+  document.body.classList.remove('doc-modal-open');
+}
+
+async function loadDoc(docPath) {
+  const res = await fetch('./' + docPath);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const text = await res.text();
+  return renderMarkdown(text);
+}
+
+
+// ── Event-Handler ──────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Doc-Cards
+  document.querySelectorAll('[data-doc]').forEach(card => {
+    card.addEventListener('click', () => {
+      const docPath = card.dataset.doc;
+      const title   = card.dataset.docTitle || docPath;
+      openDocModal(docPath, title);
+    });
+  });
+
+  // Schließen-Button
+  document.getElementById('doc-close-btn')?.addEventListener('click', closeDocModal);
+
+  // Overlay-Klick schließt (aber nicht Klick ins Modal)
+  document.getElementById('doc-overlay')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('doc-overlay')) closeDocModal();
+  });
+
+  // ESC schließt
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeDocModal();
+  });
+});
