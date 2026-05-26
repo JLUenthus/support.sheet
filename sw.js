@@ -1,8 +1,8 @@
-// ==========================================================
-// AdminSheet – Service Worker v2
-// ==========================================================
-const CACHE_VERSION = '20260525-1546';
-const CACHE_NAME = `adminsheet-${CACHE_VERSION}`;
+// ============================================================
+// support.sheet – Service Worker v2
+// ============================================================
+const CACHE_VERSION = '20260526-1128';
+const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
   './index.html',
@@ -19,6 +19,12 @@ const ASSETS = [
   './nav.js',
   './sw.js',
   './manifest.json',
+  './css/main.css',
+  './css/toast.css',
+  './css/variables.css',
+  './css/recent.css',
+  './css/favorites.css',
+  './css/search.css',
   './js/loader.js',
   './js/toast.js',
   './js/variables.js',
@@ -40,7 +46,7 @@ self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => Promise.allSettled(
-        ASSETS.map(url => cache.add(url).catch(err => console.warn('[SW] Cache miss:', url, err)))
+        ASSETS.map(url => cache.add(url).catch(err => console.warn('[support.sheet SW] Cache miss:', url, err)))
       ))
       .then(() => self.skipWaiting())
   );
@@ -52,7 +58,7 @@ self.addEventListener('activate', e => {
     caches.keys()
       .then(keys => Promise.all(
         keys.filter(k => k !== CACHE_NAME).map(k => {
-          console.log('[SW] Deleting old cache:', k);
+          console.log('[support.sheet SW] Deleting old cache:', k);
           return caches.delete(k);
         })
       ))
