@@ -6,14 +6,12 @@
   <meta name="theme-color" content="#0f1117">
   <link rel="manifest" href="manifest.json">
   <title>support.sheet – Mitmachen</title>
-
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
 </head>
 <body>
 
-  <!-- ── HEADER ──────────────────────────────────────────── -->
   <header>
     <a href="index.html" class="logo">
       <div class="logo-icon">🤝</div>
@@ -24,78 +22,205 @@
     </div>
   </header>
 
-  <!-- ── HERO ────────────────────────────────────────────── -->
   <div class="hero">
     <div class="hero-badge" style="border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.08);color:#a78bfa;">🤝 Mitmachen</div>
     <h1>Befehle einreichen.<br>Gemeinsam wachsen.</h1>
-    <p>Eigene Befehle, Skripte und Ideen einreichen – direkt per Mail. Kein GitHub-Account nötig, keine technischen Vorkenntnisse erforderlich.</p>
+    <p>Befehl oder Skript einreichen, Kategorie und Tags wählen – per Mail direkt ans Team. Kein GitHub nötig.</p>
   </div>
 
   <main>
 
-    <!-- ── BEFEHL EINREICHEN ─────────────────────────────── -->
-    <section class="contribute-section">
-      <h2 class="section-title">💡 Befehl oder Skript einreichen</h2>
-      <div class="contribute-card">
-        <p class="contribute-intro">Einen Befehl der fehlt, einen besseren Tipp, ein nützliches Skript? Einfach per Mail schicken – wird geprüft und eingebaut.</p>
+    <!-- ── TYP-AUSWAHL ─────────────────────────────────────── -->
+    <div class="type-row">
+      <button class="type-card active" onclick="selectType('befehl', this)">
+        <span class="type-icon">⌨️</span>
+        <span class="type-label">Befehl einreichen</span>
+        <span class="type-desc">CMD, PowerShell, MSC-Konsole</span>
+      </button>
+      <button class="type-card" onclick="selectType('skript', this)">
+        <span class="type-icon">📜</span>
+        <span class="type-label">Skript einreichen</span>
+        <span class="type-desc">Fertiges .ps1 Script</span>
+      </button>
+      <button class="type-card" onclick="selectType('feedback', this)">
+        <span class="type-icon">💬</span>
+        <span class="type-label">Feedback & Fehler</span>
+        <span class="type-desc">Bug, Tippfehler, Idee</span>
+      </button>
+    </div>
 
-        <div class="contribute-fields">
-          <div class="cf-row">
-            <label class="cf-label">Befehl / Skript</label>
-            <input type="text" class="cf-input" id="c-cmd" placeholder="z.B. Get-ADUser -Filter * | Export-Csv ...">
+    <!-- ── FORM: BEFEHL ───────────────────────────────────────── -->
+    <div class="form-section active" id="form-befehl">
+      <div class="form-grid">
+        <div class="form-left">
+
+          <div class="field-group">
+            <label class="field-label">Dein Name <span class="req">*</span></label>
+            <input class="field-input" id="b-name" type="text" placeholder="Max Muster">
           </div>
-          <div class="cf-row">
-            <label class="cf-label">Kategorie</label>
-            <select class="cf-input" id="c-cat">
-              <option>Windows / System</option>
-              <option>Active Directory</option>
-              <option>Exchange / EXO</option>
-              <option>Fortinet</option>
-              <option>PowerShell Script</option>
-              <option>Netzwerk</option>
-              <option>Event Log</option>
-              <option>Sonstiges</option>
-            </select>
+
+          <div class="field-group">
+            <label class="field-label">Titel des Befehls <span class="req">*</span></label>
+            <input class="field-input" id="b-title" type="text" placeholder="z.B. DNS-Cache leeren" oninput="updatePreview()">
           </div>
-          <div class="cf-row">
-            <label class="cf-label">Kurze Beschreibung</label>
-            <textarea class="cf-input cf-textarea" id="c-desc" placeholder="Was macht der Befehl? Wann ist er nützlich?"></textarea>
+
+          <div class="field-group">
+            <label class="field-label">Befehl <span class="req">*</span></label>
+            <input class="field-input field-mono" id="b-cmd" type="text" placeholder="ipconfig /flushdns" oninput="updatePreview()">
           </div>
+
+          <div class="field-group">
+            <label class="field-label">Kategorie <span class="req">*</span></label>
+            <select class="field-input" id="b-cat" onchange="updatePreview()"><option value="network">Netzwerk</option></select>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Beschreibung <span class="req">*</span></label>
+            <textarea class="field-input field-textarea" id="b-desc" placeholder="Was macht der Befehl? Wann ist er nützlich? Besonderheiten?" oninput="updatePreview()"></textarea>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Tags wählen</label>
+            <div class="tag-grid" id="b-tags"><!-- dynamisch geladen --></div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Anmerkungen (optional)</label>
+            <textarea class="field-input field-textarea" id="b-note" placeholder="z.B. Nur auf Windows 11, benötigt Admin-Rechte, ..."></textarea>
+          </div>
+
         </div>
 
-        <button class="submit-btn" id="submit-btn">📧 Per Mail einreichen</button>
-        <p class="submit-hint">Öffnet deinen E-Mail-Client mit vorausgefüllter Nachricht.</p>
+        <!-- Live Preview -->
+        <div class="form-right">
+          <div class="preview-box">
+            <div class="preview-header">
+              <span class="preview-title">JSON-Vorschau</span>
+              <button class="preview-copy-btn" onclick="copyPreview()">📋 Kopieren</button>
+            </div>
+            <pre class="preview-code" id="b-preview">// Formular ausfüllen → Preview erscheint hier</pre>
+          </div>
+          <p class="preview-hint">Die JSON-Vorschau wird automatisch generiert und in die Mail eingefügt – direkt copy-paste-fähig für die commands.json.</p>
+        </div>
       </div>
-    </section>
 
-    <!-- ── IDEEN & FEEDBACK ───────────────────────────────── -->
-    <section class="contribute-section">
-      <h2 class="section-title">💬 Ideen & Feedback</h2>
-      <div class="idea-grid">
-        <div class="idea-card">
-          <div class="idea-icon">🐛</div>
-          <div class="idea-title">Fehler melden</div>
-          <div class="idea-desc">Falscher Befehl, Tippfehler, kaputtes Feature – kurze Mail genügt.</div>
-          <a href="mailto:?subject=support.sheet%20Bug%3A%20" class="idea-btn idea-btn--red">Bug melden</a>
+      <button class="submit-btn" onclick="submitBefehl()">📧 Per Mail einreichen</button>
+    </div>
+
+    <!-- ── FORM: SKRIPT ───────────────────────────────────────── -->
+    <div class="form-section" id="form-skript">
+      <div class="form-grid">
+        <div class="form-left">
+
+          <div class="field-group">
+            <label class="field-label">Dein Name <span class="req">*</span></label>
+            <input class="field-input" id="s-name" type="text" placeholder="Max Muster">
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Script-Titel <span class="req">*</span></label>
+            <input class="field-input" id="s-title" type="text" placeholder="Get-SystemInventory" oninput="updatePreviewScript()">
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Kurzbeschreibung <span class="req">*</span></label>
+            <input class="field-input" id="s-subtitle" type="text" placeholder="System-Inventar als CSV exportieren" oninput="updatePreviewScript()">
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Kategorie <span class="req">*</span></label>
+            <select class="field-input" id="s-cat" onchange="updatePreviewScript()"><option value="system">System</option></select>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Beschreibung <span class="req">*</span></label>
+            <textarea class="field-input field-textarea" id="s-desc" placeholder="Was macht das Skript? Wofür ist es nützlich?" oninput="updatePreviewScript()"></textarea>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Verwendungsbeispiele (ein Befehl pro Zeile)</label>
+            <textarea class="field-input field-textarea field-mono" id="s-usage" placeholder=".\\Get-SystemInventory.ps1&#10;.\\Get-SystemInventory.ps1 -OutputPath C:\Temp\inv.csv" oninput="updatePreviewScript()"></textarea>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Parameter (Format: -Name : Beschreibung)</label>
+            <textarea class="field-input field-textarea field-mono" id="s-params" placeholder="-OutputPath : Speicherpfad der CSV-Datei&#10;-ComputerName : Ziel-Computer (Standard: lokal)" oninput="updatePreviewScript()"></textarea>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Voraussetzungen</label>
+            <input class="field-input" id="s-req" type="text" value="PowerShell 5.1+, Admin-Rechte" oninput="updatePreviewScript()">
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Script-Code <span class="req">*</span></label>
+            <textarea class="field-input field-textarea field-mono" id="s-code" placeholder="# Hier den vollständigen Script-Code einfügen..." style="min-height:160px"></textarea>
+          </div>
+
         </div>
-        <div class="idea-card">
-          <div class="idea-icon">✨</div>
-          <div class="idea-title">Feature-Wunsch</div>
-          <div class="idea-desc">Neue Kategorie, andere Seite, nützliche Funktion – einfach beschreiben.</div>
-          <a href="mailto:?subject=support.sheet%20Feature%3A%20" class="idea-btn">Idee einreichen</a>
-        </div>
-        <div class="idea-card">
-          <div class="idea-icon">📖</div>
-          <div class="idea-title">Beschreibung verbessern</div>
-          <div class="idea-desc">Beschreibung unvollständig oder missverständlich? Bessere Version vorschlagen.</div>
-          <a href="mailto:?subject=support.sheet%20Verbesserung%3A%20" class="idea-btn">Verbesserung schicken</a>
+
+        <div class="form-right">
+          <div class="preview-box">
+            <div class="preview-header">
+              <span class="preview-title">Eintrags-Vorschau</span>
+              <button class="preview-copy-btn" onclick="copyPreviewScript()">📋 Kopieren</button>
+            </div>
+            <pre class="preview-code" id="s-preview">// Formular ausfüllen → Preview erscheint hier</pre>
+          </div>
         </div>
       </div>
-    </section>
+
+      <button class="submit-btn" onclick="submitSkript()">📧 Per Mail einreichen</button>
+    </div>
+
+    <!-- ── FORM: FEEDBACK ─────────────────────────────────────── -->
+    <div class="form-section" id="form-feedback">
+      <div class="feedback-grid">
+
+        <div class="feedback-card" onclick="openFeedback('bug')">
+          <div class="feedback-icon">🐛</div>
+          <div class="feedback-title">Bug melden</div>
+          <div class="feedback-desc">Falscher Befehl, kaputte Funktion, Tippfehler</div>
+        </div>
+
+        <div class="feedback-card" onclick="openFeedback('feature')">
+          <div class="feedback-icon">✨</div>
+          <div class="feedback-title">Feature-Wunsch</div>
+          <div class="feedback-desc">Neue Kategorie, neue Seite, nützliche Funktion</div>
+        </div>
+
+        <div class="feedback-card" onclick="openFeedback('beschreibung')">
+          <div class="feedback-icon">📝</div>
+          <div class="feedback-title">Beschreibung verbessern</div>
+          <div class="feedback-desc">Unvollständige oder missverständliche Beschreibung</div>
+        </div>
+
+      </div>
+
+      <div class="feedback-form" id="feedback-form" hidden>
+        <div class="field-group">
+          <label class="field-label">Dein Name</label>
+          <input class="field-input" id="f-name" type="text" placeholder="Max Muster">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Betreff <span class="req">*</span></label>
+          <input class="field-input" id="f-subject" type="text">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Nachricht <span class="req">*</span></label>
+          <textarea class="field-input field-textarea" id="f-body" style="min-height:120px"></textarea>
+        </div>
+        <button class="submit-btn" onclick="submitFeedback()">📧 Per Mail senden</button>
+      </div>
+    </div>
+
+    <!-- ── ERFOLG ─────────────────────────────────────────────── -->
+    <div class="success-msg" id="success">
+      ✅ Mail-Client geöffnet! Bitte die vorausgefüllte Mail absenden.
+    </div>
 
   </main>
 
-  <!-- ── FOOTER ──────────────────────────────────────────── -->
   <footer>
     <div class="footer-links">
       <a href="index.html"    class="footer-mitmachen">⚡ Windows</a>
@@ -103,79 +228,373 @@
       <a href="forti.html"    class="footer-mitmachen footer-mitmachen--orange">🔥 Fortinet</a>
       <a href="scripts.html"  class="footer-mitmachen footer-mitmachen--green">💚 PS Scripts</a>
       <a href="eventlog.html" class="footer-mitmachen footer-mitmachen--amber">📋 Log Analyzer</a>
+      <a href="tools.html"    class="footer-mitmachen">⚙️ support.tools</a>
     </div>
     <p class="footer-copy">support.sheet · <span>Gemeinsam besser werden</span></p>
   </footer>
 
   <style>
-    .contribute-section { margin-bottom: 40px; }
-
-    .contribute-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--r-lg);
-      padding: 24px;
+    /* ── Typ-Auswahl ───────────────────────────────────────── */
+    .type-row  { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:28px; }
+    .type-card {
+      background:var(--panel); border:1px solid var(--border); border-radius:var(--r);
+      padding:16px; cursor:pointer; text-align:left; font-family:var(--font-ui);
+      display:flex; flex-direction:column; gap:4px; transition:all .15s;
     }
+    .type-card:hover  { border-color:var(--border2); background:var(--panel2); }
+    .type-card.active { border-color:rgba(167,139,250,.5); background:rgba(167,139,250,.08); }
+    .type-icon  { font-size:1.4rem; margin-bottom:4px; }
+    .type-label { font-size:.88rem; font-weight:700; color:var(--text); }
+    .type-desc  { font-size:.73rem; color:var(--muted); }
 
-    .contribute-intro { color: var(--muted); font-size: .88rem; margin-bottom: 20px; }
+    /* ── Form Sections ─────────────────────────────────────── */
+    .form-section         { display:none; }
+    .form-section.active  { display:block; }
+    .form-grid { display:grid; grid-template-columns:1fr 380px; gap:24px; align-items:start; }
+    .form-left { display:flex; flex-direction:column; gap:16px; }
 
-    .contribute-fields { display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; }
-    .cf-row   { display: flex; flex-direction: column; gap: 5px; }
-    .cf-label { font-size: .72rem; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
-    .cf-input {
-      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-      padding: 9px 12px; color: var(--text); font-family: var(--font-ui); font-size: .85rem;
-      outline: none; transition: border-color .15s; width: 100%;
+    /* ── Fields ────────────────────────────────────────────── */
+    .field-group  { display:flex; flex-direction:column; gap:5px; }
+    .field-label  { font-size:.72rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; }
+    .req          { color:var(--red); }
+    .field-input  {
+      background:var(--bg); border:1px solid var(--border); border-radius:8px;
+      padding:9px 12px; color:var(--text); font-family:var(--font-ui); font-size:.85rem;
+      outline:none; transition:border-color .15s; width:100%;
     }
-    .cf-input:focus { border-color: var(--accent); }
-    .cf-textarea    { min-height: 80px; resize: vertical; }
+    .field-input:focus  { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
+    .field-textarea     { min-height:80px; resize:vertical; }
+    .field-mono         { font-family:var(--font-mono); font-size:.78rem; }
+    select.field-input  { cursor:pointer; }
 
+    /* ── Tags ──────────────────────────────────────────────── */
+    .tag-grid { display:flex; flex-wrap:wrap; gap:8px; }
+    .tag-check {
+      display:flex; align-items:center; gap:5px;
+      padding:4px 10px; border-radius:6px; border:1px solid var(--border);
+      background:var(--panel); cursor:pointer; font-size:.75rem; color:var(--muted);
+      transition:all .15s; user-select:none;
+    }
+    .tag-check:hover { border-color:var(--border2); color:var(--text); }
+    .tag-check input { display:none; }
+    .tag-check:has(input:checked) { border-color:rgba(124,140,248,.5); background:rgba(124,140,248,.1); color:var(--accent); }
+
+    /* ── Preview ───────────────────────────────────────────── */
+    .form-right     { position:sticky; top:110px; }
+    .preview-box    { background:var(--bg); border:1px solid var(--border); border-radius:var(--r); overflow:hidden; }
+    .preview-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid var(--border); }
+    .preview-title  { font-size:.75rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+    .preview-copy-btn { padding:4px 10px; border-radius:6px; border:1px solid var(--border2); background:var(--panel); color:var(--muted); font-size:.72rem; font-weight:600; cursor:pointer; font-family:var(--font-ui); transition:all .15s; }
+    .preview-copy-btn:hover { color:var(--text); }
+    .preview-code   { margin:0; padding:14px; font-family:var(--font-mono); font-size:.73rem; color:var(--accent); line-height:1.6; overflow-x:auto; white-space:pre-wrap; word-break:break-all; min-height:120px; }
+    .preview-hint   { font-size:.72rem; color:var(--dim); margin-top:10px; line-height:1.5; }
+
+    /* ── Submit ────────────────────────────────────────────── */
     .submit-btn {
-      padding: 10px 24px; border-radius: 9px;
-      border: 1px solid rgba(167,139,250,.4); background: rgba(167,139,250,.1);
-      color: #a78bfa; font-family: var(--font-ui); font-size: .85rem; font-weight: 700;
-      cursor: pointer; transition: all .15s;
+      margin-top:20px; padding:11px 28px; border-radius:9px;
+      border:1px solid rgba(167,139,250,.4); background:rgba(167,139,250,.1);
+      color:#a78bfa; font-family:var(--font-ui); font-size:.88rem; font-weight:700;
+      cursor:pointer; transition:all .15s;
     }
-    .submit-btn:hover { background: rgba(167,139,250,.2); }
-    .submit-hint { font-size: .72rem; color: var(--dim); margin-top: 8px; }
+    .submit-btn:hover { background:rgba(167,139,250,.2); }
 
-    .idea-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
-    .idea-card {
-      background: var(--panel); border: 1px solid var(--border); border-radius: var(--r);
-      padding: 20px; display: flex; flex-direction: column; gap: 8px;
+    /* ── Feedback ──────────────────────────────────────────── */
+    .feedback-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
+    .feedback-card { background:var(--panel); border:1px solid var(--border); border-radius:var(--r); padding:18px; cursor:pointer; transition:all .15s; }
+    .feedback-card:hover { border-color:var(--border2); background:var(--panel2); }
+    .feedback-icon  { font-size:1.5rem; margin-bottom:8px; }
+    .feedback-title { font-size:.88rem; font-weight:700; color:var(--text); margin-bottom:4px; }
+    .feedback-desc  { font-size:.75rem; color:var(--muted); }
+    .feedback-form  { background:var(--panel); border:1px solid var(--border); border-radius:var(--r); padding:20px; display:flex; flex-direction:column; gap:14px; }
+
+    /* ── Success ───────────────────────────────────────────── */
+    .success-msg { display:none; margin-top:20px; padding:14px 20px; background:rgba(74,222,128,.08); border:1px solid rgba(74,222,128,.3); border-radius:var(--r); color:var(--green); font-weight:600; font-size:.88rem; }
+    .success-msg.show { display:block; }
+
+    @media (max-width:900px) {
+      .form-grid { grid-template-columns:1fr; }
+      .form-right { position:static; }
+      .type-row, .feedback-grid { grid-template-columns:1fr; }
     }
-    .idea-icon  { font-size: 1.6rem; }
-    .idea-title { font-size: .88rem; font-weight: 700; color: var(--text); }
-    .idea-desc  { font-size: .78rem; color: var(--muted); flex: 1; }
-    .idea-btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      padding: 7px 14px; border-radius: 7px; font-size: .78rem; font-weight: 600;
-      text-decoration: none; margin-top: auto;
-      border: 1px solid var(--border2); background: var(--panel2); color: var(--muted);
-      transition: all .15s;
-    }
-    .idea-btn:hover       { color: var(--text); border-color: var(--accent); }
-    .idea-btn--red        { border-color: rgba(248,113,113,.3); background: rgba(248,113,113,.06); color: var(--red); }
-    .idea-btn--red:hover  { background: rgba(248,113,113,.15); }
   </style>
 
   <script>
+    // ── Kategorien & Tags aus commands.json laden ─────────────
+    async function loadSchema() {
+      try {
+        const res = await fetch('./data/commands.json');
+        const data = await res.json();
+        const commands = data.commands || [];
+
+        // Primäre Kategorien (erster Tag) in Reihenfolge ihres ersten Auftretens
+        const cats = [];
+        const catSeen = new Set();
+        commands.forEach(cmd => {
+          const primary = cmd.tags?.[0];
+          if (primary && !catSeen.has(primary)) {
+            catSeen.add(primary);
+            cats.push(primary);
+          }
+        });
+
+        // CAT_LABELS aus render.js CATEGORY_MAP verwenden falls verfügbar
+        const labelMap = typeof CATEGORY_MAP !== 'undefined' ? CATEGORY_MAP : {};
+
+        // Selects befüllen
+        ['b-cat', 's-cat'].forEach(id => {
+          const sel = document.getElementById(id);
+          if (!sel) return;
+          sel.innerHTML = '';
+          cats.forEach(tag => {
+            const opt = document.createElement('option');
+            opt.value = tag;
+            opt.textContent = labelMap[tag]?.label || tag;
+            sel.appendChild(opt);
+          });
+          // network als Standard vorwählen falls vorhanden
+          if ([...sel.options].some(o => o.value === 'network')) sel.value = 'network';
+        });
+
+        // CAT_LABELS für Submit-Funktion
+        cats.forEach(tag => {
+          CAT_LABELS[tag] = labelMap[tag]?.label || tag;
+        });
+
+        // Alle Tags als Checkboxen
+        const allTags = [...new Set(commands.flatMap(c => c.tags || []))].sort();
+        const tagGrid = document.getElementById('b-tags');
+        if (tagGrid) {
+          tagGrid.innerHTML = '';
+          // Immer-Tags zuerst
+          const priority = ['windows', 'admin', 'info', 'quick', 'diag', 'caution', 'powershell', 'server'];
+          const sorted = [...priority.filter(t => allTags.includes(t)),
+                          ...allTags.filter(t => !priority.includes(t))];
+          sorted.forEach(tag => {
+            const label = document.createElement('label');
+            label.className = 'tag-check';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.className = 'b-tag';
+            cb.value = tag;
+            if (tag === 'windows') cb.checked = true;
+            cb.addEventListener('change', updatePreview);
+            const span = document.createElement('span');
+            span.textContent = tag + (tag === 'caution' ? ' ⚠️' : '');
+            label.appendChild(cb);
+            label.appendChild(span);
+            tagGrid.appendChild(label);
+          });
+        }
+
+        updatePreview();
+      } catch (e) {
+        console.warn('Schema-Load fehlgeschlagen:', e);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadSchema);
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch(() => {});
       });
     }
 
-    document.getElementById('submit-btn').addEventListener('click', () => {
-      const cmd  = document.getElementById('c-cmd').value.trim();
-      const cat  = document.getElementById('c-cat').value;
-      const desc = document.getElementById('c-desc').value.trim();
-      if (!cmd) { alert('Bitte einen Befehl eingeben.'); return; }
+    const MAIL_TO = 'deine@email.de'; // ← E-Mail eintragen
+
+    let CAT_LABELS = {}; // dynamisch aus commands.json geladen
+
+    // ── Typ wechseln ──────────────────────────────────────────
+    function selectType(type, el) {
+      document.querySelectorAll('.type-card').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      document.querySelectorAll('.form-section').forEach(f => f.classList.remove('active'));
+      document.getElementById('form-' + type).classList.add('active');
+      document.getElementById('success').classList.remove('show');
+    }
+
+    // ── Live Preview: Befehl ──────────────────────────────────
+    function updatePreview() {
+      const title = document.getElementById('b-title').value || 'Titel';
+      const cmd   = document.getElementById('b-cmd').value   || 'befehl';
+      const cat   = document.getElementById('b-cat').value   || 'network';
+      const desc  = document.getElementById('b-desc').value  || 'Beschreibung';
+      const tags  = [...document.querySelectorAll('.b-tag:checked')].map(c => `"${c.value}"`).join(', ');
+      const id    = cat + '-' + title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 28);
+
+      const escapedCmd  = cmd.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      const escapedDesc = desc.replace(/"/g, '\\"');
+
+      document.getElementById('b-preview').textContent =
+`{
+  "id": "${id}",
+  "name": "${title}",
+  "cmd": "${escapedCmd}",
+  "desc": "${escapedDesc}",
+  "tags": [${tags || '"windows"'}]
+},`;
+    }
+
+    // ── Live Preview: Skript ──────────────────────────────────
+    function updatePreviewScript() {
+      const title    = document.getElementById('s-title').value    || 'Script-Name';
+      const subtitle = document.getElementById('s-subtitle').value || 'Kurzbeschreibung';
+      const cat      = document.getElementById('s-cat').value      || 'system';
+      const desc     = document.getElementById('s-desc').value     || 'Beschreibung';
+      const req      = document.getElementById('s-req').value      || 'PowerShell 5.1+';
+
+      const usageRaw = document.getElementById('s-usage').value || '';
+      const usage = usageRaw.split('\n').filter(l => l.trim())
+        .map(l => `    { "label": "Beispiel", "cmd": "${l.trim().replace(/"/g, '\\"')}" }`)
+        .join(',\n');
+
+      const slug = title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+
+      document.getElementById('s-preview').textContent =
+`// In scripts.html einfügen:
+{
+  "id": "${slug}",
+  "title": "${title}",
+  "file": "powershell/${title}.ps1",
+  "category": "${cat}",
+  "subtitle": "${subtitle.replace(/"/g, '\\"')}",
+  "desc": "${desc.replace(/"/g, '\\"').replace(/\n/g, ' ')}",
+  "requirements": "${req}",
+  "usage": [
+${usage || '    { "label": "Beispiel", "cmd": ".\\\\${title}.ps1" }'}
+  ]
+}`;
+    }
+
+    function copyPreview() {
+      const txt = document.getElementById('b-preview').textContent;
+      if (txt.startsWith('//')) return;
+      navigator.clipboard.writeText(txt).then(() => {
+        const btn = document.querySelector('#form-befehl .preview-copy-btn');
+        const orig = btn.textContent;
+        btn.textContent = '✓ Kopiert';
+        setTimeout(() => btn.textContent = orig, 1500);
+      });
+    }
+
+    function copyPreviewScript() {
+      const txt = document.getElementById('s-preview').textContent;
+      if (txt.startsWith('//') && txt.includes('Formular')) return;
+      navigator.clipboard.writeText(txt).then(() => {
+        const btn = document.querySelector('#form-skript .preview-copy-btn');
+        const orig = btn.textContent;
+        btn.textContent = '✓ Kopiert';
+        setTimeout(() => btn.textContent = orig, 1500);
+      });
+    }
+
+    // ── Submit: Befehl ────────────────────────────────────────
+    function submitBefehl() {
+      const name  = document.getElementById('b-name').value.trim();
+      const title = document.getElementById('b-title').value.trim();
+      const cmd   = document.getElementById('b-cmd').value.trim();
+      const cat   = document.getElementById('b-cat').value;
+      const desc  = document.getElementById('b-desc').value.trim();
+      const note  = document.getElementById('b-note').value.trim();
+      const tags  = [...document.querySelectorAll('.b-tag:checked')].map(c => c.value).join(', ');
+      const json  = document.getElementById('b-preview').textContent;
+
+      if (!name || !title || !cmd || !desc) { alert('Bitte alle Pflichtfelder (*) ausfüllen.'); return; }
+
+      const subject = encodeURIComponent(`[support.sheet] Neuer Befehl: ${title}`);
       const body = encodeURIComponent(
-        `Kategorie: ${cat}\n\nBefehl:\n${cmd}\n\nBeschreibung:\n${desc || '(keine)'}`
-      );
-      window.location.href = `mailto:?subject=support.sheet%20Beitrag%3A%20${encodeURIComponent(cat)}&body=${body}`;
-    });
+`Hallo,
+
+ich möchte folgenden Befehl einreichen:
+
+──────────────────────────────
+VON:       ${name}
+──────────────────────────────
+
+TITEL:     ${title}
+KATEGORIE: ${CAT_LABELS[cat] || cat}
+BEFEHL:    ${cmd}
+TAGS:      ${tags || '–'}
+
+BESCHREIBUNG:
+${desc}
+${note ? '\nANMERKUNGEN:\n' + note : ''}
+
+──────────────────────────────
+JSON FÜR commands.json:
+──────────────────────────────
+${json}
+
+Viele Grüße
+${name}`);
+
+      window.location.href = `mailto:${MAIL_TO}?subject=${subject}&body=${body}`;
+      showSuccess();
+    }
+
+    // ── Submit: Skript ────────────────────────────────────────
+    function submitSkript() {
+      const name  = document.getElementById('s-name').value.trim();
+      const title = document.getElementById('s-title').value.trim();
+      const desc  = document.getElementById('s-desc').value.trim();
+      const code  = document.getElementById('s-code').value.trim();
+      const json  = document.getElementById('s-preview').textContent;
+
+      if (!name || !title || !desc || !code) { alert('Bitte alle Pflichtfelder (*) ausfüllen.'); return; }
+
+      const subject = encodeURIComponent(`[support.sheet] Neues Skript: ${title}`);
+      const body = encodeURIComponent(
+`Hallo,
+
+ich möchte folgendes Skript einreichen:
+
+──────────────────────────────
+VON: ${name}
+──────────────────────────────
+
+${json}
+
+──────────────────────────────
+SCRIPT-CODE:
+──────────────────────────────
+${code}
+
+Viele Grüße
+${name}`);
+
+      window.location.href = `mailto:${MAIL_TO}?subject=${subject}&body=${body}`;
+      showSuccess();
+    }
+
+    // ── Feedback ──────────────────────────────────────────────
+    const FEEDBACK_SUBJECTS = {
+      bug: '[support.sheet] Bug: ',
+      feature: '[support.sheet] Feature-Wunsch: ',
+      beschreibung: '[support.sheet] Beschreibung verbessern: '
+    };
+
+    function openFeedback(type) {
+      document.querySelectorAll('.feedback-card').forEach(c => c.style.opacity = '.5');
+      document.getElementById('feedback-form').hidden = false;
+      document.getElementById('f-subject').value = FEEDBACK_SUBJECTS[type] || '';
+      document.getElementById('f-subject').focus();
+    }
+
+    function submitFeedback() {
+      const name    = document.getElementById('f-name').value.trim();
+      const subject = document.getElementById('f-subject').value.trim();
+      const body    = document.getElementById('f-body').value.trim();
+      if (!subject || !body) { alert('Betreff und Nachricht sind Pflichtfelder.'); return; }
+      const fullBody = encodeURIComponent(`${body}\n\n${name ? 'Grüße,\n' + name : ''}`);
+      window.location.href = `mailto:${MAIL_TO}?subject=${encodeURIComponent(subject)}&body=${fullBody}`;
+      showSuccess();
+    }
+
+    function showSuccess() {
+      const el = document.getElementById('success');
+      el.classList.add('show');
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   </script>
 
   <script src="nav.js"></script>
