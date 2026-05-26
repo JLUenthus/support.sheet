@@ -143,6 +143,27 @@ function renderFilterBar(commands) {
   const usedTags = new Set(commands.map(getPrimaryTag).filter(Boolean));
   bar.replaceChildren();
 
+  // "Zuletzt verwendet" button – nur wenn Recent-Einträge vorhanden
+  if (typeof getRecent === 'function') {
+    const recentList = getRecent();
+    if (recentList.length > 0) {
+      const recentBtn = document.createElement('button');
+      recentBtn.className   = 'filter-btn filter-btn--recent';
+      recentBtn.dataset.tag = '__recent__';
+      recentBtn.id          = 'filter-btn-recent';
+      const recentDot = document.createElement('span');
+      recentDot.className = 'filter-dot';
+      recentDot.style.background = '#fbbf24';
+      recentBtn.appendChild(recentDot);
+      recentBtn.appendChild(document.createTextNode('Zuletzt verwendet'));
+      const recentCount = document.createElement('span');
+      recentCount.className = 'filter-recent-count';
+      recentCount.textContent = recentList.length;
+      recentBtn.appendChild(recentCount);
+      bar.appendChild(recentBtn);
+    }
+  }
+
   // "Alle" button
   const allBtn = document.createElement('button');
   allBtn.className   = 'filter-btn active';
@@ -172,6 +193,25 @@ function renderFilterBar(commands) {
   bar.addEventListener('click', e => {
     const btn = e.target.closest('.filter-btn');
     if (!btn) return;
+
+    if (btn.dataset.tag === '__recent__') {
+      // Toggle: wenn schon aktiv → zurück zu 'all'
+      const isActive = btn.classList.contains('active');
+      bar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      if (isActive) {
+        // Deaktivieren → Alle anzeigen
+        _activeFilter = 'all';
+        bar.querySelector('[data-tag="all"]')?.classList.add('active');
+        applyFilter();
+      } else {
+        // Aktivieren → Recent anzeigen
+        btn.classList.add('active');
+        _activeFilter = '__recent__';
+        applyRecentFilter();
+      }
+      return;
+    }
+
     _activeFilter = btn.dataset.tag;
     bar.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b === btn));
     applyFilter();
@@ -187,6 +227,16 @@ function applyFilter() {
     const input = document.getElementById('search-input');
     if (input && input.value.trim()) runSearch(input.value);
   }
+}
+
+function applyRecentFilter() {
+  if (typeof getRecent !== 'function') return;
+  const recentIds = getRecent().map(r => r.id);
+  // Commands aus _allCommands die in Recent vorkommen – in Recent-Reihenfolge
+  const recentCmds = recentIds
+    .map(id => _allCommands.find(c => c.id === id))
+    .filter(Boolean);
+  renderCommandGroups(recentCmds);
 }
 
 

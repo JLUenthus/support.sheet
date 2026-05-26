@@ -71,52 +71,29 @@ function addRecent(command, resolvedCommand) {
  * Nutzt textContent – kein innerHTML.
  */
 function renderRecent() {
-  const section   = document.getElementById('recent-section');
-  const container = document.getElementById('recent-container');
-  if (!section || !container) return;
-
+  // Recent-Section ist deaktiviert – Recent ist jetzt ein Filter-Button
+  // Nur den Zähler im Filter-Button aktualisieren
   const list = getRecent();
+  const btn  = document.getElementById('filter-btn-recent');
 
-  // Section ausblenden wenn leer
-  section.hidden = list.length === 0;
-  if (list.length === 0) return;
+  if (btn) {
+    // Zähler aktualisieren
+    const countEl = btn.querySelector('.filter-recent-count');
+    if (countEl) countEl.textContent = list.length;
+    // Button ausblenden wenn keine Einträge
+    btn.style.display = list.length === 0 ? 'none' : '';
+    // Wenn gerade Recent-Filter aktiv und Liste jetzt leer → zurück zu Alle
+    if (list.length === 0 && btn.classList.contains('active')) {
+      btn.classList.remove('active');
+      const allBtn = document.querySelector('[data-tag="all"]');
+      if (allBtn) allBtn.click();
+    }
+  }
 
-  const fragment = document.createDocumentFragment();
-
-  list.forEach(entry => {
-    const item = document.createElement('div');
-    item.className = 'recent-item';
-    item.title = entry.resolved;
-
-    const nameEl = document.createElement('span');
-    nameEl.className = 'recent-name';
-    nameEl.textContent = entry.name;
-
-    const cmdEl = document.createElement('code');
-    cmdEl.className = 'recent-cmd';
-    cmdEl.textContent = entry.resolved;
-
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'recent-copy-btn';
-    copyBtn.textContent = '📋';
-    const safeName = String(entry.name || '').replace(/[<>"']/g, '');
-    copyBtn.setAttribute('aria-label', `${safeName} erneut kopieren`);
-    copyBtn.addEventListener('click', () => {
-      copyToClipboard(entry.resolved, copyBtn);
-      // Nutzung erneut tracken → nach oben schieben
-      addRecent({ id: entry.id, name: entry.name }, entry.resolved);
-    });
-
-    item.appendChild(nameEl);
-    item.appendChild(cmdEl);
-    item.appendChild(copyBtn);
-    fragment.appendChild(item);
-  });
-
-  container.replaceChildren(fragment);
+  // Falls noch eine alte recent-section im HTML vorhanden ist, ausblenden
+  const section = document.getElementById('recent-section');
+  if (section) section.hidden = true;
 }
 
-
 // ── Init ──────────────────────────────────────────────────
-// Beim Laden direkt rendern (könnte bereits Einträge in localStorage geben)
 document.addEventListener('DOMContentLoaded', () => renderRecent());
