@@ -447,7 +447,9 @@ function applyInline(el, text) {
 
 // ── Modal öffnen / schließen ───────────────────────────────
 
-function openDocModal(docPath, title) {
+let _lastDocTrigger = null; // merkt sich welche Card das Modal geöffnet hat
+
+function openDocModal(docPath, title, triggerEl) {
   // Whitelist prüfen
   if (!DOC_WHITELIST.includes(docPath)) {
     console.warn('Doc not in whitelist:', docPath);
@@ -460,7 +462,13 @@ function openDocModal(docPath, title) {
 
   if (!overlay || !titleEl || !contentEl) return;
 
+  // Auslösendes Element merken für Focus-Return beim Schließen
+  _lastDocTrigger = triggerEl || document.activeElement || null;
+
   titleEl.textContent = title;
+
+  // Scroll-Position zurücksetzen bevor neuer Inhalt geladen wird
+  contentEl.scrollTop = 0;
   contentEl.replaceChildren();
 
   // Ladeindikator
@@ -472,9 +480,12 @@ function openDocModal(docPath, title) {
   overlay.classList.add('doc-overlay--open');
   document.body.classList.add('doc-modal-open');
 
+  // Fokus in Modal setzen (Accessibility)
+  document.getElementById('doc-close-btn')?.focus();
+
   loadDoc(docPath).then(domContent => {
+    contentEl.scrollTop = 0; // sicherheitshalber nochmal nach dem Render
     contentEl.replaceChildren(domContent);
-    contentEl.scrollTop = 0;
   }).catch(err => {
     contentEl.replaceChildren();
     const errEl = document.createElement('p');
@@ -489,6 +500,12 @@ function closeDocModal() {
   if (!overlay) return;
   overlay.classList.remove('doc-overlay--open');
   document.body.classList.remove('doc-modal-open');
+
+  // Fokus zurück auf die Card die das Modal geöffnet hat
+  if (_lastDocTrigger && typeof _lastDocTrigger.focus === 'function') {
+    _lastDocTrigger.focus();
+  }
+  _lastDocTrigger = null;
 }
 
 async function loadDoc(docPath) {
@@ -507,7 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
     card.addEventListener('click', () => {
       const docPath = card.dataset.doc;
       const title   = card.dataset.docTitle || docPath;
-      openDocModal(docPath, title);
+      openDocModal(docPath, title, card);
     });
   });
 
