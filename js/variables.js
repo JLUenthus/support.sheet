@@ -110,6 +110,17 @@ function buildVariableModal(variables, cmdPreview) {
     input.placeholder = varName;
     input.dataset.var = varName;
 
+    // Default-Werte aus Einstellungen vorbelegen (aus tools.js getSettings)
+    if (typeof getSettings === 'function') {
+      const s = getSettings();
+      const MAP = { domain: s.defaultDomain, server: s.defaultServer, username: s.defaultUsername };
+      const def = MAP[varName.toLowerCase()];
+      if (def) {
+        input.value = def;
+        input.placeholder = `${varName} (Standard: ${def})`;
+      }
+    }
+
     // Fehlermeldung unter dem Input
     const hint = document.createElement('span');
     hint.className = 'var-modal-hint';
