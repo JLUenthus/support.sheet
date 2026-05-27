@@ -1589,6 +1589,13 @@
       "cmd": "winget source reset --force",
       "desc": "Winget-Quellen zurücksetzen wenn Pakete plötzlich nicht mehr gefunden werden oder Source-Fehler auftreten. Klassischer MSP-Fall nach beschädigten Store- oder Winget-Konfigurationen.",
       "tags": ["winget", "windows", "repair", "admin"]
+    },
+    {
+      "id": "shortcuts-grafiktreiber-reset",
+      "name": "Grafiktreiber zurücksetzen",
+      "cmd": "Win + Strg + Shift + B",
+      "desc": "Setzt den Grafikkartentreiber zurück ohne Neustart. Hilft wenn der Bildschirm schwarz wird, flackert oder der Grafiktreiber hängt. Windows sendet ein Signal an den Treiber zum Neustart – der Bildschirm flackert kurz und ist danach wieder normal. Funktioniert auf Windows 10/11.",
+      "tags": ["shortcuts", "windows", "quick", "diag"]
     }
   ]
 }
