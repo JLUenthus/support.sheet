@@ -1477,6 +1477,118 @@
         "windows",
         "info"
       ]
-    }
+    },
+    {
+      "id": "process-tasklist-csv-export",
+      "name": "Prozessliste als CSV exportieren",
+      "cmd": "tasklist /v /fo csv > C:\\Temp\\tasklist.csv",
+      "desc": "Alle laufenden Prozesse mit Details (PID, Status, CPU-Zeit, Benutzername, Fenstertitel) als CSV exportieren. Gut für Snapshots vor/nach Problemauftreten oder zur Dokumentation bei Kundeneskalationen. Datei landet in C:\\Temp – Ordner muss existieren.",
+      "tags": ["process", "windows", "info", "diag"]
+    },
+    {
+      "id": "process-scheduled-reboot-erstellen",
+      "name": "Geplanten Neustart einrichten",
+      "cmd": "$action = New-ScheduledTaskAction -Execute \"shutdown.exe\" -Argument \"/r /f /t 0\"\n$trigger = New-ScheduledTaskTrigger -Once -At \"{time}\"\nRegister-ScheduledTask -TaskName \"Server Neustart Wartung\" -Action $action -Trigger $trigger -RunLevel Highest -User \"SYSTEM\"",
+      "desc": "Einmaligen Neustart über Aufgabenplanung einrichten – ideal für Wartungsfenster außerhalb der Geschäftszeiten. Läuft als SYSTEM mit höchsten Rechten, erzwingt das Schließen aller Anwendungen (/f). Kein offenes RDP nötig – der Task läuft auch wenn niemand angemeldet ist.",
+      "tags": ["process", "powershell", "windows", "server", "scheduled-task", "reboot", "maintenance", "admin", "caution"]
+    },
+    {
+      "id": "process-scheduled-reboot-pruefen",
+      "name": "Geplanten Neustart prüfen",
+      "cmd": "Get-ScheduledTask -TaskName \"Server Neustart Wartung\"",
+      "desc": "Status des eingerichteten Wartungs-Neustarts prüfen. Zeigt ob der Task noch aktiv ist und wann er ausgeführt wird. Vor dem Wartungsfenster kurz ausführen um sicherzugehen dass alles stimmt.",
+      "tags": ["process", "powershell", "windows", "server", "scheduled-task", "reboot", "maintenance", "info"]
+    },
+    {
+      "id": "process-scheduled-reboot-loeschen",
+      "name": "Geplanten Neustart löschen",
+      "cmd": "Unregister-ScheduledTask -TaskName \"Server Neustart Wartung\" -Confirm:$false",
+      "desc": "Wartungs-Task wieder entfernen – z.B. wenn der Neustart doch nicht mehr nötig ist oder bereits ausgeführt wurde. -Confirm:$false überspringt die Rückfrage. Danach mit Get-ScheduledTask prüfen ob der Task wirklich weg ist.",
+      "tags": ["process", "powershell", "windows", "server", "scheduled-task", "reboot", "maintenance", "admin", "caution"]
+    },
+    {
+      "id": "winget-software-suchen",
+      "name": "Software suchen",
+      "cmd": "winget search {package}",
+      "desc": "Verfügbare Pakete nach Name suchen. Gibt Paket-ID, Version und Quelle zurück. Die ID aus der Ergebnisliste für winget install verwenden.",
+      "tags": ["winget", "windows", "info", "quick"]
+    },
+    {
+      "id": "winget-paket-info",
+      "name": "Paket-Details anzeigen",
+      "cmd": "winget show --id {package} -e",
+      "desc": "Detaillierte Infos zu einem Paket: Version, Lizenz, Homepage, Beschreibung. Gut um vor der Installation zu prüfen ob es das richtige Paket ist.",
+      "tags": ["winget", "windows", "info"]
+    },
+    {
+      "id": "winget-software-installieren",
+      "name": "Software installieren",
+      "cmd": "winget install --id {package} -e --source winget --accept-package-agreements --accept-source-agreements",
+      "desc": "Software per Paket-ID installieren. -e = exakter Name, verhindert Fehlinstallationen. --accept-*-agreements unterdrückt Lizenz-Rückfragen – wichtig für Remote- und Silent-Installs. Paket-ID vorher mit 'winget search' herausfinden. Beispiele: Mozilla.Firefox, Google.Chrome, 7zip.7zip, Microsoft.VisualStudioCode.",
+      "tags": ["winget", "windows", "admin", "quick"]
+    },
+    {
+      "id": "winget-updates-anzeigen",
+      "name": "Verfügbare Updates anzeigen",
+      "cmd": "winget upgrade",
+      "desc": "Alle Programme mit verfügbaren Updates auflisten. Gut als erster Schritt vor winget upgrade --all um zu sehen was aktualisiert wird. Zeigt aktuelle und neue Version.",
+      "tags": ["winget", "windows", "info", "quick"]
+    },
+    {
+      "id": "winget-upgrade-einzelpaket",
+      "name": "Einzelnes Programm aktualisieren",
+      "cmd": "winget upgrade --id {package} -e",
+      "desc": "Nur ein bestimmtes Programm aktualisieren statt alle Pakete. Gut wenn gezielt Browser, Teams oder andere problematische Software aktualisiert werden soll ohne andere Anwendungen anzufassen.",
+      "tags": ["winget", "windows", "admin", "quick"]
+    },
+    {
+      "id": "winget-alle-aktualisieren",
+      "name": "Alle installierten Programme aktualisieren",
+      "cmd": "winget upgrade --all --silent --accept-package-agreements --accept-source-agreements",
+      "desc": "Alle veralteten Programme auf einmal aktualisieren. --silent unterdrückt Installationsdialoge. Vorher mit 'winget upgrade' ohne Parameter prüfen was aktualisiert wird.",
+      "tags": ["winget", "windows", "admin", "quick"]
+    },
+    {
+      "id": "winget-installierte-software",
+      "name": "Installierte Software auflisten",
+      "cmd": "winget list",
+      "desc": "Alle installierten Programme anzeigen – auch die die nicht über winget installiert wurden. Schnelle Alternative zu 'Programme hinzufügen/entfernen'. Mit | findstr {package} nach bestimmter Software filtern.",
+      "tags": ["winget", "windows", "info", "quick"]
+    },
+    {
+      "id": "winget-software-deinstallieren",
+      "name": "Software deinstallieren",
+      "cmd": "winget uninstall --id {package} -e",
+      "desc": "Software per Paket-ID deinstallieren. Paket-ID vorher mit 'winget list' herausfinden. Sauberer als manuell über Systemsteuerung weil winget den korrekten Uninstaller verwendet.",
+      "tags": ["winget", "windows", "admin", "caution"]
+    },
+    {
+      "id": "winget-export",
+      "name": "Installierte Software exportieren",
+      "cmd": "winget export -o {path}",
+      "desc": "Alle winget-verwalteten Programme als JSON exportieren. Kann auf einem neuen PC mit 'winget import' wiederhergestellt werden. Ideal für Neuinstallationen oder wenn ein PC ausgetauscht wird. Pfad z.B. C:\\Temp\\winget-packages.json",
+      "tags": ["winget", "windows", "admin", "quick"]
+    },
+    {
+      "id": "winget-import",
+      "name": "Software-Liste importieren",
+      "cmd": "winget import -i {path} --ignore-unavailable --accept-package-agreements --accept-source-agreements",
+      "desc": "Alle Programme aus einer exportierten JSON-Liste installieren. --ignore-unavailable überspringt nicht mehr verfügbare Pakete. --accept-*-agreements verhindert Rückfragen bei der Masseninstallation. Perfekt für die Einrichtung eines neuen PCs.",
+      "tags": ["winget", "windows", "admin", "quick"]
+    },
+    {
+      "id": "winget-quellen-anzeigen",
+      "name": "Paketquellen anzeigen",
+      "cmd": "winget source list",
+      "desc": "Konfigurierte Paketquellen anzeigen. Standard ist 'winget' und 'msstore'. Relevant wenn Pakete plötzlich nicht mehr gefunden werden.",
+      "tags": ["winget", "windows", "info"]
+    },
+    {
+      "id": "winget-repair-source",
+      "name": "Winget Quellen reparieren",
+      "cmd": "winget source reset --force",
+      "desc": "Winget-Quellen zurücksetzen wenn Pakete plötzlich nicht mehr gefunden werden oder Source-Fehler auftreten. Klassischer MSP-Fall nach beschädigten Store- oder Winget-Konfigurationen.",
+      "tags": ["winget", "windows", "repair", "admin"]
+    },
   ]
 }
