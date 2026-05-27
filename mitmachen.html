@@ -89,6 +89,17 @@
             <textarea class="field-input field-textarea" id="b-note" placeholder="z.B. Nur auf Windows 11, benötigt Admin-Rechte, ..."></textarea>
           </div>
 
+          <!-- ── Sammel-Aktionen ────────────────────────────── -->
+          <div class="collect-actions">
+            <button class="collect-add-btn" id="collect-add-btn" onclick="addToCollection()">
+              ＋ Zur Sammlung hinzufügen
+            </button>
+            <span class="collect-counter" id="collect-counter" hidden></span>
+          </div>
+
+          <!-- ── Gesammelte Befehle ─────────────────────────── -->
+          <div id="collect-list"></div>
+
         </div>
 
         <!-- Live Preview -->
@@ -307,7 +318,102 @@
     .feedback-desc  { font-size:.75rem; color:var(--muted); }
     .feedback-form  { background:var(--panel); border:1px solid var(--border); border-radius:var(--r); padding:20px; display:flex; flex-direction:column; gap:14px; }
 
-    /* ── Success ───────────────────────────────────────────── */
+    /* ── Collect Actions ───────────────────────────────────── */
+    .collect-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .collect-add-btn {
+      padding: 9px 18px;
+      border-radius: 8px;
+      border: 1px solid rgba(124,140,248,.4);
+      background: rgba(124,140,248,.08);
+      color: var(--accent);
+      font-family: var(--font-ui);
+      font-size: .82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .collect-add-btn:hover:not(:disabled) { background: rgba(124,140,248,.18); }
+    .collect-add-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    .collect-counter {
+      font-size: .75rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    /* Gesammelte Befehle */
+    #collect-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+
+    .collect-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--r);
+      padding: 10px 12px;
+    }
+
+    .collect-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .collect-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent-bg);
+      border: 1px solid var(--border2);
+      color: var(--accent);
+      font-size: .68rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .collect-title {
+      font-size: .82rem;
+      font-weight: 700;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .collect-cmd {
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      color: var(--muted);
+      background: var(--panel2);
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    .collect-remove-btn {
+      margin-left: auto;
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--dim);
+      cursor: pointer;
+      font-size: .72rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .15s;
+      flex-shrink: 0;
+    }
+    .collect-remove-btn:hover { color: var(--red); border-color: rgba(248,113,113,.4); background: rgba(248,113,113,.06); }
     .success-msg { display:none; margin-top:20px; padding:14px 20px; background:rgba(74,222,128,.08); border:1px solid rgba(74,222,128,.3); border-radius:var(--r); color:var(--green); font-weight:600; font-size:.88rem; }
     .success-msg.show { display:block; }
 
@@ -488,50 +594,169 @@ ${usage || '    { "label": "Beispiel", "cmd": ".\\\\${title}.ps1" }'}
       });
     }
 
-    // ── Submit: Befehl ────────────────────────────────────────
-    function submitBefehl() {
-      const name  = document.getElementById('b-name').value.trim();
+    // ── Sammel-System (max 5 Commands) ───────────────────────
+    const MAX_COMMANDS = 5;
+    let _pendingCommands = []; // { id, name, cmd, cat, desc, tags, note }
+
+    function currentFormData() {
       const title = document.getElementById('b-title').value.trim();
       const cmd   = document.getElementById('b-cmd').value.trim();
       const cat   = document.getElementById('b-cat').value;
       const desc  = document.getElementById('b-desc').value.trim();
       const note  = document.getElementById('b-note').value.trim();
-      const tags  = [...document.querySelectorAll('.b-tag:checked')].map(c => c.value).join(', ');
-      const json  = document.getElementById('b-preview').textContent;
+      const tags  = [...document.querySelectorAll('.b-tag:checked')].map(c => c.value);
+      const id    = cat + '-' + title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 28);
+      return { id, name: title, cmd, cat, desc, tags, note };
+    }
 
-      if (!name || !title || !cmd || !desc) { alert('Bitte alle Pflichtfelder (*) ausfüllen.'); return; }
+    function addToCollection() {
+      const name = document.getElementById('b-name').value.trim();
+      if (!name) { alert('Bitte zuerst deinen Namen eintragen.'); return; }
 
-      const subject = encodeURIComponent(`[support.sheet] Neuer Befehl: ${title}`);
+      const entry = currentFormData();
+      if (!entry.name || !entry.cmd || !entry.desc) {
+        alert('Bitte Titel, Befehl und Beschreibung ausfüllen.'); return;
+      }
+      if (_pendingCommands.length >= MAX_COMMANDS) {
+        alert(`Maximal ${MAX_COMMANDS} Befehle pro Einreichung.`); return;
+      }
+
+      _pendingCommands.push(entry);
+      renderCollectList();
+      clearForm();
+    }
+
+    function removeFromCollection(idx) {
+      _pendingCommands.splice(idx, 1);
+      renderCollectList();
+    }
+
+    function clearForm() {
+      ['b-title','b-cmd','b-desc','b-note'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      document.querySelectorAll('.b-tag:checked').forEach(cb => {
+        if (cb.value !== 'windows') cb.checked = false;
+      });
+      document.getElementById('b-preview').textContent = '// Formular ausfüllen → Preview erscheint hier';
+    }
+
+    function renderCollectList() {
+      const list    = document.getElementById('collect-list');
+      const counter = document.getElementById('collect-counter');
+      const addBtn  = document.getElementById('collect-add-btn');
+      list.replaceChildren();
+
+      const count = _pendingCommands.length;
+      const remaining = MAX_COMMANDS - count;
+
+      if (counter) {
+        counter.hidden = count === 0;
+        counter.textContent = `${count} von ${MAX_COMMANDS} Befehlen gesammelt`;
+      }
+      if (addBtn) {
+        addBtn.disabled = count >= MAX_COMMANDS;
+        addBtn.textContent = count >= MAX_COMMANDS
+          ? `Limit erreicht (${MAX_COMMANDS})`
+          : `＋ Weiteren Befehl hinzufügen (noch ${remaining})`;
+      }
+
+      _pendingCommands.forEach((entry, idx) => {
+        const card = document.createElement('div');
+        card.className = 'collect-card';
+
+        const header = document.createElement('div');
+        header.className = 'collect-card-header';
+
+        const num = document.createElement('span');
+        num.className = 'collect-num';
+        num.textContent = idx + 1;
+
+        const title = document.createElement('span');
+        title.className = 'collect-title';
+        title.textContent = entry.name;
+
+        const cmdEl = document.createElement('code');
+        cmdEl.className = 'collect-cmd';
+        cmdEl.textContent = entry.cmd.length > 50 ? entry.cmd.slice(0, 50) + '…' : entry.cmd;
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'collect-remove-btn';
+        removeBtn.textContent = '✕';
+        removeBtn.setAttribute('aria-label', 'Entfernen');
+        removeBtn.addEventListener('click', () => removeFromCollection(idx));
+
+        header.appendChild(num);
+        header.appendChild(title);
+        header.appendChild(cmdEl);
+        header.appendChild(removeBtn);
+        card.appendChild(header);
+        list.appendChild(card);
+      });
+    }
+
+    // ── Submit: Befehl ────────────────────────────────────────
+    function submitBefehl() {
+      const name = document.getElementById('b-name').value.trim();
+      if (!name) { alert('Bitte deinen Namen eintragen.'); return; }
+
+      // Aktuelles Formular noch nicht hinzugefügt? → prüfen ob es Daten hat
+      const current = currentFormData();
+      const hasCurrentData = current.name && current.cmd && current.desc;
+
+      // Wenn Sammlung leer und kein aktueller Eintrag → Fehler
+      if (_pendingCommands.length === 0 && !hasCurrentData) {
+        alert('Bitte mindestens einen Befehl ausfüllen oder zur Sammlung hinzufügen.');
+        return;
+      }
+
+      // Wenn Sammlung leer aber Formular gefüllt → direkt als einzelnen Eintrag senden
+      const toSend = _pendingCommands.length > 0
+        ? [..._pendingCommands]
+        : [current];
+
+      // JSON-Array für Mail bauen
+      const jsonEntries = toSend.map(e => {
+        const escapedCmd  = e.cmd.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        const escapedDesc = e.desc.replace(/"/g, '\\"');
+        const tagsStr     = e.tags.map(t => `"${t}"`).join(', ');
+        return `  {\n    "id": "${e.id}",\n    "name": "${e.name}",\n    "cmd": "${escapedCmd}",\n    "desc": "${escapedDesc}",\n    "tags": [${tagsStr}]\n  }`;
+      }).join(',\n');
+
+      const summaryLines = toSend.map((e, i) =>
+        `${i+1}. ${e.name}\n   Befehl: ${e.cmd}\n   Tags: ${e.tags.join(', ') || '–'}${e.note ? '\n   Hinweis: ' + e.note : ''}`
+      ).join('\n\n');
+
+      const plural = toSend.length > 1 ? `${toSend.length} Befehle` : `1 Befehl`;
+      const subject = encodeURIComponent(`[support.sheet] Einreichung: ${plural} von ${name}`);
       const body = encodeURIComponent(
 `Hallo,
 
-ich möchte folgenden Befehl einreichen:
+ich möchte folgende Befehle einreichen:
 
 ──────────────────────────────
-VON:       ${name}
+VON: ${name}
 ──────────────────────────────
 
-TITEL:     ${title}
-KATEGORIE: ${CAT_LABELS[cat] || cat}
-BEFEHL:    ${cmd}
-TAGS:      ${tags || '–'}
-
-BESCHREIBUNG:
-${desc}
-${note ? '\nANMERKUNGEN:\n' + note : ''}
+${summaryLines}
 
 ──────────────────────────────
 JSON FÜR commands.json:
 ──────────────────────────────
-${json}
+[
+${jsonEntries}
+]
 
 Viele Grüße
 ${name}`);
 
       window.location.href = `mailto:${MAIL_TO}?subject=${subject}&body=${body}`;
+      _pendingCommands = [];
+      renderCollectList();
+      clearForm();
       showSuccess();
     }
-
     // ── Submit: Skript ────────────────────────────────────────
     function submitSkript() {
       const name  = document.getElementById('s-name').value.trim();
