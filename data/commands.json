@@ -1589,6 +1589,6 @@
       "cmd": "winget source reset --force",
       "desc": "Winget-Quellen zurücksetzen wenn Pakete plötzlich nicht mehr gefunden werden oder Source-Fehler auftreten. Klassischer MSP-Fall nach beschädigten Store- oder Winget-Konfigurationen.",
       "tags": ["winget", "windows", "repair", "admin"]
-    },
+    }
   ]
 }
