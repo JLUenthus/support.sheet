@@ -20,6 +20,7 @@ const CATEGORY_MAP = {
   'printer':          { label: 'Drucker & Spooler', dot: '#fb7124', icon: '🖨️'  },
   'quick':            { label: 'Schnellbefehle',    dot: '#fbbf24', icon: '⚡'  },
   'winget':           { label: 'Winget',             dot: '#4ade80', icon: '📦'  },
+  'shortcuts':        { label: 'Tastenkürzel',       dot: '#f472b6', icon: '⌨️'  },
   // Exchange
   'exchange':         { label: 'Exchange',          dot: '#e8b339', icon: '📧'  },
   'on-premises':      { label: 'On-Premises',       dot: '#e8b339', icon: '🏢'  },
@@ -97,6 +98,7 @@ function execCommandFallback(text, onSuccess, onError) {
 
 function getShellBadge(tags) {
   if (!Array.isArray(tags)) return null;
+  if (tags.includes('shortcuts'))    return { label: 'Shortcut',   cls: 'shell-shortcut' };
   if (tags.includes('powershell'))   return { label: 'PowerShell', cls: 'shell-ps' };
   if (tags.includes('on-premises'))  return { label: 'EMS',        cls: 'shell-ems' };
   if (tags.includes('exo'))          return { label: 'EXO',        cls: 'shell-exo' };
