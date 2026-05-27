@@ -94,6 +94,14 @@ function execCommandFallback(text, onSuccess, onError) {
 
 // ── Single Command Card ───────────────────────────────────
 
+function getShellBadge(tags) {
+  if (!Array.isArray(tags)) return null;
+  if (tags.includes('powershell'))   return { label: 'PowerShell', cls: 'shell-ps' };
+  if (tags.includes('on-premises'))  return { label: 'EMS',        cls: 'shell-ems' };
+  if (tags.includes('exo'))          return { label: 'EXO',        cls: 'shell-exo' };
+  return { label: 'CMD', cls: 'shell-cmd' };
+}
+
 function createCommandCard(template, cmd) {
   const clone = template.content.cloneNode(true);
   const nameEl       = clone.querySelector('[data-field="name"]');
@@ -109,6 +117,15 @@ function createCommandCard(template, cmd) {
   nameEl.textContent = cmd.name;
   descEl.textContent = cmd.desc;
   cmdEl.textContent  = cmd.cmd;
+
+  // Shell-Badge vor den Tags
+  const badge = getShellBadge(cmd.tags);
+  if (badge) {
+    const b = document.createElement('span');
+    b.className   = 'shell-badge ' + badge.cls;
+    b.textContent = badge.label;
+    tagContainer.appendChild(b);
+  }
 
   (Array.isArray(cmd.tags) ? cmd.tags : []).forEach(tag => {
     const span = document.createElement('span');
@@ -317,6 +334,15 @@ function renderCommandGroupsRecent(commands, pageColors) {
     nameEl.textContent = cmd.name;
     descEl.textContent = cmd.desc;
     cmdEl.textContent  = cmd.cmd;
+
+    // Shell-Badge
+    const badge = getShellBadge(cmd.tags);
+    if (badge) {
+      const b = document.createElement('span');
+      b.className   = 'shell-badge ' + badge.cls;
+      b.textContent = badge.label;
+      tagContainer.appendChild(b);
+    }
 
     (Array.isArray(cmd.tags) ? cmd.tags : []).forEach(tag => {
       const span = document.createElement('span');
