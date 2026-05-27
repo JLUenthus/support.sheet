@@ -19,6 +19,7 @@ const CATEGORY_MAP = {
   'active-directory': { label: 'Active Directory',  dot: '#7c8cf8', icon: '🏢'  },
   'printer':          { label: 'Drucker & Spooler', dot: '#fb7124', icon: '🖨️'  },
   'quick':            { label: 'Schnellbefehle',    dot: '#fbbf24', icon: '⚡'  },
+  'winget':           { label: 'Winget',             dot: '#4ade80', icon: '📦'  },
   // Exchange
   'exchange':         { label: 'Exchange',          dot: '#e8b339', icon: '📧'  },
   'on-premises':      { label: 'On-Premises',       dot: '#e8b339', icon: '🏢'  },
