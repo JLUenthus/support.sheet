@@ -1592,10 +1592,24 @@
     },
     {
       "id": "shortcuts-grafiktreiber-reset",
-      "name": "Grafiktreiber zurücksetzen",
+      "name": "Grafiktreiber neu starten",
       "cmd": "Win + Strg + Shift + B",
-      "desc": "Setzt den Grafikkartentreiber zurück ohne Neustart. Hilft wenn der Bildschirm schwarz wird, flackert oder der Grafiktreiber hängt. Windows sendet ein Signal an den Treiber zum Neustart – der Bildschirm flackert kurz und ist danach wieder normal. Funktioniert auf Windows 10/11.",
-      "tags": ["shortcuts", "windows", "quick", "diag"]
+      "desc": "Startet den Grafikkartentreiber neu ohne Windows neu zu starten. Hilft wenn der Bildschirm schwarz wird, flackert oder die Anzeige hängt. Der Bildschirm kann kurz blinken und ein Signalton ertönen. Funktioniert auf Windows 10/11.",
+      "tags": ["shortcuts", "windows", "quick", "diag", "graphics"]
+    },
+    {
+      "id": "shortcuts-emoji-panel",
+      "name": "Emoji- und Sonderzeichen-Menü",
+      "cmd": "Win + .",
+      "desc": "Öffnet das Windows-Panel für Emojis, Sonderzeichen und Symbole. Praktisch für Dokumentation, Tickets oder schnelle Unicode-Zeichen.",
+      "tags": ["shortcuts", "windows", "quick", "productivity"]
+    },
+    {
+      "id": "shortcuts-fenster-monitor-wechseln",
+      "name": "Fenster auf anderen Monitor verschieben",
+      "cmd": "Win + Shift + Pfeil links / rechts",
+      "desc": "Aktives Fenster auf den nächsten oder vorherigen Monitor verschieben. Funktioniert auch mit mehr als zwei Bildschirmen – einfach mehrfach drücken. Position und Größe bleiben erhalten.",
+      "tags": ["shortcuts", "windows", "quick", "productivity"]
     }
   ]
 }
