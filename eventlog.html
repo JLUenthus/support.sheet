@@ -320,6 +320,8 @@
     .rec-copy-btn { flex-shrink:0; padding:3px 8px; border-radius:5px; border:1px solid var(--border2); background:var(--panel2); color:var(--muted); font-family:var(--font-ui); font-size:.68rem; font-weight:600; cursor:pointer; transition:all .15s; white-space:nowrap; }
     .rec-copy-btn:hover  { color:var(--text); border-color:var(--accent); }
     .rec-copy-btn.copied { color:var(--green); border-color:rgba(74,222,128,.4); background:rgba(74,222,128,.08); }
+    .rec-link-btn { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:5px; border:1px solid rgba(74,222,128,.35); background:rgba(74,222,128,.08); color:var(--green); font-family:var(--font-ui); font-size:.68rem; font-weight:600; text-decoration:none; transition:all .15s; white-space:nowrap; }
+    .rec-link-btn:hover { background:rgba(74,222,128,.18); }
 
     /* Raw table */
     .raw-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; flex-wrap:wrap; }
@@ -426,35 +428,43 @@
       const sysGrid = document.getElementById('sys-grid');
       sysGrid.replaceChildren();
 
-      const uptimeH = meta.Uptime_Hours || 0;
-      const uptimeDays = uptimeH ? Math.floor(uptimeH / 24) + 'd ' + (uptimeH % 24) + 'h' : '–';
-      const uptimeCls  = uptimeH > 720 ? 'warn' : uptimeH > 336 ? '' : 'good';
+      // Uptime: > 60 Tage = bad, > 30 Tage = warn, sonst good
+      const uptimeH    = meta.Uptime_Hours || 0;
+      const uptimeDays = uptimeH ? Math.floor(uptimeH / 24) + 'd ' + (Math.floor(uptimeH) % 24) + 'h' : '–';
+      const uptimeCls  = uptimeH > 1440 ? 'bad' : uptimeH > 720 ? 'warn' : uptimeH > 0 ? 'good' : '';
 
-      // Disk info
-      let diskInfo = '–';
+      // RAM: < 8 GB = bad, < 12 GB = warn (< 16), >= 16 = good
+      const ramGB  = meta.RAM_GB || 0;
+      const ramVal = ramGB ? ramGB + ' GB' : '–';
+      const ramCls = ramGB < 8 ? 'bad' : ramGB < 12 ? 'warn' : 'good';
+
+      // Disks: pro Laufwerk einfärben
+      const diskItems = [];
       if (meta.Disks?.length) {
-        diskInfo = meta.Disks.map(d => {
-          const pct = d.Size_GB ? Math.round((d.Free_GB / d.Size_GB) * 100) : null;
-          return `${d.DeviceID} ${d.Free_GB}/${d.Size_GB}GB${pct !== null ? ' (' + pct + '% frei)' : ''}`;
-        }).join(' · ');
+        meta.Disks.forEach(d => {
+          const pct    = d.Size_GB ? Math.round((d.Free_GB / d.Size_GB) * 100) : null;
+          const label  = `${d.DeviceID} ${d.Free_GB}/${d.Size_GB}GB${pct !== null ? ' (' + pct + '% frei)' : ''}`;
+          const cls    = pct === null ? '' : pct < 10 ? 'bad' : pct < 15 ? 'warn' : 'good';
+          diskItems.push({ label, cls });
+        });
       }
 
+      // Fehler: > 100 = bad, > 30 = warn, sonst good
       const totalEvents = events.length;
       const errorCount  = (sum.Critical||0) + (sum.Error||0);
-      const errorCls    = errorCount > 50 ? 'bad' : errorCount > 10 ? 'warn' : 'good';
+      const errorCls    = errorCount > 100 ? 'bad' : errorCount > 30 ? 'warn' : 'good';
 
       const items = [
-        ['💻 Computer',     meta.ComputerName  || '–',  ''],
-        ['🖥️ Betriebssystem', (meta.OS||'–').replace('Microsoft Windows ',''), ''],
-        ['🧠 RAM',           meta.RAM_GB ? meta.RAM_GB + ' GB' : '–', ''],
-        ['⚡ CPU',           meta.CPU ? meta.CPU.replace(/\(R\)|\(TM\)/g,'').trim().substring(0,35) : '–', ''],
-        ['⏱️ Uptime',        uptimeDays, uptimeCls],
-        ['🔄 Letzter Boot',  (meta.LastBoot||'–').replace('T',' ').substring(0,16), ''],
-        ['💾 Laufwerke',     diskInfo, ''],
-        ['📋 Typ',           meta.CollectorType || '–', ''],
-        ['🔍 Zeitraum',      meta.TimeRangeLabel || (meta.HoursCollected ? meta.HoursCollected+'h' : '–'), ''],
-        ['📊 Ereignisse',    totalEvents, ''],
-        ['❌ Fehler gesamt', errorCount, errorCls],
+        ['💻 Computer',       meta.ComputerName || '–',                                          ''],
+        ['🖥️ Betriebssystem', (meta.OS||'–').replace('Microsoft Windows ',''),                   ''],
+        ['🧠 RAM',             ramVal,                                                             ramCls],
+        ['⚡ CPU',             meta.CPU ? meta.CPU.replace(/\(R\)|\(TM\)/g,'').trim().substring(0,35) : '–', ''],
+        ['⏱️ Uptime',          uptimeDays,                                                        uptimeCls],
+        ['🔄 Letzter Boot',    (meta.LastBoot||'–').replace('T',' ').substring(0,16),             ''],
+        ['📋 Typ',             meta.CollectorType || '–',                                         ''],
+        ['🔍 Zeitraum',        meta.TimeRangeLabel || (meta.HoursCollected ? meta.HoursCollected+'h' : '–'), ''],
+        ['📊 Ereignisse',      totalEvents,                                                       ''],
+        ['❌ Fehler gesamt',   errorCount,                                                        errorCls],
       ];
 
       if (meta.DetectedRoles?.length) {
@@ -469,6 +479,25 @@
         item.appendChild(lbl); item.appendChild(val);
         sysGrid.appendChild(item);
       });
+
+      // Disk items – separat damit jedes Laufwerk eigene Farbe bekommt
+      if (diskItems.length) {
+        diskItems.forEach((disk, idx) => {
+          const item = document.createElement('div');
+          item.className = 'sys-item';
+          const lbl = document.createElement('div'); lbl.className = 'sys-label'; lbl.textContent = idx === 0 ? '💾 Laufwerke' : '';
+          const val = document.createElement('div'); val.className = 'sys-value' + (disk.cls ? ' ' + disk.cls : ''); val.textContent = disk.label;
+          item.appendChild(lbl); item.appendChild(val);
+          sysGrid.appendChild(item);
+        });
+      } else {
+        const item = document.createElement('div');
+        item.className = 'sys-item';
+        const lbl = document.createElement('div'); lbl.className = 'sys-label'; lbl.textContent = '💾 Laufwerke';
+        const val = document.createElement('div'); val.className = 'sys-value'; val.textContent = '–';
+        item.appendChild(lbl); item.appendChild(val);
+        sysGrid.appendChild(item);
+      }
 
       // Summary pills
       const pills = document.getElementById('summary-pills');
@@ -498,6 +527,7 @@
         if (imp.check === 'uptimeHours'      && (meta.Uptime_Hours||0) > imp.checkThreshold) match = true;
         if (imp.check === 'diskFreePercent'  && meta.Disks?.some(d => d.Size_GB && (d.Free_GB/d.Size_GB*100) < imp.checkThreshold)) match = true;
         if (imp.check === 'ramUsedPercent'   && meta.RAM_GB && meta.RAM_Used_GB && (meta.RAM_Used_GB/meta.RAM_GB*100) > imp.checkThreshold) match = true;
+        if (imp.check === 'ramBelowRecommended' && meta.RAM_GB && meta.RAM_GB < imp.checkThreshold) match = true;
         if (imp.check === 'errorCount'       && ((sum.Critical||0)+(sum.Error||0)) > imp.checkThreshold) match = true;
         if (imp.check === 'powerPlan'        && meta.PowerPlan && imp.checkValues.some(v => meta.PowerPlan.toLowerCase().includes(v.toLowerCase()))) match = true;
         if (imp.check === 'windowsBuild'     && meta.BuildNumber && Number(meta.BuildNumber) <= imp.checkMaxBuild) match = true;
@@ -735,27 +765,48 @@
         }
         item.appendChild(textRow);
 
-        // Fix command row
-        const cmd = typeof rec === 'object' ? rec.cmd : null;
-        if (cmd) {
+        // Fix command row (cmd und/oder link)
+        const cmd  = typeof rec === 'object' ? rec.cmd  : null;
+        const link = typeof rec === 'object' ? rec.link : null;
+
+        if (cmd || link) {
           const cmdRow = document.createElement('div');
           cmdRow.className = 'rec-cmd-row';
-          const cmdEl = document.createElement('code');
-          cmdEl.className = 'rec-cmd';
-          cmdEl.textContent = cmd.length > 80 ? cmd.substring(0, 80) + '…' : cmd;
-          cmdEl.title = cmd;
-          const copyBtn = document.createElement('button');
-          copyBtn.className = 'rec-copy-btn';
-          copyBtn.textContent = '📋 Kopieren';
-          copyBtn.addEventListener('click', () => {
-            navigator.clipboard?.writeText(cmd).then(() => {
-              copyBtn.textContent = '✓ Kopiert';
-              copyBtn.classList.add('copied');
-              setTimeout(() => { copyBtn.textContent = '📋 Kopieren'; copyBtn.classList.remove('copied'); }, 1500);
-            }).catch(() => {});
-          });
-          cmdRow.appendChild(cmdEl);
-          cmdRow.appendChild(copyBtn);
+
+          if (cmd) {
+            const cmdEl = document.createElement('code');
+            cmdEl.className = 'rec-cmd';
+            cmdEl.textContent = cmd.length > 80 ? cmd.substring(0, 80) + '…' : cmd;
+            cmdEl.title = cmd;
+
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'rec-copy-btn';
+            copyBtn.textContent = '📋 Kopieren';
+            copyBtn.addEventListener('click', () => {
+              navigator.clipboard?.writeText(cmd).then(() => {
+                copyBtn.textContent = '✓ Kopiert';
+                copyBtn.classList.add('copied');
+                setTimeout(() => { copyBtn.textContent = '📋 Kopieren'; copyBtn.classList.remove('copied'); }, 1500);
+              }).catch(() => {});
+            });
+
+            cmdRow.appendChild(cmdEl);
+            cmdRow.appendChild(copyBtn);
+          }
+
+          if (link) {
+            const linkEl = document.createElement('a');
+            linkEl.className = 'rec-link-btn';
+            linkEl.href   = link;
+            linkEl.target = '_blank';
+            linkEl.rel    = 'noopener noreferrer';
+            const linkIcon = document.createElement('span'); linkIcon.textContent = '⬇️ ';
+            const linkText = document.createElement('span'); linkText.textContent = 'Script öffnen';
+            linkEl.appendChild(linkIcon);
+            linkEl.appendChild(linkText);
+            cmdRow.appendChild(linkEl);
+          }
+
           item.appendChild(cmdRow);
         }
 
