@@ -331,6 +331,9 @@
       const events = data.Events   || data.events   || [];
       allEvents = events;
 
+      // Disks normalisieren: PowerShell gibt bei 1 Laufwerk ein Objekt statt Array zurück
+      if (meta.Disks && !Array.isArray(meta.Disks)) meta.Disks = [meta.Disks];
+
       renderSysGrid(meta, sum, events);
       const improvements = renderImprovements(meta, sum, events);
       const findings     = analyzeEvents(events);
