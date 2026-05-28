@@ -25,12 +25,12 @@
   <div class="hero">
     <div class="hero-badge" style="border-color:rgba(232,179,57,.35);background:rgba(232,179,57,.08);color:#e8b339;">📋 Event Log Analyzer</div>
     <h1>Log hochladen.<br>Problem erkannt.</h1>
-    <p>Collector-Script ausführen → JSON hochladen → automatische Analyse mit konkreten Handlungsempfehlungen.</p>
+    <p>Collector-Script ausführen → JSON hochladen → automatische Analyse mit Systemübersicht, Fehlermuster-Erkennung und konkreten Fix-Commands.</p>
   </div>
 
   <main>
 
-    <!-- ── SCHRITT 1: COLLECTOR ──────────────────────────── -->
+    <!-- ── SCHRITT 1 ──────────────────────────────────────── -->
     <section class="el-section">
       <h2 class="section-title">Schritt 1 – Collector-Script ausführen</h2>
       <div class="collector-row">
@@ -47,7 +47,7 @@
       </div>
     </section>
 
-    <!-- ── SCHRITT 2: UPLOAD ─────────────────────────────── -->
+    <!-- ── SCHRITT 2 ──────────────────────────────────────── -->
     <section class="el-section">
       <h2 class="section-title">Schritt 2 – JSON-Datei hochladen</h2>
       <div class="upload-zone" id="upload-zone">
@@ -58,14 +58,21 @@
       </div>
     </section>
 
-    <!-- ── ERGEBNISSE ────────────────────────────────────── -->
+    <!-- ── ERGEBNISSE ─────────────────────────────────────── -->
     <div id="results-section" class="results-hidden">
 
-      <!-- System-Übersicht -->
+      <!-- Systemübersicht -->
       <section class="el-section">
         <h2 class="section-title">Systemübersicht</h2>
         <div class="sys-grid" id="sys-grid"></div>
         <div class="summary-pills" id="summary-pills"></div>
+      </section>
+
+      <!-- Verbesserungsvorschläge -->
+      <section class="el-section" id="improvements-section" hidden>
+        <h2 class="section-title">💡 Optimierungsvorschläge <span id="improvements-count" class="section-count">0</span></h2>
+        <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px;">Proaktive Hinweise basierend auf Systemdaten – unabhängig von Fehlermustern.</p>
+        <div id="improvements"></div>
       </section>
 
       <!-- Findings -->
@@ -76,7 +83,7 @@
         <div id="no-findings" class="no-findings" hidden>✅ Keine bekannten Fehlermuster erkannt.</div>
       </section>
 
-      <!-- Rohe Ereignistabelle -->
+      <!-- Ereignistabelle -->
       <section class="el-section">
         <div class="raw-header">
           <span class="section-title" style="margin-bottom:0">Alle Ereignisse</span>
@@ -92,8 +99,7 @@
           </table>
         </div>
       </section>
-
-    </div><!-- /results -->
+    </div>
 
   </main>
 
@@ -108,7 +114,6 @@
     <p class="footer-copy">support.sheet · <span>Event Log Analyzer · Daten bleiben lokal im Browser</span></p>
   </footer>
 
-  <!-- ── STYLES ─────────────────────────────────────────── -->
   <style>
     .el-section { margin-bottom: 32px; }
 
@@ -126,24 +131,27 @@
     /* Upload */
     .upload-zone { border:2px dashed var(--border2); border-radius:var(--r-lg); padding:48px 24px; text-align:center; cursor:pointer; transition:border-color .2s,background .2s; }
     .upload-zone:hover, .upload-zone.drag { border-color:var(--accent); background:var(--accent-bg); }
-    .upload-zone.done { border-color:var(--green); }
+    .upload-zone.done { border-color:var(--green); background:rgba(74,222,128,.04); }
     .upload-icon { font-size:2.5rem; margin-bottom:10px; }
     .upload-text { font-size:.95rem; font-weight:600; color:var(--text); margin-bottom:4px; }
     .upload-sub  { font-size:.78rem; color:var(--muted); }
 
     /* Results */
-    .results-hidden { display:none; }
+    .results-hidden  { display:none; }
     .results-visible { display:block; }
 
     /* System grid */
-    .sys-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px; margin-bottom:14px; }
+    .sys-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(175px,1fr)); gap:10px; margin-bottom:14px; }
     .sys-item { background:var(--panel); border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; }
-    .sys-label { font-size:.68rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; }
-    .sys-value { font-size:.85rem; font-weight:600; color:var(--text); font-family:var(--font-mono); }
+    .sys-label { font-size:.67rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; }
+    .sys-value { font-size:.82rem; font-weight:600; color:var(--text); font-family:var(--font-mono); word-break:break-word; }
+    .sys-value.warn  { color:var(--amber); }
+    .sys-value.bad   { color:var(--red); }
+    .sys-value.good  { color:var(--green); }
 
     /* Summary pills */
     .summary-pills { display:flex; flex-wrap:wrap; gap:8px; }
-    .sum-pill { display:flex; align-items:center; gap:6px; padding:6px 14px; border-radius:20px; font-size:.78rem; font-weight:700; border:1px solid var(--border); background:var(--panel); color:var(--muted); cursor:default; }
+    .sum-pill { display:flex; align-items:center; gap:6px; padding:6px 14px; border-radius:20px; font-size:.78rem; font-weight:700; border:1px solid var(--border); background:var(--panel); color:var(--muted); }
     .sum-pill.critical { border-color:rgba(248,113,113,.4); background:rgba(248,113,113,.08); color:var(--red); }
     .sum-pill.error    { border-color:rgba(251,146,60,.4);  background:rgba(251,146,60,.08);  color:#fb923c; }
     .sum-pill.warning  { border-color:rgba(251,191,36,.4);  background:rgba(251,191,36,.08);  color:var(--amber); }
@@ -156,28 +164,37 @@
     .cat-btn.active { background:var(--panel2); border-color:var(--border2); color:var(--text); }
     .cat-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 
+    /* Improvement cards */
+    .improvement-card { background:var(--panel); border:1px solid rgba(124,140,248,.2); border-radius:var(--r); margin-bottom:8px; overflow:hidden; border-left:3px solid var(--accent); }
+    .improvement-card.sev-warning { border-left-color:var(--amber); border-color:rgba(251,191,36,.2); }
+    .improvement-card.sev-info    { border-left-color:#60a5fa; border-color:rgba(96,165,250,.2); }
+
     /* Finding cards */
     .finding-card { background:var(--panel); border:1px solid var(--border); border-radius:var(--r); margin-bottom:8px; overflow:hidden; border-left:3px solid var(--border); }
-    .finding-card[data-sev="critical"] { border-left-color: var(--red); }
-    .finding-card[data-sev="error"]    { border-left-color: #fb923c; }
-    .finding-card[data-sev="warning"]  { border-left-color: var(--amber); }
+    .finding-card[data-sev="critical"] { border-left-color:var(--red); }
+    .finding-card[data-sev="error"]    { border-left-color:#fb923c; }
+    .finding-card[data-sev="warning"]  { border-left-color:var(--amber); }
 
     .finding-header { display:flex; align-items:center; gap:10px; padding:12px 16px; cursor:pointer; user-select:none; transition:background .15s; }
     .finding-header:hover { background:var(--panel2); }
+
     .sev-pill { font-size:.65rem; font-weight:700; padding:2px 8px; border-radius:4px; text-transform:uppercase; letter-spacing:.04em; flex-shrink:0; }
     .sev-critical { background:rgba(248,113,113,.15); color:var(--red);  border:1px solid rgba(248,113,113,.3); }
     .sev-error    { background:rgba(251,146,60,.15);  color:#fb923c; border:1px solid rgba(251,146,60,.3); }
     .sev-warning  { background:rgba(251,191,36,.15);  color:var(--amber); border:1px solid rgba(251,191,36,.3); }
-    .finding-title { font-size:.88rem; font-weight:700; color:var(--text); flex:1; }
-    .finding-count { font-size:.72rem; color:var(--muted); background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:1px 8px; flex-shrink:0; }
+    .sev-info     { background:rgba(96,165,250,.15);  color:#60a5fa; border:1px solid rgba(96,165,250,.3); }
+
+    .finding-title  { font-size:.88rem; font-weight:700; color:var(--text); flex:1; }
+    .finding-count  { font-size:.72rem; color:var(--muted); background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:1px 8px; flex-shrink:0; }
     .finding-expand { color:var(--dim); font-size:.75rem; margin-left:4px; transition:transform .2s; }
     .finding-expand.open { transform:rotate(180deg); }
 
     .finding-body { display:none; padding:0 16px 14px; border-top:1px solid var(--border); }
     .finding-body.open { display:block; }
     .finding-desc { font-size:.8rem; color:var(--muted); line-height:1.5; margin:10px 0; }
-    .finding-events-title { font-size:.7rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; margin:10px 0 6px; }
+    .finding-sub-title { font-size:.7rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; margin:12px 0 6px; }
 
+    /* Event rows */
     .event-row { display:grid; grid-template-columns:140px 50px 100px 1fr; gap:6px; font-size:.72rem; padding:4px 8px; border-radius:4px; border-bottom:1px solid var(--border); }
     .event-row:last-child { border-bottom:none; }
     .ev-time { font-family:var(--font-mono); color:var(--dim); }
@@ -185,9 +202,17 @@
     .ev-src  { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .ev-msg  { color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-    .rec-list { display:flex; flex-direction:column; gap:4px; }
-    .rec-item { display:flex; align-items:baseline; gap:8px; font-size:.78rem; color:var(--text); padding:5px 10px; background:rgba(124,140,248,.05); border-radius:5px; border-left:2px solid var(--accent); line-height:1.4; }
-    .rec-arrow { color:var(--accent); flex-shrink:0; }
+    /* Recommendations with copy buttons */
+    .rec-list { display:flex; flex-direction:column; gap:6px; }
+    .rec-item { background:rgba(124,140,248,.05); border-radius:6px; border-left:2px solid var(--accent); overflow:hidden; }
+    .rec-text-row { display:flex; align-items:center; gap:8px; padding:7px 10px; }
+    .rec-arrow { color:var(--accent); flex-shrink:0; font-size:.85rem; }
+    .rec-text  { font-size:.78rem; color:var(--text); flex:1; line-height:1.4; }
+    .rec-cmd-row { display:flex; align-items:center; gap:8px; padding:4px 10px 7px 28px; }
+    .rec-cmd { font-family:var(--font-mono); font-size:.72rem; color:var(--accent); background:var(--bg); border:1px solid var(--border); border-radius:5px; padding:4px 8px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:default; }
+    .rec-copy-btn { flex-shrink:0; padding:3px 8px; border-radius:5px; border:1px solid var(--border2); background:var(--panel2); color:var(--muted); font-family:var(--font-ui); font-size:.68rem; font-weight:600; cursor:pointer; transition:all .15s; white-space:nowrap; }
+    .rec-copy-btn:hover  { color:var(--text); border-color:var(--accent); }
+    .rec-copy-btn.copied { color:var(--green); border-color:rgba(74,222,128,.4); background:rgba(74,222,128,.08); }
 
     /* Raw table */
     .raw-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; flex-wrap:wrap; }
@@ -204,38 +229,34 @@
     .lv-e { background:rgba(251,146,60,.15);  color:#fb923c; }
     .lv-w { background:rgba(251,191,36,.15);  color:var(--amber); }
     .lv-i { background:rgba(124,140,248,.1);  color:var(--accent); }
-    .td-msg { max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); }
-
     .no-findings { text-align:center; padding:48px; color:var(--muted); font-size:.88rem; }
   </style>
 
-  <!-- ── LOGIC ──────────────────────────────────────────── -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
     }
 
-    let RULES = [];
-    let allEvents = [];
-    let currentFindings = [];
+    let RULES        = [];
+    let IMPROVEMENTS = [];
+    let allEvents    = [];
 
-    // Rules laden
-    fetch('./data/eventlog-rules.json')
-      .then(r => r.json())
-      .then(d => { RULES = d.rules || []; })
-      .catch(() => console.warn('Rules nicht geladen'));
+    // Rules + Improvements laden
+    Promise.all([
+      fetch('./data/eventlog-rules.json').then(r => r.json()),
+      fetch('./data/improvement-rules.json').then(r => r.json()),
+    ]).then(([rulesData, impData]) => {
+      RULES        = rulesData.rules        || [];
+      IMPROVEMENTS = impData.improvements   || [];
+    }).catch(() => {});
 
-    // ── Upload ──────────────────────────────────────────
+    // ── Upload ──────────────────────────────────────────────
     const zone  = document.getElementById('upload-zone');
     const input = document.getElementById('file-input');
-
     zone.addEventListener('click', () => input.click());
     zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag'); });
     zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
-    zone.addEventListener('drop', e => {
-      e.preventDefault(); zone.classList.remove('drag');
-      if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
-    });
+    zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag'); if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]); });
     input.addEventListener('change', e => { if (e.target.files[0]) processFile(e.target.files[0]); });
 
     function processFile(file) {
@@ -246,44 +267,80 @@
           if (!data.Events && !data.events) throw new Error('Kein Events-Feld gefunden');
           renderResults(data, file.name);
         } catch(err) {
-          alert('Fehler beim Lesen: ' + err.message + '\n\nBitte das Collector-Script verwenden.');
+          alert('Fehler beim Lesen: ' + err.message);
         }
       };
       reader.readAsText(file, 'UTF-8');
     }
 
-    // ── Render Results ──────────────────────────────────
+    // ── Render Results ──────────────────────────────────────
     function renderResults(data, filename) {
       const meta   = data.Metadata || data.metadata || {};
       const sum    = data.Summary  || data.summary  || {};
       const events = data.Events   || data.events   || [];
       allEvents = events;
 
-      // Systemübersicht
+      renderSysGrid(meta, sum, events);
+      renderImprovements(meta, sum, events);
+
+      const findings = analyzeEvents(events);
+      document.getElementById('findings-count').textContent = findings.length;
+      renderFindings(findings);
+      renderCategoryFilter(findings);
+      renderEventTable(events);
+
+      const results = document.getElementById('results-section');
+      results.className = 'results-visible';
+      zone.classList.add('done');
+      zone.querySelector('.upload-text').textContent = '✅ ' + filename;
+      setTimeout(() => results.scrollIntoView({ behavior:'smooth', block:'start' }), 150);
+    }
+
+    // ── System Grid ─────────────────────────────────────────
+    function renderSysGrid(meta, sum, events) {
       const sysGrid = document.getElementById('sys-grid');
       sysGrid.replaceChildren();
-      const sysItems = [
-        ['💻 Computer',    meta.ComputerName   || '–'],
-        ['🖥️ OS',          (meta.OS||'–').replace('Microsoft Windows ','')],
-        ['🧠 RAM',         meta.RAM_GB ? meta.RAM_GB + ' GB' : '–'],
-        ['⚡ CPU',         meta.CPU ? meta.CPU.replace(/\(R\)|\(TM\)/g,'').trim().substring(0,30) : '–'],
-        ['⏱️ Uptime',      meta.Uptime_Hours ? meta.Uptime_Hours + 'h' : '–'],
-        ['🕐 Letzter Boot',meta.LastBoot ? meta.LastBoot.replace('T',' ').substring(0,16) : '–'],
-        ['📋 Typ',         meta.CollectorType  || '–'],
-        ['🔍 Zeitraum',    meta.TimeRangeLabel || (meta.HoursCollected ? meta.HoursCollected+'h' : '–')],
-      ];
-      if (meta.DetectedRoles?.length) {
-        sysItems.push(['🏢 Rollen', meta.DetectedRoles.join(', ')]);
-      }
+
+      const uptimeH = meta.Uptime_Hours || 0;
+      const uptimeDays = uptimeH ? Math.floor(uptimeH / 24) + 'd ' + (uptimeH % 24) + 'h' : '–';
+      const uptimeCls  = uptimeH > 720 ? 'warn' : uptimeH > 336 ? '' : 'good';
+
+      // Disk info
+      let diskInfo = '–';
       if (meta.Disks?.length) {
-        const diskStr = meta.Disks.map(d => `${d.DeviceID} ${d.Free_GB}/${d.Size_GB}GB`).join(' | ');
-        sysItems.push(['💾 Laufwerke', diskStr]);
+        diskInfo = meta.Disks.map(d => {
+          const pct = d.Size_GB ? Math.round((d.Free_GB / d.Size_GB) * 100) : null;
+          return `${d.DeviceID} ${d.Free_GB}/${d.Size_GB}GB${pct !== null ? ' (' + pct + '% frei)' : ''}`;
+        }).join(' · ');
       }
-      sysItems.forEach(([label, value]) => {
+
+      const totalEvents = events.length;
+      const errorCount  = (sum.Critical||0) + (sum.Error||0);
+      const errorCls    = errorCount > 50 ? 'bad' : errorCount > 10 ? 'warn' : 'good';
+
+      const items = [
+        ['💻 Computer',     meta.ComputerName  || '–',  ''],
+        ['🖥️ Betriebssystem', (meta.OS||'–').replace('Microsoft Windows ',''), ''],
+        ['🧠 RAM',           meta.RAM_GB ? meta.RAM_GB + ' GB' : '–', ''],
+        ['⚡ CPU',           meta.CPU ? meta.CPU.replace(/\(R\)|\(TM\)/g,'').trim().substring(0,35) : '–', ''],
+        ['⏱️ Uptime',        uptimeDays, uptimeCls],
+        ['🔄 Letzter Boot',  (meta.LastBoot||'–').replace('T',' ').substring(0,16), ''],
+        ['💾 Laufwerke',     diskInfo, ''],
+        ['📋 Typ',           meta.CollectorType || '–', ''],
+        ['🔍 Zeitraum',      meta.TimeRangeLabel || (meta.HoursCollected ? meta.HoursCollected+'h' : '–'), ''],
+        ['📊 Ereignisse',    totalEvents, ''],
+        ['❌ Fehler gesamt', errorCount, errorCls],
+      ];
+
+      if (meta.DetectedRoles?.length) {
+        items.push(['🏢 Rollen', meta.DetectedRoles.join(', '), '']);
+      }
+
+      items.forEach(([label, value, cls]) => {
         const item = document.createElement('div');
         item.className = 'sys-item';
         const lbl = document.createElement('div'); lbl.className = 'sys-label'; lbl.textContent = label;
-        const val = document.createElement('div'); val.className = 'sys-value'; val.textContent = value;
+        const val = document.createElement('div'); val.className = 'sys-value' + (cls ? ' ' + cls : ''); val.textContent = value;
         item.appendChild(lbl); item.appendChild(val);
         sysGrid.appendChild(item);
       });
@@ -291,37 +348,105 @@
       // Summary pills
       const pills = document.getElementById('summary-pills');
       pills.replaceChildren();
-      const pillData = [
-        { label: `${events.length} Ereignisse`,   cls: '' },
-        { label: `${sum.Critical||0} Kritisch`,   cls: (sum.Critical||0) > 0 ? 'critical' : 'ok' },
-        { label: `${sum.Error||0} Fehler`,         cls: (sum.Error||0) > 0 ? 'error' : 'ok' },
-        { label: `${sum.Warning||0} Warnungen`,    cls: (sum.Warning||0) > 0 ? 'warning' : 'ok' },
-      ];
-      pillData.forEach(({label, cls}) => {
+      [
+        { label: totalEvents + ' Ereignisse', cls: '' },
+        { label: (sum.Critical||0) + ' Kritisch', cls: (sum.Critical||0) > 0 ? 'critical' : 'ok' },
+        { label: (sum.Error||0) + ' Fehler',     cls: (sum.Error||0) > 0 ? 'error' : 'ok' },
+        { label: (sum.Warning||0) + ' Warnungen', cls: (sum.Warning||0) > 0 ? 'warning' : 'ok' },
+      ].forEach(({label, cls}) => {
         const p = document.createElement('div');
         p.className = 'sum-pill ' + cls;
         p.textContent = label;
         pills.appendChild(p);
       });
-
-      // Analyze
-      const findings = analyzeEvents(events);
-      currentFindings = findings;
-      document.getElementById('findings-count').textContent = findings.length;
-      renderFindings(findings);
-      renderCategoryFilter(findings);
-      renderEventTable(events);
-
-      // Section einblenden
-      const results = document.getElementById('results-section');
-      results.className = 'results-visible';
-      zone.classList.add('done');
-      zone.querySelector('.upload-text').textContent = '✅ ' + (filename || 'Datei geladen');
-
-      setTimeout(() => results.scrollIntoView({ behavior:'smooth', block:'start' }), 150);
     }
 
-    // ── Analyze ─────────────────────────────────────────
+    // ── Improvements ────────────────────────────────────────
+    function renderImprovements(meta, sum, events) {
+      const container = document.getElementById('improvements');
+      const section   = document.getElementById('improvements-section');
+      container.replaceChildren();
+
+      const triggered = [];
+
+      IMPROVEMENTS.forEach(imp => {
+        let match = false;
+
+        if (imp.check === 'uptimeHours' && meta.Uptime_Hours > imp.checkThreshold)
+          match = true;
+
+        if (imp.check === 'diskFreePercent' && meta.Disks?.length) {
+          match = meta.Disks.some(d => d.Size_GB && (d.Free_GB / d.Size_GB * 100) < imp.checkThreshold);
+        }
+
+        if (imp.check === 'ramUsedPercent' && meta.RAM_GB && meta.RAM_Used_GB) {
+          match = (meta.RAM_Used_GB / meta.RAM_GB * 100) > imp.checkThreshold;
+        }
+
+        if (imp.check === 'errorCount') {
+          const total = (sum.Critical||0) + (sum.Error||0);
+          match = total > imp.checkThreshold;
+        }
+
+        if (imp.check === 'powerPlan' && meta.PowerPlan) {
+          match = imp.checkValues.some(v => meta.PowerPlan.toLowerCase().includes(v.toLowerCase()));
+        }
+
+        if (imp.check === 'windowsBuild' && meta.BuildNumber) {
+          match = Number(meta.BuildNumber) <= imp.checkMaxBuild;
+        }
+
+        if (match) triggered.push(imp);
+      });
+
+      document.getElementById('improvements-count').textContent = triggered.length;
+      section.hidden = triggered.length === 0;
+
+      triggered.forEach(imp => {
+        const card = document.createElement('div');
+        card.className = 'finding-card improvement-card sev-' + imp.severity;
+        card.dataset.sev = imp.severity;
+
+        const header = document.createElement('div');
+        header.className = 'finding-header';
+
+        const sevPill = document.createElement('span');
+        sevPill.className = 'sev-pill sev-' + imp.severity;
+        sevPill.textContent = imp.severity === 'info' ? 'Tipp' : 'Hinweis';
+
+        const title = document.createElement('span');
+        title.className = 'finding-title';
+        title.textContent = imp.name;
+
+        const expand = document.createElement('span');
+        expand.className = 'finding-expand';
+        expand.textContent = '▼';
+
+        header.appendChild(sevPill);
+        header.appendChild(title);
+        header.appendChild(expand);
+        header.addEventListener('click', () => {
+          const body = header.nextElementSibling;
+          const open = body.classList.toggle('open');
+          expand.classList.toggle('open', open);
+        });
+
+        const body = document.createElement('div');
+        body.className = 'finding-body';
+
+        const desc = document.createElement('p');
+        desc.className = 'finding-desc';
+        desc.textContent = imp.description;
+        body.appendChild(desc);
+
+        body.appendChild(buildRecList(imp.recommendations));
+        card.appendChild(header);
+        card.appendChild(body);
+        container.appendChild(card);
+      });
+    }
+
+    // ── Analyze Events ──────────────────────────────────────
     function analyzeEvents(events) {
       const findings = [];
       RULES.forEach(rule => {
@@ -335,35 +460,77 @@
         findings.push({ rule, events: matched });
       });
       const ord = { critical:0, error:1, warning:2, info:3 };
-      findings.sort((a,b) => (ord[a.rule.severity]||3) - (ord[b.rule.severity]||3));
-      return findings;
+      return findings.sort((a,b) => (ord[a.rule.severity]||3) - (ord[b.rule.severity]||3));
     }
 
-    // ── Render Findings ──────────────────────────────────
+    // ── Build Recommendation List ───────────────────────────
+    function buildRecList(recommendations) {
+      const recList = document.createElement('div');
+      recList.className = 'rec-list';
+
+      recommendations.forEach(rec => {
+        const item = document.createElement('div');
+        item.className = 'rec-item';
+
+        const textRow = document.createElement('div');
+        textRow.className = 'rec-text-row';
+        const arrow = document.createElement('span'); arrow.className = 'rec-arrow'; arrow.textContent = '→';
+        const text  = document.createElement('span'); text.className  = 'rec-text';
+        // Support both old string format and new {text, cmd} format
+        text.textContent = typeof rec === 'string' ? rec : rec.text;
+        textRow.appendChild(arrow); textRow.appendChild(text);
+        item.appendChild(textRow);
+
+        // Fix command row
+        const cmd = typeof rec === 'object' ? rec.cmd : null;
+        if (cmd) {
+          const cmdRow = document.createElement('div');
+          cmdRow.className = 'rec-cmd-row';
+
+          const cmdEl = document.createElement('code');
+          cmdEl.className = 'rec-cmd';
+          cmdEl.textContent = cmd.length > 80 ? cmd.substring(0, 80) + '…' : cmd;
+          cmdEl.title = cmd;
+
+          const copyBtn = document.createElement('button');
+          copyBtn.className = 'rec-copy-btn';
+          copyBtn.textContent = '📋 Kopieren';
+          copyBtn.addEventListener('click', () => {
+            navigator.clipboard?.writeText(cmd).then(() => {
+              copyBtn.textContent = '✓ Kopiert';
+              copyBtn.classList.add('copied');
+              setTimeout(() => { copyBtn.textContent = '📋 Kopieren'; copyBtn.classList.remove('copied'); }, 1500);
+            }).catch(() => {});
+          });
+
+          cmdRow.appendChild(cmdEl);
+          cmdRow.appendChild(copyBtn);
+          item.appendChild(cmdRow);
+        }
+
+        recList.appendChild(item);
+      });
+      return recList;
+    }
+
+    // ── Render Findings ─────────────────────────────────────
     function renderFindings(findings) {
       const container = document.getElementById('findings');
       container.replaceChildren();
       document.getElementById('no-findings').hidden = findings.length > 0;
       if (!findings.length) return;
 
-      const CAT_COLORS = {
-        Absturz:'#f87171', Netzwerk:'#2dd4bf', System:'#7c8cf8', Hardware:'#4ade80',
-        Sicherheit:'#fbbf24', RDS:'#60a5fa', Backup:'#a78bfa', DHCP:'#fb7124',
-        DNS:'#e8b339', ActiveDirectory:'#f472b6', Update:'#94a3b8'
-      };
-
       findings.forEach(({ rule, events }) => {
         const card = document.createElement('div');
         card.className = 'finding-card';
         card.dataset.category = rule.category;
-        card.dataset.sev = rule.severity;
+        card.dataset.sev      = rule.severity;
 
-        // Header
         const header = document.createElement('div');
         header.className = 'finding-header';
 
         const sevPill = document.createElement('span');
-        sevPill.className = `sev-pill sev-${rule.severity}`;
+        sevPill.className = 'sev-pill sev-' + rule.severity;
         sevPill.textContent = rule.severity;
 
         const title = document.createElement('span');
@@ -372,23 +539,20 @@
 
         const count = document.createElement('span');
         count.className = 'finding-count';
-        count.textContent = `${events.length}× erkannt`;
+        count.textContent = events.length + '× erkannt';
 
         const expand = document.createElement('span');
         expand.className = 'finding-expand';
         expand.textContent = '▼';
 
-        header.appendChild(sevPill);
-        header.appendChild(title);
-        header.appendChild(count);
-        header.appendChild(expand);
+        header.appendChild(sevPill); header.appendChild(title);
+        header.appendChild(count);   header.appendChild(expand);
         header.addEventListener('click', () => {
           const body = header.nextElementSibling;
           const open = body.classList.toggle('open');
           expand.classList.toggle('open', open);
         });
 
-        // Body
         const body = document.createElement('div');
         body.className = 'finding-body';
 
@@ -397,81 +561,61 @@
         desc.textContent = rule.description;
         body.appendChild(desc);
 
-        // Events (max 5)
+        // Event samples
         if (events.length > 0) {
           const evTitle = document.createElement('div');
-          evTitle.className = 'finding-events-title';
+          evTitle.className = 'finding-sub-title';
           evTitle.textContent = `Erkannte Ereignisse (${Math.min(events.length,5)} von ${events.length})`;
           body.appendChild(evTitle);
-
           const evList = document.createElement('div');
           events.slice(0,5).forEach(e => {
             const row = document.createElement('div');
             row.className = 'event-row';
-            const time = document.createElement('span'); time.className = 'ev-time'; time.textContent = (e.TimeCreated||'').replace('T',' ').substring(0,19);
-            const id   = document.createElement('span'); id.className   = 'ev-id';   id.textContent   = e.Id||'';
-            const src  = document.createElement('span'); src.className  = 'ev-src';  src.textContent  = e.ProviderName||'';
-            const msg  = document.createElement('span'); msg.className  = 'ev-msg';  msg.textContent  = (e.Message||'').substring(0,100);
-            row.appendChild(time); row.appendChild(id); row.appendChild(src); row.appendChild(msg);
+            [
+              { cls:'ev-time', val:(e.TimeCreated||'').replace('T',' ').substring(0,19) },
+              { cls:'ev-id',   val:String(e.Id||'') },
+              { cls:'ev-src',  val:e.ProviderName||'' },
+              { cls:'ev-msg',  val:(e.Message||'').substring(0,100) },
+            ].forEach(({cls, val}) => {
+              const s = document.createElement('span'); s.className = cls; s.textContent = val; row.appendChild(s);
+            });
             evList.appendChild(row);
           });
           body.appendChild(evList);
         }
 
-        // Recommendations
+        // Recommendations with fix commands
         if (rule.recommendations?.length) {
           const recTitle = document.createElement('div');
-          recTitle.className = 'finding-events-title';
+          recTitle.className = 'finding-sub-title';
           recTitle.style.marginTop = '12px';
           recTitle.textContent = 'Empfehlungen';
           body.appendChild(recTitle);
-
-          const recList = document.createElement('div');
-          recList.className = 'rec-list';
-          rule.recommendations.forEach(rec => {
-            const item = document.createElement('div');
-            item.className = 'rec-item';
-            const arrow = document.createElement('span'); arrow.className = 'rec-arrow'; arrow.textContent = '→';
-            const text  = document.createElement('span'); text.textContent = rec;
-            item.appendChild(arrow); item.appendChild(text);
-            recList.appendChild(item);
-          });
-          body.appendChild(recList);
+          body.appendChild(buildRecList(rule.recommendations));
         }
 
-        card.appendChild(header);
-        card.appendChild(body);
+        card.appendChild(header); card.appendChild(body);
         container.appendChild(card);
       });
     }
 
-    // ── Category Filter ──────────────────────────────────
+    // ── Category Filter ─────────────────────────────────────
     function renderCategoryFilter(findings) {
       const bar  = document.getElementById('cat-bar');
       const cats = [...new Set(findings.map(f => f.rule.category))];
       bar.replaceChildren();
-
-      const CAT_COLORS = {
-        Absturz:'#f87171', Netzwerk:'#2dd4bf', System:'#7c8cf8', Hardware:'#4ade80',
-        Sicherheit:'#fbbf24', RDS:'#60a5fa', Backup:'#a78bfa', DNS:'#e8b339',
-        ActiveDirectory:'#f472b6', Update:'#94a3b8'
-      };
+      const CAT_COLORS = { Absturz:'#f87171', Netzwerk:'#2dd4bf', System:'#7c8cf8', Hardware:'#4ade80', Sicherheit:'#fbbf24', RDS:'#60a5fa', Backup:'#a78bfa', DNS:'#e8b339', ActiveDirectory:'#f472b6', Update:'#94a3b8' };
 
       const makeBtn = (cat, label, color) => {
         const btn = document.createElement('button');
         btn.className = 'cat-btn' + (cat === 'all' ? ' active' : '');
         btn.dataset.cat = cat;
-        if (color) {
-          const dot = document.createElement('span');
-          dot.className = 'cat-dot';
-          dot.style.background = color;
-          btn.appendChild(dot);
-        }
+        if (color) { const dot = document.createElement('span'); dot.className = 'cat-dot'; dot.style.background = color; btn.appendChild(dot); }
         btn.appendChild(document.createTextNode(label));
         btn.addEventListener('click', () => {
           bar.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
-          document.querySelectorAll('.finding-card').forEach(c => {
+          document.querySelectorAll('.finding-card:not(.improvement-card)').forEach(c => {
             c.style.display = cat === 'all' || c.dataset.category === cat ? '' : 'none';
           });
         });
@@ -479,38 +623,34 @@
       };
 
       bar.appendChild(makeBtn('all', `Alle (${findings.length})`, null));
-      cats.forEach(cat => {
-        const count = findings.filter(f => f.rule.category === cat).length;
-        bar.appendChild(makeBtn(cat, `${cat} (${count})`, CAT_COLORS[cat] || '#7c8cf8'));
-      });
+      cats.forEach(cat => bar.appendChild(makeBtn(cat, `${cat} (${findings.filter(f=>f.rule.category===cat).length})`, CAT_COLORS[cat]||'#7c8cf8')));
     }
 
-    // ── Event Table ──────────────────────────────────────
+    // ── Event Table ─────────────────────────────────────────
     function renderEventTable(events) {
       const tbody = document.getElementById('event-table');
-      document.getElementById('event-count').textContent = `${events.length} Ereignisse`;
+      document.getElementById('event-count').textContent = events.length + ' Ereignisse';
       const frag = document.createDocumentFragment();
-      events.slice(0, 300).forEach(e => {
-        const tr = document.createElement('tr');
-        const lvl = (e.Level||'')[0]?.toLowerCase() || 'i';
+      events.slice(0,300).forEach(e => {
+        const tr  = document.createElement('tr');
+        const lvl = (e.Level||'i')[0].toLowerCase();
         const cells = [
-          { text: (e.TimeCreated||'').replace('T',' ').substring(0,19), cls: 'font-mono' },
-          { text: String(e.Id||''), cls: 'font-mono accent' },
-          { html: `<span class="lv lv-${lvl}">${e.Level||'Info'}</span>` },
-          { text: e.ProviderName||'', cls: 'td-src' },
-          { text: e.Category||'' },
-          { text: (e.Message||'').substring(0,120), cls: 'td-msg' },
+          { text:(e.TimeCreated||'').replace('T',' ').substring(0,19), mono:true },
+          { text:String(e.Id||''), mono:true, accent:true },
+          { html:`<span class="lv lv-${lvl}">${e.Level||'Info'}</span>` },
+          { text:e.ProviderName||'', maxw:'140px' },
+          { text:e.Category||'' },
+          { text:(e.Message||'').substring(0,120), muted:true, maxw:'300px' },
         ];
         cells.forEach(cell => {
           const td = document.createElement('td');
-          if (cell.html) {
-            td.innerHTML = cell.html;
-          } else {
+          if (cell.html) { td.innerHTML = cell.html; }
+          else {
             td.textContent = cell.text;
-            if (cell.cls?.includes('mono'))   td.style.fontFamily = 'var(--font-mono)';
-            if (cell.cls?.includes('accent')) td.style.color = 'var(--accent)';
-            if (cell.cls === 'td-src')        td.style.cssText = 'max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)';
-            if (cell.cls === 'td-msg')        td.style.cssText = 'max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)';
+            if (cell.mono)   td.style.fontFamily = 'var(--font-mono)';
+            if (cell.accent) td.style.color = 'var(--accent)';
+            if (cell.muted)  td.style.color = 'var(--muted)';
+            if (cell.maxw)   td.style.cssText += `;max-width:${cell.maxw};overflow:hidden;text-overflow:ellipsis;white-space:nowrap`;
           }
           tr.appendChild(td);
         });
@@ -521,14 +661,11 @@
 
     function filterEvents() {
       const q = document.getElementById('event-search').value.toLowerCase().trim();
-      const filtered = q
-        ? allEvents.filter(e =>
-            String(e.Id).includes(q) ||
-            (e.ProviderName||'').toLowerCase().includes(q) ||
-            (e.Message||'').toLowerCase().includes(q) ||
-            (e.Category||'').toLowerCase().includes(q))
-        : allEvents;
-      document.getElementById('event-count').textContent = `${filtered.length} Ereignisse`;
+      const filtered = q ? allEvents.filter(e =>
+        String(e.Id).includes(q) || (e.ProviderName||'').toLowerCase().includes(q) ||
+        (e.Message||'').toLowerCase().includes(q) || (e.Category||'').toLowerCase().includes(q)
+      ) : allEvents;
+      document.getElementById('event-count').textContent = filtered.length + ' Ereignisse';
       renderEventTable(filtered);
     }
   </script>
