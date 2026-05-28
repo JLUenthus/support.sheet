@@ -33,6 +33,12 @@
           "cmd": "powercfg /list",
           "type": "diagnose",
           "risk": "low"
+        },
+        {
+          "text": "Set-PowerPlan-Win11 Script verwenden (setzt Höchstleistung + optimiert WLAN-Adapter)",
+          "link": "powershell/Set-PowerPlan-Win11.ps1",
+          "type": "maintenance",
+          "risk": "medium"
         }
       ]
     },
@@ -290,6 +296,34 @@
           "text": "System-Hersteller und Modell prüfen (für Firmware-Update)",
           "cmd": "Get-WmiObject -Class Win32_ComputerSystem | Select Manufacturer, Model, SystemType",
           "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "IMP_WIN11_LOW_RAM",
+      "name": "RAM für produktiven Alltag knapp",
+      "category": "Performance",
+      "severity": "info",
+      "description": "Das System hat weniger als 12 GB RAM. Die Windows 11 Mindestanforderung (4 GB) wird zwar erfüllt, für den produktiven Support-Alltag mit Teams, Browser, Office und AV/EDR-Software sind 8 GB jedoch knapp. Empfehlung: mindestens 16 GB RAM für flüssiges Arbeiten.",
+      "check": "ramBelowRecommended",
+      "checkThreshold": 12,
+      "recommendations": [
+        {
+          "text": "Aktuelle RAM-Verbraucher anzeigen",
+          "cmd": "Get-Process | Sort-Object WorkingSet64 -Descending | Select -First 10 Name, @{n='RAM_MB';e={[math]::Round($_.WorkingSet64/1MB,0)}}",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Verfügbaren und genutzten Speicher prüfen",
+          "cmd": "Get-WmiObject Win32_OperatingSystem | Select @{n='Total_GB';e={[math]::Round($_.TotalVisibleMemorySize/1MB,1)}}, @{n='Free_GB';e={[math]::Round($_.FreePhysicalMemory/1MB,1)}}",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Aufrüstung auf 16 GB RAM empfehlen",
+          "type": "maintenance",
           "risk": "low"
         }
       ]
