@@ -1,0 +1,479 @@
+{
+  "version": "1.0",
+  "rules": [
+    {
+      "id": "APP_CRASH_LOOP",
+      "name": "Anwendung in Crash-Schleife",
+      "type": "groupByProcess",
+      "severity": "critical",
+      "category": "Stabilität",
+      "eventId": 1000,
+      "minCount": 5,
+      "description": "Eine einzelne Anwendung stürzt wiederholt ab. Das deutet auf ein tieferes Problem hin: beschädigte Installation, fehlende Abhängigkeit, Speicherproblem oder inkompatibles Update.",
+      "recommendations": [
+        {
+          "text": "Anwendung neu installieren oder reparieren",
+          "type": "fix",
+          "risk": "medium"
+        },
+        {
+          "text": "Anwendungsabstürze in den letzten 7 Tagen auflisten",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='Application';Id=1000;StartTime=(Get-Date).AddDays(-7)} | Group-Object {$_.Properties[0].Value} | Sort Count -Desc | Select -First 10 Count,Name",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Ereignis-Details der abstürzenden Anwendung prüfen",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='Application';Id=1000} -MaxEvents 5 | Where-Object {$_.Message -match '{process}'} | Select TimeCreated, Message | Format-List",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "NETLOGON_NETWORK_CORRELATION",
+      "name": "Domänen-/Netzwerkproblem wahrscheinlich",
+      "type": "correlation",
+      "operator": "AND",
+      "severity": "error",
+      "category": "Netzwerk",
+      "conditions": [
+        {
+          "eventId": 5719,
+          "source": "NETLOGON",
+          "minCount": 1
+        },
+        {
+          "category": "Netzwerk",
+          "minCount": 2
+        }
+      ],
+      "description": "NETLOGON 5719 (DC nicht erreichbar) tritt zusammen mit weiteren Netzwerkereignissen auf. Häufig liegt eine instabile Netzwerkverbindung, ein nicht erreichbarer Domänencontroller oder ein DNS-Problem vor.",
+      "recommendations": [
+        {
+          "text": "DC-Erreichbarkeit prüfen",
+          "cmd": "nltest /dsgetdc:{domain}",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Netzwerkverbindung zum DC testen",
+          "cmd": "Test-NetConnection -ComputerName {server} -Port 389",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "DNS-Cache leeren und DC-Namen auflösen",
+          "cmd": "ipconfig /flushdns\nnslookup {domain}",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "NETLOGON-Dienst neu starten",
+          "cmd": "Restart-Service Netlogon -Force",
+          "type": "fix",
+          "risk": "medium"
+        }
+      ]
+    },
+    {
+      "id": "DISK_AND_SYSTEM_ERRORS",
+      "name": "Datenträgerproblem verursacht Systemfehler",
+      "type": "correlation",
+      "operator": "AND",
+      "severity": "critical",
+      "category": "Hardware",
+      "conditions": [
+        {
+          "eventIds": [
+            9,
+            11,
+            51,
+            52,
+            153
+          ],
+          "minCount": 1
+        },
+        {
+          "eventIds": [
+            7000,
+            7001,
+            7023,
+            7031
+          ],
+          "minCount": 2
+        }
+      ],
+      "description": "Datenträger-I/O-Fehler treten gleichzeitig mit Dienstausfällen auf. Wahrscheinliche Ursache: Festplattenfehler oder Verbindungsproblem führt zu kaskadierenden Dienst-Abstürzen.",
+      "recommendations": [
+        {
+          "text": "SMART-Status aller Laufwerke prüfen",
+          "cmd": "Get-PhysicalDisk | Select FriendlyName, HealthStatus, OperationalStatus",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Festplattenintegrität prüfen (nach Neustart)",
+          "cmd": "chkdsk C: /f /r /x",
+          "type": "fix",
+          "risk": "high"
+        },
+        {
+          "text": "DISM Image-Reparatur",
+          "cmd": "DISM /Online /Cleanup-Image /RestoreHealth",
+          "type": "fix",
+          "risk": "medium"
+        }
+      ]
+    },
+    {
+      "id": "REPEATED_UNPLANNED_RESTART",
+      "name": "Wiederkehrende ungeplante Neustarts",
+      "type": "correlation",
+      "operator": "OR",
+      "severity": "critical",
+      "category": "Stabilität",
+      "conditions": [
+        {
+          "eventId": 41,
+          "minCount": 2
+        },
+        {
+          "eventId": 6008,
+          "minCount": 2
+        }
+      ],
+      "description": "Das System wurde mehrfach unerwartet neu gestartet. Bei mehr als einem Vorfall liegt meist ein Hardware- oder Treiberproblem vor: Überhitzung, defekter RAM, instabiler Grafiktreiber oder Netzteil.",
+      "recommendations": [
+        {
+          "text": "Temperaturen prüfen",
+          "cmd": "Get-WmiObject MSAcpi_ThermalZoneTemperature -Namespace root/wmi | Select-Object CurrentTemperature",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "BugcheckCode aus Kernel-Power Events lesen",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='System';Id=41} -MaxEvents 5 | Select TimeCreated, Message | Format-List",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "RAM-Test planen",
+          "cmd": "mdsched.exe",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Minidumps analysieren (falls vorhanden)",
+          "cmd": "Get-ChildItem C:\\Windows\\Minidump -ErrorAction SilentlyContinue | Sort LastWriteTime -Desc | Select -First 5 Name, LastWriteTime",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "SECURITY_BRUTE_FORCE",
+      "name": "Möglicher Brute-Force / Angriff",
+      "type": "correlation",
+      "operator": "AND",
+      "severity": "critical",
+      "category": "Sicherheit",
+      "conditions": [
+        {
+          "eventId": 4625,
+          "minCount": 20
+        },
+        {
+          "eventId": 4740,
+          "minCount": 1
+        }
+      ],
+      "description": "Viele fehlgeschlagene Anmeldeversuche (4625) gefolgt von einer Kontosperrung (4740). Muster deutet auf Brute-Force-Angriff oder falsch konfigurierte Dienste hin.",
+      "recommendations": [
+        {
+          "text": "Fehlgeschlagene Anmeldungen nach Quelle auswerten",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='Security';Id=4625} -MaxEvents 50 | Select TimeCreated, @{n='User';e={$_.Properties[5].Value}}, @{n='Source';e={$_.Properties[19].Value}} | Group Source | Sort Count -Desc",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Gesperrte Konten anzeigen",
+          "cmd": "Search-ADAccount -LockedOut | Select Name, SamAccountName | Sort Name",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Account-Lockout-Policy prüfen",
+          "cmd": "net accounts",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "VSS_AND_BACKUP_FAILURE",
+      "name": "Backup-Infrastruktur ausgefallen",
+      "type": "correlation",
+      "operator": "AND",
+      "severity": "error",
+      "category": "Backup",
+      "conditions": [
+        {
+          "eventIds": [
+            12289,
+            8193,
+            8194
+          ],
+          "minCount": 2
+        },
+        {
+          "category": "Backup",
+          "minCount": 1
+        }
+      ],
+      "description": "Mehrere VSS-Fehler in Kombination mit weiteren Backup-Ereignissen. Backups schlagen wahrscheinlich vollständig fehl – Datenwiederherstellung wäre nicht möglich.",
+      "recommendations": [
+        {
+          "text": "VSS-Provider-Status prüfen",
+          "cmd": "vssadmin list providers",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "VSS-Writer-Status prüfen",
+          "cmd": "vssadmin list writers",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "VSS-Dienste neu starten",
+          "cmd": "net stop vss\nnet stop swprv\nnet start vss\nnet start swprv",
+          "type": "fix",
+          "risk": "medium"
+        }
+      ]
+    },
+    {
+      "id": "BURST_OF_ERRORS",
+      "name": "Fehlerhäufung in kurzem Zeitraum",
+      "type": "timeBurst",
+      "severity": "warning",
+      "category": "Stabilität",
+      "windowMinutes": 15,
+      "minErrorsInWindow": 20,
+      "description": "In einem kurzen Zeitfenster traten ungewöhnlich viele Fehler auf. Das deutet auf ein Ereignis hin das kaskadierende Fehler ausgelöst hat – z.B. Dienst-Neustart, Update oder Verbindungsabbruch.",
+      "recommendations": [
+        {
+          "text": "Zeitstempel der Fehlerhäufung identifizieren",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='System','Application';Level=1,2} | Group-Object {$_.TimeCreated.ToString('HH:mm')} | Sort Count -Desc | Select -First 5 Count,Name",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Systemereignisse rund um den Fehlerzeitpunkt prüfen",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='System';StartTime=(Get-Date).AddHours(-24)} | Select TimeCreated, Id, ProviderName, Message | Sort TimeCreated | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "KERBEROS_DC_DNS_PROBLEM",
+      "name": "Kerberos / DC / DNS Problem",
+      "type": "correlation",
+      "operator": "AND",
+      "severity": "error",
+      "category": "Netzwerk",
+      "conditions": [
+        {
+          "eventId": 5719,
+          "source": "NETLOGON",
+          "minCount": 1
+        },
+        {
+          "eventIds": [
+            1014,
+            1015
+          ],
+          "minCount": 1
+        }
+      ],
+      "description": "NETLOGON kann keinen DC erreichen und gleichzeitig schlagen DNS-Auflösungen fehl. Klassisches Muster für ein DNS/Kerberos-Problem: der Client kann den DC nicht per DNS finden und Kerberos-Tickets können nicht erneuert werden.",
+      "recommendations": [
+        {
+          "text": "DC per DNS prüfen",
+          "cmd": "nslookup {domain}\nnltest /dsgetdc:{domain}",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "DNS-Cache leeren",
+          "cmd": "ipconfig /flushdns\nipconfig /registerdns",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "Uhrzeit-Synchronisation prüfen (Kerberos braucht max. 5min Abweichung)",
+          "cmd": "w32tm /query /status\nw32tm /resync /force",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Netzwerk-Adapter-Konfiguration prüfen",
+          "cmd": "Get-NetAdapter | Select Name, Status, LinkSpeed\nGet-DnsClientServerAddress",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "RDS_SHARED_ACTIVATION",
+      "name": "RDS Office Aktivierungsproblem (SharedComputerActivation)",
+      "type": "correlation",
+      "operator": "AND",
+      "severity": "error",
+      "category": "RDS",
+      "conditions": [
+        {
+          "eventIds": [
+            1000,
+            1001
+          ],
+          "source": "WINWORD",
+          "minCount": 1
+        },
+        {
+          "eventIds": [
+            1058,
+            1130,
+            4105,
+            4106
+          ],
+          "minCount": 1
+        }
+      ],
+      "description": "Office-Anwendungen stürzen auf einem Terminalserver ab und gleichzeitig gibt es RDS-Lizenzfehler. Typisches Muster für ein SharedComputerActivation-Problem: Office kann keine Lizenz vom Token-Server abrufen.",
+      "recommendations": [
+        {
+          "text": "Office Aktivierungsstatus prüfen",
+          "cmd": "cscript \"C:\\Program Files\\Microsoft Office\\Office16\\OSPP.VBS\" /dstatus",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "SharedComputerActivation Token löschen",
+          "cmd": "Remove-Item -Path \"$env:LOCALAPPDATA\\Microsoft\\Office\\16.0\\Licensing\" -Recurse -Force -EA 0",
+          "type": "fix",
+          "risk": "medium"
+        },
+        {
+          "text": "Internetzugriff für Aktivierung prüfen",
+          "cmd": "Test-NetConnection licensing.mp.microsoft.com -Port 443",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "BACKUP_WILL_FAIL",
+      "name": "Backup wird wahrscheinlich scheitern",
+      "type": "correlation",
+      "operator": "AND",
+      "severity": "error",
+      "category": "Backup",
+      "conditions": [
+        {
+          "eventIds": [
+            12289,
+            8193,
+            8194
+          ],
+          "minCount": 1
+        },
+        {
+          "eventIds": [
+            2013,
+            105
+          ],
+          "minCount": 1
+        }
+      ],
+      "description": "VSS-Fehler treten gleichzeitig mit Speicherplatzmangel auf. Backups scheitern in dieser Konstellation fast sicher: VSS braucht freien Speicher für Shadow Copies, der nicht vorhanden ist.",
+      "recommendations": [
+        {
+          "text": "Freien Speicherplatz prüfen",
+          "cmd": "Get-PSDrive -PSProvider FileSystem | Select Name, @{n='Free_GB';e={[math]::Round($_.Free/1GB,1)}}, @{n='Used_GB';e={[math]::Round($_.Used/1GB,1)}}",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "VSS Shadow Copies prüfen",
+          "cmd": "vssadmin list shadowstorage\nvssadmin list shadows",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Temporäre Dateien bereinigen",
+          "cmd": "cleanmgr /sageset:1\ncleanmgr /sagerun:1",
+          "type": "maintenance",
+          "risk": "low"
+        },
+        {
+          "text": "VSS-Dienste neu starten",
+          "cmd": "net stop vss\nnet stop swprv\nnet start swprv\nnet start vss",
+          "type": "fix",
+          "risk": "medium"
+        }
+      ]
+    },
+    {
+      "id": "UNSTABLE_WLAN",
+      "name": "Instabile WLAN-Verbindung",
+      "type": "correlation",
+      "operator": "AND",
+      "severity": "warning",
+      "category": "Netzwerk",
+      "conditions": [
+        {
+          "eventIds": [
+            10317,
+            10314,
+            10315
+          ],
+          "minCount": 3
+        },
+        {
+          "eventId": 1014,
+          "minCount": 1
+        }
+      ],
+      "description": "Wiederholte WLAN-Verbindungsabbrüche kombiniert mit DNS-Auflösungsfehlern. Muster für eine instabile WLAN-Verbindung die sekundäre Probleme in cloudbasierten Anwendungen (Teams, OneDrive) verursacht.",
+      "recommendations": [
+        {
+          "text": "WLAN-Adapter Energiespareinstellungen deaktivieren",
+          "cmd": "Set-NetAdapterAdvancedProperty -Name 'Wi-Fi' -RegistryKeyword 'PnPCapabilities' -RegistryValue 24",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "WLAN-Verbindungsverluste der letzten 24h anzeigen",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='System';Id=10317,10314,10315;StartTime=(Get-Date).AddHours(-24)} | Select TimeCreated, Message | Sort TimeCreated",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Netzwerk-Adapter Treiber prüfen",
+          "cmd": "Get-NetAdapter | Where-Object {$_.Name -match 'Wi-Fi'} | Select Name, DriverVersion, DriverDate",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "WLAN-Profil neu verbinden",
+          "cmd": "netsh wlan disconnect\nnetsh wlan connect name=\"{wlanprofile}\"",
+          "type": "fix",
+          "risk": "low"
+        }
+      ]
+    }
+  ]
+}

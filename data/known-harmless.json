@@ -1,0 +1,71 @@
+{
+  "version": "1.0",
+  "description": "Bekannte harmlose Events die markiert aber nicht ausgeblendet werden.",
+  "events": [
+    {
+      "eventId": 10016,
+      "source": "Microsoft-Windows-DistributedCOM",
+      "label": "DCOM-Berechtigungsfehler",
+      "reason": "Bekannter Windows-Bug seit Jahren. Betrifft COM-Server-Berechtigungen für System-Komponenten. Microsoft hat bestätigt dass diese Events trotz Eintrags keine Auswirkungen auf die Systemfunktion haben.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 219,
+      "source": "Microsoft-Windows-Kernel-PnP",
+      "label": "Treiber konnte nicht geladen werden (USB/HID)",
+      "reason": "Tritt häufig bei bekannten AV/EDR-Filtertreibern (z.B. CrowdStrike, SentinelOne, Defender) und bestimmten USB/HID-Geräten auf. Meist harmlos wenn keine weiteren Gerätefehler auftreten.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 11,
+      "source": "disk",
+      "label": "Festplattenfehler (generisch)",
+      "reason": "Einzelne Einträge können durch kurze Verbindungsunterbrechungen entstehen und sind nicht immer kritisch. Erst bei wiederholtem Auftreten oder Kombination mit anderen Datenträger-Events beachtenswert.",
+      "reduceSeverity": false,
+      "affectsScore": false,
+      "minCountForConcern": 3,
+      "onlyHarmlessIfNoCorrelation": true,
+      "correlationIds": [
+        "DISK_AND_SYSTEM_ERRORS"
+      ]
+    },
+    {
+      "eventId": 7023,
+      "source": "Service Control Manager",
+      "label": "Dienst beendet mit Fehler",
+      "reason": "Bestimmte Dienste (z.B. superfetch/sysmain auf SSDs) werden absichtlich gestoppt oder schlagen harmlos fehl. Erst relevant wenn kritische Dienste betroffen sind.",
+      "reduceSeverity": false,
+      "affectsScore": false,
+      "excludeSources": [
+        "SysMain",
+        "Superfetch"
+      ]
+    },
+    {
+      "eventId": 1530,
+      "source": "Microsoft-Windows-User Profiles Service",
+      "label": "Benutzerprofil wird noch verwendet",
+      "reason": "Tritt beim Abmelden auf wenn Prozesse das Profil noch referenzieren. Auf Terminalservern häufig und meist harmlos.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 8003,
+      "source": "Browser",
+      "label": "Master-Browser-Konflikt",
+      "reason": "In modernen Netzwerken mit Active Directory ist der Browser-Dienst irrelevant. Diese Events bedeuten auf AD-Umgebungen praktisch nichts.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 36888,
+      "source": "Schannel",
+      "label": "TLS-Warnung",
+      "reason": "Einzelne TLS-Warnungen sind häufig auf veraltete TLS-Clients oder Kompatibilitätsprobleme zurückzuführen. Ohne weitere Fehler kein akuter Handlungsbedarf.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    }
+  ]
+}
