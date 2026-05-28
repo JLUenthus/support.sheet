@@ -157,6 +157,27 @@
     });
     logoEl.appendChild(dd);
 
+    // Dynamische Befehlszähler aus JSON nachladen
+    const COUNT_SOURCES = [
+      { id: 'index',    url: './data/commands.json',          label: (n, c) => `${n} Befehle · ${c} Kategorien` },
+      { id: 'exchange', url: './data/exchange-commands.json', label: (n)    => `${n} Befehle · On-Prem & EXO` },
+      { id: 'forti',    url: './data/forti-commands.json',    label: (n)    => `${n} Befehle · FG · FMG · FAZ` },
+    ];
+
+    COUNT_SOURCES.forEach(({ id, url, label }) => {
+      fetch(url)
+        .then(r => r.json())
+        .then(data => {
+          const cmds = Array.isArray(data) ? data : (data.commands || []);
+          const n    = cmds.length;
+          const cats = new Set(cmds.map(c => c.tags?.[0]).filter(Boolean)).size;
+          // Desc-Text im Dropdown aktualisieren
+          const descEl = dd.querySelector(`.as-dd-item[href="${id === 'index' ? 'index.html' : id + '.html'}"] .as-dd-desc`);
+          if (descEl) descEl.textContent = label(n, cats);
+        })
+        .catch(() => {}); // Fehler still ignorieren – hardcoded Fallback bleibt
+    });
+
     // Toggle dropdown on logo click (not on child links)
     logoEl.addEventListener('click', e => {
       if (e.target.closest('a.as-dd-item')) return;
