@@ -145,10 +145,10 @@ Write-Host "[i] Systeminformationen sammeln..." -ForegroundColor Yellow
 $os   = Get-CimInstance Win32_OperatingSystem
 $cs   = Get-CimInstance Win32_ComputerSystem
 $proc = Get-CimInstance Win32_Processor | Select-Object -First 1
-$disk = Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" |
+$disk = @(Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" |
         Select-Object DeviceID,
             @{N="Size_GB";E={[math]::Round($_.Size/1GB,1)}},
-            @{N="Free_GB";E={[math]::Round($_.FreeSpace/1GB,1)}}
+            @{N="Free_GB";E={[math]::Round($_.FreeSpace/1GB,1)}})
 
 # --- Erweiterte Metadaten ---
 # Defender
