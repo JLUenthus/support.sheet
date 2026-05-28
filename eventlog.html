@@ -80,6 +80,13 @@
         </div>
       </section>
 
+      <!-- Root Cause Correlations -->
+      <section class="el-section" id="correlation-section" hidden>
+        <h2 class="section-title">🎯 Wahrscheinliche Hauptursachen <span id="correlation-count" class="section-count">0</span></h2>
+        <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px;">Zusammenhängende Ereignismuster – mögliche Ursachen hinter mehreren Findings.</p>
+        <div id="correlations"></div>
+      </section>
+
       <!-- Verbesserungsvorschläge -->
       <section class="el-section" id="improvements-section" hidden>
         <h2 class="section-title">💡 Optimierungsvorschläge <span id="improvements-count" class="section-count">0</span></h2>
@@ -214,6 +221,55 @@
     .ev-src  { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .ev-msg  { color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
+    /* Top Root Cause Banner */
+    .top-root-cause {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-radius: var(--r);
+      border: 1px solid var(--border2);
+      border-left: 4px solid var(--accent);
+      background: var(--panel);
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .top-root-cause.sev-border-critical { border-left-color:var(--red);  border-color:rgba(248,113,113,.25); background:rgba(248,113,113,.04); }
+    .top-root-cause.sev-border-error    { border-left-color:#fb923c; border-color:rgba(251,146,60,.25); background:rgba(251,146,60,.04); }
+    .top-root-cause.sev-border-warning  { border-left-color:var(--amber); border-color:rgba(251,191,36,.25); background:rgba(251,191,36,.04); }
+    .trc-icon  { font-size:1.1rem; flex-shrink:0; }
+    .trc-label { font-size:.72rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.05em; flex-shrink:0; }
+    .trc-score { font-size:1rem; font-weight:700; flex-shrink:0; }
+    .trc-text  { font-size:.85rem; font-weight:600; color:var(--text); flex:1; }
+    .trc-link  { font-size:.75rem; color:var(--accent); text-decoration:none; flex-shrink:0; }
+    .trc-link:hover { text-decoration:underline; }
+
+    /* Correlation cards */
+    .corr-card { background:var(--panel); border:1px solid var(--border); border-radius:var(--r); margin-bottom:10px; overflow:hidden; border-left:3px solid var(--accent); }
+    .corr-card.sev-border-critical { border-left-color:var(--red); }
+    .corr-card.sev-border-error    { border-left-color:#fb923c; }
+    .corr-card.sev-border-warning  { border-left-color:var(--amber); }
+
+    .corr-header { display:flex; align-items:center; gap:10px; padding:12px 16px; cursor:pointer; transition:background .15s; flex-wrap:wrap; }
+    .corr-header:hover { background:var(--panel2); }
+
+    .corr-rank { width:22px; height:22px; border-radius:50%; background:var(--panel2); border:1px solid var(--border2); color:var(--muted); font-size:.72rem; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+    .corr-score { font-size:1rem; font-weight:700; min-width:46px; text-align:center; flex-shrink:0; }
+    .corr-score.sev-score-critical { color:var(--red); }
+    .corr-score.sev-score-error    { color:#fb923c; }
+    .corr-score.sev-score-warning  { color:var(--amber); }
+    .corr-score.sev-score-info     { color:#60a5fa; }
+
+    .corr-title-wrap { display:flex; align-items:center; gap:8px; flex:1; }
+    .corr-title { font-size:.88rem; font-weight:700; color:var(--text); }
+    .corr-cat   { font-size:.7rem; color:var(--dim); background:var(--panel2); border:1px solid var(--border); border-radius:4px; padding:2px 7px; flex-shrink:0; }
+    .corr-body  { padding:12px 16px 14px 50px; }
+    .corr-summary { font-size:.8rem; font-weight:700; color:var(--accent); margin-bottom:6px; }
+
+    /* Harmless badge */
+    .harmless-badge { display:inline-block; margin-left:6px; font-size:.62rem; font-weight:700; padding:1px 6px; border-radius:4px; background:rgba(74,222,128,.1); color:var(--green); border:1px solid rgba(74,222,128,.25); cursor:help; white-space:nowrap; }
+
     /* Results topbar */
     .results-topbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:12px; }
     .sev-summary    { display:flex; flex-wrap:wrap; gap:8px; }
@@ -290,15 +346,21 @@
 
     let RULES        = [];
     let IMPROVEMENTS = [];
+    let CORRELATIONS = [];
+    let HARMLESS     = [];
     let allEvents    = [];
 
-    // Rules + Improvements laden
+    // Rules + Improvements + Correlations + Harmless laden
     Promise.all([
       fetch('./data/eventlog-rules.json').then(r => r.json()),
       fetch('./data/improvement-rules.json').then(r => r.json()),
-    ]).then(([rulesData, impData]) => {
-      RULES        = rulesData.rules        || [];
-      IMPROVEMENTS = impData.improvements   || [];
+      fetch('./data/correlation-rules.json').then(r => r.json()),
+      fetch('./data/known-harmless.json').then(r => r.json()),
+    ]).then(([rulesData, impData, corrData, harmlessData]) => {
+      RULES        = rulesData.rules       || [];
+      IMPROVEMENTS = impData.improvements  || [];
+      CORRELATIONS = corrData.rules        || [];
+      HARMLESS     = harmlessData.events   || [];
     }).catch(() => {});
 
     // ── Upload ──────────────────────────────────────────────
@@ -335,11 +397,13 @@
       if (meta.Disks && !Array.isArray(meta.Disks)) meta.Disks = [meta.Disks];
 
       renderSysGrid(meta, sum, events);
-      const improvements = renderImprovements(meta, sum, events);
-      const findings     = analyzeEvents(events);
-
-      // Severity summary + priority + export
-      renderSevSummary(findings, improvements);
+      const improvements  = renderImprovements(meta, sum, events);
+      const findings      = analyzeEvents(events);
+      const corrResults   = correlateEvents(events, findings);
+      _corrResults = corrResults; // für isHarmless() Context-Awareness
+      renderCorrelations(corrResults);
+      renderTopRootCause(corrResults);
+      renderSevSummary(findings, improvements, corrResults);
       renderPriority(findings, meta, sum);
 
       document.getElementById('findings-count').textContent = findings.length;
@@ -348,7 +412,7 @@
       renderEventTable(events);
 
       // Export button
-      document.getElementById('export-btn').onclick = () => exportFindings(findings, improvements, meta, filename);
+      document.getElementById('export-btn').onclick = () => exportFindings(findings, improvements, corrResults, meta, filename);
 
       const results = document.getElementById('results-section');
       results.className = 'results-visible';
@@ -493,18 +557,17 @@
     }
 
     // ── Severity Summary Pills ──────────────────────────────
-    function renderSevSummary(findings, improvements) {
+    function renderSevSummary(findings, improvements, corrResults) {
       const el = document.getElementById('sev-summary');
       el.replaceChildren();
       const counts = { critical:0, error:0, warning:0, info:0 };
       findings.forEach(f => { counts[f.rule.severity] = (counts[f.rule.severity]||0) + 1; });
-      const impCount = improvements.length;
 
       const defs = [
-        { key:'critical', label:'Kritisch',     cls:'critical' },
-        { key:'error',    label:'Fehler',        cls:'error'    },
-        { key:'warning',  label:'Warnungen',     cls:'warning'  },
-        { key:'info',     label:'Hinweise',      cls:'ok'       },
+        { key:'critical', label:'Kritisch',  cls:'critical' },
+        { key:'error',    label:'Fehler',     cls:'error'    },
+        { key:'warning',  label:'Warnungen',  cls:'warning'  },
+        { key:'info',     label:'Hinweise',   cls:'ok'       },
       ];
       defs.forEach(({key, label, cls}) => {
         if (!counts[key]) return;
@@ -513,11 +576,18 @@
         p.textContent = counts[key] + ' ' + label;
         el.appendChild(p);
       });
-      if (impCount) {
+      if (improvements.length) {
         const p = document.createElement('div');
         p.className = 'sum-pill';
         p.style.cssText = 'border-color:rgba(124,140,248,.3);background:rgba(124,140,248,.08);color:var(--accent)';
-        p.textContent = impCount + ' Optimierungen';
+        p.textContent = improvements.length + ' Optimierungen';
+        el.appendChild(p);
+      }
+      if (corrResults?.length) {
+        const p = document.createElement('div');
+        p.className = 'sum-pill';
+        p.style.cssText = 'border-color:rgba(244,114,182,.3);background:rgba(244,114,182,.08);color:#f472b6';
+        p.textContent = corrResults.length + ' Hauptursachen';
         el.appendChild(p);
       }
     }
@@ -554,13 +624,21 @@
     }
 
     // ── Export Findings ─────────────────────────────────────
-    function exportFindings(findings, improvements, meta, filename) {
+    function exportFindings(findings, improvements, correlations, meta, filename) {
       const now = new Date().toISOString();
       const payload = {
         exportedAt:   now,
         source:       filename || 'unknown',
         computer:     meta.ComputerName || '–',
         os:           meta.OS || '–',
+        rootCauses: (correlations||[]).map(c => ({
+          score:       c.score + '%',
+          name:        c.rule.name,
+          category:    c.rule.category,
+          severity:    c.rule.severity,
+          summary:     c.summary,
+          description: c.rule.description,
+        })),
         findings: findings.map(f => ({
           severity:        f.rule.severity,
           name:            f.rule.name,
@@ -719,7 +797,302 @@
       return wrapper;
     }
 
-    // ── Render Findings ─────────────────────────────────────
+    // ── Correlation Engine ───────────────────────────────────
+    function correlateEvents(events, findings) {
+      const results = [];
+
+      CORRELATIONS.forEach(rule => {
+
+        // ── Type: groupByProcess ────────────────────────────
+        if (rule.type === 'groupByProcess') {
+          const matched = events.filter(e => Number(e.Id) === rule.eventId);
+          if (!matched.length) return;
+
+          // Group by process name (first property of event)
+          const groups = {};
+          matched.forEach(e => {
+            const proc = (e.Message || '').match(/Fehlerhafte Anwendung[:]\s*([^\s,]+)/i)?.[1]
+                      || (e.Message || '').match(/Faulting application name[:]\s*([^\s,]+)/i)?.[1]
+                      || 'Unbekannt';
+            if (!groups[proc]) groups[proc] = 0;
+            groups[proc]++;
+          });
+
+          // Find dominant process
+          const topProc = Object.entries(groups).sort((a,b) => b[1]-a[1])[0];
+          if (!topProc || topProc[1] < rule.minCount) return;
+
+          const total  = matched.length;
+          const pct    = Math.round((topProc[1] / total) * 100);
+          const score  = Math.min(100, 40 + pct * 0.6);
+
+          results.push({
+            rule,
+            score:       Math.round(score),
+            summary:     `${pct}% der App-Abstürze stammen von ${topProc[0]} (${topProc[1]}×)`,
+            detail:      `${total} App-Absturz-Events insgesamt. Dominanter Prozess: ${topProc[0]}`,
+            matchedCount: topProc[1],
+            process:     topProc[0],
+          });
+          return;
+        }
+
+        // ── Type: timeBurst ─────────────────────────────────
+        if (rule.type === 'timeBurst') {
+          const errorEvents = events.filter(e => e.Level === 'Critical' || e.Level === 'Error');
+          if (errorEvents.length < rule.minErrorsInWindow) return;
+
+          // Slide a time window
+          const windowMs = rule.windowMinutes * 60 * 1000;
+          let maxBurst = 0, burstTime = null;
+
+          errorEvents.forEach(e => {
+            const t = new Date(e.TimeCreated).getTime();
+            if (isNaN(t)) return;
+            const inWindow = errorEvents.filter(e2 => {
+              const t2 = new Date(e2.TimeCreated).getTime();
+              return !isNaN(t2) && t2 >= t && t2 <= t + windowMs;
+            }).length;
+            if (inWindow > maxBurst) { maxBurst = inWindow; burstTime = e.TimeCreated; }
+          });
+
+          if (maxBurst < rule.minErrorsInWindow) return;
+          const score = Math.min(100, 30 + maxBurst * 2);
+
+          results.push({
+            rule,
+            score:       Math.round(score),
+            summary:     `${maxBurst} Fehler in ${rule.windowMinutes} Minuten (ab ${(burstTime||'').substring(0,16).replace('T',' ')})`,
+            detail:      `Ungewöhnliche Fehlerhäufung erkannt. Mögliche Ursache: Update, Dienst-Neustart oder Verbindungsabbruch.`,
+            matchedCount: maxBurst,
+          });
+          return;
+        }
+
+        // ── Type: correlation (AND/OR) ──────────────────────
+        if (rule.type === 'correlation') {
+          const operator   = rule.operator || 'AND';
+          const conditions = rule.conditions || [];
+          const condResults = conditions.map(cond => {
+            // Match by eventId, eventIds, category, source
+            const matched = events.filter(e => {
+              const idMatch = cond.eventId
+                ? Number(e.Id) === cond.eventId
+                : cond.eventIds
+                  ? cond.eventIds.includes(Number(e.Id))
+                  : true;
+              const srcMatch = cond.source
+                ? (e.ProviderName||'').toLowerCase().includes(cond.source.toLowerCase())
+                : true;
+              const catMatch = cond.category
+                ? (e.Category||'') === cond.category
+                : true;
+              return idMatch && srcMatch && catMatch;
+            });
+            return { cond, count: matched.length, met: matched.length >= (cond.minCount || 1) };
+          });
+
+          const allMet = condResults.every(r => r.met);
+          const anyMet = condResults.some(r => r.met);
+          const triggered = operator === 'OR' ? anyMet : allMet;
+          if (!triggered) return;
+
+          const totalMatched = condResults.reduce((s, r) => s + r.count, 0);
+          const metCount     = condResults.filter(r => r.met).length;
+          // Score: base 50 if OR, higher if more conditions met
+          const score = Math.min(100, operator === 'AND'
+            ? 55 + totalMatched * 2
+            : 40 + (metCount / conditions.length) * 40 + totalMatched);
+
+          const condSummary = condResults
+            .map(r => `${r.count}× ${r.cond.eventId || r.cond.eventIds?.join('/') || r.cond.category || '?'}`)
+            .join(' + ');
+
+          results.push({
+            rule,
+            score:       Math.round(Math.min(score, 98)),
+            summary:     condSummary,
+            detail:      `${operator === 'AND' ? 'Alle' : 'Mindestens eine'} Bedingung erfüllt.`,
+            matchedCount: totalMatched,
+          });
+        }
+      });
+
+      // Sort by score descending, return top 3
+      return results.sort((a, b) => b.score - a.score).slice(0, 3);
+    }
+
+    // ── Render Correlations ──────────────────────────────────
+    function renderCorrelations(results) {
+      const section   = document.getElementById('correlation-section');
+      const container = document.getElementById('correlations');
+      const countEl   = document.getElementById('correlation-count');
+      container.replaceChildren();
+
+      if (!results.length) { section.hidden = true; return; }
+      section.hidden = false;
+      countEl.textContent = results.length;
+
+      results.forEach((res, idx) => {
+        const rule = res.rule;
+        const card = document.createElement('div');
+        card.className = 'corr-card sev-border-' + rule.severity;
+
+        // Header
+        const header = document.createElement('div');
+        header.className = 'corr-header';
+
+        const rankEl = document.createElement('div');
+        rankEl.className = 'corr-rank';
+        rankEl.textContent = idx + 1;
+
+        const scoreEl = document.createElement('div');
+        scoreEl.className = 'corr-score sev-score-' + rule.severity;
+        scoreEl.textContent = res.score + '%';
+
+        const titleWrap = document.createElement('div');
+        titleWrap.className = 'corr-title-wrap';
+
+        const sevPill = document.createElement('span');
+        sevPill.className = 'sev-pill sev-' + rule.severity;
+        sevPill.textContent = rule.severity;
+
+        const title = document.createElement('span');
+        title.className = 'corr-title';
+        title.textContent = rule.name;
+
+        const cat = document.createElement('span');
+        cat.className = 'corr-cat';
+        cat.textContent = rule.category;
+
+        titleWrap.appendChild(sevPill);
+        titleWrap.appendChild(title);
+
+        const expand = document.createElement('span');
+        expand.className = 'finding-expand';
+        expand.textContent = '▼';
+
+        header.appendChild(rankEl);
+        header.appendChild(scoreEl);
+        header.appendChild(titleWrap);
+        header.appendChild(cat);
+        header.appendChild(expand);
+
+        // Body
+        const body = document.createElement('div');
+        body.className = 'finding-body corr-body';
+        // Critical auto-open
+        if (rule.severity === 'critical') {
+          body.classList.add('open');
+          expand.classList.add('open');
+        }
+
+        header.addEventListener('click', () => {
+          expand.classList.toggle('open', body.classList.toggle('open'));
+        });
+
+        // Summary row
+        const summaryEl = document.createElement('div');
+        summaryEl.className = 'corr-summary';
+        summaryEl.textContent = res.summary;
+        body.appendChild(summaryEl);
+
+        const descEl = document.createElement('p');
+        descEl.className = 'finding-desc';
+        descEl.textContent = rule.description;
+        body.appendChild(descEl);
+
+        // Recommendations
+        if (rule.recommendations?.length) {
+          const recTitle = document.createElement('div');
+          recTitle.className = 'finding-sub-title';
+          recTitle.style.marginTop = '10px';
+          recTitle.textContent = 'Empfehlungen';
+          body.appendChild(recTitle);
+          body.appendChild(buildRecListGrouped(rule.recommendations));
+        }
+
+        card.appendChild(header);
+        card.appendChild(body);
+        container.appendChild(card);
+      });
+    }
+
+    // ── Harmless Event Check (Context-Aware) ─────────────────
+    // corrResults wird gesetzt sobald correlateEvents läuft
+    let _corrResults = [];
+
+    function isHarmless(event) {
+      const match = HARMLESS.find(h => {
+        const idMatch  = h.eventId === Number(event.Id);
+        const srcMatch = !h.source || (event.ProviderName||'').toLowerCase().includes(h.source.toLowerCase());
+        const excMatch = !h.excludeSources || !h.excludeSources.some(s =>
+          (event.ProviderName||'').toLowerCase().includes(s.toLowerCase()));
+        return idMatch && srcMatch && excMatch;
+      });
+      if (!match) return null;
+
+      // Context-Awareness: wenn eine Korrelation getriggert hat die diesen Event betrifft
+      // → NICHT als harmlos markieren
+      if (match.onlyHarmlessIfNoCorrelation && match.correlationIds?.length) {
+        const correlationActive = _corrResults.some(r =>
+          match.correlationIds.includes(r.rule.id)
+        );
+        if (correlationActive) return null; // im Kontext nicht harmlos
+      }
+
+      // minCountForConcern: nur harmlos wenn einzeln – wird von Aufrufer geprüft
+      return match;
+    }
+
+    // ── Top Root Cause Banner ─────────────────────────────────
+    function renderTopRootCause(corrResults) {
+      // Entfernen falls vorhanden
+      document.getElementById('top-root-cause')?.remove();
+      if (!corrResults?.length) return;
+
+      const top = corrResults[0];
+      const banner = document.createElement('div');
+      banner.id = 'top-root-cause';
+      banner.className = 'top-root-cause sev-border-' + top.rule.severity;
+
+      const icon = document.createElement('span');
+      icon.className = 'trc-icon';
+      icon.textContent = '🎯';
+
+      const label = document.createElement('span');
+      label.className = 'trc-label';
+      label.textContent = 'Wahrscheinlichste Ursache:';
+
+      const score = document.createElement('span');
+      score.className = 'trc-score sev-score-' + top.rule.severity;
+      score.textContent = top.score + '%';
+
+      const text = document.createElement('span');
+      text.className = 'trc-text';
+      text.textContent = top.summary || top.rule.name;
+
+      const link = document.createElement('a');
+      link.className = 'trc-link';
+      link.textContent = '↓ Details';
+      link.href = '#';
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        document.getElementById('correlation-section')?.scrollIntoView({ behavior:'smooth', block:'start' });
+      });
+
+      banner.appendChild(icon);
+      banner.appendChild(label);
+      banner.appendChild(score);
+      banner.appendChild(text);
+      banner.appendChild(link);
+
+      // Insert after sev-summary section
+      const sevSection = document.querySelector('.results-topbar')?.closest('.el-section');
+      if (sevSection) sevSection.insertAdjacentElement('afterend', banner);
+    }
+
+    // ── renderFindings: add harmless badge ───────────────────
     function renderFindings(findings) {
       const container = document.getElementById('findings');
       container.replaceChildren();
@@ -848,6 +1221,13 @@
           { text:e.Category||'' },
           { text:(e.Message||'').substring(0,120), muted:true, maxw:'300px' },
         ];
+
+        // Harmless badge in last cell
+        const harmless = isHarmless(e);
+        if (harmless) {
+          const lastCell = cells[cells.length - 1];
+          lastCell.harmlessLabel = harmless.label;
+        }
         cells.forEach(cell => {
           const td = document.createElement('td');
           if (cell.html) { td.innerHTML = cell.html; }
@@ -857,6 +1237,13 @@
             if (cell.accent) td.style.color = 'var(--accent)';
             if (cell.muted)  td.style.color = 'var(--muted)';
             if (cell.maxw)   td.style.cssText += `;max-width:${cell.maxw};overflow:hidden;text-overflow:ellipsis;white-space:nowrap`;
+            if (cell.harmlessLabel) {
+              const badge = document.createElement('span');
+              badge.className = 'harmless-badge';
+              badge.textContent = '✓ meist harmlos';
+              badge.title = cell.harmlessLabel;
+              td.appendChild(badge);
+            }
           }
           tr.appendChild(td);
         });

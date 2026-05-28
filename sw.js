@@ -1,7 +1,7 @@
 // ============================================================
 // support.sheet – Service Worker v2
 // ============================================================
-const CACHE_VERSION = '20260528-0911';
+const CACHE_VERSION = '20260528-0728';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -14,6 +14,8 @@ const ASSETS = [
   './eventlog.html',
   './data/eventlog-rules.json',
   './data/improvement-rules.json',
+  './data/known-harmless.json',
+  './data/correlation-rules.json',
   './data/commands.json',
   './data/forti-commands.json',
   './data/exchange-commands.json',
