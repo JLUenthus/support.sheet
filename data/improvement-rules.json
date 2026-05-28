@@ -1,0 +1,128 @@
+{
+  "version": "1.0",
+  "description": "Proaktive Systemoptimierung basierend auf Metadaten und Event-Mustern",
+  "improvements": [
+    {
+      "id": "IMP_POWER_PLAN",
+      "name": "Energieplan nicht optimal",
+      "category": "Performance",
+      "severity": "warning",
+      "description": "Das System verwendet einen Energiesparplan statt Höchstleistung. Auf Workstations und Servern kann das die Performance deutlich reduzieren – besonders bei kurzen CPU-Spitzen.",
+      "check": "powerPlan",
+      "checkValues": ["balanced", "power saver", "ausbalanciert", "energiesparmodus"],
+      "recommendations": [
+        {
+          "text": "Energieplan auf Höchstleistung setzen",
+          "cmd": "powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c"
+        },
+        {
+          "text": "Aktuellen Energieplan anzeigen",
+          "cmd": "powercfg /getactivescheme"
+        },
+        {
+          "text": "Alle verfügbaren Energiepläne anzeigen",
+          "cmd": "powercfg /list"
+        }
+      ]
+    },
+    {
+      "id": "IMP_UPTIME_HIGH",
+      "name": "Langer Uptime – kein Neustart seit über 30 Tagen",
+      "category": "Wartung",
+      "severity": "info",
+      "description": "Das System wurde seit mehr als 30 Tagen nicht neu gestartet. Windows Update Patches werden erst nach einem Neustart vollständig aktiv. Treiber und Dienste können sich in diesem Zustand instabil verhalten.",
+      "check": "uptimeHours",
+      "checkThreshold": 720,
+      "recommendations": [
+        {
+          "text": "Letzten Boot-Zeitpunkt prüfen",
+          "cmd": "(Get-Date) - (gcim Win32_OperatingSystem).LastBootUpTime"
+        },
+        {
+          "text": "Neustart für Wartungsfenster einplanen",
+          "cmd": "$action = New-ScheduledTaskAction -Execute 'shutdown.exe' -Argument '/r /f /t 0'\n$trigger = New-ScheduledTaskTrigger -Once -At '{time}'\nRegister-ScheduledTask -TaskName 'Wartungs-Neustart' -Action $action -Trigger $trigger -RunLevel Highest -User 'SYSTEM'"
+        }
+      ]
+    },
+    {
+      "id": "IMP_DISK_SPACE_LOW",
+      "name": "Wenig freier Speicherplatz",
+      "category": "Hardware",
+      "severity": "warning",
+      "description": "Ein Laufwerk hat weniger als 15% freien Speicherplatz. Windows benötigt freien Speicher für Updates, temporäre Dateien, Swap und Sicherungspunkte. Unter 10% können Fehler auftreten.",
+      "check": "diskFreePercent",
+      "checkThreshold": 15,
+      "recommendations": [
+        {
+          "text": "Datenträgerspeicher analysieren",
+          "cmd": "Get-PSDrive -PSProvider FileSystem | Select Name, @{n='Free_GB';e={[math]::Round($_.Free/1GB,1)}}, @{n='Used_GB';e={[math]::Round($_.Used/1GB,1)}} | Sort Free_GB"
+        },
+        {
+          "text": "Temporäre Dateien bereinigen",
+          "cmd": "Remove-Item -Path $env:TEMP\\* -Recurse -Force -ErrorAction SilentlyContinue\nRemove-Item -Path C:\\Windows\\Temp\\* -Recurse -Force -ErrorAction SilentlyContinue"
+        },
+        {
+          "text": "Windows-Komponentenspeicher bereinigen",
+          "cmd": "DISM /Online /Cleanup-Image /StartComponentCleanup /ResetBase"
+        }
+      ]
+    },
+    {
+      "id": "IMP_RAM_HIGH",
+      "name": "Hohe RAM-Auslastung",
+      "category": "Performance",
+      "severity": "warning",
+      "description": "Das System nutzt mehr als 85% des verfügbaren Arbeitsspeichers. Dies kann zu Leistungseinbrüchen führen und Windows veranlassen, Prozesse auszulagern.",
+      "check": "ramUsedPercent",
+      "checkThreshold": 85,
+      "recommendations": [
+        {
+          "text": "Top RAM-Verbraucher anzeigen",
+          "cmd": "Get-Process | Sort-Object WorkingSet64 -Descending | Select -First 10 Name, @{n='RAM_MB';e={[math]::Round($_.WorkingSet64/1MB,0)}}"
+        },
+        {
+          "text": "Commit-Größe prüfen",
+          "cmd": "Get-WmiObject Win32_OperatingSystem | Select @{n='Total_GB';e={[math]::Round($_.TotalVisibleMemorySize/1MB,1)}}, @{n='Free_GB';e={[math]::Round($_.FreePhysicalMemory/1MB,1)}}"
+        }
+      ]
+    },
+    {
+      "id": "IMP_WINDOWS_VERSION",
+      "name": "Windows-Version veraltet",
+      "category": "Sicherheit",
+      "severity": "warning",
+      "description": "Das System läuft auf einer älteren Windows-Version. Ältere Versionen erhalten keine Sicherheitsupdates mehr und sind ein Sicherheitsrisiko.",
+      "check": "windowsBuild",
+      "checkMaxBuild": 19044,
+      "recommendations": [
+        {
+          "text": "Aktuelle Windows-Version prüfen",
+          "cmd": "Get-ComputerInfo | Select WindowsProductName, WindowsVersion, OsBuildNumber"
+        },
+        {
+          "text": "Windows Update starten",
+          "cmd": "Start-Process ms-settings:windowsupdate"
+        }
+      ]
+    },
+    {
+      "id": "IMP_MANY_ERRORS",
+      "name": "Überdurchschnittlich viele Fehler",
+      "category": "System",
+      "severity": "warning",
+      "description": "Das System hat im analysierten Zeitraum ungewöhnlich viele Fehler-Ereignisse. Das deutet auf ein zugrunde liegendes Problem hin das noch nicht erkannt wurde.",
+      "check": "errorCount",
+      "checkThreshold": 50,
+      "recommendations": [
+        {
+          "text": "Häufigste Fehlerquellen anzeigen",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='System','Application'; Level=1,2; StartTime=(Get-Date).AddDays(-7)} | Group-Object ProviderName | Sort Count -Desc | Select -First 10 Count, Name"
+        },
+        {
+          "text": "Systemdateien prüfen",
+          "cmd": "sfc /scannow"
+        }
+      ]
+    }
+  ]
+}
