@@ -9,19 +9,30 @@
       "severity": "warning",
       "description": "Das System verwendet einen Energiesparplan statt Höchstleistung. Auf Workstations und Servern kann das die Performance deutlich reduzieren – besonders bei kurzen CPU-Spitzen.",
       "check": "powerPlan",
-      "checkValues": ["balanced", "power saver", "ausbalanciert", "energiesparmodus"],
+      "checkValues": [
+        "balanced",
+        "power saver",
+        "ausbalanciert",
+        "energiesparmodus"
+      ],
       "recommendations": [
         {
           "text": "Energieplan auf Höchstleistung setzen",
-          "cmd": "powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c"
+          "cmd": "powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c",
+          "type": "fix",
+          "risk": "low"
         },
         {
           "text": "Aktuellen Energieplan anzeigen",
-          "cmd": "powercfg /getactivescheme"
+          "cmd": "powercfg /getactivescheme",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
           "text": "Alle verfügbaren Energiepläne anzeigen",
-          "cmd": "powercfg /list"
+          "cmd": "powercfg /list",
+          "type": "diagnose",
+          "risk": "low"
         }
       ]
     },
@@ -36,11 +47,15 @@
       "recommendations": [
         {
           "text": "Letzten Boot-Zeitpunkt prüfen",
-          "cmd": "(Get-Date) - (gcim Win32_OperatingSystem).LastBootUpTime"
+          "cmd": "(Get-Date) - (gcim Win32_OperatingSystem).LastBootUpTime",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
           "text": "Neustart für Wartungsfenster einplanen",
-          "cmd": "$action = New-ScheduledTaskAction -Execute 'shutdown.exe' -Argument '/r /f /t 0'\n$trigger = New-ScheduledTaskTrigger -Once -At '{time}'\nRegister-ScheduledTask -TaskName 'Wartungs-Neustart' -Action $action -Trigger $trigger -RunLevel Highest -User 'SYSTEM'"
+          "cmd": "$action = New-ScheduledTaskAction -Execute 'shutdown.exe' -Argument '/r /f /t 0'\n$trigger = New-ScheduledTaskTrigger -Once -At '{time}'\nRegister-ScheduledTask -TaskName 'Wartungs-Neustart' -Action $action -Trigger $trigger -RunLevel Highest -User 'SYSTEM'",
+          "type": "maintenance",
+          "risk": "high"
         }
       ]
     },
@@ -55,15 +70,21 @@
       "recommendations": [
         {
           "text": "Datenträgerspeicher analysieren",
-          "cmd": "Get-PSDrive -PSProvider FileSystem | Select Name, @{n='Free_GB';e={[math]::Round($_.Free/1GB,1)}}, @{n='Used_GB';e={[math]::Round($_.Used/1GB,1)}} | Sort Free_GB"
+          "cmd": "Get-PSDrive -PSProvider FileSystem | Select Name, @{n='Free_GB';e={[math]::Round($_.Free/1GB,1)}}, @{n='Used_GB';e={[math]::Round($_.Used/1GB,1)}} | Sort Free_GB",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
           "text": "Temporäre Dateien bereinigen",
-          "cmd": "Remove-Item -Path $env:TEMP\\* -Recurse -Force -ErrorAction SilentlyContinue\nRemove-Item -Path C:\\Windows\\Temp\\* -Recurse -Force -ErrorAction SilentlyContinue"
+          "cmd": "Remove-Item -Path $env:TEMP\\* -Recurse -Force -ErrorAction SilentlyContinue\nRemove-Item -Path C:\\Windows\\Temp\\* -Recurse -Force -ErrorAction SilentlyContinue",
+          "type": "maintenance",
+          "risk": "low"
         },
         {
           "text": "Windows-Komponentenspeicher bereinigen",
-          "cmd": "DISM /Online /Cleanup-Image /StartComponentCleanup /ResetBase"
+          "cmd": "DISM /Online /Cleanup-Image /StartComponentCleanup /ResetBase",
+          "type": "maintenance",
+          "risk": "high"
         }
       ]
     },
@@ -78,11 +99,15 @@
       "recommendations": [
         {
           "text": "Top RAM-Verbraucher anzeigen",
-          "cmd": "Get-Process | Sort-Object WorkingSet64 -Descending | Select -First 10 Name, @{n='RAM_MB';e={[math]::Round($_.WorkingSet64/1MB,0)}}"
+          "cmd": "Get-Process | Sort-Object WorkingSet64 -Descending | Select -First 10 Name, @{n='RAM_MB';e={[math]::Round($_.WorkingSet64/1MB,0)}}",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
           "text": "Commit-Größe prüfen",
-          "cmd": "Get-WmiObject Win32_OperatingSystem | Select @{n='Total_GB';e={[math]::Round($_.TotalVisibleMemorySize/1MB,1)}}, @{n='Free_GB';e={[math]::Round($_.FreePhysicalMemory/1MB,1)}}"
+          "cmd": "Get-WmiObject Win32_OperatingSystem | Select @{n='Total_GB';e={[math]::Round($_.TotalVisibleMemorySize/1MB,1)}}, @{n='Free_GB';e={[math]::Round($_.FreePhysicalMemory/1MB,1)}}",
+          "type": "diagnose",
+          "risk": "low"
         }
       ]
     },
@@ -97,11 +122,15 @@
       "recommendations": [
         {
           "text": "Aktuelle Windows-Version prüfen",
-          "cmd": "Get-ComputerInfo | Select WindowsProductName, WindowsVersion, OsBuildNumber"
+          "cmd": "Get-ComputerInfo | Select WindowsProductName, WindowsVersion, OsBuildNumber",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
           "text": "Windows Update starten",
-          "cmd": "Start-Process ms-settings:windowsupdate"
+          "cmd": "Start-Process ms-settings:windowsupdate",
+          "type": "fix",
+          "risk": "low"
         }
       ]
     },
@@ -116,11 +145,152 @@
       "recommendations": [
         {
           "text": "Häufigste Fehlerquellen anzeigen",
-          "cmd": "Get-WinEvent -FilterHashtable @{LogName='System','Application'; Level=1,2; StartTime=(Get-Date).AddDays(-7)} | Group-Object ProviderName | Sort Count -Desc | Select -First 10 Count, Name"
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='System','Application'; Level=1,2; StartTime=(Get-Date).AddDays(-7)} | Group-Object ProviderName | Sort Count -Desc | Select -First 10 Count, Name",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
           "text": "Systemdateien prüfen",
-          "cmd": "sfc /scannow"
+          "cmd": "sfc /scannow",
+          "type": "fix",
+          "risk": "medium"
+        }
+      ]
+    },
+    {
+      "id": "IMP_DEFENDER_DISABLED",
+      "name": "Windows Defender Echtzeit-Schutz deaktiviert",
+      "category": "Sicherheit",
+      "severity": "warning",
+      "description": "Der Echtzeit-Schutz von Windows Defender ist deaktiviert. Das System ist ohne aktiven Virenschutz. Klassischer MSP-Fall: Benutzer oder Software hat den Schutz abgeschaltet.",
+      "check": "defenderDisabled",
+      "recommendations": [
+        {
+          "text": "Defender-Status prüfen",
+          "cmd": "Get-MpComputerStatus | Select RealTimeProtectionEnabled, AntivirusEnabled, AMServiceEnabled",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Echtzeit-Schutz wieder aktivieren",
+          "cmd": "Set-MpPreference -DisableRealtimeMonitoring $false",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "Defender-Ereignisse prüfen",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Windows Defender/Operational'; Level=1,2,3} -MaxEvents 20 | Select TimeCreated, Message",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "IMP_BITLOCKER_OFF",
+      "name": "BitLocker nicht aktiv",
+      "category": "Sicherheit",
+      "severity": "info",
+      "description": "Das Systemlaufwerk ist nicht mit BitLocker verschlüsselt. Bei Diebstahl oder Verlust des Geräts sind alle Daten ungeschützt lesbar. Besonders relevant für mobile Geräte und Laptops.",
+      "check": "bitlockerOff",
+      "recommendations": [
+        {
+          "text": "BitLocker-Status aller Laufwerke prüfen",
+          "cmd": "Get-BitLockerVolume | Select MountPoint, ProtectionStatus, EncryptionMethod, VolumeStatus",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "BitLocker aktivieren (interaktiv)",
+          "cmd": "manage-bde -on C: -RecoveryPassword",
+          "type": "fix",
+          "risk": "medium"
+        },
+        {
+          "text": "Recovery Key sichern",
+          "cmd": "manage-bde -protectors -get C:",
+          "type": "maintenance",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "IMP_MANY_APPCRASH",
+      "name": "Viele Anwendungsabstürze",
+      "category": "Stabilität",
+      "severity": "warning",
+      "description": "Überdurchschnittlich viele Application Error Events (ID 1000) im Analysezeitraum. Das deutet auf instabile Software, fehlende Abhängigkeiten oder beschädigte Systemdateien hin.",
+      "check": "appCrashCount",
+      "checkThreshold": 5,
+      "recommendations": [
+        {
+          "text": "Häufig abstürzende Anwendungen identifizieren",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='Application'; Id=1000} | Group-Object {$_.Properties[0].Value} | Sort Count -Desc | Select -First 10 Count, Name",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Systemdateien auf Beschädigungen prüfen",
+          "cmd": "sfc /scannow",
+          "type": "fix",
+          "risk": "medium"
+        },
+        {
+          "text": ".NET Framework Versionen prüfen",
+          "cmd": "Get-ChildItem 'HKLM:\\SOFTWARE\\Microsoft\\NET Framework Setup\\NDP' -Recurse | Get-ItemProperty -Name Version -EA 0 | Sort Version -Desc | Select PSChildName, Version",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "IMP_MANY_AUTOSTARTS",
+      "name": "Viele Autostart-Einträge",
+      "category": "Performance",
+      "severity": "info",
+      "description": "Das System hat viele Autostart-Programme. Das verlängert die Boot-Zeit und belastet RAM und CPU dauerhaft. Klassischer Fall für Kundengeräte die über Jahre gewachsen sind.",
+      "check": "autostartCount",
+      "checkThreshold": 20,
+      "recommendations": [
+        {
+          "text": "Autostart-Einträge anzeigen",
+          "cmd": "Get-CimInstance Win32_StartupCommand | Select Name, Command, Location, User | Sort Name",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Autostart-Verwaltung öffnen",
+          "cmd": "msconfig",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Startup-Impact im Task-Manager prüfen (Aufgaben-Manager → Start-Apps)",
+          "cmd": "taskmgr",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "IMP_BIOS_OLD",
+      "name": "BIOS/Firmware möglicherweise veraltet",
+      "category": "Hardware",
+      "severity": "info",
+      "description": "Das BIOS/UEFI-Datum ist mehr als 2 Jahre alt. Veraltete Firmware kann Sicherheitslücken enthalten oder Kompatibilitätsprobleme mit neuerer Hardware und Windows-Features verursachen.",
+      "check": "biosAgeYears",
+      "checkThreshold": 2,
+      "recommendations": [
+        {
+          "text": "BIOS-Version und Datum anzeigen",
+          "cmd": "Get-WmiObject -Class Win32_BIOS | Select Manufacturer, Name, Version, ReleaseDate",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "System-Hersteller und Modell prüfen (für Firmware-Update)",
+          "cmd": "Get-WmiObject -Class Win32_ComputerSystem | Select Manufacturer, Model, SystemType",
+          "type": "diagnose",
+          "risk": "low"
         }
       ]
     }

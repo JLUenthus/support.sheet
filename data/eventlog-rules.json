@@ -18,22 +18,32 @@
       "recommendations": [
         {
           "text": "Temperaturen prüfen: CPU/GPU Temp mit HWInfo64 kontrollieren",
-          "cmd": "Get-WmiObject MSAcpi_ThermalZoneTemperature -Namespace root/wmi | Select-Object CurrentTemperature"
+          "cmd": "Get-WmiObject MSAcpi_ThermalZoneTemperature -Namespace root/wmi | Select-Object CurrentTemperature",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
           "text": "RAM testen: Windows-Speicherdiagnose oder memtest86 ausführen",
-          "cmd": "mdsched.exe"
+          "cmd": "mdsched.exe",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
           "text": "Treiber aktualisieren: besonders Grafik- und Chipsatz-Treiber",
-          "cmd": "pnputil /scan-devices"
+          "cmd": "pnputil /scan-devices",
+          "type": "fix",
+          "risk": "medium"
         },
         {
-          "text": "Ereignis-Details prüfen: BugcheckCode zeigt genaue Absturzursache"
+          "text": "Ereignis-Details prüfen: BugcheckCode zeigt genaue Absturzursache",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
           "text": "Energieplan: Höchstleistung aktivieren (Set-PowerPlan-Win11.ps1)",
-          "cmd": "powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c"
+          "cmd": "powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c",
+          "type": "fix",
+          "risk": "low"
         }
       ],
       "relatedEventIds": [
@@ -64,22 +74,32 @@
       "recommendations": [
         {
           "text": "Anwendung neu installieren oder reparieren",
-          "cmd": "Get-WinEvent -FilterHashtable @{LogName='Application';Id=1000} -MaxEvents 5 | Select TimeCreated,Message"
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='Application';Id=1000} -MaxEvents 5 | Select TimeCreated,Message",
+          "type": "fix",
+          "risk": "medium"
         },
         {
-          "text": "Visual C++ Redistributables aktualisieren"
+          "text": "Visual C++ Redistributables aktualisieren",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
           "text": ".NET Framework Version prüfen",
-          "cmd": "Get-ChildItem 'HKLM:\\SOFTWARE\\Microsoft\\NET Framework Setup\\NDP' -Recurse | Get-ItemProperty -Name Version -EA 0"
+          "cmd": "Get-ChildItem 'HKLM:\\SOFTWARE\\Microsoft\\NET Framework Setup\\NDP' -Recurse | Get-ItemProperty -Name Version -EA 0",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
           "text": "sfc /scannow ausführen um Systemdateien zu prüfen",
-          "cmd": "sfc /scannow"
+          "cmd": "sfc /scannow",
+          "type": "fix",
+          "risk": "medium"
         },
         {
           "text": "DISM /Online /Cleanup-Image /RestoreHealth",
-          "cmd": "DISM /Online /Cleanup-Image /RestoreHealth"
+          "cmd": "DISM /Online /Cleanup-Image /RestoreHealth",
+          "type": "fix",
+          "risk": "medium"
         }
       ],
       "relatedEventIds": [
@@ -110,16 +130,24 @@
       "description": "WLAN-Adapter verliert die Verbindung, häufig nach dem Aufwachen aus dem Standby. Ursache: Energiesparmodus des Adapters.",
       "recommendations": [
         {
-          "text": "Energiesparmodus deaktivieren: Gerätemanager → Netzwerkadapter → Eigenschaften → Energieverwaltung"
+          "text": "Energiesparmodus deaktivieren: Gerätemanager → Netzwerkadapter → Eigenschaften → Energieverwaltung",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Set-PowerPlan-Win11.ps1 Block 3+4 ausführen (VPN/Adapter Einstellungen)"
+          "text": "Set-PowerPlan-Win11.ps1 Block 3+4 ausführen (VPN/Adapter Einstellungen)",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "WLAN-Treiber aktualisieren"
+          "text": "WLAN-Treiber aktualisieren",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Schnellstart deaktivieren: powercfg /h off"
+          "text": "Schnellstart deaktivieren: powercfg /h off",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "relatedEventIds": [
@@ -149,19 +177,29 @@
       "description": "DNS-Abfragen schlagen wiederholt fehl. Netzwerkverbindung oder DNS-Server nicht erreichbar.",
       "recommendations": [
         {
-          "text": "DNS-Cache leeren: ipconfig /flushdns"
+          "text": "DNS-Cache leeren: ipconfig /flushdns",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "DNS-Server testen: nslookup google.com 8.8.8.8"
+          "text": "DNS-Server testen: nslookup google.com 8.8.8.8",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Netzwerkverbindung prüfen: ipconfig /all"
+          "text": "Netzwerkverbindung prüfen: ipconfig /all",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Alternativen DNS setzen: 8.8.8.8 / 1.1.1.1 testen"
+          "text": "Alternativen DNS setzen: 8.8.8.8 / 1.1.1.1 testen",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "DNS-Dienst neu starten: Restart-Service -Name 'DNS Client'"
+          "text": "DNS-Dienst neu starten: Restart-Service -Name 'DNS Client'",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "tags": [
@@ -192,19 +230,29 @@
       "description": "Ein Windows-Dienst konnte nicht gestartet werden oder ist unerwartet beendet worden.",
       "recommendations": [
         {
-          "text": "Dienststatus prüfen: Get-Service | Where-Object Status -eq 'Stopped'"
+          "text": "Dienststatus prüfen: Get-Service | Where-Object Status -eq 'Stopped'",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Dienst manuell starten: sc start Dienstname"
+          "text": "Dienst manuell starten: sc start Dienstname",
+          "type": "fix",
+          "risk": "medium"
         },
         {
-          "text": "Abhängigkeiten prüfen: sc qc Dienstname"
+          "text": "Abhängigkeiten prüfen: sc qc Dienstname",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Dienstkonto prüfen: Passwort abgelaufen oder Konto gesperrt?"
+          "text": "Dienstkonto prüfen: Passwort abgelaufen oder Konto gesperrt?",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Event-Details prüfen: Fehlermeldung enthält genauen Dienstnamen"
+          "text": "Event-Details prüfen: Fehlermeldung enthält genauen Dienstnamen",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "tags": [
@@ -235,19 +283,29 @@
       "description": "Fehler beim Lesen/Schreiben auf der Festplatte. Kann auf defekte Sektoren oder eine failing Festplatte hinweisen.",
       "recommendations": [
         {
-          "text": "SMART-Status prüfen: CrystalDiskInfo herunterladen"
+          "text": "SMART-Status prüfen: CrystalDiskInfo herunterladen",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "chkdsk /f /r ausführen (beim nächsten Neustart)"
+          "text": "chkdsk /f /r ausführen (beim nächsten Neustart)",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Kabelverbindungen und SATA-Anschlüsse prüfen"
+          "text": "Kabelverbindungen und SATA-Anschlüsse prüfen",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Sofort Datensicherung erstellen!"
+          "text": "Sofort Datensicherung erstellen!",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Get-PhysicalDisk: HealthStatus prüfen"
+          "text": "Get-PhysicalDisk: HealthStatus prüfen",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "tags": [
@@ -272,19 +330,29 @@
       "description": "Ein Benutzerkonto wurde durch zu viele fehlgeschlagene Anmeldeversuche gesperrt.",
       "recommendations": [
         {
-          "text": "Konto entsperren: Unlock-ADAccount -Identity Benutzername"
+          "text": "Konto entsperren: Unlock-ADAccount -Identity Benutzername",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Ursache ermitteln: Event 4625 nach dem Benutzernamen filtern"
+          "text": "Ursache ermitteln: Event 4625 nach dem Benutzernamen filtern",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Gespeicherte Kennwörter prüfen: Outlook, VPN, geplante Tasks"
+          "text": "Gespeicherte Kennwörter prüfen: Outlook, VPN, geplante Tasks",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Alte Sitzungen trennen: query user / logoff SESSION-ID"
+          "text": "Alte Sitzungen trennen: query user / logoff SESSION-ID",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Passwort auf allen Geräten aktualisieren"
+          "text": "Passwort auf allen Geräten aktualisieren",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "tags": [
@@ -309,16 +377,24 @@
       "description": "Windows wurde nicht ordnungsgemäß heruntergefahren. Häufig Stromausfall, Kernel-Panic oder Hardware-Fehler.",
       "recommendations": [
         {
-          "text": "USV prüfen: Stromversorgung stabil?"
+          "text": "USV prüfen: Stromversorgung stabil?",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Temperaturen kontrollieren: Überhitzung?"
+          "text": "Temperaturen kontrollieren: Überhitzung?",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Kernel-Power Event 41 suchen: gibt genauere Absturzursache"
+          "text": "Kernel-Power Event 41 suchen: gibt genauere Absturzursache",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "RAM testen: Windows-Speicherdiagnose ausführen"
+          "text": "RAM testen: Windows-Speicherdiagnose ausführen",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "relatedEventIds": [
@@ -350,19 +426,29 @@
       "description": "Mehrere fehlgeschlagene RDS-Verbindungsversuche. Ursachen: Lizenzproblem, Zertifikat abgelaufen oder Netzwerkproblem.",
       "recommendations": [
         {
-          "text": "RDS-Lizenzserver prüfen: licmgr.exe"
+          "text": "RDS-Lizenzserver prüfen: licmgr.exe",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "RDS-Zertifikat prüfen: Eigenschaften des RD-Gateway"
+          "text": "RDS-Zertifikat prüfen: Eigenschaften des RD-Gateway",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Firewall-Regel prüfen: Port 3389 (RDP) offen?"
+          "text": "Firewall-Regel prüfen: Port 3389 (RDP) offen?",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "SharedComputerActivation prüfen: HKLM:\\Software\\Microsoft\\Office\\ClickToRun\\Configuration"
+          "text": "SharedComputerActivation prüfen: HKLM:\\Software\\Microsoft\\Office\\ClickToRun\\Configuration",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Dienste prüfen: Remote Desktop Services, RD Licensing"
+          "text": "Dienste prüfen: Remote Desktop Services, RD Licensing",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "tags": [
@@ -391,19 +477,29 @@
       "description": "Volume Shadow Copy Service Fehler. Betrifft Backups, Systemwiederherstellung und Datei-Snapshots.",
       "recommendations": [
         {
-          "text": "VSS-Diagnose: vssadmin list writers"
+          "text": "VSS-Diagnose: vssadmin list writers",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "VSS neu starten: net stop vss && net start vss"
+          "text": "VSS neu starten: net stop vss && net start vss",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Freien Speicherplatz prüfen: mindestens 10% frei für Schattenkopien"
+          "text": "Freien Speicherplatz prüfen: mindestens 10% frei für Schattenkopien",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "vssadmin list shadows: bestehende Schattenkopien anzeigen"
+          "text": "vssadmin list shadows: bestehende Schattenkopien anzeigen",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Windows Backup neu konfigurieren"
+          "text": "Windows Backup neu konfigurieren",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "tags": [
@@ -436,19 +532,29 @@
       "description": "Office-Anwendung stürzt auf einem RDS/Terminalserver ab – häufig durch falsche Lizenz oder fehlende SharedComputerActivation. Microsoft 365 Apps for Business ist NICHT für Terminalserver lizenziert, nur Apps for Enterprise.",
       "recommendations": [
         {
-          "text": "SharedComputerLicensing prüfen: reg query HKLM\\SOFTWARE\\Microsoft\\Office\\ClickToRun\\Configuration /v SharedComputerLicensing"
+          "text": "SharedComputerLicensing prüfen: reg query HKLM\\SOFTWARE\\Microsoft\\Office\\ClickToRun\\Configuration /v SharedComputerLicensing",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "SharedComputerLicensing aktivieren: reg add HKLM\\SOFTWARE\\Microsoft\\Office\\ClickToRun\\Configuration /v SharedComputerLicensing /t REG_SZ /d 1 /f"
+          "text": "SharedComputerLicensing aktivieren: reg add HKLM\\SOFTWARE\\Microsoft\\Office\\ClickToRun\\Configuration /v SharedComputerLicensing /t REG_SZ /d 1 /f",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Lizenztyp prüfen: Apps for Business funktioniert NICHT auf RDS – Apps for Enterprise benötigt"
+          "text": "Lizenztyp prüfen: Apps for Business funktioniert NICHT auf RDS – Apps for Enterprise benötigt",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Token-Cache leeren: %localappdata%\\Microsoft\\Office\\16.0\\Licensing Ordner löschen"
+          "text": "Token-Cache leeren: %localappdata%\\Microsoft\\Office\\16.0\\Licensing Ordner löschen",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Office-Aktivierung testen: cscript 'C:\\Program Files\\Microsoft Office\\Office16\\ospp.vbs' /act"
+          "text": "Office-Aktivierung testen: cscript 'C:\\Program Files\\Microsoft Office\\Office16\\ospp.vbs' /act",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "tags": [
@@ -478,19 +584,29 @@
       "description": "Der RDS-Lizenzserver ist nicht erreichbar oder die RDS-Lizenzen sind abgelaufen. Benutzer können sich nach der Karenzzeit (120 Tage) nicht mehr einloggen.",
       "recommendations": [
         {
-          "text": "Lizenzserver prüfen: licmgr.exe auf dem Lizenzserver öffnen"
+          "text": "Lizenzserver prüfen: licmgr.exe auf dem Lizenzserver öffnen",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Lizenzserver-Erreichbarkeit testen: ping LIZENZSERVER, Port 135 (RPC) offen?"
+          "text": "Lizenzserver-Erreichbarkeit testen: ping LIZENZSERVER, Port 135 (RPC) offen?",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Lizenzserver in GPO prüfen: Computer Config → Windows-Einstellungen → RD Licensing → Lizenzserver angeben"
+          "text": "Lizenzserver in GPO prüfen: Computer Config → Windows-Einstellungen → RD Licensing → Lizenzserver angeben",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "RD Licensing Dienst neu starten: Restart-Service -Name 'Remote Desktop Licensing'"
+          "text": "RD Licensing Dienst neu starten: Restart-Service -Name 'Remote Desktop Licensing'",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Lizenzanzahl prüfen: genug CALs für alle Benutzer vorhanden?"
+          "text": "Lizenzanzahl prüfen: genug CALs für alle Benutzer vorhanden?",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "tags": [
@@ -518,22 +634,34 @@
       "description": "Dasselbe Konto wird wiederholt gesperrt. Typische Ursachen: gespeichertes altes Passwort in Outlook/VPN/geplanten Tasks, aktive Sessions auf anderem Gerät oder tatsächlicher Angriff.",
       "recommendations": [
         {
-          "text": "Gespeicherte Anmeldedaten prüfen: Systemsteuerung → Anmeldeinformationsverwaltung"
+          "text": "Gespeicherte Anmeldedaten prüfen: Systemsteuerung → Anmeldeinformationsverwaltung",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Outlook Passwort prüfen: alle Profile auf altes Passwort durchsuchen"
+          "text": "Outlook Passwort prüfen: alle Profile auf altes Passwort durchsuchen",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Aktive Sessions suchen: query user /server:SERVERNAME auf allen Servern"
+          "text": "Aktive Sessions suchen: query user /server:SERVERNAME auf allen Servern",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Geplante Tasks mit Dienstkonto prüfen: Get-ScheduledTask | Where-Object { $_.Principal.UserId -like '*USERNAME*' }"
+          "text": "Geplante Tasks mit Dienstkonto prüfen: Get-ScheduledTask | Where-Object { $_.Principal.UserId -like '*USERNAME*' }",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "VPN-Client Passwort aktualisieren"
+          "text": "VPN-Client Passwort aktualisieren",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Konto entsperren: Unlock-ADAccount -Identity USERNAME"
+          "text": "Konto entsperren: Unlock-ADAccount -Identity USERNAME",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "tags": [
@@ -562,22 +690,34 @@
       "description": "Eine Partition ist kritisch voll – besonders gefährlich bei SQL-Backup- oder Log-Partitionen. VSS-Schattenkopien, SQL-Backups und Transaktionslogs können fehlschlagen.",
       "recommendations": [
         {
-          "text": "Freien Speicher prüfen: Get-PSDrive -PSProvider FileSystem | Select Name,Used,Free"
+          "text": "Freien Speicher prüfen: Get-PSDrive -PSProvider FileSystem | Select Name,Used,Free",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Größte Ordner finden: Get-ChildItem C:\\ -Recurse -ErrorAction SilentlyContinue | Sort-Object Length -Descending | Select -First 20 FullName,Length"
+          "text": "Größte Ordner finden: Get-ChildItem C:\\ -Recurse -ErrorAction SilentlyContinue | Sort-Object Length -Descending | Select -First 20 FullName,Length",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Alte SQL-Backups löschen: nur die letzten 3-7 Tage behalten"
+          "text": "Alte SQL-Backups löschen: nur die letzten 3-7 Tage behalten",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "SQL-Backup-Komprimierung aktivieren: spart 50-70% Speicher"
+          "text": "SQL-Backup-Komprimierung aktivieren: spart 50-70% Speicher",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Partition erweitern: im vSphere/Hyper-V-Client Festplatte vergrößern, dann Datenträgerverwaltung → Volume erweitern"
+          "text": "Partition erweitern: im vSphere/Hyper-V-Client Festplatte vergrößern, dann Datenträgerverwaltung → Volume erweitern",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Windows Update Cache leeren: cleanmgr /sageset:1 && cleanmgr /sagerun:1"
+          "text": "Windows Update Cache leeren: cleanmgr /sageset:1 && cleanmgr /sagerun:1",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "tags": [
@@ -611,22 +751,34 @@
       "description": "OneDrive oder M365-Dienste können sich nicht authentifizieren. Häufig abgelaufener Token, Proxy-Probleme oder Conditional Access-Richtlinien.",
       "recommendations": [
         {
-          "text": "OneDrive zurücksetzen: %localappdata%\\Microsoft\\OneDrive\\onedrive.exe /reset"
+          "text": "OneDrive zurücksetzen: %localappdata%\\Microsoft\\OneDrive\\onedrive.exe /reset",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Token-Cache leeren: %localappdata%\\Microsoft\\Office\\16.0\\Licensing löschen"
+          "text": "Token-Cache leeren: %localappdata%\\Microsoft\\Office\\16.0\\Licensing löschen",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Neu anmelden: OneDrive-Symbol → Einstellungen → Konto → Diesen PC trennen → neu verbinden"
+          "text": "Neu anmelden: OneDrive-Symbol → Einstellungen → Konto → Diesen PC trennen → neu verbinden",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Proxy prüfen: netsh winhttp show proxy"
+          "text": "Proxy prüfen: netsh winhttp show proxy",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Microsoft 365 Admin Center: Conditional Access Richtlinien prüfen ob Gerät konform ist"
+          "text": "Microsoft 365 Admin Center: Conditional Access Richtlinien prüfen ob Gerät konform ist",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "OneDrive neu installieren: aktuelle Version von onedrive.com herunterladen"
+          "text": "OneDrive neu installieren: aktuelle Version von onedrive.com herunterladen",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "tags": [
@@ -658,22 +810,34 @@
       "description": "Der Client kann keine Verbindung zum Domänenkontroller aufbauen. Logins schlagen fehl, GPOs werden nicht angewendet, Kerberos-Tickets können nicht erneuert werden.",
       "recommendations": [
         {
-          "text": "DC-Erreichbarkeit testen: ping DOMAINCONTROLLER, Test-ComputerSecureChannel"
+          "text": "DC-Erreichbarkeit testen: ping DOMAINCONTROLLER, Test-ComputerSecureChannel",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Sicheren Kanal zurücksetzen: Test-ComputerSecureChannel -Repair -Credential (Get-Credential)"
+          "text": "Sicheren Kanal zurücksetzen: Test-ComputerSecureChannel -Repair -Credential (Get-Credential)",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Netlogon-Dienst neu starten: Restart-Service Netlogon"
+          "text": "Netlogon-Dienst neu starten: Restart-Service Netlogon",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "DNS prüfen: nslookup DOMAINNAME – DC-IPs müssen auflösbar sein"
+          "text": "DNS prüfen: nslookup DOMAINNAME – DC-IPs müssen auflösbar sein",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Computerkonto prüfen: Get-ADComputer COMPUTERNAME – ist das Konto noch aktiv?"
+          "text": "Computerkonto prüfen: Get-ADComputer COMPUTERNAME – ist das Konto noch aktiv?",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Zeitabweichung prüfen: w32tm /query /status – max. 5 Minuten Abweichung erlaubt"
+          "text": "Zeitabweichung prüfen: w32tm /query /status – max. 5 Minuten Abweichung erlaubt",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "tags": [
@@ -703,19 +867,29 @@
       "description": "Das System hat nicht genug freien Arbeitsspeicher oder der nicht-ausgelagerte Pool ist erschöpft. Führt zu Performance-Einbrüchen, Dienst-Abstürzen und kann zu BSOD führen.",
       "recommendations": [
         {
-          "text": "RAM-Auslastung prüfen: Get-Process | Sort-Object WorkingSet64 -Descending | Select -First 10 Name,@{N='RAM_MB';E={[math]::Round($_.WorkingSet64/1MB,1)}}"
+          "text": "RAM-Auslastung prüfen: Get-Process | Sort-Object WorkingSet64 -Descending | Select -First 10 Name,@{N='RAM_MB';E={[math]::Round($_.WorkingSet64/1MB,1)}}",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Pagefile prüfen: System → Erweitert → Leistung → Virtueller Arbeitsspeicher"
+          "text": "Pagefile prüfen: System → Erweitert → Leistung → Virtueller Arbeitsspeicher",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Speicherleck suchen: Ressourcenmonitor → Arbeitsspeicher → Seitenresidente Treiber"
+          "text": "Speicherleck suchen: Ressourcenmonitor → Arbeitsspeicher → Seitenresidente Treiber",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Treiber aktualisieren: defekte Treiber sind häufige Ursache für Pool-Erschöpfung"
+          "text": "Treiber aktualisieren: defekte Treiber sind häufige Ursache für Pool-Erschöpfung",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "RAM aufrüsten wenn dauerhaft >85% Auslastung"
+          "text": "RAM aufrüsten wenn dauerhaft >85% Auslastung",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "tags": [
@@ -747,19 +921,29 @@
       "description": "Windows Update schlägt wiederholt fehl. Kann auf beschädigte Update-Komponenten, Speichermangel oder Netzwerkprobleme hinweisen.",
       "recommendations": [
         {
-          "text": "Windows Update Troubleshooter ausführen: Einstellungen → System → Problembehandlung"
+          "text": "Windows Update Troubleshooter ausführen: Einstellungen → System → Problembehandlung",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Update-Cache leeren: net stop wuauserv && rd /s /q C:\\Windows\\SoftwareDistribution\\Download && net start wuauserv"
+          "text": "Update-Cache leeren: net stop wuauserv && rd /s /q C:\\Windows\\SoftwareDistribution\\Download && net start wuauserv",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "DISM reparieren: DISM /Online /Cleanup-Image /RestoreHealth"
+          "text": "DISM reparieren: DISM /Online /Cleanup-Image /RestoreHealth",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Systemdateien prüfen: sfc /scannow"
+          "text": "Systemdateien prüfen: sfc /scannow",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Freien Speicherplatz prüfen: mindestens 10 GB für Updates benötigt"
+          "text": "Freien Speicherplatz prüfen: mindestens 10 GB für Updates benötigt",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "tags": [
@@ -789,19 +973,29 @@
       "description": "Der Druckspooler-Dienst ist abgestürzt oder wurde unerwartet beendet. Alle Druckaufträge werden blockiert bis der Dienst neu gestartet wird.",
       "recommendations": [
         {
-          "text": "Spooler neu starten: net stop spooler && del /Q /F /S \"%SystemRoot%\\System32\\spool\\PRINTERS\\*.*\" && net start spooler"
+          "text": "Spooler neu starten: net stop spooler && del /Q /F /S \"%SystemRoot%\\System32\\spool\\PRINTERS\\*.*\" && net start spooler",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Hängende Druckjobs löschen: Get-PrintJob -PrinterName * | Remove-PrintJob"
+          "text": "Hängende Druckjobs löschen: Get-PrintJob -PrinterName * | Remove-PrintJob",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Defekten Treiber identifizieren: Ereignisanzeige → System → Quelle: PrintService"
+          "text": "Defekten Treiber identifizieren: Ereignisanzeige → System → Quelle: PrintService",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Treiber neu installieren: Druckverwaltung → Treiber → defekten Treiber entfernen"
+          "text": "Treiber neu installieren: Druckverwaltung → Treiber → defekten Treiber entfernen",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Täglichen Spooler-Neustart als Task einrichten (Set-PowerPlan-Win11.ps1 nicht zuständig, manuell via Aufgabenplanung)"
+          "text": "Täglichen Spooler-Neustart als Task einrichten (Set-PowerPlan-Win11.ps1 nicht zuständig, manuell via Aufgabenplanung)",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "tags": [
@@ -834,19 +1028,29 @@
       "description": "Windows Explorer oder Taskleisten-Komponenten stürzen wiederholt ab. Häufig nach fehlgeschlagenen Windows Updates oder durch defekte Shell-Erweiterungen.",
       "recommendations": [
         {
-          "text": "Explorer neu starten: taskkill /f /im explorer.exe && start explorer.exe"
+          "text": "Explorer neu starten: taskkill /f /im explorer.exe && start explorer.exe",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Windows-Suche zurücksetzen: Get-AppXPackage -Name Microsoft.Windows.Search | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register \"$($_.InstallLocation)\\AppXManifest.xml\"}"
+          "text": "Windows-Suche zurücksetzen: Get-AppXPackage -Name Microsoft.Windows.Search | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register \"$($_.InstallLocation)\\AppXManifest.xml\"}",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Systemdateien prüfen: sfc /scannow"
+          "text": "Systemdateien prüfen: sfc /scannow",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Update-Rollback prüfen: Einstellungen → Windows Update → Updateverlauf"
+          "text": "Update-Rollback prüfen: Einstellungen → Windows Update → Updateverlauf",
+          "type": "diagnose",
+          "risk": "low"
         },
         {
-          "text": "Shell-Erweiterungen prüfen: ShellExView (NirSoft) – defekte Drittanbieter-Erweiterungen deaktivieren"
+          "text": "Shell-Erweiterungen prüfen: ShellExView (NirSoft) – defekte Drittanbieter-Erweiterungen deaktivieren",
+          "type": "diagnose",
+          "risk": "low"
         }
       ],
       "tags": [
