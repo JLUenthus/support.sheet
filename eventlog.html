@@ -68,6 +68,18 @@
         <div class="summary-pills" id="summary-pills"></div>
       </section>
 
+      <!-- Severity Summary + Priorität + Export -->
+      <section class="el-section">
+        <div class="results-topbar">
+          <div class="sev-summary" id="sev-summary"></div>
+          <button class="export-btn" id="export-btn">⬇️ Findings exportieren</button>
+        </div>
+        <div class="priority-box" id="priority-box" hidden>
+          <div class="priority-title">⚡ Empfohlene Reihenfolge</div>
+          <ol class="priority-list" id="priority-list"></ol>
+        </div>
+      </section>
+
       <!-- Verbesserungsvorschläge -->
       <section class="el-section" id="improvements-section" hidden>
         <h2 class="section-title">💡 Optimierungsvorschläge <span id="improvements-count" class="section-count">0</span></h2>
@@ -202,7 +214,46 @@
     .ev-src  { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .ev-msg  { color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-    /* Recommendations with copy buttons */
+    /* Results topbar */
+    .results-topbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:12px; }
+    .sev-summary    { display:flex; flex-wrap:wrap; gap:8px; }
+    .export-btn {
+      padding:7px 16px; border-radius:8px; font-family:var(--font-ui); font-size:.78rem; font-weight:600; cursor:pointer;
+      border:1px solid var(--border2); background:var(--panel2); color:var(--muted); transition:all .15s;
+    }
+    .export-btn:hover { color:var(--text); border-color:var(--accent); }
+
+    /* Priority box */
+    .priority-box {
+      background: rgba(124,140,248,.05);
+      border: 1px solid rgba(124,140,248,.2);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--r);
+      padding: 14px 16px;
+      margin-bottom: 20px;
+    }
+    .priority-title { font-size:.82rem; font-weight:700; color:var(--accent); margin-bottom:10px; }
+    .priority-list  { margin:0 0 0 18px; display:flex; flex-direction:column; gap:5px; }
+    .priority-list li { font-size:.82rem; color:var(--text); }
+
+    /* Grouped recs */
+    .rec-groups     { display:flex; flex-direction:column; gap:10px; }
+    .rec-group      { display:flex; flex-direction:column; gap:4px; }
+    .rec-group-label { font-size:.7rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:2px; padding-left:2px; }
+
+    /* Rec badges */
+    .rec-badges { display:flex; gap:4px; flex-shrink:0; margin-left:auto; }
+    .rec-badge  { font-size:.62rem; font-weight:700; padding:2px 6px; border-radius:4px; border:1px solid; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
+
+    /* Type badges */
+    .rec-type--diagnose    { background:rgba(96,165,250,.12);  color:#60a5fa; border-color:rgba(96,165,250,.3); }
+    .rec-type--fix         { background:rgba(251,191,36,.12);  color:var(--amber); border-color:rgba(251,191,36,.3); }
+    .rec-type--maintenance { background:rgba(248,113,113,.12); color:var(--red);   border-color:rgba(248,113,113,.3); }
+
+    /* Risk badges */
+    .rec-risk--low    { background:rgba(74,222,128,.1);  color:var(--green); border-color:rgba(74,222,128,.3); }
+    .rec-risk--medium { background:rgba(251,191,36,.1);  color:var(--amber); border-color:rgba(251,191,36,.3); }
+    .rec-risk--high   { background:rgba(248,113,113,.1); color:var(--red);   border-color:rgba(248,113,113,.3); }
     .rec-list { display:flex; flex-direction:column; gap:6px; }
     .rec-item { background:rgba(124,140,248,.05); border-radius:6px; border-left:2px solid var(--accent); overflow:hidden; }
     .rec-text-row { display:flex; align-items:center; gap:8px; padding:7px 10px; }
@@ -281,13 +332,20 @@
       allEvents = events;
 
       renderSysGrid(meta, sum, events);
-      renderImprovements(meta, sum, events);
+      const improvements = renderImprovements(meta, sum, events);
+      const findings     = analyzeEvents(events);
 
-      const findings = analyzeEvents(events);
+      // Severity summary + priority + export
+      renderSevSummary(findings, improvements);
+      renderPriority(findings, meta, sum);
+
       document.getElementById('findings-count').textContent = findings.length;
       renderFindings(findings);
       renderCategoryFilter(findings);
       renderEventTable(events);
+
+      // Export button
+      document.getElementById('export-btn').onclick = () => exportFindings(findings, improvements, meta, filename);
 
       const results = document.getElementById('results-section');
       results.className = 'results-visible';
@@ -368,34 +426,22 @@
       container.replaceChildren();
 
       const triggered = [];
-
       IMPROVEMENTS.forEach(imp => {
         let match = false;
-
-        if (imp.check === 'uptimeHours' && meta.Uptime_Hours > imp.checkThreshold)
-          match = true;
-
-        if (imp.check === 'diskFreePercent' && meta.Disks?.length) {
-          match = meta.Disks.some(d => d.Size_GB && (d.Free_GB / d.Size_GB * 100) < imp.checkThreshold);
+        if (imp.check === 'uptimeHours'      && (meta.Uptime_Hours||0) > imp.checkThreshold) match = true;
+        if (imp.check === 'diskFreePercent'  && meta.Disks?.some(d => d.Size_GB && (d.Free_GB/d.Size_GB*100) < imp.checkThreshold)) match = true;
+        if (imp.check === 'ramUsedPercent'   && meta.RAM_GB && meta.RAM_Used_GB && (meta.RAM_Used_GB/meta.RAM_GB*100) > imp.checkThreshold) match = true;
+        if (imp.check === 'errorCount'       && ((sum.Critical||0)+(sum.Error||0)) > imp.checkThreshold) match = true;
+        if (imp.check === 'powerPlan'        && meta.PowerPlan && imp.checkValues.some(v => meta.PowerPlan.toLowerCase().includes(v.toLowerCase()))) match = true;
+        if (imp.check === 'windowsBuild'     && meta.BuildNumber && Number(meta.BuildNumber) <= imp.checkMaxBuild) match = true;
+        if (imp.check === 'defenderDisabled' && meta.DefenderRealtime === false) match = true;
+        if (imp.check === 'bitlockerOff'     && meta.BitLockerStatus && !meta.BitLockerStatus.includes('On')) match = true;
+        if (imp.check === 'appCrashCount'    && events.filter(e => Number(e.Id) === 1000).length > (imp.checkThreshold||5)) match = true;
+        if (imp.check === 'autostartCount'   && (meta.AutostartCount||0) > (imp.checkThreshold||20)) match = true;
+        if (imp.check === 'biosAgeYears'     && meta.BIOSDate) {
+          const biosYear = new Date(meta.BIOSDate).getFullYear();
+          if (!isNaN(biosYear) && (new Date().getFullYear() - biosYear) > imp.checkThreshold) match = true;
         }
-
-        if (imp.check === 'ramUsedPercent' && meta.RAM_GB && meta.RAM_Used_GB) {
-          match = (meta.RAM_Used_GB / meta.RAM_GB * 100) > imp.checkThreshold;
-        }
-
-        if (imp.check === 'errorCount') {
-          const total = (sum.Critical||0) + (sum.Error||0);
-          match = total > imp.checkThreshold;
-        }
-
-        if (imp.check === 'powerPlan' && meta.PowerPlan) {
-          match = imp.checkValues.some(v => meta.PowerPlan.toLowerCase().includes(v.toLowerCase()));
-        }
-
-        if (imp.check === 'windowsBuild' && meta.BuildNumber) {
-          match = Number(meta.BuildNumber) <= imp.checkMaxBuild;
-        }
-
         if (match) triggered.push(imp);
       });
 
@@ -409,44 +455,133 @@
 
         const header = document.createElement('div');
         header.className = 'finding-header';
-
         const sevPill = document.createElement('span');
         sevPill.className = 'sev-pill sev-' + imp.severity;
         sevPill.textContent = imp.severity === 'info' ? 'Tipp' : 'Hinweis';
-
         const title = document.createElement('span');
         title.className = 'finding-title';
         title.textContent = imp.name;
-
         const expand = document.createElement('span');
         expand.className = 'finding-expand';
         expand.textContent = '▼';
-
-        header.appendChild(sevPill);
-        header.appendChild(title);
-        header.appendChild(expand);
+        header.appendChild(sevPill); header.appendChild(title); header.appendChild(expand);
         header.addEventListener('click', () => {
           const body = header.nextElementSibling;
-          const open = body.classList.toggle('open');
-          expand.classList.toggle('open', open);
+          expand.classList.toggle('open', body.classList.toggle('open'));
         });
 
         const body = document.createElement('div');
         body.className = 'finding-body';
-
         const desc = document.createElement('p');
         desc.className = 'finding-desc';
         desc.textContent = imp.description;
         body.appendChild(desc);
-
-        body.appendChild(buildRecList(imp.recommendations));
-        card.appendChild(header);
-        card.appendChild(body);
+        body.appendChild(buildRecListGrouped(imp.recommendations));
+        card.appendChild(header); card.appendChild(body);
         container.appendChild(card);
+      });
+
+      return triggered;
+    }
+
+    // ── Severity Summary Pills ──────────────────────────────
+    function renderSevSummary(findings, improvements) {
+      const el = document.getElementById('sev-summary');
+      el.replaceChildren();
+      const counts = { critical:0, error:0, warning:0, info:0 };
+      findings.forEach(f => { counts[f.rule.severity] = (counts[f.rule.severity]||0) + 1; });
+      const impCount = improvements.length;
+
+      const defs = [
+        { key:'critical', label:'Kritisch',     cls:'critical' },
+        { key:'error',    label:'Fehler',        cls:'error'    },
+        { key:'warning',  label:'Warnungen',     cls:'warning'  },
+        { key:'info',     label:'Hinweise',      cls:'ok'       },
+      ];
+      defs.forEach(({key, label, cls}) => {
+        if (!counts[key]) return;
+        const p = document.createElement('div');
+        p.className = 'sum-pill ' + cls;
+        p.textContent = counts[key] + ' ' + label;
+        el.appendChild(p);
+      });
+      if (impCount) {
+        const p = document.createElement('div');
+        p.className = 'sum-pill';
+        p.style.cssText = 'border-color:rgba(124,140,248,.3);background:rgba(124,140,248,.08);color:var(--accent)';
+        p.textContent = impCount + ' Optimierungen';
+        el.appendChild(p);
+      }
+    }
+
+    // ── Priority Logic ──────────────────────────────────────
+    function renderPriority(findings, meta, sum) {
+      const box  = document.getElementById('priority-box');
+      const list = document.getElementById('priority-list');
+      const steps = [];
+
+      const hasCritDisk = findings.some(f => f.rule.id === 'DISK_IO_ERROR');
+      const hasLowDisk  = meta.Disks?.some(d => d.Size_GB && (d.Free_GB/d.Size_GB) < 0.1);
+      const hasHighRAM  = (sum.Error||0) + (sum.Critical||0) > 20;
+      const hasUpdate   = findings.some(f => f.rule.id === 'WINDOWS_UPDATE_FAIL');
+      const hasKernel   = findings.some(f => f.rule.id === 'KERNEL_POWER_41');
+      const hasDefender = findings.some(f => f.rule.id === 'IMP_DEFENDER_DISABLED');
+      const highUptime  = (meta.Uptime_Hours||0) > 720;
+
+      if (hasCritDisk)  steps.push('🔴 Datenträgerfehler sofort analysieren – Datenverlust möglich');
+      if (hasLowDisk)   steps.push('🟠 Speicherplatz bereinigen – unter 10% freier Platz');
+      if (hasDefender)  steps.push('🔴 Echtzeit-Schutz wieder aktivieren');
+      if (hasKernel)    steps.push('🟠 Ungeplante Neustarts untersuchen (Temperaturen, RAM, Treiber)');
+      if (hasHighRAM)   steps.push('🟡 Fehlerquellen identifizieren – viele Fehler-Events');
+      if (hasUpdate)    steps.push('🟡 Windows Update Probleme beheben');
+      if (highUptime)   steps.push('⚪ Neustart für Wartungsfenster einplanen (>30 Tage Uptime)');
+
+      box.hidden = steps.length < 2;
+      list.replaceChildren();
+      steps.forEach(step => {
+        const li = document.createElement('li');
+        li.textContent = step;
+        list.appendChild(li);
       });
     }
 
-    // ── Analyze Events ──────────────────────────────────────
+    // ── Export Findings ─────────────────────────────────────
+    function exportFindings(findings, improvements, meta, filename) {
+      const now = new Date().toISOString();
+      const payload = {
+        exportedAt:   now,
+        source:       filename || 'unknown',
+        computer:     meta.ComputerName || '–',
+        os:           meta.OS || '–',
+        findings: findings.map(f => ({
+          severity:        f.rule.severity,
+          name:            f.rule.name,
+          category:        f.rule.category,
+          occurrences:     f.events.length,
+          description:     f.rule.description,
+          recommendations: f.rule.recommendations.map(r =>
+            typeof r === 'string' ? r : `[${r.type||''}/${r.risk||''}] ${r.text}${r.cmd ? ' → ' + r.cmd : ''}`
+          ),
+        })),
+        improvements: improvements.map(i => ({
+          severity:    i.severity,
+          name:        i.name,
+          category:    i.category,
+          description: i.description,
+        })),
+      };
+
+      const json = JSON.stringify(payload, null, 2);
+      const blob = new Blob([json], { type:'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `findings-${(meta.ComputerName||'export').replace(/[^a-zA-Z0-9]/g,'-')}-${now.slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
     function analyzeEvents(events) {
       const findings = [];
       RULES.forEach(rule => {
@@ -464,6 +599,17 @@
     }
 
     // ── Build Recommendation List ───────────────────────────
+    const TYPE_CONFIG = {
+      diagnose:    { label: 'Diagnose',  cls: 'rec-type--diagnose'  },
+      fix:         { label: 'Fix',       cls: 'rec-type--fix'       },
+      maintenance: { label: 'Wartung',   cls: 'rec-type--maintenance'},
+    };
+    const RISK_CONFIG = {
+      low:    { label: 'Niedrig', cls: 'rec-risk--low'    },
+      medium: { label: 'Mittel',  cls: 'rec-risk--medium' },
+      high:   { label: 'Hoch',    cls: 'rec-risk--high'   },
+    };
+
     function buildRecList(recommendations) {
       const recList = document.createElement('div');
       recList.className = 'rec-list';
@@ -472,13 +618,35 @@
         const item = document.createElement('div');
         item.className = 'rec-item';
 
+        // Text row
         const textRow = document.createElement('div');
         textRow.className = 'rec-text-row';
         const arrow = document.createElement('span'); arrow.className = 'rec-arrow'; arrow.textContent = '→';
         const text  = document.createElement('span'); text.className  = 'rec-text';
-        // Support both old string format and new {text, cmd} format
         text.textContent = typeof rec === 'string' ? rec : rec.text;
-        textRow.appendChild(arrow); textRow.appendChild(text);
+        textRow.appendChild(arrow);
+        textRow.appendChild(text);
+
+        // Type + Risk badges
+        const type = typeof rec === 'object' ? rec.type : null;
+        const risk = typeof rec === 'object' ? rec.risk : null;
+        if (type || risk) {
+          const badges = document.createElement('div');
+          badges.className = 'rec-badges';
+          if (type && TYPE_CONFIG[type]) {
+            const b = document.createElement('span');
+            b.className = 'rec-badge ' + TYPE_CONFIG[type].cls;
+            b.textContent = TYPE_CONFIG[type].label;
+            badges.appendChild(b);
+          }
+          if (risk && RISK_CONFIG[risk]) {
+            const b = document.createElement('span');
+            b.className = 'rec-badge ' + RISK_CONFIG[risk].cls;
+            b.textContent = RISK_CONFIG[risk].label;
+            badges.appendChild(b);
+          }
+          textRow.appendChild(badges);
+        }
         item.appendChild(textRow);
 
         // Fix command row
@@ -486,12 +654,10 @@
         if (cmd) {
           const cmdRow = document.createElement('div');
           cmdRow.className = 'rec-cmd-row';
-
           const cmdEl = document.createElement('code');
           cmdEl.className = 'rec-cmd';
           cmdEl.textContent = cmd.length > 80 ? cmd.substring(0, 80) + '…' : cmd;
           cmdEl.title = cmd;
-
           const copyBtn = document.createElement('button');
           copyBtn.className = 'rec-copy-btn';
           copyBtn.textContent = '📋 Kopieren';
@@ -502,7 +668,6 @@
               setTimeout(() => { copyBtn.textContent = '📋 Kopieren'; copyBtn.classList.remove('copied'); }, 1500);
             }).catch(() => {});
           });
-
           cmdRow.appendChild(cmdEl);
           cmdRow.appendChild(copyBtn);
           item.appendChild(cmdRow);
@@ -511,6 +676,39 @@
         recList.appendChild(item);
       });
       return recList;
+    }
+
+    // ── Grouped Recommendation List ─────────────────────────
+    function buildRecListGrouped(recommendations) {
+      const groups = { diagnose: [], fix: [], maintenance: [] };
+      recommendations.forEach(rec => {
+        const type = typeof rec === 'object' ? (rec.type || 'diagnose') : 'diagnose';
+        if (!groups[type]) groups[type] = [];
+        groups[type].push(rec);
+      });
+
+      const GROUP_LABELS = {
+        diagnose:    '🔵 Diagnose',
+        fix:         '🟡 Fix',
+        maintenance: '🔴 Wartung',
+      };
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'rec-groups';
+
+      ['diagnose','fix','maintenance'].forEach(type => {
+        if (!groups[type]?.length) return;
+        const group = document.createElement('div');
+        group.className = 'rec-group';
+        const label = document.createElement('div');
+        label.className = 'rec-group-label';
+        label.textContent = GROUP_LABELS[type];
+        group.appendChild(label);
+        group.appendChild(buildRecList(groups[type]));
+        wrapper.appendChild(group);
+      });
+
+      return wrapper;
     }
 
     // ── Render Findings ─────────────────────────────────────
@@ -591,7 +789,7 @@
           recTitle.style.marginTop = '12px';
           recTitle.textContent = 'Empfehlungen';
           body.appendChild(recTitle);
-          body.appendChild(buildRecList(rule.recommendations));
+          body.appendChild(buildRecListGrouped(rule.recommendations));
         }
 
         card.appendChild(header); card.appendChild(body);
