@@ -1,7 +1,7 @@
 // ============================================================
 // support.sheet – Service Worker v2
 // ============================================================
-const CACHE_VERSION = '20260528-0828';
+const CACHE_VERSION = '20260529-1028';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -45,6 +45,7 @@ const ASSETS = [
   './powershell/Set-PowerPlan-Win11.ps1',
   './powershell/Get-EventLogCollector-Client.ps1',
   './powershell/Get-EventLogCollector-Server.ps1',
+  './powershell/Exchange-PreflightCheck.ps1',
 ];
 
 // ── INSTALL: Cache alle eigenen Assets ───────────────────
