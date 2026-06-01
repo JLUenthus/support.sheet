@@ -92,6 +92,7 @@
             52,
             153
           ],
+          "source": "disk",
           "minCount": 1
         },
         {
@@ -471,6 +472,61 @@
           "text": "WLAN-Profil neu verbinden",
           "cmd": "netsh wlan disconnect\nnetsh wlan connect name=\"{wlanprofile}\"",
           "type": "fix",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "RAM_PRESSURE_SERVICE_CRASH",
+      "name": "RAM-Überlastung verursacht Service-Abstürze",
+      "type": "correlation",
+      "operator": "AND",
+      "severity": "critical",
+      "category": "Hardware",
+      "conditions": [
+        {
+          "eventIds": [
+            7034,
+            7031
+          ],
+          "minCount": 5
+        }
+      ],
+      "description": "Mehrere Dienste stürzen wiederholt ab ohne offensichtlichen einzelnen Fehler. Kombiniert mit hoher RAM-Auslastung (> 90%) ist RAM-Druck die wahrscheinlichste Ursache. Typisches Muster: Dienste crashen nachts wenn geplante Tasks zusätzlichen Speicher anfordern.",
+      "recommendations": [
+        {
+          "text": "RAM-Auslastung und Top-Verbraucher prüfen",
+          "cmd": "Get-Process | Sort-Object WorkingSet64 -Descending | Select -First 15 Name, Id, @{n='RAM_MB';e={[math]::Round($_.WorkingSet64/1MB,0)}}, @{n='VM_MB';e={[math]::Round($_.VirtualMemorySize64/1MB,0)}} | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Verfügbaren und belegten RAM anzeigen",
+          "cmd": "Get-WmiObject Win32_OperatingSystem | Select @{n='Total_GB';e={[math]::Round($_.TotalVisibleMemorySize/1MB,1)}}, @{n='Free_GB';e={[math]::Round($_.FreePhysicalMemory/1MB,1)}}, @{n='Used_Pct';e={[math]::Round((($_.TotalVisibleMemorySize-$_.FreePhysicalMemory)/$_.TotalVisibleMemorySize)*100,1)}}",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Geplante Tasks prüfen die um den Absturzzeitpunkt laufen",
+          "cmd": "Get-ScheduledTask | Where-Object {$_.State -eq 'Ready'} | Get-ScheduledTaskInfo | Where-Object {$_.LastRunTime -gt (Get-Date).AddDays(-1)} | Sort LastRunTime -Desc | Select TaskName, LastRunTime, LastTaskResult | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Memory Leak prüfen: Prozesse mit ungewöhnlich hohem Handle-Count",
+          "cmd": "Get-Process | Where-Object {$_.HandleCount -gt 10000} | Sort HandleCount -Desc | Select Name, Id, HandleCount, @{n='RAM_MB';e={[math]::Round($_.WorkingSet64/1MB,0)}} | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Abgestürzte Dienste neu starten",
+          "cmd": "Get-Service | Where-Object {$_.Status -eq 'Stopped' -and $_.StartType -eq 'Automatic'} | Start-Service -PassThru",
+          "type": "fix",
+          "risk": "medium"
+        },
+        {
+          "text": "RAM-Aufrüstung empfehlen oder RAM-intensive Prozesse auf anderen Server verteilen",
+          "type": "maintenance",
           "risk": "low"
         }
       ]

@@ -99,20 +99,31 @@
       "name": "Hohe RAM-Auslastung",
       "category": "Performance",
       "severity": "warning",
-      "description": "Das System nutzt mehr als 85% des verfügbaren Arbeitsspeichers. Dies kann zu Leistungseinbrüchen führen und Windows veranlassen, Prozesse auszulagern.",
+      "description": "Das System nutzt mehr als 90% des verfügbaren Arbeitsspeichers. Bei über 95% kommt es regelmäßig zu Service-Abstürzen, besonders wenn geplante Tasks nachts zusätzlichen Speicher anfordern. Dienste wie COM+-Systemanwendung oder Drittanwendungen sind typische erste Opfer.",
       "check": "ramUsedPercent",
-      "checkThreshold": 85,
+      "checkThreshold": 90,
       "recommendations": [
         {
           "text": "Top RAM-Verbraucher anzeigen",
-          "cmd": "Get-Process | Sort-Object WorkingSet64 -Descending | Select -First 10 Name, @{n='RAM_MB';e={[math]::Round($_.WorkingSet64/1MB,0)}}",
+          "cmd": "Get-Process | Sort-Object WorkingSet64 -Descending | Select -First 15 Name, @{n='RAM_MB';e={[math]::Round($_.WorkingSet64/1MB,0)}} | Format-Table -AutoSize",
           "type": "diagnose",
           "risk": "low"
         },
         {
-          "text": "Commit-Größe prüfen",
-          "cmd": "Get-WmiObject Win32_OperatingSystem | Select @{n='Total_GB';e={[math]::Round($_.TotalVisibleMemorySize/1MB,1)}}, @{n='Free_GB';e={[math]::Round($_.FreePhysicalMemory/1MB,1)}}",
+          "text": "Freien und belegten RAM prüfen",
+          "cmd": "Get-WmiObject Win32_OperatingSystem | Select @{n='Total_GB';e={[math]::Round($_.TotalVisibleMemorySize/1MB,1)}}, @{n='Free_GB';e={[math]::Round($_.FreePhysicalMemory/1MB,1)}}, @{n='Used_Pct';e={[math]::Round((($_.TotalVisibleMemorySize-$_.FreePhysicalMemory)/$_.TotalVisibleMemorySize)*100,1)}}",
           "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Prozesse mit möglichem Memory Leak prüfen (Handle-Count > 10.000)",
+          "cmd": "Get-Process | Where-Object {$_.HandleCount -gt 10000} | Sort HandleCount -Desc | Select Name, Id, HandleCount, @{n='RAM_MB';e={[math]::Round($_.WorkingSet64/1MB,0)}}",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "RAM-Aufrüstung prüfen oder Dienste auf weiteren Server verteilen",
+          "type": "maintenance",
           "risk": "low"
         }
       ]
