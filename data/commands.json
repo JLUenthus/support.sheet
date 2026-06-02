@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-05-25",
+  "lastUpdated": "2026-06-02",
   "commands": [
     {
       "id": "msc-computerverwaltung",
@@ -1479,137 +1479,756 @@
       ]
     },
     {
+      "id": "dhcp-scope-anzeigen",
+      "name": "DHCP-Scopes anzeigen",
+      "cmd": "Get-DhcpServerv4Scope | Select ScopeId, Name, StartRange, EndRange, SubnetMask, State | Format-Table -AutoSize",
+      "desc": "Alle konfigurierten IPv4-Scopes mit Adressbereich und Status. State: Active/InActive. Erster Check wenn Clients keine IP bekommen.",
+      "tags": [
+        "dhcp",
+        "powershell",
+        "windows",
+        "server",
+        "info"
+      ]
+    },
+    {
+      "id": "dhcp-lease-suchen",
+      "name": "DHCP-Lease nach IP oder MAC suchen",
+      "cmd": "Get-DhcpServerv4Lease -ScopeId '{scope}' | Where-Object {$_.IPAddress -eq '{ip}' -or $_.ClientId -eq '{mac}'} | Select IPAddress, ClientId, HostName, LeaseExpiryTime, AddressState",
+      "desc": "Lease eines bestimmten Clients finden. Scope-ID z.B. 192.168.1.0. Gut wenn ein Gerät keine IP bekommt oder eine IP doppelt vergeben scheint.",
+      "tags": [
+        "dhcp",
+        "powershell",
+        "windows",
+        "server",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "dhcp-alle-leases",
+      "name": "Alle aktiven DHCP-Leases anzeigen",
+      "cmd": "Get-DhcpServerv4Lease -ScopeId '{scope}' | Where-Object {$_.AddressState -eq 'Active'} | Select IPAddress, ClientId, HostName, LeaseExpiryTime | Sort-Object IPAddress",
+      "desc": "Alle aktiven Leases eines Scopes. Gut für Inventar oder wenn der Adresspool voll läuft.",
+      "tags": [
+        "dhcp",
+        "powershell",
+        "windows",
+        "server",
+        "info"
+      ]
+    },
+    {
+      "id": "dhcp-pool-auslastung",
+      "name": "DHCP-Pool Auslastung prüfen",
+      "cmd": "Get-DhcpServerv4ScopeStatistics -ScopeId '{scope}' | Select ScopeId, Free, InUse, Reserved, @{n='Auslastung_%';e={[math]::Round($_.InUse/($_.Free+$_.InUse)*100,1)}}",
+      "desc": "Zeigt wie voll ein DHCP-Pool ist. Bei über 80% Auslastung drohen IP-Vergabe-Fehler. Lease-Zeit verkürzen oder Pool erweitern.",
+      "tags": [
+        "dhcp",
+        "powershell",
+        "windows",
+        "server",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "dhcp-lease-loeschen",
+      "name": "DHCP-Lease löschen",
+      "cmd": "Remove-DhcpServerv4Lease -ScopeId '{scope}' -ClientId '{mac}'",
+      "desc": "Lease eines Clients manuell löschen. Notwendig bei doppelten IPs oder wenn ein Gerät nach MAC-Wechsel keine neue IP bekommt.",
+      "tags": [
+        "dhcp",
+        "powershell",
+        "windows",
+        "server",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "dhcp-reservation-erstellen",
+      "name": "DHCP-Reservierung anlegen",
+      "cmd": "Add-DhcpServerv4Reservation -ScopeId '{scope}' -IPAddress '{ip}' -ClientId '{mac}' -Name '{hostname}' -Description 'Reservierung fuer {hostname}'",
+      "desc": "Feste IP per MAC-Adresse reservieren. Sauberer als statische IP direkt am Gerät – bleibt im DHCP-Management sichtbar.",
+      "tags": [
+        "dhcp",
+        "powershell",
+        "windows",
+        "server",
+        "admin"
+      ]
+    },
+    {
+      "id": "dhcp-dienst-status",
+      "name": "DHCP-Server Dienststatus",
+      "cmd": "Get-Service -Name DHCPServer | Select Name, Status, StartType\nGet-DhcpServerSetting | Select IsAuthorized, IsBoundToIPv4, IsBoundToIPv6",
+      "desc": "Dienststatus und ob der DHCP-Server im AD autorisiert ist. Nicht autorisierter DHCP-Server verteilt keine Leases in AD-Umgebungen.",
+      "tags": [
+        "dhcp",
+        "powershell",
+        "windows",
+        "server",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "hyperv-vms-anzeigen",
+      "name": "Alle VMs anzeigen",
+      "cmd": "Get-VM | Select Name, State, CPUUsage, MemoryAssigned, Uptime, Version | Format-Table -AutoSize",
+      "desc": "Schnellübersicht aller VMs mit Status, CPU-Last, RAM und Uptime. Erster Check nach Login auf einen Hyper-V-Host.",
+      "tags": [
+        "hyperv",
+        "powershell",
+        "windows",
+        "server",
+        "info"
+      ]
+    },
+    {
+      "id": "hyperv-vm-details",
+      "name": "VM Details anzeigen",
+      "cmd": "Get-VM -Name '{vm}' | Select *",
+      "desc": "Alle Eigenschaften einer VM. Generation, Checkpoints, Integration Services Version, Netzwerkadapter.",
+      "tags": [
+        "hyperv",
+        "powershell",
+        "windows",
+        "server",
+        "info"
+      ]
+    },
+    {
+      "id": "hyperv-vm-starten",
+      "name": "VM starten",
+      "cmd": "Start-VM -Name '{vm}'",
+      "desc": "VM starten. Vorher Get-VM prüfen ob die VM existiert und im richtigen Zustand ist.",
+      "tags": [
+        "hyperv",
+        "powershell",
+        "windows",
+        "server",
+        "admin"
+      ]
+    },
+    {
+      "id": "hyperv-vm-stoppen",
+      "name": "VM herunterfahren (Gast-OS)",
+      "cmd": "Stop-VM -Name '{vm}'",
+      "desc": "Sendet Shutdown-Signal ans Gast-OS (sauberes Herunterfahren). Integration Services müssen laufen. Für harten Abbruch: -Force oder -TurnOff.",
+      "tags": [
+        "hyperv",
+        "powershell",
+        "windows",
+        "server",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "hyperv-checkpoint-erstellen",
+      "name": "Checkpoint erstellen",
+      "cmd": "Checkpoint-VM -Name '{vm}' -SnapshotName 'Pre-Update-$(Get-Date -Format yyyy-MM-dd)'",
+      "desc": "Checkpoint vor Updates oder Konfigurationsänderungen. Name enthält automatisch das Datum. Achtung: Checkpoints beeinflussen Performance – nach erfolgreicher Änderung löschen.",
+      "tags": [
+        "hyperv",
+        "powershell",
+        "windows",
+        "server",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "hyperv-checkpoints-anzeigen",
+      "name": "Checkpoints anzeigen",
+      "cmd": "Get-VMCheckpoint -VMName '{vm}' | Select Name, CreationTime, ParentCheckpointName | Format-Table -AutoSize",
+      "desc": "Alle Checkpoints einer VM. Viele alte Checkpoints fressen Speicher und verlangsamen die VM.",
+      "tags": [
+        "hyperv",
+        "powershell",
+        "windows",
+        "server",
+        "info"
+      ]
+    },
+    {
+      "id": "hyperv-ressourcen-host",
+      "name": "Host-Ressourcen anzeigen",
+      "cmd": "Get-VMHost | Select Name, LogicalProcessorCount, MemoryCapacity, VirtualHardDiskPath, VirtualMachinePath\nGet-VM | Measure-Object -Property MemoryAssigned -Sum | Select @{n='RAM_gesamt_GB';e={[math]::Round($_.Sum/1GB,1)}}",
+      "desc": "Anzahl logische CPUs und RAM des Hosts, Standardpfade für VHDs. Plus: wie viel RAM gerade an VMs zugewiesen ist. Gut für Kapazitätsplanung.",
+      "tags": [
+        "hyperv",
+        "powershell",
+        "windows",
+        "server",
+        "info"
+      ]
+    },
+    {
+      "id": "hyperv-integration-services",
+      "name": "Integration Services Version prüfen",
+      "cmd": "Get-VM | Select Name, @{n='IntegrationServices';e={$_.IntegrationServicesVersion}} | Sort-Object Name",
+      "desc": "Veraltete Integration Services verursachen Performance-Probleme und fehlende Features. Updaten via Windows Update im Gast-OS.",
+      "tags": [
+        "hyperv",
+        "powershell",
+        "windows",
+        "server",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "hyperv-replikation-status",
+      "name": "Hyper-V Replikation Status",
+      "cmd": "Get-VMReplication | Select VMName, State, Health, LastReplicationTime, ReplicaServerName | Format-Table -AutoSize",
+      "desc": "Status aller replizierten VMs. Health: Normal/Warning/Critical. Bei Critical sofort prüfen – Replikation ist ausgefallen.",
+      "tags": [
+        "hyperv",
+        "powershell",
+        "windows",
+        "server",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "update-status-pruefen",
+      "name": "Windows Update Status prüfen",
+      "cmd": "Get-WUInstallHistory -Last 10 | Select Date, Title, Result | Format-Table -AutoSize",
+      "desc": "Letzte 10 installierte Updates mit Ergebnis. Benötigt PSWindowsUpdate Modul. Ohne Modul: Get-HotFix | Sort InstalledOn -Desc | Select -First 10",
+      "tags": [
+        "update",
+        "powershell",
+        "windows",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "update-hotfix-liste",
+      "name": "Installierte Updates auflisten",
+      "cmd": "Get-HotFix | Sort-Object InstalledOn -Descending | Select HotFixID, Description, InstalledOn, InstalledBy | Format-Table -AutoSize",
+      "desc": "Alle installierten Windows-Patches. Kein externes Modul nötig. Gut um zu prüfen ob ein bestimmter Patch installiert ist.",
+      "tags": [
+        "update",
+        "powershell",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "update-dienste-reset",
+      "name": "Windows Update Dienste zurücksetzen",
+      "cmd": "Stop-Service wuauserv, cryptSvc, bits, msiserver -Force -ErrorAction SilentlyContinue\nRename-Item 'C:\\Windows\\SoftwareDistribution' 'SoftwareDistribution.old' -ErrorAction SilentlyContinue\nRename-Item 'C:\\Windows\\System32\\catroot2' 'catroot2.old' -ErrorAction SilentlyContinue\nStart-Service wuauserv, cryptSvc, bits, msiserver",
+      "desc": "Klassischer Fix wenn Windows Update hängt oder Fehler 0x80070002 / 0x80248007 auftritt. Leert den Update-Cache und startet Dienste neu. Altes SoftwareDistribution-Verzeichnis bleibt als .old erhalten.",
+      "tags": [
+        "update",
+        "powershell",
+        "windows",
+        "repair",
+        "caution"
+      ]
+    },
+    {
+      "id": "update-wsus-client-reset",
+      "name": "WSUS-Client zurücksetzen",
+      "cmd": "Stop-Service wuauserv -Force\nRemove-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WindowsUpdate' -Name AccountDomainSid, PingID, SusClientId, SusClientIDValidated -ErrorAction SilentlyContinue\nStart-Service wuauserv\nwuauclt /resetauthorization /detectnow\nwuauclt /reportnow",
+      "desc": "WSUS-Client-ID zurücksetzen und Neu-Registrierung erzwingen. Hilft wenn ein PC nicht in der WSUS-Konsole erscheint oder keine Updates bekommt obwohl andere PCs funktionieren.",
+      "tags": [
+        "update",
+        "powershell",
+        "windows",
+        "repair",
+        "caution"
+      ]
+    },
+    {
+      "id": "update-fehlercode-lesen",
+      "name": "Windows Update Fehlercodes auslesen",
+      "cmd": "Get-WinEvent -LogName 'System' -ErrorAction SilentlyContinue | Where-Object {$_.Id -in 20,25,31,34,35} | Select TimeCreated, Id, Message | Format-List",
+      "desc": "Update-relevante Systemereignisse. ID 20=Install-Fehler, 25=Rollback, 31=Reboot nötig. Alternativ: C:\\Windows\\WindowsUpdate.log für detaillierte Logs.",
+      "tags": [
+        "update",
+        "powershell",
+        "windows",
+        "diag",
+        "info"
+      ]
+    },
+    {
+      "id": "update-pending-reboot",
+      "name": "Ausstehenden Neustart prüfen",
+      "cmd": "$r = @{}\n$r['CBS']     = Test-Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Component Based Servicing\\RebootPending'\n$r['WU']      = (Get-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WindowsUpdate\\Auto Update\\RebootRequired' -EA 0) -ne $null\n$r['PendRen'] = (Get-ItemProperty 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager' -EA 0).PendingFileRenameOperations -ne $null\n$r | Format-Table -AutoSize",
+      "desc": "Prüft drei Registry-Stellen ob ein Neustart aussteht. Wichtig vor Software-Deployment oder wenn Updates nicht angewendet werden.",
+      "tags": [
+        "update",
+        "powershell",
+        "windows",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "update-troubleshooter",
+      "name": "Windows Update Troubleshooter öffnen",
+      "cmd": "msdt.exe /id WindowsUpdateDiagnostic",
+      "desc": "Startet den eingebauten Windows Update Troubleshooter. Behebt automatisch häufige Probleme wie hängende Dienste und beschädigte Komponenten.",
+      "tags": [
+        "update",
+        "windows",
+        "quick",
+        "diag"
+      ]
+    },
+    {
+      "id": "rds-sessions-anzeigen",
+      "name": "RDS-Sessions anzeigen",
+      "cmd": "query session /server:{server}",
+      "desc": "Alle aktiven und getrennten Sessions auf einem RDS-Server. Zeigt Session-ID, Benutzername, Status (Active/Disc) und Verbindungstyp.",
+      "tags": [
+        "rds",
+        "windows",
+        "server",
+        "info"
+      ]
+    },
+    {
+      "id": "rds-session-trennen",
+      "name": "RDS-Session trennen (Disconnect)",
+      "cmd": "logoff {sessionid} /server:{server}",
+      "desc": "Session eines Benutzers trennen (abmelden). Session-ID aus 'query session' entnehmen. Achtung: ungespeicherte Daten gehen verloren.",
+      "tags": [
+        "rds",
+        "windows",
+        "server",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "rds-user-sessions",
+      "name": "Angemeldete Benutzer anzeigen",
+      "cmd": "query user /server:{server}",
+      "desc": "Alle angemeldeten Benutzer mit Session-ID, Status, Leerlaufzeit und Anmeldezeit. Gut für schnellen Überblick wer gerade auf dem Server arbeitet.",
+      "tags": [
+        "rds",
+        "windows",
+        "server",
+        "info"
+      ]
+    },
+    {
+      "id": "rds-lizenz-status",
+      "name": "RDS-Lizenzstatus prüfen",
+      "cmd": "Get-WmiObject -Namespace root\\cimv2 -Class Win32_TerminalServiceSetting | Select TerminalServerMode, LicensingType, LicensingDescription",
+      "desc": "Lizenzierungsmodus und Typ. LicensingType 2=Geräte-CAL, 4=Benutzer-CAL. Gibt Hinweis ob RDS korrekt lizenziert ist.",
+      "tags": [
+        "rds",
+        "powershell",
+        "windows",
+        "server",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "rds-shadow-session",
+      "name": "RDS-Session übernehmen (Shadow)",
+      "cmd": "mstsc /shadow:{sessionid} /control /noConsentPrompt /v:{server}",
+      "desc": "Remote-Zugriff auf eine laufende RDS-Session zur Unterstützung. /control = Maus und Tastatur übernehmen. /noConsentPrompt überspringt Zustimmungsdialog (Gruppenrichtlinie muss erlauben).",
+      "tags": [
+        "rds",
+        "windows",
+        "server",
+        "remote",
+        "admin"
+      ]
+    },
+    {
+      "id": "rds-prozesse-session",
+      "name": "Prozesse einer Session anzeigen",
+      "cmd": "query process /server:{server} /id:{sessionid}",
+      "desc": "Alle laufenden Prozesse einer bestimmten Session. Gut um hängende Prozesse nach Abmeldung zu finden.",
+      "tags": [
+        "rds",
+        "windows",
+        "server",
+        "diag",
+        "info"
+      ]
+    },
+    {
+      "id": "rds-graceful-logoff",
+      "name": "Benutzer per PowerShell abmelden",
+      "cmd": "Invoke-RDUserLogoff -HostServer '{server}' -UnifiedSessionID {sessionid} -Force",
+      "desc": "Sauberes Abmelden eines Benutzers per RD-Management Modul. -Force überspringt Bestätigung. Benötigt RSAT Remote Desktop Services Tools.",
+      "tags": [
+        "rds",
+        "powershell",
+        "windows",
+        "server",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "rds-temp-profile-fix",
+      "name": "Temporäres RDS-Profil beheben",
+      "cmd": "# Profil-Verzeichnis prüfen\nGet-Item 'C:\\Users\\{username}'\n# Registry-Profilpfad prüfen\nGet-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList\\*' | Where-Object {$_.ProfileImagePath -like '*{username}*'} | Select PSChildName, ProfileImagePath, State",
+      "desc": "Wenn ein Benutzer mit temporärem Profil eingeloggt wird: Registry-State prüfen. State=4=temporäres Profil. Lösung: Profil-Schlüssel löschen und Benutzer neu anmelden.",
+      "tags": [
+        "rds",
+        "powershell",
+        "windows",
+        "server",
+        "repair",
+        "diag"
+      ]
+    },
+    {
+      "id": "cert-lokale-zertifikate",
+      "name": "Lokale Zertifikate anzeigen",
+      "cmd": "Get-ChildItem Cert:\\LocalMachine\\My | Select Subject, Thumbprint, NotBefore, NotAfter, @{n='DaysLeft';e={($_.NotAfter - (Get-Date)).Days}} | Sort-Object DaysLeft | Format-Table -AutoSize",
+      "desc": "Alle persönlichen Zertifikate im lokalen Computerspeicher mit verbleibenden Tagen. Negative DaysLeft = abgelaufen. Gut für schnelle Ablauf-Kontrolle.",
+      "tags": [
+        "certificates",
+        "powershell",
+        "windows",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "cert-bald-ablaufend",
+      "name": "Bald ablaufende Zertifikate finden",
+      "cmd": "Get-ChildItem Cert:\\LocalMachine\\My | Where-Object {$_.NotAfter -lt (Get-Date).AddDays(30)} | Select Subject, Thumbprint, NotAfter, @{n='DaysLeft';e={($_.NotAfter - (Get-Date)).Days}} | Sort-Object DaysLeft",
+      "desc": "Zertifikate die in weniger als 30 Tagen ablaufen. Threshold anpassen: AddDays(60) für 60 Tage. Regelmäßig prüfen um abgelaufene Zertifikate zu vermeiden.",
+      "tags": [
+        "certificates",
+        "powershell",
+        "windows",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "cert-alle-stores",
+      "name": "Zertifikate in allen Stores prüfen",
+      "cmd": "Get-ChildItem Cert:\\LocalMachine\\* -Recurse | Where-Object {$_.PSIsContainer -eq $false} | Select PSParentPath, Subject, NotAfter, @{n='DaysLeft';e={($_.NotAfter - (Get-Date)).Days}} | Where-Object {$_.DaysLeft -lt 90} | Sort-Object DaysLeft",
+      "desc": "Alle Zertifikate in allen lokalen Stores (Root, CA, My, WebHosting etc.) die in weniger als 90 Tagen ablaufen. Vollständiger Überblick.",
+      "tags": [
+        "certificates",
+        "powershell",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "cert-details-anzeigen",
+      "name": "Zertifikat-Details anzeigen",
+      "cmd": "Get-ChildItem Cert:\\LocalMachine\\My | Where-Object {$_.Thumbprint -eq '{thumbprint}'} | Select *",
+      "desc": "Alle Details zu einem bestimmten Zertifikat per Thumbprint. Subject, Issuer, SAN, Schlüssellänge, Verwendungszweck.",
+      "tags": [
+        "certificates",
+        "powershell",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "cert-iis-binding",
+      "name": "IIS HTTPS-Binding und Zertifikat prüfen",
+      "cmd": "Import-Module WebAdministration\nGet-WebBinding | Where-Object {$_.protocol -eq 'https'} | Select bindingInformation, certificateHash, certificateStoreName",
+      "desc": "Zeigt alle HTTPS-Bindings in IIS mit dem zugeordneten Zertifikat-Hash. Gut um zu prüfen ob das richtige Zertifikat in IIS eingetragen ist.",
+      "tags": [
+        "certificates",
+        "powershell",
+        "windows",
+        "server",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "cert-export",
+      "name": "Zertifikat exportieren (ohne Private Key)",
+      "cmd": "$cert = Get-ChildItem Cert:\\LocalMachine\\My | Where-Object {$_.Thumbprint -eq '{thumbprint}'}\n$cert | Export-Certificate -FilePath 'C:\\Temp\\{name}.cer' -Type CERT",
+      "desc": "Öffentliches Zertifikat als .cer exportieren (kein Private Key). Für Import auf anderen Systemen oder zur Weitergabe.",
+      "tags": [
+        "certificates",
+        "powershell",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "cert-csr-erstellen",
+      "name": "CSR-Anforderung erstellen",
+      "cmd": "certreq -new 'C:\\Temp\\request.inf' 'C:\\Temp\\request.csr'",
+      "desc": "Certificate Signing Request für eine CA erstellen. Benötigt request.inf mit Subject, SAN und Schlüssellänge. Der CSR wird bei der CA eingereicht.",
+      "tags": [
+        "certificates",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "cert-fingerprint-pruefen",
+      "name": "SSL-Zertifikat einer Website prüfen",
+      "cmd": "$req = [System.Net.HttpWebRequest]::Create('https://{hostname}')\n$req.AllowAutoRedirect = $false\ntry { $req.GetResponse().Dispose() } catch {}\n$cert = $req.ServicePoint.Certificate\n[PSCustomObject]@{ Subject=$cert.Subject; Issuer=$cert.Issuer; Expires=$cert.GetExpirationDateString(); DaysLeft=([datetime]::Parse($cert.GetExpirationDateString())-(Get-Date)).Days }",
+      "desc": "SSL-Zertifikat einer Website direkt per PowerShell prüfen ohne Browser. Zeigt Subject, Issuer und Ablaufdatum. Gut für schnelle Remote-Checks.",
+      "tags": [
+        "certificates",
+        "powershell",
+        "windows",
+        "network",
+        "diag",
+        "info"
+      ]
+    },
+    {
       "id": "process-tasklist-csv-export",
       "name": "Prozessliste als CSV exportieren",
       "cmd": "tasklist /v /fo csv > C:\\Temp\\tasklist.csv",
       "desc": "Alle laufenden Prozesse mit Details (PID, Status, CPU-Zeit, Benutzername, Fenstertitel) als CSV exportieren. Gut für Snapshots vor/nach Problemauftreten oder zur Dokumentation bei Kundeneskalationen. Datei landet in C:\\Temp – Ordner muss existieren.",
-      "tags": ["process", "windows", "info", "diag"]
+      "tags": [
+        "process",
+        "windows",
+        "info",
+        "diag"
+      ]
     },
     {
       "id": "process-scheduled-reboot-erstellen",
       "name": "Geplanten Neustart einrichten",
       "cmd": "$action = New-ScheduledTaskAction -Execute \"shutdown.exe\" -Argument \"/r /f /t 0\"\n$trigger = New-ScheduledTaskTrigger -Once -At \"{time}\"\nRegister-ScheduledTask -TaskName \"Server Neustart Wartung\" -Action $action -Trigger $trigger -RunLevel Highest -User \"SYSTEM\"",
       "desc": "Einmaligen Neustart über Aufgabenplanung einrichten – ideal für Wartungsfenster außerhalb der Geschäftszeiten. Läuft als SYSTEM mit höchsten Rechten, erzwingt das Schließen aller Anwendungen (/f). Kein offenes RDP nötig – der Task läuft auch wenn niemand angemeldet ist.",
-      "tags": ["process", "powershell", "windows", "server", "scheduled-task", "reboot", "maintenance", "admin", "caution"]
+      "tags": [
+        "process",
+        "powershell",
+        "windows",
+        "server",
+        "scheduled-task",
+        "reboot",
+        "maintenance",
+        "admin",
+        "caution"
+      ]
     },
     {
       "id": "process-scheduled-reboot-pruefen",
       "name": "Geplanten Neustart prüfen",
       "cmd": "Get-ScheduledTask -TaskName \"Server Neustart Wartung\"",
       "desc": "Status des eingerichteten Wartungs-Neustarts prüfen. Zeigt ob der Task noch aktiv ist und wann er ausgeführt wird. Vor dem Wartungsfenster kurz ausführen um sicherzugehen dass alles stimmt.",
-      "tags": ["process", "powershell", "windows", "server", "scheduled-task", "reboot", "maintenance", "info"]
+      "tags": [
+        "process",
+        "powershell",
+        "windows",
+        "server",
+        "scheduled-task",
+        "reboot",
+        "maintenance",
+        "info"
+      ]
     },
     {
       "id": "process-scheduled-reboot-loeschen",
       "name": "Geplanten Neustart löschen",
       "cmd": "Unregister-ScheduledTask -TaskName \"Server Neustart Wartung\" -Confirm:$false",
       "desc": "Wartungs-Task wieder entfernen – z.B. wenn der Neustart doch nicht mehr nötig ist oder bereits ausgeführt wurde. -Confirm:$false überspringt die Rückfrage. Danach mit Get-ScheduledTask prüfen ob der Task wirklich weg ist.",
-      "tags": ["process", "powershell", "windows", "server", "scheduled-task", "reboot", "maintenance", "admin", "caution"]
+      "tags": [
+        "process",
+        "powershell",
+        "windows",
+        "server",
+        "scheduled-task",
+        "reboot",
+        "maintenance",
+        "admin",
+        "caution"
+      ]
     },
     {
       "id": "winget-software-suchen",
       "name": "Software suchen",
       "cmd": "winget search {package}",
       "desc": "Verfügbare Pakete nach Name suchen. Gibt Paket-ID, Version und Quelle zurück. Die ID aus der Ergebnisliste für winget install verwenden.",
-      "tags": ["winget", "windows", "info", "quick"]
+      "tags": [
+        "winget",
+        "windows",
+        "info",
+        "quick"
+      ]
     },
     {
       "id": "winget-paket-info",
       "name": "Paket-Details anzeigen",
       "cmd": "winget show --id {package} -e",
       "desc": "Detaillierte Infos zu einem Paket: Version, Lizenz, Homepage, Beschreibung. Gut um vor der Installation zu prüfen ob es das richtige Paket ist.",
-      "tags": ["winget", "windows", "info"]
+      "tags": [
+        "winget",
+        "windows",
+        "info"
+      ]
     },
     {
       "id": "winget-software-installieren",
       "name": "Software installieren",
       "cmd": "winget install --id {package} -e --source winget --accept-package-agreements --accept-source-agreements",
       "desc": "Software per Paket-ID installieren. -e = exakter Name, verhindert Fehlinstallationen. --accept-*-agreements unterdrückt Lizenz-Rückfragen – wichtig für Remote- und Silent-Installs. Paket-ID vorher mit 'winget search' herausfinden. Beispiele: Mozilla.Firefox, Google.Chrome, 7zip.7zip, Microsoft.VisualStudioCode.",
-      "tags": ["winget", "windows", "admin", "quick"]
+      "tags": [
+        "winget",
+        "windows",
+        "admin",
+        "quick"
+      ]
     },
     {
       "id": "winget-updates-anzeigen",
       "name": "Verfügbare Updates anzeigen",
       "cmd": "winget upgrade",
       "desc": "Alle Programme mit verfügbaren Updates auflisten. Gut als erster Schritt vor winget upgrade --all um zu sehen was aktualisiert wird. Zeigt aktuelle und neue Version.",
-      "tags": ["winget", "windows", "info", "quick"]
+      "tags": [
+        "winget",
+        "windows",
+        "info",
+        "quick"
+      ]
     },
     {
       "id": "winget-upgrade-einzelpaket",
       "name": "Einzelnes Programm aktualisieren",
       "cmd": "winget upgrade --id {package} -e",
       "desc": "Nur ein bestimmtes Programm aktualisieren statt alle Pakete. Gut wenn gezielt Browser, Teams oder andere problematische Software aktualisiert werden soll ohne andere Anwendungen anzufassen.",
-      "tags": ["winget", "windows", "admin", "quick"]
+      "tags": [
+        "winget",
+        "windows",
+        "admin",
+        "quick"
+      ]
     },
     {
       "id": "winget-alle-aktualisieren",
       "name": "Alle installierten Programme aktualisieren",
       "cmd": "winget upgrade --all --silent --accept-package-agreements --accept-source-agreements",
       "desc": "Alle veralteten Programme auf einmal aktualisieren. --silent unterdrückt Installationsdialoge. Vorher mit 'winget upgrade' ohne Parameter prüfen was aktualisiert wird.",
-      "tags": ["winget", "windows", "admin", "quick"]
+      "tags": [
+        "winget",
+        "windows",
+        "admin",
+        "quick"
+      ]
     },
     {
       "id": "winget-installierte-software",
       "name": "Installierte Software auflisten",
       "cmd": "winget list",
       "desc": "Alle installierten Programme anzeigen – auch die die nicht über winget installiert wurden. Schnelle Alternative zu 'Programme hinzufügen/entfernen'. Mit | findstr {package} nach bestimmter Software filtern.",
-      "tags": ["winget", "windows", "info", "quick"]
+      "tags": [
+        "winget",
+        "windows",
+        "info",
+        "quick"
+      ]
     },
     {
       "id": "winget-software-deinstallieren",
       "name": "Software deinstallieren",
       "cmd": "winget uninstall --id {package} -e",
       "desc": "Software per Paket-ID deinstallieren. Paket-ID vorher mit 'winget list' herausfinden. Sauberer als manuell über Systemsteuerung weil winget den korrekten Uninstaller verwendet.",
-      "tags": ["winget", "windows", "admin", "caution"]
+      "tags": [
+        "winget",
+        "windows",
+        "admin",
+        "caution"
+      ]
     },
     {
       "id": "winget-export",
       "name": "Installierte Software exportieren",
       "cmd": "winget export -o {path}",
       "desc": "Alle winget-verwalteten Programme als JSON exportieren. Kann auf einem neuen PC mit 'winget import' wiederhergestellt werden. Ideal für Neuinstallationen oder wenn ein PC ausgetauscht wird. Pfad z.B. C:\\Temp\\winget-packages.json",
-      "tags": ["winget", "windows", "admin", "quick"]
+      "tags": [
+        "winget",
+        "windows",
+        "admin",
+        "quick"
+      ]
     },
     {
       "id": "winget-import",
       "name": "Software-Liste importieren",
       "cmd": "winget import -i {path} --ignore-unavailable --accept-package-agreements --accept-source-agreements",
       "desc": "Alle Programme aus einer exportierten JSON-Liste installieren. --ignore-unavailable überspringt nicht mehr verfügbare Pakete. --accept-*-agreements verhindert Rückfragen bei der Masseninstallation. Perfekt für die Einrichtung eines neuen PCs.",
-      "tags": ["winget", "windows", "admin", "quick"]
+      "tags": [
+        "winget",
+        "windows",
+        "admin",
+        "quick"
+      ]
     },
     {
       "id": "winget-quellen-anzeigen",
       "name": "Paketquellen anzeigen",
       "cmd": "winget source list",
       "desc": "Konfigurierte Paketquellen anzeigen. Standard ist 'winget' und 'msstore'. Relevant wenn Pakete plötzlich nicht mehr gefunden werden.",
-      "tags": ["winget", "windows", "info"]
+      "tags": [
+        "winget",
+        "windows",
+        "info"
+      ]
     },
     {
       "id": "winget-repair-source",
       "name": "Winget Quellen reparieren",
       "cmd": "winget source reset --force",
       "desc": "Winget-Quellen zurücksetzen wenn Pakete plötzlich nicht mehr gefunden werden oder Source-Fehler auftreten. Klassischer MSP-Fall nach beschädigten Store- oder Winget-Konfigurationen.",
-      "tags": ["winget", "windows", "repair", "admin"]
+      "tags": [
+        "winget",
+        "windows",
+        "repair",
+        "admin"
+      ]
     },
     {
       "id": "shortcuts-grafiktreiber-reset",
       "name": "Grafiktreiber neu starten",
       "cmd": "Win + Strg + Shift + B",
       "desc": "Startet den Grafikkartentreiber neu ohne Windows neu zu starten. Hilft wenn der Bildschirm schwarz wird, flackert oder die Anzeige hängt. Der Bildschirm kann kurz blinken und ein Signalton ertönen. Funktioniert auf Windows 10/11.",
-      "tags": ["shortcuts", "windows", "quick", "diag", "graphics"]
+      "tags": [
+        "shortcuts",
+        "windows",
+        "quick",
+        "diag",
+        "graphics"
+      ]
     },
     {
       "id": "shortcuts-emoji-panel",
       "name": "Emoji- und Sonderzeichen-Menü",
       "cmd": "Win + .",
       "desc": "Öffnet das Windows-Panel für Emojis, Sonderzeichen und Symbole. Praktisch für Dokumentation, Tickets oder schnelle Unicode-Zeichen.",
-      "tags": ["shortcuts", "windows", "quick", "productivity"]
+      "tags": [
+        "shortcuts",
+        "windows",
+        "quick",
+        "productivity"
+      ]
     },
     {
       "id": "shortcuts-fenster-monitor-wechseln",
       "name": "Fenster auf anderen Monitor verschieben",
       "cmd": "Win + Shift + Pfeil links / rechts",
       "desc": "Aktives Fenster auf den nächsten oder vorherigen Monitor verschieben. Funktioniert auch mit mehr als zwei Bildschirmen – einfach mehrfach drücken. Position und Größe bleiben erhalten.",
-      "tags": ["shortcuts", "windows", "quick", "productivity"]
+      "tags": [
+        "shortcuts",
+        "windows",
+        "quick",
+        "productivity"
+      ]
     }
   ]
 }
