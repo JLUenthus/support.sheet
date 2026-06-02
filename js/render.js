@@ -21,6 +21,11 @@ const CATEGORY_MAP = {
   'quick':            { label: 'Schnellbefehle',    dot: '#fbbf24', icon: '⚡'  },
   'winget':           { label: 'Winget',             dot: '#4ade80', icon: '📦'  },
   'shortcuts':        { label: 'Tastenkürzel',       dot: '#f472b6', icon: '⌨️'  },
+  'dhcp':             { label: 'DHCP',               dot: '#2dd4bf', icon: '🌐'  },
+  'hyperv':           { label: 'Hyper-V',            dot: '#a78bfa', icon: '🖥️'  },
+  'update':           { label: 'Windows Update',     dot: '#fbbf24', icon: '🔄'  },
+  'rds':              { label: 'RDS / Terminal',     dot: '#60a5fa', icon: '🖥️'  },
+  'certificates':     { label: 'Zertifikate',        dot: '#4ade80', icon: '🔒'  },
   // Exchange
   'exchange':         { label: 'Exchange',          dot: '#e8b339', icon: '📧'  },
   'on-premises':      { label: 'On-Premises',       dot: '#e8b339', icon: '🏢'  },
