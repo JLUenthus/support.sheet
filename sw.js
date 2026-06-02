@@ -1,7 +1,7 @@
 // ============================================================
 // support.sheet – Service Worker v2
 // ============================================================
-const CACHE_VERSION = '20260531-1028';
+const CACHE_VERSION = '20260602-0742';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -46,6 +46,7 @@ const ASSETS = [
   './powershell/Get-EventLogCollector-Client.ps1',
   './powershell/Get-EventLogCollector-Server.ps1',
   './powershell/Exchange-PreflightCheck.ps1',
+  './powershell/Set-BraveDebloat.ps1',
 ];
 
 // ── INSTALL: Cache alle eigenen Assets ───────────────────
