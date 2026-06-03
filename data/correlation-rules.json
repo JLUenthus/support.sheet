@@ -530,6 +530,340 @@
           "risk": "low"
         }
       ]
+    },
+    {
+      "id": "SERVICE_TIMEOUT_CHAIN",
+      "name": "Dienst-Abhängigkeitskette ausgefallen",
+      "type": "correlation",
+      "operator": "AND",
+      "severity": "error",
+      "category": "Dienste",
+      "conditions": [
+        {
+          "eventIds": [
+            7009,
+            7011
+          ],
+          "minCount": 2
+        },
+        {
+          "eventIds": [
+            7034,
+            7031,
+            7023
+          ],
+          "minCount": 3
+        }
+      ],
+      "description": "Mehrere Dienste haben Timeout-Fehler (7009/7011) gefolgt von erzwungenen Stopps (7031/7034). Klassisches Muster einer Abhängigkeitskette: ein Basisdienst antwortet nicht mehr, alle abhängigen Dienste sterben nacheinander. Häufige Ursachen: überlastetes System, blockierte Ressource, hängender Prozess oder Treiberproblem.",
+      "recommendations": [
+        {
+          "text": "Gestoppte Dienste mit Autostart finden",
+          "cmd": "Get-Service | Where-Object {$_.Status -eq 'Stopped' -and $_.StartType -eq 'Automatic'} | Select Name, DisplayName, StartType | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Dienst-Abhängigkeiten des häufigsten Absturz-Dienstes prüfen",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='System';Id=7009,7011,7031,7034} -MaxEvents 20 | Select TimeCreated, Id, Message | Sort TimeCreated | Format-Table -AutoSize -Wrap",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Prozesse mit hohem Handle-Count prüfen (mögliche Blockade)",
+          "cmd": "Get-Process | Where-Object {$_.HandleCount -gt 5000} | Sort HandleCount -Desc | Select Name, Id, HandleCount, @{n='RAM_MB';e={[math]::Round($_.WorkingSet64/1MB,0)}} | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "System auf blockierte Sperren prüfen",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='System';Level=1,2;StartTime=(Get-Date).AddHours(-2)} | Group-Object ProviderName | Sort Count -Desc | Select -First 5 Count, Name | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "WINDOWS_UPDATE_CASCADE",
+      "name": "Windows Update Fehler mit Systemkomponenten-Schaden",
+      "type": "correlation",
+      "operator": "AND",
+      "severity": "error",
+      "category": "Update",
+      "conditions": [
+        {
+          "eventIds": [
+            20,
+            24,
+            25
+          ],
+          "source": "WindowsUpdateClient",
+          "minCount": 2
+        },
+        {
+          "eventIds": [
+            7,
+            8,
+            14
+          ],
+          "source": "Microsoft-Windows-Servicing",
+          "minCount": 1
+        }
+      ],
+      "description": "Windows Update schlägt wiederholt fehl und gleichzeitig gibt es CBS/Servicing-Fehler. Deutet auf einen beschädigten Windows-Komponentenspeicher hin. Updates können in diesem Zustand nicht erfolgreich installiert werden bis der Komponentenspeicher repariert ist.",
+      "recommendations": [
+        {
+          "text": "Komponentenspeicher auf Fehler prüfen",
+          "cmd": "DISM /Online /Cleanup-Image /CheckHealth",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Komponentenspeicher reparieren (benötigt Internet oder ISO)",
+          "cmd": "DISM /Online /Cleanup-Image /RestoreHealth",
+          "type": "fix",
+          "risk": "medium"
+        },
+        {
+          "text": "Systemdateien nach DISM-Reparatur prüfen",
+          "cmd": "sfc /scannow",
+          "type": "fix",
+          "risk": "medium"
+        },
+        {
+          "text": "Windows Update Cache leeren und Dienste neu starten",
+          "cmd": "Stop-Service wuauserv, cryptSvc, bits, msiserver -Force\nRename-Item 'C:\\Windows\\SoftwareDistribution' 'SoftwareDistribution.old' -EA 0\nRename-Item 'C:\\Windows\\System32\\catroot2' 'catroot2.old' -EA 0\nStart-Service wuauserv, cryptSvc, bits, msiserver",
+          "type": "fix",
+          "risk": "medium"
+        }
+      ]
+    },
+    {
+      "id": "DEFENDER_DISABLED_UNPROTECTED",
+      "name": "Echtzeit-Schutz deaktiviert – System ungeschützt",
+      "type": "correlation",
+      "operator": "OR",
+      "severity": "critical",
+      "category": "Sicherheit",
+      "conditions": [
+        {
+          "eventIds": [
+            5001,
+            5010,
+            5012
+          ],
+          "source": "Microsoft-Windows-Windows Defender",
+          "minCount": 1
+        },
+        {
+          "eventIds": [
+            3002,
+            3007
+          ],
+          "source": "Microsoft-Windows-Windows Defender",
+          "minCount": 1
+        }
+      ],
+      "description": "Windows Defender meldet dass der Echtzeit-Schutz deaktiviert wurde oder ein kritischer Schutzdienst ausgefallen ist. Das System ist aktuell ohne aktiven Virenschutz. Im MSP-Alltag häufig durch Software-Installation, Gruppenrichtlinien-Konflikt oder absichtliche Deaktivierung durch Benutzer verursacht.",
+      "recommendations": [
+        {
+          "text": "Defender-Status prüfen",
+          "cmd": "Get-MpComputerStatus | Select RealTimeProtectionEnabled, AntivirusEnabled, AMServiceEnabled, NISEnabled | Format-List",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Echtzeit-Schutz wieder aktivieren",
+          "cmd": "Set-MpPreference -DisableRealtimeMonitoring $false",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "Defender-Ereignisse der letzten 24h prüfen",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Windows Defender/Operational';Level=1,2,3;StartTime=(Get-Date).AddHours(-24)} -EA 0 | Select TimeCreated, Id, Message | Format-List",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Drittanbieter-AV prüfen (könnte Defender deaktiviert haben)",
+          "cmd": "Get-WmiObject -Namespace root\\SecurityCenter2 -Class AntiVirusProduct | Select displayName, productState | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "ACCOUNT_LOCKOUT_PATTERN",
+      "name": "Wiederholte Kontosperrungen – Ursache prüfen",
+      "type": "correlation",
+      "operator": "OR",
+      "severity": "warning",
+      "category": "Sicherheit",
+      "conditions": [
+        {
+          "eventId": 4740,
+          "minCount": 2
+        },
+        {
+          "eventId": 4625,
+          "minCount": 15
+        }
+      ],
+      "description": "Mehrere Kontosperrungen oder viele fehlgeschlagene Anmeldeversuche. Im MSP-Alltag meistens kein Angriff sondern: gespeichertes falsches Passwort in einem Dienst, geplanter Task oder Netzlaufwerk, mobiles Gerät mit altem Passwort, oder Benutzer der sein Passwort vergessen hat.",
+      "recommendations": [
+        {
+          "text": "Gesperrte Konten im AD finden",
+          "cmd": "Search-ADAccount -LockedOut | Select Name, SamAccountName, LockedOut, LastLogonDate | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Konto entsperren",
+          "cmd": "Unlock-ADAccount -Identity '{username}'",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "Quelle der fehlgeschlagenen Anmeldungen finden",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='Security';Id=4625} -MaxEvents 20 -EA 0 | Select TimeCreated, @{n='User';e={$_.Properties[5].Value}}, @{n='Workstation';e={$_.Properties[13].Value}}, @{n='IP';e={$_.Properties[19].Value}} | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Geplante Tasks mit gespeicherten Credentials prüfen",
+          "cmd": "Get-ScheduledTask | Where-Object {$_.Principal.UserId -ne 'SYSTEM' -and $_.Principal.UserId -ne $null} | Select TaskName, @{n='User';e={$_.Principal.UserId}} | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "SINGLE_SOURCE_ERROR_FLOOD",
+      "name": "Eine Ereignisquelle verursacht Großteil aller Fehler",
+      "type": "groupBySource",
+      "severity": "warning",
+      "category": "Stabilität",
+      "minCount": 20,
+      "dominancePercent": 40,
+      "description": "Eine einzelne Ereignisquelle (Provider/Anwendung) erzeugt einen unverhältnismäßig großen Anteil aller Fehler-Events. Das maskiert oft andere wichtige Probleme und erschwert die Analyse. Die Fehlerquelle selbst ist das eigentliche Problem das behoben werden muss.",
+      "recommendations": [
+        {
+          "text": "Alle Fehler nach Quelle gruppieren",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='System','Application';Level=1,2} -EA 0 | Group-Object ProviderName | Sort Count -Desc | Select -First 10 Count, Name | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Letzte 20 Events der dominanten Quelle analysieren",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='System','Application';Level=1,2;ProviderName='{source}'} -MaxEvents 20 | Select TimeCreated, Id, Message | Format-List",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Prozess der Quelle prüfen ob er noch läuft",
+          "cmd": "Get-Process | Where-Object {$_.Name -like '*{source}*'} | Select Name, Id, CPU, @{n='RAM_MB';e={[math]::Round($_.WorkingSet64/1MB,0)}} | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "BOOT_DRIVER_FAILURES",
+      "name": "Treiberfehler beim Systemstart",
+      "type": "correlation",
+      "operator": "AND",
+      "severity": "error",
+      "category": "Hardware",
+      "conditions": [
+        {
+          "eventIds": [
+            219,
+            7000,
+            7026
+          ],
+          "minCount": 2
+        },
+        {
+          "eventId": 6005,
+          "minCount": 1
+        }
+      ],
+      "description": "Mehrere Treiber konnten beim Start nicht geladen werden (7000/7026/219) und das System wurde neu gestartet (6005). Ursachen: fehlende oder beschädigte Treiberdateien, inkompatible Treiber nach Update, verwaiste Registry-Einträge von deinstallierter Software.",
+      "recommendations": [
+        {
+          "text": "Nicht startbare Dienste und Treiber identifizieren",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='System';Id=7000,7001,7026;StartTime=(Get-Date).AddDays(-1)} | Select TimeCreated, Id, @{n='Service';e={$_.Message.Split('\"')[1]}} | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Registry auf verwaiste Treiber prüfen",
+          "cmd": "Get-ItemProperty 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\*' | Where-Object {$_.ImagePath -like '*.sys' -and !(Test-Path ($_.ImagePath -replace '\\?\\\\',''))} | Select PSChildName, ImagePath | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Verwaisten Treiber-Dienst entfernen (ID aus obigem Befehl)",
+          "cmd": "sc.exe delete '{servicename}'",
+          "type": "fix",
+          "risk": "medium"
+        },
+        {
+          "text": "Geräte-Manager auf Fehler prüfen",
+          "cmd": "pnputil /scan-devices",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "NETWORK_ADAPTER_CASCADE",
+      "name": "Netzwerkadapter-Resets verursachen Folgeprobleme",
+      "type": "correlation",
+      "operator": "AND",
+      "severity": "error",
+      "category": "Netzwerk",
+      "conditions": [
+        {
+          "eventIds": [
+            4201,
+            4202,
+            27
+          ],
+          "minCount": 2
+        },
+        {
+          "eventId": 1014,
+          "minCount": 1
+        }
+      ],
+      "description": "Netzwerkadapter-Verbindungsabbrüche (4201/4202/27) führen zu DNS-Auflösungsfehlern (1014). Typisches Kaskaden-Muster: instabile Netzwerkverbindung → DNS schlägt fehl → alle Dienste die Netzwerk brauchen (Defender-Updates, Windows Update, Domain-Kommunikation) funktionieren nicht mehr.",
+      "recommendations": [
+        {
+          "text": "Netzwerkadapter-Status und Treiber prüfen",
+          "cmd": "Get-NetAdapter | Select Name, Status, LinkSpeed, DriverVersion, DriverDate | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Netzwerkverbindungs-Ereignisse der letzten 24h",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='System';Id=4201,4202,27;StartTime=(Get-Date).AddHours(-24)} -EA 0 | Select TimeCreated, Id, Message | Sort TimeCreated | Format-Table -AutoSize -Wrap",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Energiesparoptionen des Netzwerkadapters deaktivieren",
+          "cmd": "Get-NetAdapter | ForEach-Object { Set-NetAdapterAdvancedProperty -Name $_.Name -RegistryKeyword 'PnPCapabilities' -RegistryValue 24 -EA 0 }",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "TCP/IP Stack zurücksetzen",
+          "cmd": "netsh int ip reset\nnetsh winsock reset\nipconfig /flushdns",
+          "type": "fix",
+          "risk": "medium"
+        }
+      ]
     }
   ]
 }
