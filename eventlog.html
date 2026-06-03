@@ -9,7 +9,8 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">  <title>support.sheet – Event Log Analyzer</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>support.sheet – Event Log Analyzer</title>
   <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
@@ -863,29 +864,33 @@
           const matched = events.filter(e => Number(e.Id) === rule.eventId);
           if (!matched.length) return;
 
-          // Group by process name (first property of event)
           const groups = {};
           matched.forEach(e => {
-            const proc = (e.Message || '').match(/Fehlerhafte Anwendung[:]\s*([^\s,]+)/i)?.[1]
-                      || (e.Message || '').match(/Faulting application name[:]\s*([^\s,]+)/i)?.[1]
-                      || 'Unbekannt';
+            const msg = e.Message || '';
+            // Multiple extraction patterns: German + English app crash + service crash
+            const proc =
+              msg.match(/Fehlerhafte Anwendung[:\s]+([^\s,\r\n]+)/i)?.[1] ||
+              msg.match(/Faulting application name[:\s]+([^\s,\r\n]+)/i)?.[1] ||
+              msg.match(/Dienst\s+"([^"]+)"/i)?.[1] ||
+              msg.match(/service\s+"([^"]+)"/i)?.[1] ||
+              msg.match(/"([^"]+\.exe)/i)?.[1] ||
+              'Unbekannt';
             if (!groups[proc]) groups[proc] = 0;
             groups[proc]++;
           });
 
-          // Find dominant process
           const topProc = Object.entries(groups).sort((a,b) => b[1]-a[1])[0];
           if (!topProc || topProc[1] < rule.minCount) return;
 
-          const total  = matched.length;
-          const pct    = Math.round((topProc[1] / total) * 100);
-          const score  = Math.min(100, 40 + pct * 0.6);
+          const total = matched.length;
+          const pct   = Math.round((topProc[1] / total) * 100);
+          const score = Math.min(98, 40 + pct * 0.6);
 
           results.push({
             rule,
             score:       Math.round(score),
-            summary:     `${pct}% der App-Abstürze stammen von ${topProc[0]} (${topProc[1]}×)`,
-            detail:      `${total} App-Absturz-Events insgesamt. Dominanter Prozess: ${topProc[0]}`,
+            summary:     `${pct}% der Abstürze stammen von: ${topProc[0]} (${topProc[1]}× von ${total} Events)`,
+            detail:      `Dominanter Prozess: ${topProc[0]}`,
             matchedCount: topProc[1],
             process:     topProc[0],
           });
@@ -1273,7 +1278,12 @@
       const bar  = document.getElementById('cat-bar');
       const cats = [...new Set(findings.map(f => f.rule.category))];
       bar.replaceChildren();
-      const CAT_COLORS = { Absturz:'#f87171', Netzwerk:'#2dd4bf', System:'#7c8cf8', Hardware:'#4ade80', Sicherheit:'#fbbf24', RDS:'#60a5fa', Backup:'#a78bfa', DNS:'#e8b339', ActiveDirectory:'#f472b6', Update:'#94a3b8' };
+      const CAT_COLORS = {
+        Absturz:'#f87171', Netzwerk:'#2dd4bf', System:'#7c8cf8',
+        Hardware:'#4ade80', Sicherheit:'#fbbf24', RDS:'#60a5fa',
+        Backup:'#a78bfa', DNS:'#e8b339', ActiveDirectory:'#f472b6',
+        Update:'#94a3b8', Dienste:'#fb923c', Stabilität:'#f87171'
+      };
 
       const makeBtn = (cat, label, color) => {
         const btn = document.createElement('button');
