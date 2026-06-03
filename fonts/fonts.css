@@ -1,0 +1,57 @@
+/* support.sheet – lokal gehostete Schriften
+   Keine externen Server, kein Google Fonts, DSGVO-konform
+*/
+
+/* JetBrains Mono 400 */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('jetbrains-mono-400.ttf') format('truetype');
+}
+
+/* JetBrains Mono 500 */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('jetbrains-mono-500.ttf') format('truetype');
+}
+
+/* Outfit 400 */
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('outfit-400.ttf') format('truetype');
+}
+
+/* Outfit 500 */
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('outfit-500.ttf') format('truetype');
+}
+
+/* Outfit 600 */
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('outfit-600.ttf') format('truetype');
+}
+
+/* Outfit 700 */
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('outfit-700.ttf') format('truetype');
+}
