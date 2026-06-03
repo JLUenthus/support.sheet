@@ -1,7 +1,7 @@
 // ============================================================
 // support.sheet – Service Worker v2
 // ============================================================
-const CACHE_VERSION = '20260602-0842';
+const CACHE_VERSION = '20260603-0702';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -22,6 +22,11 @@ const ASSETS = [
   './nav.js',
   './sw.js',
   './manifest.json',
+  './apple-touch-icon.png',
+  './favicon-512.png',
+  './favicon-192.png',
+  './favicon-32.png',
+  './favicon.ico',
   './css/main.css',
   './css/toast.css',
   './css/variables.css',
