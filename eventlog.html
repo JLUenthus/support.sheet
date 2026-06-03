@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">  <title>support.sheet – Event Log Analyzer</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
 </head>
@@ -971,7 +971,42 @@
             matchedCount: totalMatched,
           });
         }
+
+        // ── Type: groupBySource ─────────────────────────────
+        // Erkennt wenn eine einzelne Quelle den Großteil aller Fehler verursacht
+        if (rule.type === 'groupBySource') {
+          const errorEvents = events.filter(e =>
+            e.Level === 'Critical' || e.Level === 'Error'
+          );
+          if (errorEvents.length < (rule.minCount || 20)) return;
+
+          // Gruppieren nach Provider
+          const groups = {};
+          errorEvents.forEach(e => {
+            const src = e.ProviderName || 'Unbekannt';
+            groups[src] = (groups[src] || 0) + 1;
+          });
+
+          const top = Object.entries(groups).sort((a,b) => b[1]-a[1])[0];
+          if (!top) return;
+
+          const pct = Math.round((top[1] / errorEvents.length) * 100);
+          if (pct < (rule.dominancePercent || 40)) return;
+
+          const score = Math.min(98, 35 + pct * 0.6);
+          results.push({
+            rule,
+            score:        Math.round(score),
+            summary:      `${pct}% aller Fehler stammen von: ${top[0]} (${top[1]}× von ${errorEvents.length} Fehler-Events)`,
+            detail:       `Dominante Fehlerquelle identifiziert.`,
+            matchedCount: top[1],
+            process:      top[0],
+          });
+        }
       });
+
+      // Security-Events: Rules die Security-Log brauchen werden still übersprungen
+      // wenn keine Security-Events vorhanden sind (kein Fehler werfen)
 
       // Sort by score descending, return top 3
       return results.sort((a, b) => b.score - a.score).slice(0, 3);
