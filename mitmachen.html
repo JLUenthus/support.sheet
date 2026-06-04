@@ -232,7 +232,30 @@
 
     <!-- ── ERFOLG ─────────────────────────────────────────────── -->
     <div class="success-msg" id="success">
-      ✅ Mail-Client geöffnet! Bitte die vorausgefüllte Mail absenden.
+      <div class="success-icon">✅</div>
+      <div class="success-text">
+        <strong>Mail-Client geöffnet!</strong> Bitte die vorausgefüllte Mail absenden.
+      </div>
+      <div class="success-process">
+        <div class="process-title">Was passiert als nächstes?</div>
+        <div class="process-steps">
+          <div class="process-step">
+            <span class="process-num">1</span>
+            <span>Einreichung wird geprüft – meist innerhalb weniger Tage</span>
+          </div>
+          <div class="process-step">
+            <span class="process-num">2</span>
+            <span>Bei Commands: JSON-Format und Tags werden angepasst falls nötig</span>
+          </div>
+          <div class="process-step">
+            <span class="process-num">3</span>
+            <span>Nach Aufnahme erscheint der Command beim nächsten Update live auf der Seite</span>
+          </div>
+        </div>
+        <div class="process-note">
+          Keine Rückmeldung erhalten? Kein Problem – alle Einreichungen werden gesichtet, auch wenn es manchmal etwas länger dauert.
+        </div>
+      </div>
     </div>
 
   </main>
@@ -419,8 +442,16 @@
       flex-shrink: 0;
     }
     .collect-remove-btn:hover { color: var(--red); border-color: rgba(248,113,113,.4); background: rgba(248,113,113,.06); }
-    .success-msg { display:none; margin-top:20px; padding:14px 20px; background:rgba(74,222,128,.08); border:1px solid rgba(74,222,128,.3); border-radius:var(--r); color:var(--green); font-weight:600; font-size:.88rem; }
+    .success-msg { display:none; margin-top:20px; padding:0; background:rgba(74,222,128,.06); border:1px solid rgba(74,222,128,.25); border-radius:var(--r); overflow:hidden; }
     .success-msg.show { display:block; }
+    .success-icon { font-size:1.5rem; padding:20px 20px 0; }
+    .success-text { padding:8px 20px 16px; color:var(--green); font-weight:700; font-size:.95rem; border-bottom:1px solid rgba(74,222,128,.15); }
+    .success-process { padding:16px 20px 20px; }
+    .process-title { font-size:.72rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:12px; }
+    .process-steps { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+    .process-step { display:flex; align-items:flex-start; gap:10px; font-size:.82rem; color:var(--muted); }
+    .process-num { width:20px; height:20px; border-radius:50%; background:rgba(74,222,128,.15); border:1px solid rgba(74,222,128,.3); color:var(--green); font-size:.7rem; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+    .process-note { font-size:.75rem; color:var(--dim); padding-top:12px; border-top:1px solid var(--border); line-height:1.5; }
 
     @media (max-width:900px) {
       .form-grid { grid-template-columns:1fr; }
