@@ -66,6 +66,187 @@
       "reason": "Einzelne TLS-Warnungen sind häufig auf veraltete TLS-Clients oder Kompatibilitätsprobleme zurückzuführen. Ohne weitere Fehler kein akuter Handlungsbedarf.",
       "reduceSeverity": true,
       "affectsScore": false
+    },
+    {
+      "eventId": 10010,
+      "source": "Microsoft-Windows-DistributedCOM",
+      "label": "DCOM Server nicht registriert",
+      "reason": "COM-Server konnte nicht registriert werden. Häufig durch Drittanbieter-Software oder deinstallierte Komponenten. Ohne begleitende Fehler meist harmlos.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 6155,
+      "source": "LsaSrv",
+      "label": "LSA Pakete geladen",
+      "reason": "Normales Systemereignis beim Windows-Start. LSA Security-Pakete werden initialisiert. Kein Handlungsbedarf.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 1796,
+      "source": "Microsoft-Windows-PrintService",
+      "label": "Drucker-Treiber geladen",
+      "reason": "Druckertreiber wurde beim Start geladen. Tritt auf jedem System mit installierten Druckern auf. Kein Fehler.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 4202,
+      "source": "Tcpip",
+      "label": "Netzwerkadapter getrennt (einzeln)",
+      "reason": "Einzelne Trennung des Netzwerkadapters beim Boot oder durch Energiesparmodus. Erst bei wiederholtem Auftreten im Betrieb relevant.",
+      "reduceSeverity": false,
+      "affectsScore": false,
+      "minCountForConcern": 5
+    },
+    {
+      "eventId": 41,
+      "source": "Microsoft-Windows-Kernel-Power",
+      "label": "Ungeplanter Neustart (einmalig)",
+      "reason": "Einmaliger ungeplanter Neustart kann durch Update, kurzen Stromausfall oder Benutzeraktion entstehen. Erst bei wiederholtem Auftreten kritisch.",
+      "reduceSeverity": false,
+      "affectsScore": false,
+      "minCountForConcern": 2
+    },
+    {
+      "eventId": 537,
+      "source": "Microsoft-Windows-Kernel-Boot",
+      "label": "Kernel-Boot Diagnose",
+      "reason": "Normales Boot-Diagnoseereignis. Enthält Boot-Zeitmessungen und ist kein Fehler.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 1014,
+      "source": "Microsoft-Windows-DNS-Client",
+      "label": "DNS-Auflösung Timeout (einzeln)",
+      "reason": "Einzelne DNS-Timeouts entstehen beim Boot bevor das Netzwerk vollständig initialisiert ist. Erst bei anhaltenden Timeouts im Betrieb relevant.",
+      "reduceSeverity": false,
+      "affectsScore": false,
+      "minCountForConcern": 5
+    },
+    {
+      "eventId": 5973,
+      "source": "Microsoft-Windows-Immersive-Shell",
+      "label": "App-Aktivierung fehlgeschlagen",
+      "reason": "UWP/Store App konnte nicht aktiviert werden. Tritt häufig nach Updates auf und löst sich meistens von selbst. Kein Systemfehler.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 1008,
+      "source": "Microsoft-Windows-Perflib",
+      "label": "Performance-Zähler Fehler",
+      "reason": "Performance-Zähler-DLL konnte nicht geladen werden. Betrifft nur Leistungsüberwachung, nicht den normalen Betrieb. Häufig nach Deinstallation von Software.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 4625,
+      "source": "Microsoft-Windows-Security-Auditing",
+      "label": "Fehlgeschlagene Anmeldung (einzeln)",
+      "reason": "Einzelne fehlgeschlagene Anmeldungen sind normal (falsches Passwort, gesperrtes Konto). Erst bei mehr als 10 Vorkommen relevant.",
+      "reduceSeverity": false,
+      "affectsScore": false,
+      "minCountForConcern": 10
+    },
+    {
+      "eventId": 16384,
+      "source": "Microsoft-Windows-Security-SPP",
+      "label": "Software Protection Plattform",
+      "reason": "Windows-Lizenzvalidierung im Hintergrund. Tritt regelmäßig auf und ist kein Fehler solange Windows aktiviert ist.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 16394,
+      "source": "Microsoft-Windows-Security-SPP",
+      "label": "Software Protection – Ruhezustand",
+      "reason": "Software Protection Dienst wechselt in Ruhezustand nach erfolgreicher Lizenzvalidierung. Normales Verhalten.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 903,
+      "source": "Microsoft-Windows-Security-SPP",
+      "label": "Windows Aktivierungsstatus",
+      "reason": "Statusbericht der Windows-Aktivierung. Kein Fehler wenn Windows aktiviert ist.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 7040,
+      "source": "Service Control Manager",
+      "label": "Dienst-Starttyp geändert",
+      "reason": "Starttyp eines Dienstes wurde geändert (z.B. von Manuell auf Deaktiviert). Häufig durch Windows Update oder Software-Installation ausgelöst. Kein Fehler.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 20,
+      "source": "Microsoft-Windows-WindowsUpdateClient",
+      "label": "Windows Update installiert",
+      "reason": "Update wurde erfolgreich installiert. Positives Ereignis, kein Fehler.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 43,
+      "source": "Microsoft-Windows-Kernel-Power",
+      "label": "Kernel-Power Ruhezustand",
+      "reason": "System wechselt in Ruhezustand oder Standbymodus. Normales Systemereignis.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 6013,
+      "source": "EventLog",
+      "label": "System-Uptime Bericht",
+      "reason": "Täglicher Uptime-Bericht des Systems in Sekunden. Kein Fehler, nur Diagnoseinformation.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 6005,
+      "source": "EventLog",
+      "label": "Event Log Dienst gestartet",
+      "reason": "Event Log Dienst wurde beim Systemstart initialisiert. Normales Boot-Ereignis.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 6006,
+      "source": "EventLog",
+      "label": "Event Log Dienst gestoppt",
+      "reason": "Event Log Dienst wurde beim Herunterfahren gestoppt. Normales Shutdown-Ereignis.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 6008,
+      "source": "EventLog",
+      "label": "Unerwartetes Herunterfahren (einmalig)",
+      "reason": "System wurde einmalig unerwartet heruntergefahren. Einmalig nach Stromausfall oder Update-Neustart harmlos. Erst bei Wiederholung relevant.",
+      "reduceSeverity": false,
+      "affectsScore": false,
+      "minCountForConcern": 2
+    },
+    {
+      "eventId": 258,
+      "source": "Microsoft-Windows-Kernel-Processor-Power",
+      "label": "CPU Energiezustand",
+      "reason": "Prozessor wechselt Energiezustand (C-States). Normales Energieverwaltungsereignis, kein Fehler.",
+      "reduceSeverity": true,
+      "affectsScore": false
+    },
+    {
+      "eventId": 131,
+      "source": "Microsoft-Windows-TWinUI",
+      "label": "TWinUI Diagnose",
+      "reason": "Windows Shell UI Diagnoseereignis. Kein Fehler im normalen Betrieb.",
+      "reduceSeverity": true,
+      "affectsScore": false
     }
   ]
 }

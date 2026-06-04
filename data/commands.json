@@ -2229,6 +2229,260 @@
         "quick",
         "productivity"
       ]
+    },
+    {
+      "id": "printer-alle-drucker-server",
+      "name": "Alle Drucker auf Print-Server anzeigen",
+      "cmd": "Get-Printer -ComputerName '{server}' | Select Name, DriverName, PortName, Shared, Published, PrinterStatus | Format-Table -AutoSize",
+      "desc": "Alle installierten Drucker auf einem Print-Server. PrinterStatus: Normal=0, Error=2, Offline=128. Basis-Check bei Druckerproblemen im Netzwerk.",
+      "tags": [
+        "printer",
+        "powershell",
+        "windows",
+        "server",
+        "info"
+      ]
+    },
+    {
+      "id": "printer-treiber-liste",
+      "name": "Installierte Druckertreiber anzeigen",
+      "cmd": "Get-PrinterDriver -ComputerName '{server}' | Select Name, Manufacturer, PrinterEnvironment, InfPath | Sort Name | Format-Table -AutoSize",
+      "desc": "Alle installierten Druckertreiber. Gut für Inventar und um veraltete Treiber zu finden. InfPath zeigt wo der Treiber herkommt.",
+      "tags": [
+        "printer",
+        "powershell",
+        "windows",
+        "server",
+        "info"
+      ]
+    },
+    {
+      "id": "printer-port-anzeigen",
+      "name": "Drucker-Ports anzeigen",
+      "cmd": "Get-PrinterPort -ComputerName '{server}' | Select Name, PrinterHostAddress, PortNumber, Protocol | Format-Table -AutoSize",
+      "desc": "Alle konfigurierten Drucker-Ports. Gut wenn ein Drucker nicht erreichbar ist – IP-Adresse des Ports mit tatsächlicher Drucker-IP vergleichen.",
+      "tags": [
+        "printer",
+        "powershell",
+        "windows",
+        "server",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "printer-jobs-anzeigen",
+      "name": "Druckerwarteschlange anzeigen",
+      "cmd": "Get-PrintJob -PrinterName '{printer}' -ComputerName '{server}' | Select Id, JobStatus, UserName, Document, TotalPages, SubmittedTime | Format-Table -AutoSize",
+      "desc": "Alle Jobs in der Warteschlange eines Druckers. JobStatus: Printing, Deleting, Error, Paused. Hängende Jobs identifizieren bevor man den Spooler neu startet.",
+      "tags": [
+        "printer",
+        "powershell",
+        "windows",
+        "server",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "printer-job-loeschen",
+      "name": "Hängenden Druckjob löschen",
+      "cmd": "Get-PrintJob -PrinterName '{printer}' -ComputerName '{server}' | Where-Object {$_.JobStatus -ne 'Printing'} | Remove-PrintJob",
+      "desc": "Alle nicht-aktiven Jobs aus der Warteschlange entfernen. Sicherer als Spooler-Neustart wenn nur einzelne Jobs hängen. Aktive Jobs bleiben erhalten.",
+      "tags": [
+        "printer",
+        "powershell",
+        "windows",
+        "server",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "printer-freigabe-pruefen",
+      "name": "Drucker-Freigaben prüfen",
+      "cmd": "Get-Printer -ComputerName '{server}' | Where-Object {$_.Shared -eq $true} | Select Name, ShareName, Published, Location | Format-Table -AutoSize",
+      "desc": "Alle freigegebenen Drucker. Published=True bedeutet im AD veröffentlicht. Gut für Audit oder wenn Nutzer bestimmte Drucker nicht finden.",
+      "tags": [
+        "printer",
+        "powershell",
+        "windows",
+        "server",
+        "info"
+      ]
+    },
+    {
+      "id": "printer-remote-installieren",
+      "name": "Netzwerkdrucker remote installieren",
+      "cmd": "Add-Printer -ConnectionName '\\\\{server}\\{printer}' -ComputerName '{hostname}'",
+      "desc": "Netzwerkdrucker auf einem Remote-PC installieren ohne manuell dort einloggen zu müssen. Nützlich für Helpdesk-Einsätze.",
+      "tags": [
+        "printer",
+        "powershell",
+        "windows",
+        "admin",
+        "remote"
+      ]
+    },
+    {
+      "id": "wmi-system-info",
+      "name": "System-Informationen per CIM",
+      "cmd": "Get-CimInstance Win32_ComputerSystem | Select Name, Manufacturer, Model, TotalPhysicalMemory, NumberOfProcessors, NumberOfLogicalProcessors, Domain | Format-List",
+      "desc": "Vollständige Systeminfo per CIM. Schneller als GUI, gut für Remote-Abfragen. Manufacturer und Model für Treiber-Downloads, Domain für AD-Zugehörigkeit.",
+      "tags": [
+        "system",
+        "powershell",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "wmi-bios-info",
+      "name": "BIOS und Firmware-Informationen",
+      "cmd": "Get-CimInstance Win32_BIOS | Select Manufacturer, Name, Version, ReleaseDate, SMBIOSBIOSVersion | Format-List",
+      "desc": "BIOS-Hersteller, Version und Datum. Wichtig für Firmware-Update-Check und bei UEFI-Secure-Boot Problemen.",
+      "tags": [
+        "system",
+        "powershell",
+        "windows",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "wmi-prozessoren",
+      "name": "CPU-Details per CIM",
+      "cmd": "Get-CimInstance Win32_Processor | Select Name, NumberOfCores, NumberOfLogicalProcessors, MaxClockSpeed, CurrentClockSpeed, LoadPercentage, L2CacheSize, L3CacheSize | Format-List",
+      "desc": "CPU-Details. CurrentClockSpeed vs MaxClockSpeed zeigt ob Throttling aktiv ist. LoadPercentage gibt aktuelle Last.",
+      "tags": [
+        "system",
+        "powershell",
+        "windows",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "wmi-netzwerkkarten",
+      "name": "Netzwerkkarten per CIM",
+      "cmd": "Get-CimInstance Win32_NetworkAdapterConfiguration | Where-Object {$_.IPEnabled} | Select Description, IPAddress, DefaultIPGateway, DNSServerSearchOrder, MACAddress | Format-List",
+      "desc": "Alle aktiven Netzwerkkarten mit IP, Gateway und DNS. Schneller als ipconfig /all für automatisierte Abfragen.",
+      "tags": [
+        "network",
+        "powershell",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "wmi-services-status",
+      "name": "Dienste per CIM abfragen",
+      "cmd": "Get-CimInstance Win32_Service | Where-Object {$_.StartMode -eq 'Auto' -and $_.State -ne 'Running'} | Select Name, DisplayName, State, StartMode, PathName | Format-Table -AutoSize",
+      "desc": "Alle Dienste die auf Autostart stehen aber nicht laufen. Gezielter als Get-Service da StartMode und PathName verfügbar sind.",
+      "tags": [
+        "system",
+        "powershell",
+        "windows",
+        "info",
+        "diag"
+      ]
+    },
+    {
+      "id": "wmi-installierte-updates",
+      "name": "Installierte Windows-Updates per CIM",
+      "cmd": "Get-CimInstance Win32_QuickFixEngineering | Sort-Object InstalledOn -Descending | Select HotFixID, Description, InstalledOn, InstalledBy | Select-Object -First 20 | Format-Table -AutoSize",
+      "desc": "Letzte 20 installierte Updates. CIM-Variante von Get-HotFix – gleicher Output, aber direkt per Remote-Session nutzbar.",
+      "tags": [
+        "update",
+        "powershell",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "wmi-laufwerke-details",
+      "name": "Laufwerke und Partitionen per CIM",
+      "cmd": "Get-CimInstance Win32_LogicalDisk | Select DeviceID, DriveType, @{n='Size_GB';e={[math]::Round($_.Size/1GB,1)}}, @{n='Free_GB';e={[math]::Round($_.FreeSpace/1GB,1)}}, @{n='Free_%';e={[math]::Round($_.FreeSpace/$_.Size*100,1)}}, FileSystem, VolumeName | Format-Table -AutoSize",
+      "desc": "Alle Laufwerke mit Größe, freiem Speicher in GB und Prozent. DriveType: 3=Fest, 4=Netz, 5=CD. Schnell und Remote-fähig.",
+      "tags": [
+        "disk",
+        "powershell",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "wmi-remote-query",
+      "name": "CIM-Abfrage auf Remote-System",
+      "cmd": "Get-CimInstance -ClassName Win32_ComputerSystem -ComputerName '{hostname}' -Credential (Get-Credential)",
+      "desc": "CIM-Abfrage direkt auf einem Remote-System ohne PSSession. Funktioniert über DCOM/WinRM. Gut für schnelle Einzelabfragen ohne vollständige Remote-Session.",
+      "tags": [
+        "system",
+        "powershell",
+        "windows",
+        "remote",
+        "info"
+      ]
+    },
+    {
+      "id": "remote-winrm-test",
+      "name": "WinRM-Verbindung testen",
+      "cmd": "Test-WSMan -ComputerName '{hostname}' -Authentication Default",
+      "desc": "Prüft ob WinRM auf einem Remote-System erreichbar und konfiguriert ist. Gibt Protokollversion zurück. Erster Check wenn PSRemoting nicht funktioniert.",
+      "tags": [
+        "remote",
+        "powershell",
+        "windows",
+        "diag"
+      ]
+    },
+    {
+      "id": "remote-invoke-command",
+      "name": "Befehl auf mehreren Systemen ausführen",
+      "cmd": "Invoke-Command -ComputerName '{host1}','{host2}' -ScriptBlock { Get-Service | Where-Object {$_.Status -eq 'Stopped'} } | Select PSComputerName, Name, Status | Format-Table -AutoSize",
+      "desc": "Gleichen Befehl gleichzeitig auf mehreren Systemen ausführen. PSComputerName zeigt von welchem System das Ergebnis kommt. Gut für Fleet-Checks ohne einzeln einloggen.",
+      "tags": [
+        "remote",
+        "powershell",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "remote-session-persistent",
+      "name": "Dauerhafte Remote-Session erstellen",
+      "cmd": "$s = New-PSSession -ComputerName '{hostname}'\nEnter-PSSession -Session $s\n# Zum Beenden: Exit-PSSession\n# Session später wiederverwenden: Enter-PSSession -Session $s",
+      "desc": "Dauerhafte Session die nicht bei jedem Befehl neu aufgebaut wird. Schneller als Enter-PSSession für mehrere aufeinanderfolgende Befehle. Session bleibt offen bis manuell getrennt.",
+      "tags": [
+        "remote",
+        "powershell",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "remote-sessions-anzeigen",
+      "name": "Offene PS-Sessions anzeigen",
+      "cmd": "Get-PSSession",
+      "desc": "Alle aktuell offenen PowerShell Remote-Sessions. Nicht mehr benötigte Sessions mit Remove-PSSession schließen – offene Sessions verbrauchen Ressourcen auf beiden Seiten.",
+      "tags": [
+        "remote",
+        "powershell",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "remote-winrm-trusted-hosts",
+      "name": "WinRM TrustedHosts konfigurieren",
+      "cmd": "# Aktuell anzeigen:\nGet-Item WSMan:\\localhost\\Client\\TrustedHosts\n# Einen Host hinzufügen:\nSet-Item WSMan:\\localhost\\Client\\TrustedHosts -Value '{hostname}' -Concatenate -Force\n# Alle erlauben (nur in vertrauenswürdigen Netzwerken):\nSet-Item WSMan:\\localhost\\Client\\TrustedHosts -Value '*' -Force",
+      "desc": "Wenn Remote-Session mit Fehlermeldung 'Der Client kann keine Verbindung...' abbricht: TrustedHosts prüfen und ergänzen. In Domänenumgebungen meist nicht nötig.",
+      "tags": [
+        "remote",
+        "powershell",
+        "windows",
+        "admin"
+      ]
     }
   ]
 }

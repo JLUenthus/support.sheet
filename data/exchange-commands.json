@@ -561,5 +561,111 @@
       "groups"
     ],
     "product": "exo"
+  },
+  {
+    "id": "comp-mailbox-hold",
+    "name": "Litigation Hold aktivieren",
+    "cmd": "Set-Mailbox -Identity '{username}' -LitigationHoldEnabled $true -LitigationHoldDuration 365",
+    "desc": "Postfach für rechtliche Aufbewahrung sperren. Alle Elemente werden 365 Tage aufbewahrt auch wenn der Benutzer sie löscht. Wichtig bei HR-Fällen oder behördlichen Anforderungen. Duration in Tagen oder 'Unlimited'.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "compliance",
+      "admin",
+      "caution"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "comp-hold-status",
+    "name": "Litigation Hold Status prüfen",
+    "cmd": "Get-Mailbox -Identity '{username}' | Select DisplayName, LitigationHoldEnabled, LitigationHoldDate, LitigationHoldOwner, LitigationHoldDuration | Format-List",
+    "desc": "Prüft ob ein Postfach unter Legal Hold steht und seit wann. LitigationHoldDate und LitigationHoldOwner zeigen wer wann den Hold gesetzt hat.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "compliance",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "comp-message-tracking",
+    "name": "Mail-Zustellung nachverfolgen",
+    "cmd": "Get-MessageTrackingLog -Start (Get-Date).AddDays(-7) -Sender '{email}' -Recipients '{email}' -EventId DELIVER | Select Timestamp, Sender, Recipients, MessageSubject, Source | Format-Table -AutoSize",
+    "desc": "Mail-Zustellung der letzten 7 Tage nachverfolgen. EventId: DELIVER=zugestellt, FAIL=fehlgeschlagen, SEND=gesendet. Gut wenn Benutzer meldet dass eine Mail nicht ankam.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "diag",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "comp-mailbox-search",
+    "name": "Postfachinhalt durchsuchen",
+    "cmd": "New-MailboxSearch -Name 'Suche-{username}' -SourceMailboxes '{username}' -SearchQuery 'subject:Rechnung AND received:2026-01-01..2026-06-01' -TargetMailbox '{username}' -TargetFolder 'Suchergebnis' -LogLevel Full",
+    "desc": "Postfach nach bestimmten Inhalten durchsuchen und Ergebnisse in Ziel-Postfach kopieren. Für eDiscovery oder wenn Benutzer Mails nicht mehr findet. Gibt detailliertes Log aus.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "compliance",
+      "admin"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "comp-audit-log",
+    "name": "Postfach-Audit-Log abfragen",
+    "cmd": "Search-MailboxAuditLog -Identity '{username}' -StartDate (Get-Date).AddDays(-30) -EndDate (Get-Date) -ShowDetails | Select Operation, OperationResult, LogonUserDisplayName, ItemSubject, TimeStamp | Format-Table -AutoSize",
+    "desc": "Wer hat wann auf das Postfach zugegriffen und was gemacht. Zeigt Send As, Delegated Access, Löschungen. Muss vorher aktiviert sein: Set-Mailbox -Identity x -AuditEnabled $true",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "compliance",
+      "security",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "comp-inactive-mailboxes",
+    "name": "Inaktive Postfächer finden",
+    "cmd": "Get-Mailbox -InactiveMailboxOnly | Select DisplayName, PrimarySmtpAddress, LitigationHoldEnabled, WhenSoftDeleted | Format-Table -AutoSize",
+    "desc": "Alle soft-gelöschten Postfächer die noch unter Hold stehen. Inaktive Postfächer belegen Lizenzen und Speicher. Nach Klärung ob Hold nötig: Remove-Mailbox -Identity x -PermanentlyDelete",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "compliance",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "exo-retention-policy",
+    "name": "Aufbewahrungsrichtlinien anzeigen (EXO)",
+    "cmd": "Get-RetentionPolicy | Select Name, RetentionPolicyTagLinks | Format-List",
+    "desc": "Alle Aufbewahrungsrichtlinien in Exchange Online. RetentionPolicyTagLinks zeigt welche Tags (Fristen) zugewiesen sind. Wichtig für Compliance-Audits.",
+    "tags": [
+      "exchange",
+      "exo",
+      "compliance",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-hold-users",
+    "name": "Alle Postfächer unter Hold anzeigen (EXO)",
+    "cmd": "Get-Mailbox -ResultSize Unlimited | Where-Object {$_.LitigationHoldEnabled -eq $true} | Select DisplayName, PrimarySmtpAddress, LitigationHoldDate, LitigationHoldDuration | Format-Table -AutoSize",
+    "desc": "Übersicht aller Postfächer die unter Legal Hold stehen. Gut für Compliance-Berichte und um zu prüfen ob Holds noch aktuell oder abgelaufen sind.",
+    "tags": [
+      "exchange",
+      "exo",
+      "compliance",
+      "info"
+    ],
+    "product": "exo"
   }
 ]
