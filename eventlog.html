@@ -52,7 +52,7 @@
       </div>
     </section>
 
-    <!-- ── SCHRITT 2 ──────────────────────────────────────── -->
+    <!-- ── SCHRITT 2 – Upload (prominent) ─────────────────── -->
     <section class="el-section">
       <h2 class="section-title">Schritt 2 – JSON-Datei hochladen</h2>
       <div class="upload-zone" id="upload-zone">
@@ -60,6 +60,29 @@
         <div class="upload-text">JSON-Datei hier ablegen oder klicken</div>
         <div class="upload-sub">Erwartet: EventLog_Client_*.json oder EventLog_Server_*.json</div>
         <input type="file" id="file-input" accept=".json" style="display:none">
+      </div>
+
+      <!-- Was dich erwartet – nur vor Upload sichtbar -->
+      <div class="upload-preview" id="upload-preview">
+        <div class="upload-preview-title">Was dich erwartet</div>
+        <div class="upload-preview-items">
+          <div class="upi"><span class="upi-icon">🖥️</span><div><div class="upi-name">Systemübersicht</div><div class="upi-desc">RAM, CPU, Uptime, Laufwerke – farblich bewertet</div></div></div>
+          <div class="upi"><span class="upi-icon">🎯</span><div><div class="upi-name">Wahrscheinliche Hauptursachen</div><div class="upi-desc">Correlation Engine erkennt Zusammenhänge</div></div></div>
+          <div class="upi"><span class="upi-icon">💡</span><div><div class="upi-name">Optimierungsvorschläge</div><div class="upi-desc">Proaktive Checks unabhängig von Fehlern</div></div></div>
+          <div class="upi"><span class="upi-icon">🔍</span><div><div class="upi-name">Analyseergebnis</div><div class="upi-desc">Fehlermuster mit gruppierten Fix-Commands</div></div></div>
+          <div class="upi"><span class="upi-icon">📋</span><div><div class="upi-name">Ereignistabelle</div><div class="upi-desc">Alle Events durchsuchbar, harmlose markiert</div></div></div>
+        </div>
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="analyzer-disclaimer">
+        <span class="disclaimer-icon">ℹ️</span>
+        <div class="disclaimer-text">
+          <strong>Hinweis zur Interpretation:</strong>
+          Die Analyse basiert auf bekannten Ereignismustern und zeigt <em>Wahrscheinlichkeiten</em>, keine gesicherten Diagnosen.
+          Empfehlungen sollten vor der Ausführung geprüft werden – insbesondere Commands mit Risikostufe <strong>Mittel</strong> oder <strong>Hoch</strong>.
+          Das Tool wird kontinuierlich weiterentwickelt; neue Regeln und Verbesserungen werden regelmäßig ergänzt.
+        </div>
       </div>
     </section>
 
@@ -92,13 +115,6 @@
         <div id="correlations"></div>
       </section>
 
-      <!-- Verbesserungsvorschläge -->
-      <section class="el-section" id="improvements-section" hidden>
-        <h2 class="section-title">💡 Optimierungsvorschläge <span id="improvements-count" class="section-count">0</span></h2>
-        <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px;">Proaktive Hinweise basierend auf Systemdaten – unabhängig von Fehlermustern.</p>
-        <div id="improvements"></div>
-      </section>
-
       <!-- Findings -->
       <section class="el-section">
         <h2 class="section-title">Analyseergebnis <span id="findings-count" class="section-count">0</span></h2>
@@ -107,16 +123,24 @@
         <div id="no-findings" class="no-findings" hidden>✅ Keine bekannten Fehlermuster erkannt.</div>
       </section>
 
-      <!-- Ereignistabelle -->
+      <!-- Verbesserungsvorschläge -->
+      <section class="el-section" id="improvements-section" hidden>
+        <h2 class="section-title">💡 Optimierungsvorschläge <span id="improvements-count" class="section-count">0</span></h2>
+        <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px;">Proaktive Hinweise basierend auf Systemdaten – unabhängig von Fehlermustern.</p>
+        <div id="improvements"></div>
+      </section>
+
+      <!-- Ereignistabelle (ein/ausblendbar) -->
       <section class="el-section">
         <div class="raw-header">
-          <span class="section-title" style="margin-bottom:0">Alle Ereignisse</span>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input type="text" id="event-search" class="event-search-input" placeholder="ID, Quelle, Nachricht…" oninput="filterEvents()">
-            <span id="event-count" style="font-size:.72rem;color:var(--dim)"></span>
-          </div>
+          <button class="table-toggle-btn" id="table-toggle-btn" onclick="toggleEventTable()">
+            <span id="table-toggle-icon">▼</span>
+            <span class="section-title" style="margin-bottom:0">Alle Ereignisse</span>
+            <span id="event-count" style="font-size:.72rem;color:var(--dim);margin-left:4px"></span>
+          </button>
+          <input type="text" id="event-search" class="event-search-input" placeholder="ID, Quelle, Nachricht…" oninput="filterEvents()">
         </div>
-        <div class="raw-table-wrap">
+        <div id="event-table-wrap" class="raw-table-wrap">
           <table class="event-table">
             <thead><tr><th>Zeit</th><th>ID</th><th>Level</th><th>Quelle</th><th>Kategorie</th><th>Nachricht</th></tr></thead>
             <tbody id="event-table"></tbody>
@@ -275,7 +299,35 @@
     /* Harmless badge */
     .harmless-badge { display:inline-block; margin-left:6px; font-size:.62rem; font-weight:700; padding:1px 6px; border-radius:4px; background:rgba(74,222,128,.1); color:var(--green); border:1px solid rgba(74,222,128,.25); cursor:help; white-space:nowrap; }
 
-    /* Results topbar */
+    /* ── Upload Preview ──────────────────────────────────── */
+    .upload-preview { margin-top:16px; }
+    .upload-preview-title { font-size:.72rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
+    .upload-preview-items { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; }
+    .upi { display:flex; align-items:flex-start; gap:10px; background:var(--bg); border:1px solid var(--border); border-radius:var(--r); padding:10px 12px; }
+    .upi-icon { font-size:1.1rem; flex-shrink:0; }
+    .upi-name { font-size:.8rem; font-weight:700; color:var(--text); margin-bottom:2px; }
+    .upi-desc { font-size:.72rem; color:var(--muted); line-height:1.4; }
+
+    /* ── Disclaimer ──────────────────────────────────────── */
+    .analyzer-disclaimer { display:flex; gap:10px; align-items:flex-start; margin-top:14px; padding:12px 14px; background:rgba(251,191,36,.05); border:1px solid rgba(251,191,36,.2); border-left:3px solid var(--amber); border-radius:var(--r); }
+    .disclaimer-icon { font-size:1rem; flex-shrink:0; margin-top:1px; }
+    .disclaimer-text { font-size:.78rem; color:var(--muted); line-height:1.6; }
+    .disclaimer-text strong { color:var(--text); }
+    .disclaimer-text em { color:var(--amber); font-style:normal; font-weight:600; }
+
+    /* ── Sys-Item farbiger Border bei bad/warn ───────────── */
+    .sys-item { background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--border); border-radius:var(--r); padding:12px 14px; transition:border-color .2s; }
+    .sys-item.item-bad  { border-left-color:var(--red);   background:rgba(248,113,113,.04); }
+    .sys-item.item-warn { border-left-color:var(--amber); background:rgba(251,191,36,.04); }
+    .sys-item.item-good { border-left-color:var(--green); }
+
+    /* ── Table Toggle ────────────────────────────────────── */
+    .table-toggle-btn { display:flex; align-items:center; gap:8px; background:none; border:none; cursor:pointer; font-family:var(--font-ui); padding:0; color:var(--text); }
+    .table-toggle-btn:hover { color:var(--accent); }
+    #table-toggle-icon { font-size:.7rem; color:var(--dim); transition:transform .2s; }
+    #table-toggle-icon.collapsed { transform:rotate(-90deg); }
+    #event-table-wrap.table-hidden { display:none; }
+    .raw-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; flex-wrap:wrap; }
     .results-topbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:12px; }
     .sev-summary    { display:flex; flex-wrap:wrap; gap:8px; }
     .export-btn {
@@ -425,6 +477,9 @@
       results.className = 'results-visible';
       zone.classList.add('done');
       zone.querySelector('.upload-text').textContent = '✅ ' + filename;
+      // Preview ausblenden nach Upload
+      const preview = document.getElementById('upload-preview');
+      if (preview) preview.style.display = 'none';
       setTimeout(() => results.scrollIntoView({ behavior:'smooth', block:'start' }), 150);
     }
 
@@ -478,7 +533,7 @@
 
       items.forEach(([label, value, cls]) => {
         const item = document.createElement('div');
-        item.className = 'sys-item';
+        item.className = 'sys-item' + (cls === 'bad' ? ' item-bad' : cls === 'warn' ? ' item-warn' : cls === 'good' ? ' item-good' : '');
         const lbl = document.createElement('div'); lbl.className = 'sys-label'; lbl.textContent = label;
         const val = document.createElement('div'); val.className = 'sys-value' + (cls ? ' ' + cls : ''); val.textContent = value;
         item.appendChild(lbl); item.appendChild(val);
@@ -489,7 +544,7 @@
       if (diskItems.length) {
         diskItems.forEach((disk, idx) => {
           const item = document.createElement('div');
-          item.className = 'sys-item';
+          item.className = 'sys-item' + (disk.cls === 'bad' ? ' item-bad' : disk.cls === 'warn' ? ' item-warn' : disk.cls === 'good' ? ' item-good' : '');
           const lbl = document.createElement('div'); lbl.className = 'sys-label'; lbl.textContent = idx === 0 ? '💾 Laufwerke' : '';
           const val = document.createElement('div'); val.className = 'sys-value' + (disk.cls ? ' ' + disk.cls : ''); val.textContent = disk.label;
           item.appendChild(lbl); item.appendChild(val);
@@ -1360,6 +1415,13 @@
       ) : allEvents;
       document.getElementById('event-count').textContent = filtered.length + ' Ereignisse';
       renderEventTable(filtered);
+    }
+
+    function toggleEventTable() {
+      const wrap = document.getElementById('event-table-wrap');
+      const icon = document.getElementById('table-toggle-icon');
+      const isHidden = wrap.classList.toggle('table-hidden');
+      icon.classList.toggle('collapsed', isHidden);
     }
   </script>
 
