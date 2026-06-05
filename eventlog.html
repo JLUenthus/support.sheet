@@ -490,7 +490,9 @@
 
       // Uptime: > 60 Tage = bad, > 30 Tage = warn, sonst good
       const uptimeH    = meta.Uptime_Hours || 0;
-      const uptimeDays = uptimeH ? Math.floor(uptimeH / 24) + 'd ' + (Math.floor(uptimeH) % 24) + 'h' : '–';
+      const uptimeDays = uptimeH
+        ? Math.floor(uptimeH / 24) + 'd ' + Math.floor(uptimeH % 24) + 'h'
+        : '–';
       const uptimeCls  = uptimeH > 1440 ? 'bad' : uptimeH > 720 ? 'warn' : uptimeH > 0 ? 'good' : '';
 
       // RAM: < 8 GB = bad, < 12 GB = warn (< 16), >= 16 = good
