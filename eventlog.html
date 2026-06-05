@@ -99,7 +99,7 @@
       <!-- Severity Summary + Priorität + Export -->
       <section class="el-section">
         <div class="results-topbar">
-          <div class="sev-summary" id="sev-summary"></div>
+          <div class="sev-summary" id="sev-summary" style="display:none"></div>
           <button class="export-btn" id="export-btn">⬇️ Findings exportieren</button>
         </div>
         <div class="priority-box" id="priority-box" hidden>
@@ -140,6 +140,10 @@
           </button>
           <input type="text" id="event-search" class="event-search-input" placeholder="ID, Quelle, Nachricht…" oninput="filterEvents()">
         </div>
+
+        <!-- Filter Pills – klickbar, direkt über Tabelle -->
+        <div class="event-filter-pills" id="event-filter-pills"></div>
+
         <div id="event-table-wrap" class="raw-table-wrap">
           <table class="event-table">
             <thead><tr><th>Zeit</th><th>ID</th><th>Level</th><th>Quelle</th><th>Kategorie</th><th>Nachricht</th></tr></thead>
@@ -328,7 +332,28 @@
     #table-toggle-icon.collapsed { transform:rotate(-90deg); }
     #event-table-wrap.table-hidden { display:none; }
     .raw-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; flex-wrap:wrap; }
-    .results-topbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:12px; }
+    /* ── Event Filter Pills ──────────────────────────────── */
+    .event-filter-pills { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+
+    .event-filter-pill {
+      display:inline-flex; align-items:center;
+      padding:5px 14px; border-radius:20px; font-size:.78rem; font-weight:700;
+      border:1px solid var(--border); background:var(--panel); color:var(--muted);
+      cursor:pointer; transition:all .15s; font-family:var(--font-ui);
+    }
+    .event-filter-pill:hover { color:var(--text); border-color:var(--border2); }
+    .event-filter-pill.active { box-shadow:0 0 0 2px currentColor; }
+    .event-filter-pill.pill-all.active      { border-color:var(--border2); color:var(--text); background:var(--panel2); }
+    .event-filter-pill.pill-critical        { border-color:rgba(248,113,113,.3); color:var(--red);   background:rgba(248,113,113,.08); }
+    .event-filter-pill.pill-critical.active { background:rgba(248,113,113,.2); }
+    .event-filter-pill.pill-error           { border-color:rgba(251,146,60,.3);  color:#fb923c; background:rgba(251,146,60,.08); }
+    .event-filter-pill.pill-error.active    { background:rgba(251,146,60,.2); }
+    .event-filter-pill.pill-warning         { border-color:rgba(251,191,36,.3);  color:var(--amber); background:rgba(251,191,36,.08); }
+    .event-filter-pill.pill-warning.active  { background:rgba(251,191,36,.2); }
+    .event-filter-pill.pill-info            { border-color:var(--border); color:var(--muted); }
+    .event-filter-pill.pill-info.active     { background:var(--panel2); color:var(--text); }
+
+    /* Results topbar */
     .sev-summary    { display:flex; flex-wrap:wrap; gap:8px; }
     .export-btn {
       padding:7px 16px; border-radius:8px; font-family:var(--font-ui); font-size:.78rem; font-weight:600; cursor:pointer;
@@ -648,40 +673,48 @@
       return triggered;
     }
 
-    // ── Severity Summary Pills ──────────────────────────────
+    // ── Severity Summary + Event Filter Pills ──────────────
+    let _activeEventFilter = 'all'; // 'all' | 'Critical' | 'Error' | 'Warning' | 'Info'
+
     function renderSevSummary(findings, improvements, corrResults) {
-      const el = document.getElementById('sev-summary');
-      el.replaceChildren();
-      const counts = { critical:0, error:0, warning:0, info:0 };
-      findings.forEach(f => { counts[f.rule.severity] = (counts[f.rule.severity]||0) + 1; });
+      // Count events by level from allEvents
+      const evCounts = { all: allEvents.length, Critical:0, Error:0, Warning:0, Information:0 };
+      allEvents.forEach(e => {
+        const lvl = e.Level || '';
+        if (evCounts[lvl] !== undefined) evCounts[lvl]++;
+      });
+
+      const pillsEl = document.getElementById('event-filter-pills');
+      pillsEl.replaceChildren();
 
       const defs = [
-        { key:'critical', label:'Kritisch',  cls:'critical' },
-        { key:'error',    label:'Fehler',     cls:'error'    },
-        { key:'warning',  label:'Warnungen',  cls:'warning'  },
-        { key:'info',     label:'Hinweise',   cls:'ok'       },
+        { key:'all',         label: evCounts.all + ' Ereignisse', cls:'pill-all',      level:null },
+        { key:'Critical',    label: evCounts.Critical  + ' Kritisch',  cls:'pill-critical', level:'Critical'     },
+        { key:'Error',       label: evCounts.Error     + ' Fehler',    cls:'pill-error',    level:'Error'        },
+        { key:'Warning',     label: evCounts.Warning   + ' Warnungen', cls:'pill-warning',  level:'Warning'      },
+        { key:'Information', label: evCounts.Information + ' Info',    cls:'pill-info',     level:'Information'  },
       ];
-      defs.forEach(({key, label, cls}) => {
-        if (!counts[key]) return;
-        const p = document.createElement('div');
-        p.className = 'sum-pill ' + cls;
-        p.textContent = counts[key] + ' ' + label;
-        el.appendChild(p);
+
+      defs.forEach(({key, label, cls, level}) => {
+        if (key !== 'all' && evCounts[key] === 0) return;
+        const btn = document.createElement('button');
+        btn.className = 'event-filter-pill ' + cls + (_activeEventFilter === key ? ' active' : '');
+        btn.textContent = label;
+        btn.addEventListener('click', () => {
+          _activeEventFilter = key;
+          // Update active state
+          pillsEl.querySelectorAll('.event-filter-pill').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          // Filter table
+          const filtered = level ? allEvents.filter(e => e.Level === level) : allEvents;
+          document.getElementById('event-count').textContent = filtered.length + ' Ereignisse';
+          renderEventTable(filtered);
+          // Clear search
+          const search = document.getElementById('event-search');
+          if (search) search.value = '';
+        });
+        pillsEl.appendChild(btn);
       });
-      if (improvements.length) {
-        const p = document.createElement('div');
-        p.className = 'sum-pill';
-        p.style.cssText = 'border-color:rgba(124,140,248,.3);background:rgba(124,140,248,.08);color:var(--accent)';
-        p.textContent = improvements.length + ' Optimierungen';
-        el.appendChild(p);
-      }
-      if (corrResults?.length) {
-        const p = document.createElement('div');
-        p.className = 'sum-pill';
-        p.style.cssText = 'border-color:rgba(244,114,182,.3);background:rgba(244,114,182,.08);color:#f472b6';
-        p.textContent = corrResults.length + ' Hauptursachen';
-        el.appendChild(p);
-      }
     }
 
     // ── Priority Logic ──────────────────────────────────────
@@ -1410,11 +1443,16 @@
     }
 
     function filterEvents() {
-      const q = document.getElementById('event-search').value.toLowerCase().trim();
-      const filtered = q ? allEvents.filter(e =>
+      const q   = document.getElementById('event-search').value.toLowerCase().trim();
+      const lvl = _activeEventFilter !== 'all' ? _activeEventFilter : null;
+
+      let filtered = allEvents;
+      if (lvl)  filtered = filtered.filter(e => e.Level === lvl);
+      if (q)    filtered = filtered.filter(e =>
         String(e.Id).includes(q) || (e.ProviderName||'').toLowerCase().includes(q) ||
         (e.Message||'').toLowerCase().includes(q) || (e.Category||'').toLowerCase().includes(q)
-      ) : allEvents;
+      );
+
       document.getElementById('event-count').textContent = filtered.length + ' Ereignisse';
       renderEventTable(filtered);
     }
