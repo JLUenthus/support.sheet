@@ -1,7 +1,7 @@
 // ============================================================
 // support.sheet – Service Worker v2
 // ============================================================
-const CACHE_VERSION = '20260610-0745';
+const CACHE_VERSION = '20260610-1119';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
