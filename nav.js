@@ -111,20 +111,20 @@
 
     /* Update check button */
     /* Gruppen-Tab */
-    .as-tab-group { position:relative; }
-    .as-tab--group { cursor:pointer; border:none; background:none; font-family:var(--font-ui,inherit); }
+    .as-tab-group { position:relative; display:inline-flex; }
+    .as-tab--group { cursor:pointer; border:none; background:none; font-family:var(--font-ui,inherit); display:flex; align-items:center; gap:5px; padding:0; }
     .as-group-chevron { font-size:.6rem; color:var(--dim,#555a70); transition:transform .2s; margin-left:2px; }
     .as-tab-group.open .as-group-chevron { transform:rotate(180deg); }
     .as-subtab-menu {
-      display:none; position:absolute; top:calc(100% + 6px); left:50%; transform:translateX(-50%);
-      z-index:400; background:#1a1d2e; border:1px solid #343860; border-radius:10px;
-      padding:6px; min-width:180px; box-shadow:0 12px 32px rgba(0,0,0,.5);
+      display:none; position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%);
+      z-index:600; background:#1a1d2e; border:1px solid #343860; border-radius:10px;
+      padding:6px; min-width:190px; box-shadow:0 16px 40px rgba(0,0,0,.6);
       animation:asDropIn .15s ease;
     }
     .as-tab-group.open .as-subtab-menu { display:block; }
     .as-subtab { display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:7px; text-decoration:none; color:#8890aa; font-size:.82rem; font-weight:600; transition:all .12s; white-space:nowrap; }
     .as-subtab:hover { background:rgba(255,255,255,.05); color:#e0e4f0; }
-    .as-subtab.active { color:var(--as-tab-color); background:color-mix(in srgb, var(--as-tab-color) 12%, transparent); }
+    .as-subtab.active { color:var(--as-tab-color,#7c8cf8); background:color-mix(in srgb, var(--as-tab-color,#7c8cf8) 12%, transparent); }
     .as-dd-group-label { font-size:.65rem; font-weight:700; color:#555a70; text-transform:uppercase; letter-spacing:.08em; padding:8px 12px 4px; }
     .as-dd-item--child { padding-left:20px; }
 
@@ -155,6 +155,27 @@
     .as-scroll-top:hover { background:#1a1d2e; color:#e0e4f0; border-color:${currentPage.color}; }
   `;
   document.head.appendChild(style);
+
+  // ── Logo Icon + Label dynamisch setzen ───────────────────
+  const logoIconEl  = document.getElementById('as-logo-icon');
+  const logoLabelEl = document.getElementById('as-logo-label');
+  if (logoIconEl)  logoIconEl.textContent = currentPage.icon;
+  if (logoLabelEl) {
+    // "support" bleibt, nur der farbige Span ändert sich
+    const suffix = currentPage.id === 'index' ? '.sheet'
+                 : currentPage.id === 'exchange' ? '.exchange'
+                 : currentPage.id === 'forti' ? '.forti'
+                 : currentPage.id === 'scripts' ? '.scripts'
+                 : currentPage.id === 'eventlog' ? '.analyzer'
+                 : currentPage.id === 'entra' ? '.entra'
+                 : currentPage.id === 'har' ? '.har'
+                 : currentPage.id === 'mitmachen' ? '.mitmachen'
+                 : '.tools';
+    logoLabelEl.textContent = 'support';
+    const span = document.createElement('span');
+    span.textContent = suffix;
+    logoLabelEl.appendChild(span);
+  }
 
   // ── LOGO DROPDOWN ─────────────────────────────────────────
   // Find logo element – works for all pages
