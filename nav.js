@@ -117,10 +117,9 @@
     .as-group-chevron { font-size:.6rem; color:var(--dim,#555a70); transition:transform .2s; margin-left:2px; }
     .as-tab-group.open .as-group-chevron { transform:rotate(180deg); }
     .as-subtab-menu {
-      display:none; position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%);
+      display:none; position:absolute; top:calc(100% + 8px); left:0;
       z-index:600; background:#1a1d2e; border:1px solid #343860; border-radius:10px;
       padding:6px; min-width:190px; box-shadow:0 16px 40px rgba(0,0,0,.6);
-      animation:asDropIn .15s ease;
     }
     .as-tab-group.open .as-subtab-menu { display:block; }
     .as-subtab { display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:7px; text-decoration:none; color:#8890aa; font-size:.82rem; font-weight:600; transition:all .12s; white-space:nowrap; }
