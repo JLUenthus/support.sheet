@@ -107,47 +107,26 @@
     <!-- ── UPLOAD ─────────────────────────────────────────── -->
     <section class="el-section">
       <h2 class="section-title">CSV hochladen</h2>
-      <p style="font-size:.8rem;color:var(--muted);margin-bottom:14px">
-        Mehrere Dateien desselben Typs werden automatisch zusammengeführt. Einfach alle auswählen oder reinziehen.
-      </p>
 
-      <div class="upload-slots">
-        <div class="upload-slot" id="slot-interactive">
-          <div class="slot-label">👤 Interaktive Anmeldungen</div>
-          <div class="upload-zone slot-zone" data-slot="interactive">
-            <div class="upload-icon" style="font-size:1.5rem">📂</div>
-            <div class="upload-text" style="font-size:.82rem">Dateien ablegen oder klicken</div>
-            <div class="upload-sub">InteractiveSignIns_*.csv</div>
-            <input type="file" accept=".csv" multiple style="display:none">
-          </div>
-          <div class="slot-files" id="files-interactive"></div>
+      <!-- Einheitliche Upload-Zone -->
+      <div class="entra-upload-zone" id="entra-drop-zone">
+        <div class="euz-icon">📂</div>
+        <div class="euz-title">Dateien hier ablegen oder klicken</div>
+        <div class="euz-sub">Alle Sign-In-Typen werden automatisch erkannt und zusammengeführt</div>
+        <div class="euz-types">
+          <span class="euz-type">👤 Interactive</span>
+          <span class="euz-type">🤖 Non-Interactive</span>
+          <span class="euz-type">⚙️ Application / MSI</span>
         </div>
-
-        <div class="upload-slot" id="slot-noninteractive">
-          <div class="slot-label">🤖 Nicht-interaktive Anmeldungen</div>
-          <div class="upload-zone slot-zone" data-slot="noninteractive">
-            <div class="upload-icon" style="font-size:1.5rem">📂</div>
-            <div class="upload-text" style="font-size:.82rem">Dateien ablegen oder klicken</div>
-            <div class="upload-sub">NonInteractiveSignIns_*.csv</div>
-            <input type="file" accept=".csv" multiple style="display:none">
-          </div>
-          <div class="slot-files" id="files-noninteractive"></div>
-        </div>
-
-        <div class="upload-slot" id="slot-application">
-          <div class="slot-label">⚙️ Dienstprinzipal-Anmeldungen</div>
-          <div class="upload-zone slot-zone" data-slot="application">
-            <div class="upload-icon" style="font-size:1.5rem">📂</div>
-            <div class="upload-text" style="font-size:.82rem">Dateien ablegen oder klicken</div>
-            <div class="upload-sub">ApplicationSignIns_*.csv · MSISignIns_*.csv</div>
-            <input type="file" accept=".csv" multiple style="display:none">
-          </div>
-          <div class="slot-files" id="files-application"></div>
-        </div>
+        <input type="file" id="entra-file-input" accept=".csv" multiple style="display:none">
       </div>
 
-      <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <button id="analyze-btn" class="analyze-btn" disabled onclick="analyzeAll()">📊 Alle Logs analysieren</button>
+      <!-- Geladene Dateien -->
+      <div id="entra-file-list" class="entra-file-list" style="display:none"></div>
+
+      <!-- Aktions-Leiste -->
+      <div class="entra-actions">
+        <button id="analyze-btn" class="analyze-btn" disabled onclick="analyzeAll()">📊 Logs analysieren</button>
         <span id="total-rows-hint" style="font-size:.78rem;color:var(--muted)"></span>
         <button id="clear-btn" style="display:none" onclick="clearAll()" class="clear-small-btn">✕ Zurücksetzen</button>
       </div>
@@ -222,16 +201,42 @@
     .guide-link:hover { text-decoration:underline; }
     .guide-screenshot-placeholder { margin-top:8px; padding:10px 14px; background:var(--bg); border:1px dashed var(--border2); border-radius:var(--r); font-size:.75rem; color:var(--dim); font-style:italic; }
 
-    /* Upload Slots */
-    .upload-slots { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; }
-    .upload-slot  { display:flex; flex-direction:column; gap:8px; }
-    .slot-label   { font-size:.75rem; font-weight:700; color:var(--muted); }
-    .slot-zone    { border:2px dashed var(--border2); border-radius:var(--r); padding:18px 12px; text-align:center; cursor:pointer; transition:all .15s; }
-    .slot-zone:hover, .slot-zone.drag { border-color:var(--accent); background:var(--accent-bg); }
-    .slot-zone.done { border-color:var(--green); border-style:solid; background:rgba(74,222,128,.04); }
-    .slot-files   { display:flex; flex-direction:column; gap:4px; }
-    .slot-file-tag { display:flex; align-items:center; gap:6px; font-size:.72rem; color:var(--green); background:rgba(74,222,128,.08); border:1px solid rgba(74,222,128,.2); border-radius:5px; padding:3px 8px; }
-    .analyze-btn  { padding:9px 20px; border-radius:8px; font-family:var(--font-ui); font-size:.85rem; font-weight:700; cursor:pointer; border:1px solid rgba(124,140,248,.4); background:rgba(124,140,248,.1); color:var(--accent); transition:all .15s; }
+    /* ── Unified Upload Zone ─────────────────────────────── */
+    .entra-upload-zone {
+      border: 2px dashed var(--border2);
+      border-radius: var(--r-lg);
+      padding: 36px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .entra-upload-zone:hover,
+    .entra-upload-zone.drag   { border-color: var(--accent); background: var(--accent-bg); }
+    .entra-upload-zone.has-files { border-color: var(--green); border-style: solid; background: rgba(74,222,128,.04); }
+
+    .euz-icon  { font-size: 2.2rem; margin-bottom: 10px; }
+    .euz-title { font-size: .95rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .euz-sub   { font-size: .78rem; color: var(--muted); margin-bottom: 14px; }
+    .euz-types { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
+    .euz-type  { font-size: .72rem; font-weight: 600; padding: 3px 10px; border-radius: 12px; border: 1px solid var(--border2); background: var(--panel2); color: var(--muted); }
+
+    /* ── File List ───────────────────────────────────────── */
+    .entra-file-list { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+    .entra-file-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px;
+      background: var(--panel); border: 1px solid var(--border); border-radius: var(--r);
+      flex-wrap: wrap;
+    }
+    .entra-file-type  { font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; border: 1px solid; background: var(--bg); white-space: nowrap; flex-shrink: 0; }
+    .entra-file-name  { font-size: .78rem; color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; font-family: var(--font-mono); }
+    .entra-file-count { font-size: .72rem; color: var(--dim); white-space: nowrap; flex-shrink: 0; }
+    .entra-file-remove { flex-shrink: 0; width: 20px; height: 20px; border-radius: 4px; border: 1px solid var(--border); background: transparent; color: var(--dim); cursor: pointer; font-size: .7rem; transition: all .15s; display: flex; align-items: center; justify-content: center; padding: 0; }
+    .entra-file-remove:hover { color: var(--red); border-color: rgba(248,113,113,.4); background: rgba(248,113,113,.08); }
+
+    /* ── Actions ─────────────────────────────────────────── */
+    .entra-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+    .analyze-btn { padding:9px 20px; border-radius:8px; font-family:var(--font-ui); font-size:.85rem; font-weight:700; cursor:pointer; border:1px solid rgba(124,140,248,.4); background:rgba(124,140,248,.1); color:var(--accent); transition:all .15s; }
     .analyze-btn:hover:not(:disabled) { background:rgba(124,140,248,.2); }
     .analyze-btn:disabled { opacity:.4; cursor:not-allowed; }
     .clear-small-btn { padding:5px 12px; border-radius:7px; font-family:var(--font-ui); font-size:.75rem; font-weight:600; cursor:pointer; border:1px solid var(--border); background:var(--panel); color:var(--muted); transition:all .15s; }
@@ -335,80 +340,119 @@
       window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
     }
 
-    let RULES       = [];
-    let allRows     = [];
+    let RULES        = [];
+    let allRows      = [];
+    let loadedFiles  = [];
     let activeFilter = 'all';
-    const slotData  = { interactive: [], noninteractive: [], application: [] };
 
     fetch('./data/entra-rules.json').then(r => r.json()).then(d => {
       RULES = d.rules || [];
     }).catch(() => {});
 
-    // ── Upload Slots ──────────────────────────────────────
-    document.querySelectorAll('.slot-zone').forEach(zone => {
-      const input = zone.querySelector('input[type="file"]');
-      const slot  = zone.dataset.slot;
+    // ── Einheitliche Upload-Zone ──────────────────────────
+    const dropZone  = document.getElementById('entra-drop-zone');
+    const fileInput = document.getElementById('entra-file-input');
 
-      zone.addEventListener('click', () => input.click());
-      zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag'); });
-      zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
-      zone.addEventListener('drop', e => {
-        e.preventDefault(); zone.classList.remove('drag');
-        [...e.dataTransfer.files].forEach(f => readFile(f, slot));
-      });
-      input.addEventListener('change', e => {
-        [...e.target.files].forEach(f => readFile(f, slot));
-        e.target.value = '';
-      });
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault(); dropZone.classList.remove('drag');
+      [...e.dataTransfer.files].filter(f => f.name.endsWith('.csv')).forEach(readFile);
+    });
+    fileInput.addEventListener('change', e => {
+      [...e.target.files].forEach(readFile);
+      e.target.value = '';
     });
 
-    function readFile(file, slot) {
+    function detectType(filename) {
+      const f = filename.toLowerCase();
+      if (f.includes('noninteractive'))  return { label: '🤖 Non-Interactive', color: '#60a5fa' };
+      if (f.includes('interactive'))     return { label: '👤 Interactive',     color: '#7c8cf8' };
+      if (f.includes('application'))     return { label: '⚙️ Application',     color: '#e8b339' };
+      if (f.includes('msi'))             return { label: '🔑 MSI/Managed ID',  color: '#4ade80' };
+      if (f.includes('authdetails'))     return { label: '🔍 Auth Details',     color: '#f472b6' };
+      return { label: '📋 Sign-In Log', color: '#94a3b8' };
+    }
+
+    function readFile(file) {
+      // Skip duplicates
+      if (loadedFiles.some(f => f.name === file.name && f.size === file.size)) return;
+
       const reader = new FileReader();
       reader.onload = e => {
         const rows = parseCSV(e.target.result);
         if (!rows.length) return;
-        slotData[slot].push(...rows);
-        updateSlotUI(slot, file.name);
+        const type = detectType(file.name);
+        loadedFiles.push({ name: file.name, size: file.size, rows, type });
+        updateFileList();
         updateAnalyzeBtn();
       };
       reader.readAsText(file, 'UTF-8');
     }
 
-    function updateSlotUI(slot, filename) {
-      const filesEl = document.getElementById('files-' + slot);
-      const zone    = document.querySelector(`.slot-zone[data-slot="${slot}"]`);
-      zone.classList.add('done');
+    function updateFileList() {
+      const listEl = document.getElementById('entra-file-list');
+      listEl.style.display = loadedFiles.length ? '' : 'none';
+      listEl.replaceChildren();
+      loadedFiles.forEach((f, idx) => {
+        const item = document.createElement('div');
+        item.className = 'entra-file-item';
 
-      const tag = document.createElement('div');
-      tag.className = 'slot-file-tag';
-      const name = document.createElement('span');
-      name.textContent = filename;
-      tag.appendChild(name);
-      filesEl.appendChild(tag);
+        const typeTag = document.createElement('span');
+        typeTag.className = 'entra-file-type';
+        typeTag.textContent = f.type.label;
+        typeTag.style.borderColor = f.type.color + '55';
+        typeTag.style.color = f.type.color;
+
+        const name = document.createElement('span');
+        name.className = 'entra-file-name';
+        name.textContent = f.name;
+
+        const count = document.createElement('span');
+        count.className = 'entra-file-count';
+        count.textContent = f.rows.length.toLocaleString('de-DE') + ' Zeilen';
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'entra-file-remove';
+        removeBtn.textContent = '✕';
+        removeBtn.addEventListener('click', () => {
+          loadedFiles.splice(idx, 1);
+          updateFileList();
+          updateAnalyzeBtn();
+        });
+
+        item.appendChild(typeTag);
+        item.appendChild(name);
+        item.appendChild(count);
+        item.appendChild(removeBtn);
+        listEl.appendChild(item);
+      });
     }
 
     function updateAnalyzeBtn() {
-      const total = Object.values(slotData).flat().length;
-      const btn   = document.getElementById('analyze-btn');
-      const hint  = document.getElementById('total-rows-hint');
+      const total    = loadedFiles.reduce((s, f) => s + f.rows.length, 0);
+      const btn      = document.getElementById('analyze-btn');
+      const hint     = document.getElementById('total-rows-hint');
       const clearBtn = document.getElementById('clear-btn');
-      btn.disabled = total === 0;
-      hint.textContent = total > 0 ? `${total.toLocaleString('de-DE')} Einträge geladen` : '';
+      btn.disabled   = total === 0;
+      hint.textContent = total > 0 ? `${total.toLocaleString('de-DE')} Einträge aus ${loadedFiles.length} Datei${loadedFiles.length > 1 ? 'en' : ''}` : '';
       clearBtn.style.display = total > 0 ? '' : 'none';
+      // Drop zone feedback
+      dropZone.classList.toggle('has-files', loadedFiles.length > 0);
     }
 
     function clearAll() {
-      Object.keys(slotData).forEach(k => slotData[k] = []);
-      document.querySelectorAll('.slot-files').forEach(el => el.replaceChildren());
-      document.querySelectorAll('.slot-zone').forEach(z => z.classList.remove('done','drag'));
-      document.getElementById('results-section').style.display = 'none';
+      loadedFiles = [];
+      updateFileList();
       updateAnalyzeBtn();
+      document.getElementById('results-section').style.display = 'none';
     }
 
     function analyzeAll() {
-      allRows = Object.values(slotData).flat();
+      allRows = loadedFiles.flatMap(f => f.rows);
       if (!allRows.length) return;
-      renderResults(allRows, `${allRows.length} Einträge aus ${Object.values(slotData).filter(a=>a.length).length} Typ(en)`);
+      renderResults(allRows, `${allRows.length.toLocaleString('de-DE')} Einträge`);
     }
 
     // ── CSV Parser ────────────────────────────────────────

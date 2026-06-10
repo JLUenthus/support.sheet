@@ -73,7 +73,10 @@
       border-bottom:1px solid #2a2d3e;
       padding:0 24px; display:flex; align-items:center; gap:2px;
       overflow-x:auto; scrollbar-width:none;
+      overflow-y:visible;
     }
+    /* When group is open, tab-bar allows overflow so dropdown shows above content */
+    .as-tab-bar:has(.as-tab-group.open) { overflow-x:visible; overflow-y:visible; }
     .as-tab-bar::-webkit-scrollbar { display:none; }
     .as-tab {
       display:flex; align-items:center; gap:6px;
