@@ -1,0 +1,120 @@
+{
+  "version": "1.0",
+  "description": "HAR Analyzer Rules – Auth, Performance, M365/Teams fokussiert",
+  "rules": [
+    {
+      "id": "HAR_AUTH_LOOP",
+      "name": "Authentifizierungs-Schleife erkannt",
+      "severity": "critical",
+      "category": "Auth",
+      "description": "Mehrere 401-Fehler gefolgt von Token-Anfragen im Wechsel. Deutet auf eine Endlosschleife hin bei der Token erworben werden aber sofort als ungültig abgelehnt werden. Häufig durch Clock-Skew, falsche Tenant-ID oder korrupten Token-Cache.",
+      "check": "authLoop",
+      "minCount": 3,
+      "recommendations": [
+        { "text": "Browser-Cache und Cookies vollständig leeren", "type": "fix", "risk": "low" },
+        { "text": "Systemzeit prüfen – Kerberos/OAuth toleriert max. 5 Minuten Abweichung", "cmd": "w32tm /query /status", "type": "diagnose", "risk": "low" },
+        { "text": "Inkognito-Fenster testen um gecachte Token auszuschließen", "type": "diagnose", "risk": "low" }
+      ]
+    },
+    {
+      "id": "HAR_401_SPIKE",
+      "name": "Häufung von 401-Fehlern",
+      "severity": "error",
+      "category": "Auth",
+      "description": "Ungewöhnlich viele 401 Unauthorized Antworten. Token abgelaufen, falsche Credentials oder fehlende Berechtigungen.",
+      "check": "statusCount",
+      "statusCode": 401,
+      "minCount": 5,
+      "recommendations": [
+        { "text": "Benutzer abmelden und neu anmelden", "type": "fix", "risk": "low" },
+        { "text": "Token-Cache leeren (MSAL Token Cache)", "type": "fix", "risk": "low" },
+        { "text": "App-Berechtigungen in Entra prüfen", "type": "diagnose", "risk": "low" }
+      ]
+    },
+    {
+      "id": "HAR_403_PERMISSION",
+      "name": "403 Forbidden – Berechtigungsproblem",
+      "severity": "error",
+      "category": "Berechtigungen",
+      "description": "Anfragen werden mit 403 abgelehnt. Der Benutzer ist authentifiziert aber nicht autorisiert. Häufig fehlende Graph API Berechtigungen, SharePoint-Zugriffsrechte oder Azure RBAC.",
+      "check": "statusCount",
+      "statusCode": 403,
+      "minCount": 3,
+      "recommendations": [
+        { "text": "Graph API Berechtigungen der App prüfen", "type": "diagnose", "risk": "low" },
+        { "text": "SharePoint/OneDrive Zugriffsrechte prüfen", "type": "diagnose", "risk": "low" },
+        { "text": "Azure RBAC Rollenzuweisungen prüfen", "type": "diagnose", "risk": "low" }
+      ]
+    },
+    {
+      "id": "HAR_SLOW_AUTH",
+      "name": "Langsame Authentifizierung",
+      "severity": "warning",
+      "category": "Performance",
+      "description": "Auth-Endpunkte antworten langsam (>3 Sekunden). Kann zu Timeouts in Anwendungen führen und erklärt träge Starts von Teams, Outlook oder anderen M365-Apps.",
+      "check": "slowAuth",
+      "thresholdMs": 3000,
+      "recommendations": [
+        { "text": "Netzwerkverbindung zu login.microsoftonline.com testen", "cmd": "Test-NetConnection login.microsoftonline.com -Port 443", "type": "diagnose", "risk": "low" },
+        { "text": "DNS-Auflösung prüfen", "cmd": "Resolve-DnsName login.microsoftonline.com", "type": "diagnose", "risk": "low" },
+        { "text": "Proxy/VPN prüfen – kann Auth-Traffic verlangsamen", "type": "diagnose", "risk": "low" }
+      ]
+    },
+    {
+      "id": "HAR_CORS_ERROR",
+      "name": "CORS-Fehler erkannt",
+      "severity": "warning",
+      "category": "App-Konfiguration",
+      "description": "Cross-Origin Resource Sharing Fehler. Browser blockiert Anfragen wegen fehlender CORS-Header. Häufig bei Web-App-Entwicklung oder nach Domain-Änderungen.",
+      "check": "corsErrors",
+      "minCount": 1,
+      "recommendations": [
+        { "text": "CORS-Konfiguration der App-Registrierung prüfen", "type": "diagnose", "risk": "low" },
+        { "text": "Erlaubte Origins in App-Registrierung ergänzen", "type": "fix", "risk": "medium" }
+      ]
+    },
+    {
+      "id": "HAR_LARGE_PAYLOAD",
+      "name": "Sehr große Anfragen – Performance-Risiko",
+      "severity": "info",
+      "category": "Performance",
+      "description": "Einzelne Anfragen übertragen ungewöhnlich große Datenmengen (>1MB). Kann zu Timeouts und träger UI führen, besonders über VPN oder langsame Verbindungen.",
+      "check": "largePayload",
+      "thresholdBytes": 1048576,
+      "minCount": 3,
+      "recommendations": [
+        { "text": "Große Anfragen identifizieren und auf Notwendigkeit prüfen", "type": "diagnose", "risk": "low" },
+        { "text": "Netzwerkverbindungsgeschwindigkeit prüfen", "cmd": "Test-NetConnection -ComputerName 8.8.8.8 -Port 443 | Select PingSucceeded, PingReplyDetails", "type": "diagnose", "risk": "low" }
+      ]
+    },
+    {
+      "id": "HAR_TEAMS_RELAY_FAIL",
+      "name": "Teams Relay-Verbindung fehlgeschlagen",
+      "severity": "error",
+      "category": "Teams",
+      "description": "Teams TURN/STUN Relay-Server nicht erreichbar. Verursacht schlechte Audio/Video-Qualität oder fehlgeschlagene Anrufe. Häufig durch Firewall oder Proxy-Konfiguration.",
+      "check": "domainErrors",
+      "domains": ["relay.teams.microsoft.com", "worldaz.turn.teams.microsoft.com", "stun.teams.microsoft.com"],
+      "recommendations": [
+        { "text": "Teams-Netzwerkanforderungen prüfen (UDP 3478-3481, 443)", "type": "diagnose", "risk": "low" },
+        { "text": "Firewall-Regeln für Teams prüfen", "type": "diagnose", "risk": "low" },
+        { "text": "Microsoft 365 Network Connectivity Test ausführen", "cmd": "Start-Process 'https://connectivity.office.com'", "type": "diagnose", "risk": "low" }
+      ]
+    },
+    {
+      "id": "HAR_TIMEOUT_PATTERN",
+      "name": "Request-Timeouts erkannt",
+      "severity": "warning",
+      "category": "Performance",
+      "description": "Mehrere Anfragen haben sehr lange Antwortzeiten (>10 Sekunden) oder sind mit Timeout fehlgeschlagen. Deutet auf Netzwerkprobleme, überlastete Server oder Proxy-Probleme hin.",
+      "check": "timeouts",
+      "thresholdMs": 10000,
+      "minCount": 3,
+      "recommendations": [
+        { "text": "Netzwerklatenz messen", "cmd": "Test-NetConnection graph.microsoft.com -Port 443", "type": "diagnose", "risk": "low" },
+        { "text": "Proxy-Einstellungen prüfen", "cmd": "netsh winhttp show proxy", "type": "diagnose", "risk": "low" },
+        { "text": "M365 Service Health prüfen", "cmd": "Start-Process 'https://status.office365.com'", "type": "diagnose", "risk": "low" }
+      ]
+    }
+  ]
+}
