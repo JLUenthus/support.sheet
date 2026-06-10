@@ -11,9 +11,22 @@
       "check": "authLoop",
       "minCount": 3,
       "recommendations": [
-        { "text": "Browser-Cache und Cookies vollständig leeren", "type": "fix", "risk": "low" },
-        { "text": "Systemzeit prüfen – Kerberos/OAuth toleriert max. 5 Minuten Abweichung", "cmd": "w32tm /query /status", "type": "diagnose", "risk": "low" },
-        { "text": "Inkognito-Fenster testen um gecachte Token auszuschließen", "type": "diagnose", "risk": "low" }
+        {
+          "text": "Browser-Cache und Cookies vollständig leeren",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "Systemzeit prüfen – Kerberos/OAuth toleriert max. 5 Minuten Abweichung",
+          "cmd": "w32tm /query /status",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Inkognito-Fenster testen um gecachte Token auszuschließen",
+          "type": "diagnose",
+          "risk": "low"
+        }
       ]
     },
     {
@@ -26,9 +39,21 @@
       "statusCode": 401,
       "minCount": 5,
       "recommendations": [
-        { "text": "Benutzer abmelden und neu anmelden", "type": "fix", "risk": "low" },
-        { "text": "Token-Cache leeren (MSAL Token Cache)", "type": "fix", "risk": "low" },
-        { "text": "App-Berechtigungen in Entra prüfen", "type": "diagnose", "risk": "low" }
+        {
+          "text": "Benutzer abmelden und neu anmelden",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "Token-Cache leeren (MSAL Token Cache)",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "App-Berechtigungen in Entra prüfen",
+          "type": "diagnose",
+          "risk": "low"
+        }
       ]
     },
     {
@@ -41,9 +66,21 @@
       "statusCode": 403,
       "minCount": 3,
       "recommendations": [
-        { "text": "Graph API Berechtigungen der App prüfen", "type": "diagnose", "risk": "low" },
-        { "text": "SharePoint/OneDrive Zugriffsrechte prüfen", "type": "diagnose", "risk": "low" },
-        { "text": "Azure RBAC Rollenzuweisungen prüfen", "type": "diagnose", "risk": "low" }
+        {
+          "text": "Graph API Berechtigungen der App prüfen",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "SharePoint/OneDrive Zugriffsrechte prüfen",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Azure RBAC Rollenzuweisungen prüfen",
+          "type": "diagnose",
+          "risk": "low"
+        }
       ]
     },
     {
@@ -51,13 +88,27 @@
       "name": "Langsame Authentifizierung",
       "severity": "warning",
       "category": "Performance",
-      "description": "Auth-Endpunkte antworten langsam (>3 Sekunden). Kann zu Timeouts in Anwendungen führen und erklärt träge Starts von Teams, Outlook oder anderen M365-Apps.",
+      "description": "Auth-Endpunkte antworten langsam (>3 Sekunden). Kann zu Timeouts in Anwendungen führen und erklärt träge Starts von Teams, Outlook oder anderen M365-Apps. Hinweis: Long-Polling und WebSocket-Verbindungen werden automatisch ignoriert.",
       "check": "slowAuth",
       "thresholdMs": 3000,
       "recommendations": [
-        { "text": "Netzwerkverbindung zu login.microsoftonline.com testen", "cmd": "Test-NetConnection login.microsoftonline.com -Port 443", "type": "diagnose", "risk": "low" },
-        { "text": "DNS-Auflösung prüfen", "cmd": "Resolve-DnsName login.microsoftonline.com", "type": "diagnose", "risk": "low" },
-        { "text": "Proxy/VPN prüfen – kann Auth-Traffic verlangsamen", "type": "diagnose", "risk": "low" }
+        {
+          "text": "Netzwerkverbindung zu login.microsoftonline.com testen",
+          "cmd": "Test-NetConnection login.microsoftonline.com -Port 443",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "DNS-Auflösung prüfen",
+          "cmd": "Resolve-DnsName login.microsoftonline.com",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Proxy/VPN prüfen – kann Auth-Traffic verlangsamen",
+          "type": "diagnose",
+          "risk": "low"
+        }
       ]
     },
     {
@@ -69,8 +120,16 @@
       "check": "corsErrors",
       "minCount": 1,
       "recommendations": [
-        { "text": "CORS-Konfiguration der App-Registrierung prüfen", "type": "diagnose", "risk": "low" },
-        { "text": "Erlaubte Origins in App-Registrierung ergänzen", "type": "fix", "risk": "medium" }
+        {
+          "text": "CORS-Konfiguration der App-Registrierung prüfen",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Erlaubte Origins in App-Registrierung ergänzen",
+          "type": "fix",
+          "risk": "medium"
+        }
       ]
     },
     {
@@ -83,8 +142,17 @@
       "thresholdBytes": 1048576,
       "minCount": 3,
       "recommendations": [
-        { "text": "Große Anfragen identifizieren und auf Notwendigkeit prüfen", "type": "diagnose", "risk": "low" },
-        { "text": "Netzwerkverbindungsgeschwindigkeit prüfen", "cmd": "Test-NetConnection -ComputerName 8.8.8.8 -Port 443 | Select PingSucceeded, PingReplyDetails", "type": "diagnose", "risk": "low" }
+        {
+          "text": "Große Anfragen identifizieren und auf Notwendigkeit prüfen",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Netzwerkverbindungsgeschwindigkeit prüfen",
+          "cmd": "Test-NetConnection -ComputerName 8.8.8.8 -Port 443 | Select PingSucceeded, PingReplyDetails",
+          "type": "diagnose",
+          "risk": "low"
+        }
       ]
     },
     {
@@ -94,26 +162,103 @@
       "category": "Teams",
       "description": "Teams TURN/STUN Relay-Server nicht erreichbar. Verursacht schlechte Audio/Video-Qualität oder fehlgeschlagene Anrufe. Häufig durch Firewall oder Proxy-Konfiguration.",
       "check": "domainErrors",
-      "domains": ["relay.teams.microsoft.com", "worldaz.turn.teams.microsoft.com", "stun.teams.microsoft.com"],
+      "domains": [
+        "relay.teams.microsoft.com",
+        "worldaz.turn.teams.microsoft.com",
+        "stun.teams.microsoft.com"
+      ],
       "recommendations": [
-        { "text": "Teams-Netzwerkanforderungen prüfen (UDP 3478-3481, 443)", "type": "diagnose", "risk": "low" },
-        { "text": "Firewall-Regeln für Teams prüfen", "type": "diagnose", "risk": "low" },
-        { "text": "Microsoft 365 Network Connectivity Test ausführen", "cmd": "Start-Process 'https://connectivity.office.com'", "type": "diagnose", "risk": "low" }
+        {
+          "text": "Teams-Netzwerkanforderungen prüfen (UDP 3478-3481, 443)",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Firewall-Regeln für Teams prüfen",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Microsoft 365 Network Connectivity Test ausführen",
+          "cmd": "Start-Process 'https://connectivity.office.com'",
+          "type": "diagnose",
+          "risk": "low"
+        }
       ]
     },
     {
-      "id": "HAR_TIMEOUT_PATTERN",
-      "name": "Request-Timeouts erkannt",
-      "severity": "warning",
-      "category": "Performance",
-      "description": "Mehrere Anfragen haben sehr lange Antwortzeiten (>10 Sekunden) oder sind mit Timeout fehlgeschlagen. Deutet auf Netzwerkprobleme, überlastete Server oder Proxy-Probleme hin.",
-      "check": "timeouts",
-      "thresholdMs": 10000,
-      "minCount": 3,
+      "id": "HAR_PLANNER_PLAN_404",
+      "name": "Planner Plan nicht gefunden (404)",
+      "severity": "error",
+      "category": "Planner/M365",
+      "description": "Graph API meldet 404 für einen Planner Plan. Der Plan wurde gelöscht oder der Benutzer hat keinen Zugriff mehr. Typischer Supportfall: Benutzer öffnet alten Link zu einem nicht mehr existierenden Plan.",
+      "check": "urlPattern404",
+      "urlPattern": "graph.microsoft.com.*planner/plans",
       "recommendations": [
-        { "text": "Netzwerklatenz messen", "cmd": "Test-NetConnection graph.microsoft.com -Port 443", "type": "diagnose", "risk": "low" },
-        { "text": "Proxy-Einstellungen prüfen", "cmd": "netsh winhttp show proxy", "type": "diagnose", "risk": "low" },
-        { "text": "M365 Service Health prüfen", "cmd": "Start-Process 'https://status.office365.com'", "type": "diagnose", "risk": "low" }
+        {
+          "text": "Plan-Existenz über Graph Explorer prüfen",
+          "cmd": "Start-Process 'https://developer.microsoft.com/graph/graph-explorer'",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Planner Plan ID aus der URL extrahieren und Zugriff prüfen",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Benutzer-Zugriff auf die zugehörige M365 Gruppe prüfen",
+          "cmd": "Get-MgGroup -GroupId '{groupId}' | Select DisplayName, Visibility",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "HAR_TELEMETRY_FLOOD",
+      "name": "Hoher Telemetrie-Anteil im Log",
+      "severity": "info",
+      "category": "Performance",
+      "description": "Mehr als 30% der Requests gehen an Microsoft Telemetrie-Endpunkte (events.data.microsoft.com). Das ist bei langen Sessions normal – macht aber die Analyse unübersichtlicher. Der Analyzer filtert diese Requests automatisch aus der Performance-Bewertung heraus.",
+      "check": "telemetryFlood",
+      "telemetryThreshold": 30,
+      "recommendations": [
+        {
+          "text": "Telemetrie-Requests werden automatisch aus Performance-Berechnungen herausgerechnet",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "HAR_SUBSTRATE_LONGPOLL",
+      "name": "Viele Long-Polling Verbindungen (substrate.office.com)",
+      "severity": "info",
+      "category": "M365 Apps",
+      "description": "Viele Verbindungen zu substrate.office.com mit langen Laufzeiten sind normales Verhalten von Microsoft To-Do, Planner und anderen M365-Apps. Das sind intentionale Long-Polling-Verbindungen – keine Fehler oder Performance-Probleme.",
+      "check": "substrateLongPoll",
+      "minCount": 10,
+      "recommendations": [
+        {
+          "text": "Normal – substrate.office.com wird von Planner, To-Do und M365-Apps für Echtzeit-Updates verwendet",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "HAR_SIGNALR_WEBSOCKET",
+      "name": "WebSocket/SignalR Verbindung",
+      "severity": "info",
+      "category": "Echtzeit",
+      "description": "WebSocket-Verbindungen (Status 101) mit sehr langer Laufzeit sind normal für Teams, Planner und andere Echtzeit-Funktionen. Werden aus der Performance-Analyse herausgefiltert.",
+      "check": "websocketLongDuration",
+      "recommendations": [
+        {
+          "text": "Normal – WebSocket-Verbindungen für Echtzeit-Kollaboration",
+          "type": "diagnose",
+          "risk": "low"
+        }
       ]
     }
   ]
