@@ -7,16 +7,32 @@
     { id:'exchange', href:'exchange.html', label:'Exchange',     icon:'📧', color:'#e8b339', desc:'On-Prem & Exchange Online' },
     { id:'forti',    href:'forti.html',    label:'Fortinet',     icon:'🔥', color:'#fb7124', desc:'FG · FMG · FAZ' },
     { id:'scripts',  href:'scripts.html',  label:'PS Scripts',   icon:'💚', color:'#4ade80', desc:'Fertige .ps1 Skripte' },
-    { id:'eventlog', href:'eventlog.html', label:'Log Analyzer', icon:'📋', color:'#e8b339', desc:'Event Logs analysieren' },
-    { id:'entra',    href:'entra.html',    label:'Entra Analyzer',icon:'🔐', color:'#7c8cf8', desc:'Sign-In Logs analysieren' },
-    { id:'har',      href:'har.html',      label:'HAR Analyzer',  icon:'🌐', color:'#60a5fa', desc:'Browser Sessions analysieren' },
+    {
+      id:'analyzer', label:'Analyzer', icon:'📋', color:'#e8b339', group:true,
+      children: [
+        { id:'eventlog', href:'eventlog.html', label:'Log Analyzer',   icon:'📋', color:'#e8b339', desc:'Windows Event Logs analysieren' },
+        { id:'entra',    href:'entra.html',    label:'Entra Analyzer', icon:'🔐', color:'#7c8cf8', desc:'Sign-In Logs analysieren' },
+        { id:'har',      href:'har.html',      label:'HAR Analyzer',   icon:'🌐', color:'#60a5fa', desc:'Browser Sessions analysieren' },
+      ]
+    },
     { id:'mitmachen',href:'mitmachen.html',label:'Mitmachen',    icon:'🤝', color:'#a78bfa', desc:'Ideen & Befehle einreichen' },
     { id:'tools',     href:'tools.html',     label:'support.tools', icon:'⚙️',  color:'#94a3b8', desc:'App installieren · Offline · Einstellungen', tools:true },
   ];
 
   const currentFile = location.pathname.split('/').pop() || 'index.html';
-  const currentPage = PAGES.find(p => p.href === currentFile) || PAGES[0];
+
+  // Flache Liste aller Seiten (inkl. Kinder aus Gruppen)
+  const ALL_PAGES = PAGES.flatMap(p => p.group ? p.children : [p]);
+  const currentPage = ALL_PAGES.find(p => p.href === currentFile) || ALL_PAGES[0];
   const currentId   = currentPage.id;
+
+  // Gruppen-ID für Tab-Highlighting
+  const currentGroupId = (() => {
+    for (const p of PAGES) {
+      if (p.group && p.children.some(c => c.id === currentId)) return p.id;
+    }
+    return currentId;
+  })();
 
   // Body-Klasse für seitenspezifisches Styling (z.B. H1-Farbe)
   document.body.classList.add(`page-${currentId}`);
@@ -94,6 +110,24 @@
     .as-update-dismiss:hover { color:#8890aa; }
 
     /* Update check button */
+    /* Gruppen-Tab */
+    .as-tab-group { position:relative; }
+    .as-tab--group { cursor:pointer; border:none; background:none; font-family:var(--font-ui,inherit); }
+    .as-group-chevron { font-size:.6rem; color:var(--dim,#555a70); transition:transform .2s; margin-left:2px; }
+    .as-tab-group.open .as-group-chevron { transform:rotate(180deg); }
+    .as-subtab-menu {
+      display:none; position:absolute; top:calc(100% + 6px); left:50%; transform:translateX(-50%);
+      z-index:400; background:#1a1d2e; border:1px solid #343860; border-radius:10px;
+      padding:6px; min-width:180px; box-shadow:0 12px 32px rgba(0,0,0,.5);
+      animation:asDropIn .15s ease;
+    }
+    .as-tab-group.open .as-subtab-menu { display:block; }
+    .as-subtab { display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:7px; text-decoration:none; color:#8890aa; font-size:.82rem; font-weight:600; transition:all .12s; white-space:nowrap; }
+    .as-subtab:hover { background:rgba(255,255,255,.05); color:#e0e4f0; }
+    .as-subtab.active { color:var(--as-tab-color); background:color-mix(in srgb, var(--as-tab-color) 12%, transparent); }
+    .as-dd-group-label { font-size:.65rem; font-weight:700; color:#555a70; text-transform:uppercase; letter-spacing:.08em; padding:8px 12px 4px; }
+    .as-dd-item--child { padding-left:20px; }
+
     .as-refresh-btn {
       display:flex; align-items:center; justify-content:center;
       width:32px; height:32px; border-radius:8px; flex-shrink:0;
@@ -138,12 +172,38 @@
     const dd = document.createElement('div');
     dd.className = 'as-dropdown';
     PAGES.forEach((p, i) => {
-      // Divider before Mitmachen (last item)
-      if (i === PAGES.length - 1) {
+      // Divider before last item
+      if (p.id === 'mitmachen') {
         const div = document.createElement('div');
         div.className = 'as-dd-div';
         dd.appendChild(div);
       }
+
+      if (p.group) {
+        // Group header
+        const groupLabel = document.createElement('div');
+        groupLabel.className = 'as-dd-group-label';
+        groupLabel.textContent = p.icon + ' ' + p.label;
+        dd.appendChild(groupLabel);
+
+        // Children
+        p.children.forEach(child => {
+          const a = document.createElement('a');
+          a.className = 'as-dd-item as-dd-item--child' + (child.id === currentId ? ' active' : '');
+          a.href = child.href;
+          a.innerHTML = `
+            <div class="as-dd-icon" style="background:${child.color}1a">${child.icon}</div>
+            <div class="as-dd-info">
+              <span class="as-dd-label" style="color:${child.id === currentId ? child.color : ''}">${child.label}</span>
+              <span class="as-dd-desc">${child.desc}</span>
+            </div>
+            ${child.id === currentId ? `<div class="as-dd-dot" style="background:${child.color}"></div>` : ''}
+          `;
+          dd.appendChild(a);
+        });
+        return;
+      }
+
       const a = document.createElement('a');
       a.className = 'as-dd-item' + (p.id === currentId ? ' active' : '');
       a.href = p.href;
@@ -197,13 +257,58 @@
     const tabBar = document.createElement('nav');
     tabBar.className = 'as-tab-bar';
     tabBar.setAttribute('aria-label', 'Seitennavigation');
+
     PAGES.forEach(p => {
-      // Spacer pushes tools tab to the right edge
       if (p.tools) {
         const spacer = document.createElement('div');
         spacer.style.cssText = 'flex:1';
         tabBar.appendChild(spacer);
       }
+
+      if (p.group) {
+        // Gruppen-Tab mit Dropdown
+        const isActiveGroup = p.children.some(c => c.id === currentId);
+        const activeChild   = p.children.find(c => c.id === currentId);
+        const groupColor    = activeChild ? activeChild.color : p.color;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'as-tab-group' + (isActiveGroup ? ' active' : '');
+        wrap.style.setProperty('--as-tab-color', groupColor);
+
+        const groupTab = document.createElement('button');
+        groupTab.className = 'as-tab as-tab--group' + (isActiveGroup ? ' active' : '');
+        groupTab.style.setProperty('--as-tab-color', groupColor);
+        groupTab.innerHTML = `<span class="as-tab-icon">${activeChild ? activeChild.icon : p.icon}</span>${activeChild ? activeChild.label : p.label} <span class="as-group-chevron">▾</span>`;
+
+        const subMenu = document.createElement('div');
+        subMenu.className = 'as-subtab-menu';
+
+        p.children.forEach(child => {
+          const sub = document.createElement('a');
+          sub.className = 'as-subtab' + (child.id === currentId ? ' active' : '');
+          sub.href = child.href;
+          sub.style.setProperty('--as-tab-color', child.color);
+          sub.innerHTML = `<span class="as-tab-icon">${child.icon}</span>${child.label}`;
+          subMenu.appendChild(sub);
+        });
+
+        wrap.appendChild(groupTab);
+        wrap.appendChild(subMenu);
+
+        // Toggle subtab menu
+        groupTab.addEventListener('click', e => {
+          e.stopPropagation();
+          const isOpen = wrap.classList.toggle('open');
+          document.querySelectorAll('.as-tab-group').forEach(g => { if (g !== wrap) g.classList.remove('open'); });
+        });
+        document.addEventListener('click', e => {
+          if (!wrap.contains(e.target)) wrap.classList.remove('open');
+        });
+
+        tabBar.appendChild(wrap);
+        return;
+      }
+
       const a = document.createElement('a');
       a.className = 'as-tab' + (p.id === currentId ? ' active' : '') + (p.tools ? ' as-tab--tools' : '');
       a.href = p.href;
@@ -211,9 +316,9 @@
       a.innerHTML = `<span class="as-tab-icon">${p.icon}</span>${p.label}`;
       tabBar.appendChild(a);
     });
+
     header.insertAdjacentElement('afterend', tabBar);
 
-    // Shrink hero padding to compensate
     const hero = document.querySelector('.hero');
     if (hero) {
       const pt = parseInt(window.getComputedStyle(hero).paddingTop);

@@ -107,11 +107,49 @@
     <!-- ── UPLOAD ─────────────────────────────────────────── -->
     <section class="el-section">
       <h2 class="section-title">CSV hochladen</h2>
-      <div class="upload-zone" id="upload-zone">
-        <div class="upload-icon">📂</div>
-        <div class="upload-text">CSV-Datei hier ablegen oder klicken</div>
-        <div class="upload-sub">InteractiveSignIns_*.csv · NonInteractiveSignIns_*.csv · ApplicationSignIns_*.csv</div>
-        <input type="file" id="file-input" accept=".csv" style="display:none">
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:14px">
+        Mehrere Dateien desselben Typs werden automatisch zusammengeführt. Einfach alle auswählen oder reinziehen.
+      </p>
+
+      <div class="upload-slots">
+        <div class="upload-slot" id="slot-interactive">
+          <div class="slot-label">👤 Interaktive Anmeldungen</div>
+          <div class="upload-zone slot-zone" data-slot="interactive">
+            <div class="upload-icon" style="font-size:1.5rem">📂</div>
+            <div class="upload-text" style="font-size:.82rem">Dateien ablegen oder klicken</div>
+            <div class="upload-sub">InteractiveSignIns_*.csv</div>
+            <input type="file" accept=".csv" multiple style="display:none">
+          </div>
+          <div class="slot-files" id="files-interactive"></div>
+        </div>
+
+        <div class="upload-slot" id="slot-noninteractive">
+          <div class="slot-label">🤖 Nicht-interaktive Anmeldungen</div>
+          <div class="upload-zone slot-zone" data-slot="noninteractive">
+            <div class="upload-icon" style="font-size:1.5rem">📂</div>
+            <div class="upload-text" style="font-size:.82rem">Dateien ablegen oder klicken</div>
+            <div class="upload-sub">NonInteractiveSignIns_*.csv</div>
+            <input type="file" accept=".csv" multiple style="display:none">
+          </div>
+          <div class="slot-files" id="files-noninteractive"></div>
+        </div>
+
+        <div class="upload-slot" id="slot-application">
+          <div class="slot-label">⚙️ Dienstprinzipal-Anmeldungen</div>
+          <div class="upload-zone slot-zone" data-slot="application">
+            <div class="upload-icon" style="font-size:1.5rem">📂</div>
+            <div class="upload-text" style="font-size:.82rem">Dateien ablegen oder klicken</div>
+            <div class="upload-sub">ApplicationSignIns_*.csv · MSISignIns_*.csv</div>
+            <input type="file" accept=".csv" multiple style="display:none">
+          </div>
+          <div class="slot-files" id="files-application"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button id="analyze-btn" class="analyze-btn" disabled onclick="analyzeAll()">📊 Alle Logs analysieren</button>
+        <span id="total-rows-hint" style="font-size:.78rem;color:var(--muted)"></span>
+        <button id="clear-btn" style="display:none" onclick="clearAll()" class="clear-small-btn">✕ Zurücksetzen</button>
       </div>
     </section>
 
@@ -184,7 +222,20 @@
     .guide-link:hover { text-decoration:underline; }
     .guide-screenshot-placeholder { margin-top:8px; padding:10px 14px; background:var(--bg); border:1px dashed var(--border2); border-radius:var(--r); font-size:.75rem; color:var(--dim); font-style:italic; }
 
-    /* Entra table status */
+    /* Upload Slots */
+    .upload-slots { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; }
+    .upload-slot  { display:flex; flex-direction:column; gap:8px; }
+    .slot-label   { font-size:.75rem; font-weight:700; color:var(--muted); }
+    .slot-zone    { border:2px dashed var(--border2); border-radius:var(--r); padding:18px 12px; text-align:center; cursor:pointer; transition:all .15s; }
+    .slot-zone:hover, .slot-zone.drag { border-color:var(--accent); background:var(--accent-bg); }
+    .slot-zone.done { border-color:var(--green); border-style:solid; background:rgba(74,222,128,.04); }
+    .slot-files   { display:flex; flex-direction:column; gap:4px; }
+    .slot-file-tag { display:flex; align-items:center; gap:6px; font-size:.72rem; color:var(--green); background:rgba(74,222,128,.08); border:1px solid rgba(74,222,128,.2); border-radius:5px; padding:3px 8px; }
+    .analyze-btn  { padding:9px 20px; border-radius:8px; font-family:var(--font-ui); font-size:.85rem; font-weight:700; cursor:pointer; border:1px solid rgba(124,140,248,.4); background:rgba(124,140,248,.1); color:var(--accent); transition:all .15s; }
+    .analyze-btn:hover:not(:disabled) { background:rgba(124,140,248,.2); }
+    .analyze-btn:disabled { opacity:.4; cursor:not-allowed; }
+    .clear-small-btn { padding:5px 12px; border-radius:7px; font-family:var(--font-ui); font-size:.75rem; font-weight:600; cursor:pointer; border:1px solid var(--border); background:var(--panel); color:var(--muted); transition:all .15s; }
+    .clear-small-btn:hover { color:var(--red); border-color:rgba(248,113,113,.4); }
     .status-success { color:var(--green); font-weight:700; font-size:.75rem; }
     .status-error   { color:var(--red);   font-weight:700; font-size:.75rem; }
     .status-interrupt{ color:var(--amber); font-weight:700; font-size:.75rem; }
@@ -287,36 +338,77 @@
     let RULES       = [];
     let allRows     = [];
     let activeFilter = 'all';
+    const slotData  = { interactive: [], noninteractive: [], application: [] };
 
     fetch('./data/entra-rules.json').then(r => r.json()).then(d => {
       RULES = d.rules || [];
     }).catch(() => {});
 
-    // ── Upload ────────────────────────────────────────────
-    const zone  = document.getElementById('upload-zone');
-    const input = document.getElementById('file-input');
-    zone.addEventListener('click', () => input.click());
-    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag'); });
-    zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
-    zone.addEventListener('drop', e => {
-      e.preventDefault(); zone.classList.remove('drag');
-      if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
-    });
-    input.addEventListener('change', e => { if (e.target.files[0]) processFile(e.target.files[0]); });
+    // ── Upload Slots ──────────────────────────────────────
+    document.querySelectorAll('.slot-zone').forEach(zone => {
+      const input = zone.querySelector('input[type="file"]');
+      const slot  = zone.dataset.slot;
 
-    function processFile(file) {
+      zone.addEventListener('click', () => input.click());
+      zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+      zone.addEventListener('drop', e => {
+        e.preventDefault(); zone.classList.remove('drag');
+        [...e.dataTransfer.files].forEach(f => readFile(f, slot));
+      });
+      input.addEventListener('change', e => {
+        [...e.target.files].forEach(f => readFile(f, slot));
+        e.target.value = '';
+      });
+    });
+
+    function readFile(file, slot) {
       const reader = new FileReader();
       reader.onload = e => {
-        try {
-          const rows = parseCSV(e.target.result);
-          if (!rows.length) throw new Error('Keine Daten gefunden');
-          allRows = rows;
-          renderResults(rows, file.name);
-        } catch(err) {
-          alert('Fehler beim Lesen: ' + err.message);
-        }
+        const rows = parseCSV(e.target.result);
+        if (!rows.length) return;
+        slotData[slot].push(...rows);
+        updateSlotUI(slot, file.name);
+        updateAnalyzeBtn();
       };
       reader.readAsText(file, 'UTF-8');
+    }
+
+    function updateSlotUI(slot, filename) {
+      const filesEl = document.getElementById('files-' + slot);
+      const zone    = document.querySelector(`.slot-zone[data-slot="${slot}"]`);
+      zone.classList.add('done');
+
+      const tag = document.createElement('div');
+      tag.className = 'slot-file-tag';
+      const name = document.createElement('span');
+      name.textContent = filename;
+      tag.appendChild(name);
+      filesEl.appendChild(tag);
+    }
+
+    function updateAnalyzeBtn() {
+      const total = Object.values(slotData).flat().length;
+      const btn   = document.getElementById('analyze-btn');
+      const hint  = document.getElementById('total-rows-hint');
+      const clearBtn = document.getElementById('clear-btn');
+      btn.disabled = total === 0;
+      hint.textContent = total > 0 ? `${total.toLocaleString('de-DE')} Einträge geladen` : '';
+      clearBtn.style.display = total > 0 ? '' : 'none';
+    }
+
+    function clearAll() {
+      Object.keys(slotData).forEach(k => slotData[k] = []);
+      document.querySelectorAll('.slot-files').forEach(el => el.replaceChildren());
+      document.querySelectorAll('.slot-zone').forEach(z => z.classList.remove('done','drag'));
+      document.getElementById('results-section').style.display = 'none';
+      updateAnalyzeBtn();
+    }
+
+    function analyzeAll() {
+      allRows = Object.values(slotData).flat();
+      if (!allRows.length) return;
+      renderResults(allRows, `${allRows.length} Einträge aus ${Object.values(slotData).filter(a=>a.length).length} Typ(en)`);
     }
 
     // ── CSV Parser ────────────────────────────────────────
@@ -412,11 +504,11 @@
       renderTable(rows);
       document.getElementById('row-count').textContent = rows.length + ' Einträge';
 
-      // Show results
+      // Show results – scroll to TOP of results, not table
       document.getElementById('results-section').style.display = '';
-      zone.classList.add('done');
-      zone.querySelector('.upload-text').textContent = '✅ ' + filename;
-      setTimeout(() => document.getElementById('results-section').scrollIntoView({ behavior:'smooth', block:'start' }), 150);
+      setTimeout(() => {
+        document.getElementById('results-section').scrollIntoView({ behavior:'smooth', block:'start' });
+      }, 100);
     }
 
     // ── Filter Pills ──────────────────────────────────────
