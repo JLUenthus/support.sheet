@@ -7,13 +7,31 @@
       "name": "MFA-Pflicht neu durchgesetzt",
       "severity": "warning",
       "category": "MFA",
-      "errorCodes": ["50076", "50079"],
-      "statusFilter": ["Unterbrochen"],
+      "errorCodes": [
+        "50076",
+        "50079"
+      ],
+      "statusFilter": [
+        "Unterbrochen"
+      ],
       "description": "Benutzer wird zur MFA aufgefordert weil eine Konfigurationsänderung durch den Administrator vorgenommen wurde oder der Benutzer sich von einem neuen Gerät/Standort anmeldet. Typisch nach Conditional Access Änderungen.",
       "recommendations": [
-        { "text": "Benutzer informieren dass MFA-Registrierung erforderlich ist", "type": "fix", "risk": "low" },
-        { "text": "MFA-Registrierungsstatus prüfen", "cmd": "Get-MsolUser -UserPrincipalName '{username}' | Select StrongAuthenticationMethods, StrongAuthenticationRequirements", "type": "diagnose", "risk": "low" },
-        { "text": "Conditional Access Richtlinien prüfen die MFA erzwingen", "type": "diagnose", "risk": "low" }
+        {
+          "text": "Benutzer informieren dass MFA-Registrierung erforderlich ist",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "MFA-Registrierungsstatus prüfen",
+          "cmd": "Get-MgUserAuthenticationMethod -UserId '{username}'",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Conditional Access Richtlinien prüfen die MFA erzwingen",
+          "type": "diagnose",
+          "risk": "low"
+        }
       ]
     },
     {
@@ -21,12 +39,27 @@
       "name": "Redirect URI stimmt nicht überein",
       "severity": "error",
       "category": "App-Konfiguration",
-      "errorCodes": ["50011"],
+      "errorCodes": [
+        "50011"
+      ],
       "description": "Die in der Anfrage angegebene Redirect URI ist nicht in der App-Registrierung hinterlegt. Häufig nach Updates von Microsoft-Apps oder nach Änderungen an App-Registrierungen. Kann Browser-basierte Anmeldungen blockieren.",
       "recommendations": [
-        { "text": "App-Registrierung in Entra prüfen und Redirect URIs aktualisieren", "type": "fix", "risk": "medium" },
-        { "text": "Microsoft Edge / Browser-App-Registrierung prüfen", "type": "diagnose", "risk": "low" },
-        { "text": "App-Registrierungen im Entra Portal öffnen", "cmd": "Start-Process 'https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade'", "type": "diagnose", "risk": "low" }
+        {
+          "text": "App-Registrierung in Entra prüfen und Redirect URIs aktualisieren",
+          "type": "fix",
+          "risk": "medium"
+        },
+        {
+          "text": "Microsoft Edge / Browser-App-Registrierung prüfen",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "App-Registrierungen im Entra Portal öffnen",
+          "cmd": "Start-Process 'https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade'",
+          "type": "diagnose",
+          "risk": "low"
+        }
       ]
     },
     {
@@ -34,12 +67,29 @@
       "name": "App-Zustimmung fehlt",
       "severity": "error",
       "category": "App-Konfiguration",
-      "errorCodes": ["65001", "65002", "65004"],
+      "errorCodes": [
+        "65001",
+        "65002",
+        "65004"
+      ],
       "description": "Eine Anwendung versucht auf eine Ressource zuzugreifen für die keine Admin-Zustimmung erteilt wurde. Tritt auf wenn neue Apps hinzugefügt werden oder Berechtigungen geändert wurden.",
       "recommendations": [
-        { "text": "Admin-Consent für die App erteilen", "type": "fix", "risk": "medium" },
-        { "text": "Enterprise Apps im Entra Portal prüfen", "cmd": "Start-Process 'https://portal.azure.com/#view/Microsoft_AAD_IAM/StartboardApplicationsMenuBlade/~/AppAppsPreview'", "type": "diagnose", "risk": "low" },
-        { "text": "App-Berechtigungen im Entra Portal überprüfen und Consent erteilen", "type": "fix", "risk": "medium" }
+        {
+          "text": "Admin-Consent für die App erteilen",
+          "type": "fix",
+          "risk": "medium"
+        },
+        {
+          "text": "Enterprise Apps im Entra Portal prüfen",
+          "cmd": "Start-Process 'https://portal.azure.com/#view/Microsoft_AAD_IAM/StartboardApplicationsMenuBlade/~/AppAppsPreview'",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "App-Berechtigungen im Entra Portal überprüfen und Consent erteilen",
+          "type": "fix",
+          "risk": "medium"
+        }
       ]
     },
     {
@@ -47,12 +97,29 @@
       "name": "Konto gesperrt oder deaktiviert",
       "severity": "critical",
       "category": "Konto",
-      "errorCodes": ["50053", "50057"],
+      "errorCodes": [
+        "50053",
+        "50057"
+      ],
       "description": "Das Benutzerkonto wurde gesperrt (zu viele fehlgeschlagene Anmeldeversuche) oder ist deaktiviert. Betrifft den Zugriff auf alle M365-Dienste.",
       "recommendations": [
-        { "text": "Konto-Sperrstatus prüfen", "cmd": "Get-AzureADUser -ObjectId '{username}' | Select AccountEnabled, RefreshTokensValidFromDateTime", "type": "diagnose", "risk": "low" },
-        { "text": "Konto entsperren", "cmd": "Set-AzureADUser -ObjectId '{username}' -AccountEnabled $true", "type": "fix", "risk": "low" },
-        { "text": "Anmelde-Risiko in Entra Identity Protection prüfen", "type": "diagnose", "risk": "low" }
+        {
+          "text": "Konto-Sperrstatus prüfen",
+          "cmd": "Get-MgUser -UserId '{username}' | Select DisplayName, AccountEnabled, SignInActivity | Select AccountEnabled, RefreshTokensValidFromDateTime",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Konto entsperren",
+          "cmd": "Update-MgUser -UserId '{username}' -AccountEnabled $true",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "Anmelde-Risiko in Entra Identity Protection prüfen",
+          "type": "diagnose",
+          "risk": "low"
+        }
       ]
     },
     {
@@ -60,11 +127,24 @@
       "name": "Passwort abgelaufen",
       "severity": "warning",
       "category": "Konto",
-      "errorCodes": ["50055", "50144"],
+      "errorCodes": [
+        "50055",
+        "50144"
+      ],
       "description": "Das Passwort des Benutzers ist abgelaufen. Der Benutzer kann sich nicht mehr anmelden bis das Passwort zurückgesetzt wird.",
       "recommendations": [
-        { "text": "Passwort zurücksetzen", "cmd": "Set-AzureADUserPassword -ObjectId '{username}' -ForceChangePasswordNextLogin $true", "type": "fix", "risk": "low" },
-        { "text": "Passwort-Ablaufrichtlinie prüfen", "cmd": "Get-AzureADUser -ObjectId '{username}' | Select PasswordPolicies, PasswordProfile", "type": "diagnose", "risk": "low" }
+        {
+          "text": "Passwort zurücksetzen",
+          "cmd": "Update-MgUser -UserId '{username}' -PasswordProfile @{ForceChangePasswordNextSignIn=$true}",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "Passwort-Ablaufrichtlinie prüfen",
+          "cmd": "Get-MgUser -UserId '{username}' | Select DisplayName, AccountEnabled, SignInActivity | Select PasswordPolicies, PasswordProfile",
+          "type": "diagnose",
+          "risk": "low"
+        }
       ]
     },
     {
@@ -72,11 +152,24 @@
       "name": "Token abgelaufen – Erneute Anmeldung nötig",
       "severity": "info",
       "category": "Token",
-      "errorCodes": ["70008", "70011", "700082"],
+      "errorCodes": [
+        "70008",
+        "70011",
+        "700082"
+      ],
       "description": "Das Refresh Token oder Access Token ist abgelaufen. Erfordert eine erneute interaktive Anmeldung. Häufig nach langer Inaktivität oder Token-Lifetime-Richtlinienänderungen.",
       "recommendations": [
-        { "text": "Benutzer auffordern sich neu anzumelden", "type": "fix", "risk": "low" },
-        { "text": "Token Lifetime Policy prüfen", "cmd": "Get-AzureADPolicy | Where-Object {$_.Type -eq 'TokenLifetimePolicy'} | Select DisplayName, Definition", "type": "diagnose", "risk": "low" }
+        {
+          "text": "Benutzer auffordern sich neu anzumelden",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "Token Lifetime Policy prüfen",
+          "cmd": "Get-MgPolicyTokenLifetimePolicy | Select DisplayName, Definition",
+          "type": "diagnose",
+          "risk": "low"
+        }
       ]
     },
     {
@@ -84,12 +177,29 @@
       "name": "Conditional Access blockiert Zugriff",
       "severity": "error",
       "category": "Conditional Access",
-      "errorCodes": ["53003", "53000", "53001"],
+      "errorCodes": [
+        "53003",
+        "53000",
+        "53001"
+      ],
       "description": "Eine Conditional Access Richtlinie blockiert die Anmeldung. Häufige Ursachen: Gerät nicht konform, Gerät nicht registriert, Zugriff von nicht erlaubtem Standort oder Netzwerk.",
       "recommendations": [
-        { "text": "CA-Richtlinien im Entra Portal prüfen", "type": "diagnose", "risk": "low" },
-        { "text": "Gerätestatus in Entra prüfen (Compliant/Managed)", "cmd": "Get-AzureADDevice -SearchString '{hostname}' | Select DisplayName, IsCompliant, IsManaged, DeviceTrustType", "type": "diagnose", "risk": "low" },
-        { "text": "Sign-In Log im Entra Portal für Details zu CA-Richtlinie aufrufen", "type": "diagnose", "risk": "low" }
+        {
+          "text": "CA-Richtlinien im Entra Portal prüfen",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Gerätestatus in Entra prüfen (Compliant/Managed)",
+          "cmd": "Get-MgDevice -Filter \"displayName eq '{hostname}'\" | Select DisplayName, IsCompliant, IsManaged, TrustType",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Sign-In Log im Entra Portal für Details zu CA-Richtlinie aufrufen",
+          "type": "diagnose",
+          "risk": "low"
+        }
       ]
     },
     {
@@ -97,12 +207,30 @@
       "name": "Ungültige Anmeldedaten / Token",
       "severity": "error",
       "category": "Authentifizierung",
-      "errorCodes": ["70000", "70001", "70007"],
+      "errorCodes": [
+        "70000",
+        "70001",
+        "70007"
+      ],
       "description": "Ungültige Anmeldedaten oder Token wurden übermittelt. Kann durch falsche Credentials, abgelaufene Refresh Tokens oder nach Passwortänderung auftreten wenn ein Dienst noch alte Credentials verwendet.",
       "recommendations": [
-        { "text": "Gespeicherte Anmeldedaten in Windows Credential Manager prüfen", "cmd": "cmdkey /list", "type": "diagnose", "risk": "low" },
-        { "text": "Alte Tokens invalidieren (alle Sessions beenden)", "cmd": "Revoke-AzureADUserAllRefreshToken -ObjectId '{username}'", "type": "fix", "risk": "medium" },
-        { "text": "Benutzer auffordern sich neu anzumelden", "type": "fix", "risk": "low" }
+        {
+          "text": "Gespeicherte Anmeldedaten in Windows Credential Manager prüfen",
+          "cmd": "cmdkey /list",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Alte Tokens invalidieren (alle Sessions beenden)",
+          "cmd": "Revoke-MgUserSignInSession -UserId '{username}'",
+          "type": "fix",
+          "risk": "medium"
+        },
+        {
+          "text": "Benutzer auffordern sich neu anzumelden",
+          "type": "fix",
+          "risk": "low"
+        }
       ]
     },
     {
@@ -112,12 +240,27 @@
       "severity": "warning",
       "category": "Muster",
       "minCount": 10,
-      "statusFilter": ["Fehler"],
+      "statusFilter": [
+        "Fehler"
+      ],
       "description": "Ein einzelner Benutzer hat ungewöhnlich viele fehlgeschlagene Anmeldeversuche. Mögliche Ursachen: falsch gespeichertes Passwort in einem Dienst, abgelaufenes Passwort, oder tatsächlicher Angriff.",
       "recommendations": [
-        { "text": "Anmelde-Risiko für den Benutzer prüfen", "type": "diagnose", "risk": "low" },
-        { "text": "Gespeicherte Anmeldedaten auf Benutzergeräten prüfen", "cmd": "cmdkey /list", "type": "diagnose", "risk": "low" },
-        { "text": "Passwort zurücksetzen wenn Passwort-Leak vermutet wird", "type": "fix", "risk": "low" }
+        {
+          "text": "Anmelde-Risiko für den Benutzer prüfen",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Gespeicherte Anmeldedaten auf Benutzergeräten prüfen",
+          "cmd": "cmdkey /list",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Passwort zurücksetzen wenn Passwort-Leak vermutet wird",
+          "type": "fix",
+          "risk": "low"
+        }
       ]
     },
     {
@@ -127,12 +270,27 @@
       "severity": "warning",
       "category": "App-Konfiguration",
       "minCount": 20,
-      "statusFilter": ["Fehler"],
+      "statusFilter": [
+        "Fehler"
+      ],
       "description": "Eine einzelne Anwendung erzeugt überdurchschnittlich viele Fehler. Hinweis auf fehlerhafte App-Konfiguration, abgelaufene App-Secrets oder Berechtigungsprobleme.",
       "recommendations": [
-        { "text": "App-Registrierung und Secrets prüfen", "type": "diagnose", "risk": "low" },
-        { "text": "Enterprise App Berechtigungen prüfen", "type": "diagnose", "risk": "low" },
-        { "text": "App-Secret Ablaufdatum prüfen", "cmd": "Get-AzureADApplication | Where-Object {$_.DisplayName -like '*{app}*'} | Select DisplayName, KeyCredentials, PasswordCredentials", "type": "diagnose", "risk": "low" }
+        {
+          "text": "App-Registrierung und Secrets prüfen",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Enterprise App Berechtigungen prüfen",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "App-Secret Ablaufdatum prüfen",
+          "cmd": "Get-MgApplication -Filter \"startswith(displayName,'{app}')\" | Select DisplayName, KeyCredentials, PasswordCredentials",
+          "type": "diagnose",
+          "risk": "low"
+        }
       ]
     }
   ]
