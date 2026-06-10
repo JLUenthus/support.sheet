@@ -1,7 +1,7 @@
 // ============================================================
 // support.sheet – Service Worker v2
 // ============================================================
-const CACHE_VERSION = '20260605-1123';
+const CACHE_VERSION = '20260610-0605';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -22,6 +22,10 @@ const ASSETS = [
   './nav.js',
   './sw.js',
   './manifest.json',
+  './data/har-rules.json',
+  './data/entra-rules.json',
+  './har.html',
+  './entra.html',
   './fonts/fonts.css',
   './fonts/jetbrains-mono-400.ttf',
   './fonts/jetbrains-mono-500.ttf',

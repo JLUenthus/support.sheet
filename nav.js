@@ -8,6 +8,8 @@
     { id:'forti',    href:'forti.html',    label:'Fortinet',     icon:'🔥', color:'#fb7124', desc:'FG · FMG · FAZ' },
     { id:'scripts',  href:'scripts.html',  label:'PS Scripts',   icon:'💚', color:'#4ade80', desc:'Fertige .ps1 Skripte' },
     { id:'eventlog', href:'eventlog.html', label:'Log Analyzer', icon:'📋', color:'#e8b339', desc:'Event Logs analysieren' },
+    { id:'entra',    href:'entra.html',    label:'Entra Analyzer',icon:'🔐', color:'#7c8cf8', desc:'Sign-In Logs analysieren' },
+    { id:'har',      href:'har.html',      label:'HAR Analyzer',  icon:'🌐', color:'#60a5fa', desc:'Browser Sessions analysieren' },
     { id:'mitmachen',href:'mitmachen.html',label:'Mitmachen',    icon:'🤝', color:'#a78bfa', desc:'Ideen & Befehle einreichen' },
     { id:'tools',     href:'tools.html',     label:'support.tools', icon:'⚙️',  color:'#94a3b8', desc:'App installieren · Offline · Einstellungen', tools:true },
   ];

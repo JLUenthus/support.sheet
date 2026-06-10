@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>support.sheet – HAR Analyzer</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/toast.css">
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-icon">🌐</div>
+      <div class="logo-text">support<span>.sheet</span></div>
+    </a>
+    <div class="header-right">
+      <div class="pill pill-count" style="border-color:rgba(96,165,250,.3);background:rgba(96,165,250,.08);color:#60a5fa;">🌐 HAR Analyzer</div>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="hero-badge" style="border-color:rgba(96,165,250,.3);background:rgba(96,165,250,.08);color:#60a5fa;">🌐 HAR Session Analyzer</div>
+    <h1>HAR hochladen.<br>Session analysiert.</h1>
+    <p>HAR-Datei aus dem Browser-DevTools hochladen – Auth-Token-Ablauf, 401-Fehler, langsame Requests und Session-Probleme automatisch erkennen.</p>
+  </div>
+
+  <main>
+
+    <!-- ── ANLEITUNG ──────────────────────────────────────── -->
+    <section class="el-section">
+      <h2 class="section-title">So exportierst du eine HAR-Datei</h2>
+      <div class="guide-steps">
+
+        <div class="guide-step">
+          <div class="guide-num">1</div>
+          <div class="guide-content">
+            <div class="guide-title">Browser DevTools öffnen</div>
+            <div class="guide-desc">
+              <strong>Chrome/Edge:</strong> F12 oder Strg+Shift+I → Tab <strong>Netzwerk</strong><br>
+              <strong>Firefox:</strong> F12 → Tab <strong>Netzwerk</strong>
+            </div>
+            <!-- [Screenshot: DevTools Netzwerk-Tab in Chrome/Edge] -->
+            <div class="guide-screenshot-placeholder">📸 Screenshot: DevTools Netzwerk-Tab öffnen</div>
+          </div>
+        </div>
+
+        <div class="guide-step">
+          <div class="guide-num">2</div>
+          <div class="guide-content">
+            <div class="guide-title">Aufzeichnung starten und Problem reproduzieren</div>
+            <div class="guide-desc">
+              Aufzeichnung läuft automatisch wenn DevTools offen sind.
+              Das Problem reproduzieren (Login, App-Start, Fehler auslösen).
+              Rotes Aufnahme-Symbol oben links muss aktiv sein.
+            </div>
+            <!-- [Screenshot: Aktive Aufzeichnung im Netzwerk-Tab] -->
+            <div class="guide-screenshot-placeholder">📸 Screenshot: Aktive Aufzeichnung im Netzwerk-Tab</div>
+          </div>
+        </div>
+
+        <div class="guide-step">
+          <div class="guide-num">3</div>
+          <div class="guide-content">
+            <div class="guide-title">HAR-Datei exportieren</div>
+            <div class="guide-desc">
+              <strong>Chrome/Edge:</strong> Im Netzwerk-Tab → rechte Maustaste auf einen Request → <em>"Alle als HAR speichern"</em><br>
+              Oder: Download-Icon (⬇️) oben in der Toolbar.<br>
+              <strong>Firefox:</strong> Zahnrad-Icon → <em>"Alles als HAR speichern"</em>
+            </div>
+            <!-- [Screenshot: "Alle als HAR speichern" Kontextmenü in Chrome] -->
+            <div class="guide-screenshot-placeholder">📸 Screenshot: HAR-Export-Option im Kontextmenü</div>
+          </div>
+        </div>
+
+        <div class="guide-step">
+          <div class="guide-num">4</div>
+          <div class="guide-content">
+            <div class="guide-title">HAR-Datei hochladen</div>
+            <div class="guide-desc">
+              Die .har-Datei in die Upload-Zone unten ziehen.
+              <strong>Hinweis:</strong> HAR-Dateien können Tokens und Cookies enthalten –
+              teile sie nur intern und lösche sie nach der Analyse.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="analyzer-disclaimer">
+        <span class="disclaimer-icon">⚠️</span>
+        <div class="disclaimer-text">
+          <strong>Sicherheitshinweis:</strong> HAR-Dateien können <em>Auth-Token, Cookies und Passwörter</em> im Klartext enthalten.
+          Alle Daten werden ausschließlich lokal im Browser verarbeitet – nichts verlässt dein Gerät.
+          HAR-Dateien nach der Analyse löschen und nicht per E-Mail weiterleiten.
+        </div>
+      </div>
+    </section>
+
+    <!-- ── UPLOAD ─────────────────────────────────────────── -->
+    <section class="el-section">
+      <h2 class="section-title">HAR-Datei hochladen</h2>
+      <div class="upload-zone" id="upload-zone">
+        <div class="upload-icon">📂</div>
+        <div class="upload-text">HAR-Datei hier ablegen oder klicken</div>
+        <div class="upload-sub">Wird nur lokal im Browser verarbeitet – keine Daten werden hochgeladen</div>
+        <input type="file" id="file-input" accept=".har" style="display:none">
+      </div>
+      <div id="progress-wrap" style="display:none;margin-top:12px">
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px">⏳ Analysiere HAR-Datei…</div>
+        <div style="background:var(--panel);border-radius:8px;height:6px;overflow:hidden;border:1px solid var(--border)">
+          <div id="progress-fill" style="background:var(--accent);height:100%;width:0%;transition:width .1s"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ERGEBNISSE ─────────────────────────────────────── -->
+    <div id="results-section" style="display:none">
+
+      <!-- Übersicht + Stats -->
+      <section class="el-section">
+        <h2 class="section-title">Übersicht</h2>
+        <div class="sys-grid" id="stats-grid"></div>
+      </section>
+
+      <!-- Findings -->
+      <section class="el-section">
+        <h2 class="section-title">🎯 Diagnose-Befunde <span id="findings-count" class="section-count">0</span></h2>
+        <div id="findings"></div>
+      </section>
+
+      <!-- Auth Requests -->
+      <section class="el-section">
+        <h2 class="section-title">🔑 Auth & Token Requests <span id="auth-count" class="section-count">0</span></h2>
+        <div class="raw-table-wrap">
+          <table class="event-table">
+            <thead><tr><th>Zeit</th><th>Status</th><th>URL</th><th>Dauer</th></tr></thead>
+            <tbody id="auth-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Fehler-Requests -->
+      <section class="el-section" id="errors-section" style="display:none">
+        <h2 class="section-title">❌ Fehler-Requests <span id="errors-count" class="section-count">0</span></h2>
+        <div class="raw-table-wrap">
+          <table class="event-table">
+            <thead><tr><th>Zeit</th><th>Status</th><th>URL</th><th>Dauer</th></tr></thead>
+            <tbody id="error-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Alle Requests -->
+      <section class="el-section">
+        <div class="raw-header">
+          <button class="table-toggle-btn" onclick="toggleAllTable()">
+            <span id="all-table-icon">▼</span>
+            <span class="section-title" style="margin-bottom:0">Alle Requests</span>
+            <span id="all-count" style="font-size:.72rem;color:var(--dim);margin-left:4px"></span>
+          </button>
+          <input type="text" id="search-input" class="event-search-input" placeholder="URL, Status, Domain…" oninput="filterAll()">
+        </div>
+        <div id="all-table-wrap" class="raw-table-wrap">
+          <table class="event-table">
+            <thead><tr><th>Zeit</th><th>Status</th><th>Methode</th><th>URL</th><th>Größe</th><th>Dauer</th></tr></thead>
+            <tbody id="all-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-links">
+      <a href="index.html"    class="footer-mitmachen">⚡ Windows</a>
+      <a href="exchange.html" class="footer-mitmachen footer-mitmachen--amber">📧 Exchange</a>
+      <a href="eventlog.html" class="footer-mitmachen" style="border-color:rgba(232,179,57,.3);color:#e8b339">📋 Log Analyzer</a>
+      <a href="entra.html"    class="footer-mitmachen" style="border-color:rgba(124,140,248,.3);color:#7c8cf8">🔐 Entra Analyzer</a>
+    </div>
+    <p class="footer-copy">support.sheet · <span>HAR Analyzer · Daten bleiben lokal</span></p>
+  </footer>
+
+  <style>
+    .guide-steps { display:flex; flex-direction:column; gap:12px; margin-bottom:16px; }
+    .guide-step  { display:flex; gap:14px; align-items:flex-start; }
+    .guide-num   { width:28px; height:28px; border-radius:50%; background:rgba(96,165,250,.15); border:1px solid rgba(96,165,250,.3); color:#60a5fa; font-size:.78rem; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; }
+    .guide-content { flex:1; }
+    .guide-title { font-size:.88rem; font-weight:700; color:var(--text); margin-bottom:4px; }
+    .guide-desc  { font-size:.8rem; color:var(--muted); line-height:1.6; }
+    .guide-screenshot-placeholder { margin-top:8px; padding:10px 14px; background:var(--bg); border:1px dashed var(--border2); border-radius:var(--r); font-size:.75rem; color:var(--dim); font-style:italic; }
+    .analyzer-disclaimer { display:flex; gap:10px; align-items:flex-start; margin-top:14px; padding:12px 14px; background:rgba(248,113,113,.05); border:1px solid rgba(248,113,113,.2); border-left:3px solid var(--red); border-radius:var(--r); }
+    .disclaimer-icon { font-size:1rem; flex-shrink:0; margin-top:1px; }
+    .disclaimer-text { font-size:.78rem; color:var(--muted); line-height:1.6; }
+    .disclaimer-text strong { color:var(--text); }
+    .disclaimer-text em { color:var(--red); font-style:normal; font-weight:600; }
+    .upload-zone { border:2px dashed var(--border2); border-radius:var(--r-lg); padding:48px 24px; text-align:center; cursor:pointer; transition:border-color .2s,background .2s; }
+    .upload-zone:hover,.upload-zone.drag { border-color:#60a5fa; background:rgba(96,165,250,.04); }
+    .upload-zone.done { border-color:var(--green); background:rgba(74,222,128,.04); }
+    .upload-icon { font-size:2.5rem; margin-bottom:10px; }
+    .upload-text { font-size:.95rem; font-weight:600; color:var(--text); margin-bottom:4px; }
+    .upload-sub  { font-size:.78rem; color:var(--muted); }
+    .sys-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+    .sys-item { background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--border); border-radius:var(--r); padding:12px 14px; }
+    .sys-item.item-bad  { border-left-color:var(--red);   background:rgba(248,113,113,.04); }
+    .sys-item.item-warn { border-left-color:var(--amber); background:rgba(251,191,36,.04); }
+    .sys-item.item-good { border-left-color:var(--green); }
+    .sys-label { font-size:.67rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; }
+    .sys-value { font-size:1.1rem; font-weight:700; color:var(--text); font-family:var(--font-mono); }
+    .sys-value.bad { color:var(--red); } .sys-value.warn { color:var(--amber); } .sys-value.good { color:var(--green); }
+    .finding-card { background:var(--panel); border:1px solid var(--border); border-radius:var(--r); margin-bottom:8px; overflow:hidden; border-left:3px solid var(--border); }
+    .finding-card[data-sev="critical"] { border-left-color:var(--red); }
+    .finding-card[data-sev="error"]    { border-left-color:#fb923c; }
+    .finding-card[data-sev="warning"]  { border-left-color:var(--amber); }
+    .finding-card[data-sev="info"]     { border-left-color:#60a5fa; }
+    .finding-header { display:flex; align-items:center; gap:10px; padding:12px 16px; cursor:pointer; transition:background .15s; }
+    .finding-header:hover { background:var(--panel2); }
+    .finding-title { font-size:.88rem; font-weight:700; color:var(--text); flex:1; }
+    .finding-count { font-size:.72rem; color:var(--muted); background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:1px 8px; }
+    .finding-expand { color:var(--dim); font-size:.75rem; transition:transform .2s; }
+    .finding-expand.open { transform:rotate(180deg); }
+    .finding-body { display:none; padding:0 16px 14px; border-top:1px solid var(--border); }
+    .finding-body.open { display:block; }
+    .finding-desc { font-size:.8rem; color:var(--muted); line-height:1.5; margin:10px 0; }
+    .sev-pill { font-size:.65rem; font-weight:700; padding:2px 8px; border-radius:4px; text-transform:uppercase; letter-spacing:.04em; flex-shrink:0; }
+    .sev-critical { background:rgba(248,113,113,.15); color:var(--red); border:1px solid rgba(248,113,113,.3); }
+    .sev-error    { background:rgba(251,146,60,.15);  color:#fb923c; border:1px solid rgba(251,146,60,.3); }
+    .sev-warning  { background:rgba(251,191,36,.15);  color:var(--amber); border:1px solid rgba(251,191,36,.3); }
+    .sev-info     { background:rgba(96,165,250,.15);  color:#60a5fa; border:1px solid rgba(96,165,250,.3); }
+    .rec-list { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+    .rec-item { background:rgba(96,165,250,.05); border-radius:6px; border-left:2px solid #60a5fa; overflow:hidden; }
+    .rec-text-row { display:flex; align-items:center; gap:8px; padding:7px 10px; }
+    .rec-arrow { color:#60a5fa; flex-shrink:0; } .rec-text { font-size:.78rem; color:var(--text); flex:1; line-height:1.4; }
+    .rec-cmd-row { display:flex; align-items:center; gap:8px; padding:4px 10px 7px 28px; }
+    .rec-cmd { font-family:var(--font-mono); font-size:.72rem; color:#60a5fa; background:var(--bg); border:1px solid var(--border); border-radius:5px; padding:4px 8px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .rec-copy-btn { flex-shrink:0; padding:3px 8px; border-radius:5px; border:1px solid var(--border2); background:var(--panel2); color:var(--muted); font-family:var(--font-ui); font-size:.68rem; font-weight:600; cursor:pointer; transition:all .15s; }
+    .rec-copy-btn:hover { color:var(--text); border-color:#60a5fa; }
+    .rec-copy-btn.copied { color:var(--green); border-color:rgba(74,222,128,.4); background:rgba(74,222,128,.08); }
+    .raw-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; flex-wrap:wrap; }
+    .table-toggle-btn { display:flex; align-items:center; gap:8px; background:none; border:none; cursor:pointer; font-family:var(--font-ui); padding:0; color:var(--text); }
+    #all-table-icon { font-size:.7rem; color:var(--dim); transition:transform .2s; }
+    .event-search-input { background:var(--panel); border:1px solid var(--border); border-radius:7px; padding:6px 12px; color:var(--text); font-family:var(--font-ui); font-size:.78rem; outline:none; width:220px; transition:border-color .15s; }
+    .event-search-input:focus { border-color:#60a5fa; }
+    .raw-table-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:var(--r); }
+    .event-table { width:100%; border-collapse:collapse; font-size:.72rem; }
+    .event-table th { background:var(--panel2); color:var(--muted); font-weight:700; text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); white-space:nowrap; text-transform:uppercase; letter-spacing:.04em; font-size:.65rem; }
+    .event-table td { padding:6px 10px; border-bottom:1px solid var(--border); color:var(--text); vertical-align:top; }
+    .event-table tr:last-child td { border-bottom:none; }
+    .event-table tr:hover td { background:var(--panel); }
+    .status-ok  { font-family:var(--font-mono); font-size:.72rem; font-weight:700; color:var(--green); }
+    .status-4xx { font-family:var(--font-mono); font-size:.72rem; font-weight:700; color:var(--amber); }
+    .status-401 { font-family:var(--font-mono); font-size:.72rem; font-weight:700; color:var(--red); }
+    .status-5xx { font-family:var(--font-mono); font-size:.72rem; font-weight:700; color:var(--red); }
+    .status-0   { font-family:var(--font-mono); font-size:.72rem; font-weight:700; color:var(--dim); }
+    .url-cell   { max-width:350px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); }
+  </style>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+    }
+
+    let HAR_RULES = [];
+    let allHarRows = [];
+
+    fetch('./data/har-rules.json').then(r => r.json()).then(d => {
+      HAR_RULES = d.rules || [];
+    }).catch(() => {});
+
+    const AUTH_PATTERNS = [
+      'login.microsoftonline.com','login.microsoft.com','login.live.com',
+      'oauth2','msal','token','auth','sso','saml','signin','authorize',
+      'access_token','id_token','refresh_token','graph.microsoft.com/v1.0/me'
+    ];
+
+    function isAuth(url) {
+      const u = url.toLowerCase();
+      return AUTH_PATTERNS.some(p => u.includes(p));
+    }
+
+    function fmtUrl(url) {
+      try { const u = new URL(url); return u.hostname + u.pathname.slice(0,60) + (u.pathname.length>60?'…':''); }
+      catch { return url.slice(0,80); }
+    }
+
+    function fmtTime(s) {
+      return new Date(s).toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    }
+
+    function statusCls(s) {
+      if (s === 401) return 'status-401';
+      if (s === 0)   return 'status-0';
+      if (s >= 500)  return 'status-5xx';
+      if (s >= 400)  return 'status-4xx';
+      return 'status-ok';
+    }
+
+    // ── Upload ────────────────────────────────────────────
+    const zone  = document.getElementById('upload-zone');
+    const input = document.getElementById('file-input');
+    zone.addEventListener('click', () => input.click());
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+    zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag'); if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]); });
+    input.addEventListener('change', e => { if (e.target.files[0]) processFile(e.target.files[0]); });
+
+    function setProgress(v) { document.getElementById('progress-fill').style.width = v + '%'; }
+
+    function processFile(file) {
+      zone.style.opacity = '0.5';
+      document.getElementById('progress-wrap').style.display = '';
+      setProgress(10);
+      const reader = new FileReader();
+      reader.onload = e => {
+        setProgress(40);
+        setTimeout(() => {
+          try {
+            const har = JSON.parse(e.target.result);
+            setProgress(80);
+            analyze(har, file.name);
+            setProgress(100);
+            setTimeout(() => {
+              document.getElementById('progress-wrap').style.display = 'none';
+              zone.classList.add('done');
+              zone.querySelector('.upload-text').textContent = '✅ ' + file.name;
+              zone.style.opacity = '1';
+            }, 300);
+          } catch(err) {
+            alert('Fehler beim Lesen: ' + err.message);
+            zone.style.opacity = '1';
+            document.getElementById('progress-wrap').style.display = 'none';
+          }
+        }, 50);
+      };
+      reader.readAsText(file);
+    }
+
+    function analyze(har, filename) {
+      const entries = har.log?.entries || [];
+      let errors = [], authReqs = [], cookies = new Map();
+      let first401Time = null;
+
+      allHarRows = [];
+
+      entries.forEach(en => {
+        const url    = en.request?.url || '';
+        const status = en.response?.status || 0;
+        const time   = en.startedDateTime || '';
+        const dur    = Math.round(en.time || 0);
+        const size   = en.response?.content?.size || 0;
+
+        (en.response?.cookies || []).forEach(c => {
+          cookies.set(c.name, { domain: c.domain || fmtUrl(url).split('/')[0], expires: c.expires || 'Session', secure: !!c.secure });
+        });
+
+        allHarRows.push({ url, status, method: en.request?.method || '', time, dur, size });
+
+        if (status === 401 || status === 403 || status >= 500 || status === 0) {
+          errors.push({ url, status, time, dur });
+          if (status === 401 && !first401Time) first401Time = time;
+        }
+        if (isAuth(url)) authReqs.push({ url, status, time, dur });
+      });
+
+      // Stats grid
+      const grid = document.getElementById('stats-grid');
+      grid.replaceChildren();
+      const total   = entries.length;
+      const err401  = errors.filter(e => e.status === 401).length;
+      const err4xx  = errors.filter(e => e.status >= 400 && e.status < 500).length;
+      const err5xx  = errors.filter(e => e.status >= 500).length;
+      const netErr  = errors.filter(e => e.status === 0).length;
+      const slowReqs = allHarRows.filter(r => r.dur > 3000).length;
+
+      [
+        ['📊 Requests', total, ''],
+        ['🔑 Auth-Requests', authReqs.length, authReqs.length > 0 ? 'good' : ''],
+        ['🔴 401 Errors', err401, err401 > 0 ? 'bad' : 'good'],
+        ['🟠 4xx Fehler', err4xx, err4xx > 0 ? 'warn' : 'good'],
+        ['🔴 5xx Fehler', err5xx, err5xx > 0 ? 'bad' : 'good'],
+        ['🌐 Netzwerkfehler', netErr, netErr > 0 ? 'warn' : ''],
+        ['🐢 Langsam >3s', slowReqs, slowReqs > 0 ? 'warn' : ''],
+        ['🍪 Cookies', cookies.size, ''],
+      ].forEach(([label, value, cls]) => {
+        const item = document.createElement('div');
+        item.className = 'sys-item' + (cls === 'bad' ? ' item-bad' : cls === 'warn' ? ' item-warn' : cls === 'good' ? ' item-good' : '');
+        const lbl = document.createElement('div'); lbl.className = 'sys-label'; lbl.textContent = label;
+        const val = document.createElement('div'); val.className = 'sys-value' + (cls ? ' ' + cls : ''); val.textContent = value;
+        item.appendChild(lbl); item.appendChild(val);
+        grid.appendChild(item);
+      });
+
+      // Run rules + built-in findings
+      const findings = runHarRules(allHarRows, errors, authReqs, first401Time, cookies);
+      document.getElementById('findings-count').textContent = findings.length;
+      renderHarFindings(findings);
+
+      // Auth table
+      document.getElementById('auth-count').textContent = authReqs.length;
+      renderSimpleTable('auth-table', authReqs);
+
+      // Error table
+      document.getElementById('errors-count').textContent = errors.length;
+      document.getElementById('errors-section').style.display = errors.length ? '' : 'none';
+      renderSimpleTable('error-table', errors);
+
+      // All table
+      document.getElementById('all-count').textContent = allHarRows.length + ' Requests';
+      renderAllTable(allHarRows);
+
+      document.getElementById('results-section').style.display = '';
+      setTimeout(() => document.getElementById('results-section').scrollIntoView({ behavior:'smooth', block:'start' }), 150);
+    }
+
+    function runHarRules(rows, errors, authReqs, first401Time, cookies) {
+      const results = [];
+
+      // Built-in rules (from original analyzer logic)
+      const err401 = errors.filter(e => e.status === 401);
+      const authAfter401 = authReqs.filter(r => first401Time && r.time > first401Time);
+
+      if (err401.length > 0 && authAfter401.length === 0) {
+        results.push({
+          severity: 'critical', title: 'Kein Token-Refresh nach 401 erkannt',
+          count: err401.length,
+          desc: 'Nach dem ersten 401-Fehler wurde kein erneuter Auth-Request an login.microsoftonline.com gefunden. Der Refresh-Token ist möglicherweise abgelaufen oder MSAL kann nicht auf den Token-Cache zugreifen.',
+          recs: [{ text:'Browser-Cache und Cookies vollständig leeren', type:'fix', risk:'low' }, { text:'Inkognito-Fenster testen', type:'diagnose', risk:'low' }, { text:'MSAL Token Cache prüfen', type:'diagnose', risk:'low' }]
+        });
+      }
+
+      const failedAuth = authReqs.filter(r => r.status >= 400);
+      if (failedAuth.length > 0) {
+        results.push({
+          severity: 'error', title: `${failedAuth.length} fehlgeschlagene Auth-Requests`,
+          count: failedAuth.length,
+          desc: 'Auth-Endpunkte antworten mit Fehlern. Deutet auf ungültige Tokens, falsche Tenant-Konfiguration oder gesperrte App-Registrierung hin.',
+          recs: [{ text:'Benutzer abmelden und neu anmelden', type:'fix', risk:'low' }, { text:'App-Registrierung in Entra prüfen', type:'diagnose', risk:'low' }]
+        });
+      }
+
+      // Auth loop detection
+      if (err401.length >= 3 && failedAuth.length >= 3) {
+        results.push({
+          severity: 'critical', title: 'Authentifizierungs-Schleife erkannt',
+          count: err401.length + failedAuth.length,
+          desc: 'Mehrere 401-Fehler gefolgt von fehlgeschlagenen Token-Anfragen. Klassische Auth-Loop: Token wird angefordert, aber sofort abgelehnt.',
+          recs: [{ text:'Browser-Cache vollständig leeren', type:'fix', risk:'low' }, { text:'Systemzeit prüfen', cmd:'w32tm /query /status', type:'diagnose', risk:'low' }]
+        });
+      }
+
+      // Network errors
+      const netErrors = errors.filter(e => e.status === 0);
+      if (netErrors.length > 0) {
+        results.push({
+          severity: 'warning', title: `${netErrors.length} Netzwerkfehler (Status 0)`,
+          count: netErrors.length,
+          desc: 'Requests mit Status 0 deuten auf CORS-Fehler, abgebrochene Verbindungen oder Netzwerkunterbrechungen hin.',
+          recs: [{ text:'CORS-Konfiguration der App prüfen', type:'diagnose', risk:'low' }, { text:'Netzwerkverbindung prüfen', type:'diagnose', risk:'low' }]
+        });
+      }
+
+      // Slow auth
+      const slowAuth = authReqs.filter(r => r.dur > 3000);
+      if (slowAuth.length > 0) {
+        results.push({
+          severity: 'warning', title: 'Langsame Auth-Endpunkte',
+          count: slowAuth.length,
+          desc: `${slowAuth.length} Auth-Requests dauerten länger als 3 Sekunden. Kann zu Timeouts und trägen App-Starts führen.`,
+          recs: [{ text:'Netzwerkverbindung zu login.microsoftonline.com testen', cmd:'Test-NetConnection login.microsoftonline.com -Port 443', type:'diagnose', risk:'low' }, { text:'Proxy/VPN prüfen', type:'diagnose', risk:'low' }]
+        });
+      }
+
+      // Large payloads
+      const largeReqs = rows.filter(r => r.size > 1048576);
+      if (largeReqs.length >= 3) {
+        results.push({
+          severity: 'info', title: `${largeReqs.length} sehr große Anfragen (>1MB)`,
+          count: largeReqs.length,
+          desc: 'Mehrere Anfragen übertragen mehr als 1MB. Kann Performance-Probleme verursachen, besonders über VPN.',
+          recs: [{ text:'Große Anfragen identifizieren', type:'diagnose', risk:'low' }]
+        });
+      }
+
+      // Token gap
+      if (authReqs.length >= 2) {
+        for (let i = 1; i < authReqs.length; i++) {
+          const diff = (new Date(authReqs[i].time) - new Date(authReqs[i-1].time)) / 60000;
+          if (diff > 60) {
+            results.push({
+              severity: 'warning', title: 'Lange Lücke zwischen Auth-Requests',
+              count: 1,
+              desc: `${Math.round(diff)} Minuten ohne Token-Renewal. Access Tokens laufen nach 60-75 Min ab – fehlendes Silent-Renewal deutet auf ein MSAL-Problem hin.`,
+              recs: [{ text:'MSAL Silent Token Renewal prüfen', type:'diagnose', risk:'low' }, { text:'Token Lifetime Policy prüfen', type:'diagnose', risk:'low' }]
+            });
+            break;
+          }
+        }
+      }
+
+      if (!results.length) {
+        results.push({ severity:'info', title:'✅ Keine kritischen Probleme gefunden', count:0, desc:'Keine Auth-Fehler oder kritische Muster erkannt.', recs:[] });
+      }
+
+      const ord = { critical:0, error:1, warning:2, info:3 };
+      return results.sort((a,b) => (ord[a.severity]||3)-(ord[b.severity]||3));
+    }
+
+    function renderHarFindings(findings) {
+      const container = document.getElementById('findings');
+      container.replaceChildren();
+      findings.forEach(f => {
+        const card = document.createElement('div');
+        card.className = 'finding-card'; card.dataset.sev = f.severity;
+        const header = document.createElement('div'); header.className = 'finding-header';
+        const sevPill = document.createElement('span'); sevPill.className = 'sev-pill sev-'+f.severity; sevPill.textContent = f.severity;
+        const title = document.createElement('span'); title.className = 'finding-title'; title.textContent = f.title;
+        const expand = document.createElement('span'); expand.className = 'finding-expand'; expand.textContent = '▼';
+        header.appendChild(sevPill); header.appendChild(title); header.appendChild(expand);
+        header.addEventListener('click', () => { const body=header.nextElementSibling; expand.classList.toggle('open',body.classList.toggle('open')); });
+        const body = document.createElement('div'); body.className = 'finding-body';
+        if (f.severity === 'critical' || f.severity === 'error') { body.classList.add('open'); expand.classList.add('open'); }
+        const desc = document.createElement('p'); desc.className = 'finding-desc'; desc.textContent = f.desc;
+        body.appendChild(desc);
+        if (f.recs?.length) {
+          const recList = document.createElement('div'); recList.className = 'rec-list';
+          f.recs.forEach(rec => {
+            const item = document.createElement('div'); item.className = 'rec-item';
+            const tr = document.createElement('div'); tr.className = 'rec-text-row';
+            const arrow = document.createElement('span'); arrow.className = 'rec-arrow'; arrow.textContent = '→';
+            const text = document.createElement('span'); text.className = 'rec-text'; text.textContent = rec.text;
+            tr.appendChild(arrow); tr.appendChild(text); item.appendChild(tr);
+            if (rec.cmd) {
+              const cr = document.createElement('div'); cr.className = 'rec-cmd-row';
+              const ce = document.createElement('code'); ce.className = 'rec-cmd'; ce.textContent = rec.cmd.length>80?rec.cmd.substring(0,80)+'…':rec.cmd; ce.title=rec.cmd;
+              const cb = document.createElement('button'); cb.className='rec-copy-btn'; cb.textContent='📋 Kopieren';
+              cb.addEventListener('click',()=>{navigator.clipboard?.writeText(rec.cmd).then(()=>{cb.textContent='✓ Kopiert';cb.classList.add('copied');setTimeout(()=>{cb.textContent='📋 Kopieren';cb.classList.remove('copied');},1500);});});
+              cr.appendChild(ce); cr.appendChild(cb); item.appendChild(cr);
+            }
+            recList.appendChild(item);
+          });
+          body.appendChild(recList);
+        }
+        card.appendChild(header); card.appendChild(body);
+        container.appendChild(card);
+      });
+    }
+
+    function renderSimpleTable(tbodyId, rows) {
+      const tbody = document.getElementById(tbodyId);
+      const frag = document.createDocumentFragment();
+      if (!rows.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td'); td.colSpan = 4; td.textContent = 'Keine Einträge'; td.style.cssText = 'text-align:center;color:var(--dim);padding:24px';
+        tr.appendChild(td); frag.appendChild(tr);
+      } else {
+        rows.slice(0,200).forEach(r => {
+          const tr = document.createElement('tr');
+          [
+            { text: fmtTime(r.time), mono:true },
+            { html: `<span class="${statusCls(r.status)}">${r.status}</span>` },
+            { text: fmtUrl(r.url), cls:'url-cell' },
+            { text: r.dur + 'ms', mono:true },
+          ].forEach(cell => {
+            const td = document.createElement('td');
+            if (cell.html) { td.innerHTML = cell.html; }
+            else { td.textContent = cell.text; if (cell.mono) td.style.fontFamily='var(--font-mono)'; if (cell.cls) td.className=cell.cls; }
+            tr.appendChild(td);
+          });
+          frag.appendChild(tr);
+        });
+      }
+      tbody.replaceChildren(frag);
+    }
+
+    function renderAllTable(rows) {
+      const tbody = document.getElementById('all-table');
+      const frag = document.createDocumentFragment();
+      rows.slice(0,1000).forEach(r => {
+        const tr = document.createElement('tr');
+        [
+          { text: fmtTime(r.time), mono:true },
+          { html: `<span class="${statusCls(r.status)}">${r.status}</span>` },
+          { text: r.method, mono:true },
+          { text: fmtUrl(r.url), cls:'url-cell' },
+          { text: (r.size/1024).toFixed(1)+'KB', mono:true },
+          { text: r.dur+'ms', mono:true },
+        ].forEach(cell => {
+          const td = document.createElement('td');
+          if (cell.html) { td.innerHTML = cell.html; }
+          else { td.textContent = cell.text||''; if (cell.mono) td.style.fontFamily='var(--font-mono)'; if (cell.cls) td.className=cell.cls; }
+          tr.appendChild(td);
+        });
+        frag.appendChild(tr);
+      });
+      tbody.replaceChildren(frag);
+    }
+
+    function filterAll() {
+      const q = document.getElementById('search-input').value.toLowerCase();
+      const filtered = q ? allHarRows.filter(r => r.url.toLowerCase().includes(q) || String(r.status).includes(q)) : allHarRows;
+      document.getElementById('all-count').textContent = filtered.length + ' Requests';
+      renderAllTable(filtered);
+    }
+
+    function toggleAllTable() {
+      const wrap = document.getElementById('all-table-wrap');
+      const icon = document.getElementById('all-table-icon');
+      const hidden = wrap.style.display === 'none';
+      wrap.style.display = hidden ? '' : 'none';
+      icon.style.transform = hidden ? '' : 'rotate(-90deg)';
+    }
+  </script>
+
+  <script src="nav.js"></script>
+</body>
+</html>
