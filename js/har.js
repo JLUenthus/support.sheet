@@ -80,6 +80,29 @@ if ('serviceWorker' in navigator) {
       reader.readAsText(file);
     }
 
+    // ── Known noise patterns to filter from performance metrics ──
+    const TELEMETRY_DOMAINS = [
+      'events.data.microsoft.com', 'browser.events.data.microsoft.com',
+      'eu-office.events.data.microsoft.com', 'self.events.data.microsoft.com',
+      'watson.telemetry.microsoft.com', 'vortex.data.microsoft.com',
+    ];
+    const LONGPOLL_PATTERNS = [
+      'substrate.office.com/todob2/api/v1/realtime',
+      '/realtime', '/longpoll', '/comet', '/push',
+    ];
+
+    function isTelemetry(url) {
+      return TELEMETRY_DOMAINS.some(d => url.includes(d));
+    }
+    function isLongPoll(url, dur, status) {
+      // WebSocket upgrades or long-running connections are not real slow requests
+      if (status === 101) return true;
+      return LONGPOLL_PATTERNS.some(p => url.includes(p)) && dur > 10000;
+    }
+    function isNoise(url, dur, status) {
+      return isTelemetry(url) || isLongPoll(url, dur, status);
+    }
+
     function analyze(har, filename) {
       const entries = har.log?.entries || [];
       let errors = [], authReqs = [], cookies = new Map();
@@ -93,39 +116,46 @@ if ('serviceWorker' in navigator) {
         const time   = en.startedDateTime || '';
         const dur    = Math.round(en.time || 0);
         const size   = en.response?.content?.size || 0;
+        const noise  = isNoise(url, dur, status);
 
         (en.response?.cookies || []).forEach(c => {
           cookies.set(c.name, { domain: c.domain || fmtUrl(url).split('/')[0], expires: c.expires || 'Session', secure: !!c.secure });
         });
 
-        allHarRows.push({ url, status, method: en.request?.method || '', time, dur, size });
+        allHarRows.push({ url, status, method: en.request?.method || '', time, dur, size, noise });
 
-        if (status === 401 || status === 403 || status >= 500 || status === 0) {
+        // Only count real errors – not telemetry noise
+        if (!noise && (status === 401 || status === 403 || status >= 500 || status === 0)) {
           errors.push({ url, status, time, dur });
           if (status === 401 && !first401Time) first401Time = time;
         }
         if (isAuth(url)) authReqs.push({ url, status, time, dur });
       });
 
-      // Stats grid
+      // Stats – exclude noise from meaningful metrics
+      const realRows    = allHarRows.filter(r => !r.noise);
+      const telemetryN  = allHarRows.filter(r => isTelemetry(r.url)).length;
+      const longPollN   = allHarRows.filter(r => isLongPoll(r.url, r.dur, r.status)).length;
+      const total       = entries.length;
+      const err401      = errors.filter(e => e.status === 401).length;
+      const err4xx      = errors.filter(e => e.status >= 400 && e.status < 500).length;
+      const err5xx      = errors.filter(e => e.status >= 500).length;
+      const netErr      = errors.filter(e => e.status === 0).length;
+      // Slow = real requests > 3s, excluding longpoll/websocket
+      const slowReqs    = realRows.filter(r => r.dur > 3000 && r.status !== 101).length;
+      const telemetryPct = Math.round(telemetryN / total * 100);
+
       const grid = document.getElementById('stats-grid');
       grid.replaceChildren();
-      const total   = entries.length;
-      const err401  = errors.filter(e => e.status === 401).length;
-      const err4xx  = errors.filter(e => e.status >= 400 && e.status < 500).length;
-      const err5xx  = errors.filter(e => e.status >= 500).length;
-      const netErr  = errors.filter(e => e.status === 0).length;
-      const slowReqs = allHarRows.filter(r => r.dur > 3000).length;
-
       [
-        ['📊 Requests', total, ''],
+        ['📊 Requests gesamt', total, ''],
+        ['📡 Telemetrie', `${telemetryN} (${telemetryPct}%)`, telemetryPct > 30 ? 'warn' : ''],
         ['🔑 Auth-Requests', authReqs.length, authReqs.length > 0 ? 'good' : ''],
         ['🔴 401 Errors', err401, err401 > 0 ? 'bad' : 'good'],
         ['🟠 4xx Fehler', err4xx, err4xx > 0 ? 'warn' : 'good'],
         ['🔴 5xx Fehler', err5xx, err5xx > 0 ? 'bad' : 'good'],
         ['🌐 Netzwerkfehler', netErr, netErr > 0 ? 'warn' : ''],
         ['🐢 Langsam >3s', slowReqs, slowReqs > 0 ? 'warn' : ''],
-        ['🍪 Cookies', cookies.size, ''],
       ].forEach(([label, value, cls]) => {
         const item = document.createElement('div');
         item.className = 'sys-item' + (cls === 'bad' ? ' item-bad' : cls === 'warn' ? ' item-warn' : cls === 'good' ? ' item-good' : '');
@@ -135,21 +165,17 @@ if ('serviceWorker' in navigator) {
         grid.appendChild(item);
       });
 
-      // Run rules + built-in findings
-      const findings = runHarRules(allHarRows, errors, authReqs, first401Time, cookies);
+      const findings = runHarRules(allHarRows, errors, authReqs, first401Time, cookies, telemetryPct);
       document.getElementById('findings-count').textContent = findings.length;
       renderHarFindings(findings);
 
-      // Auth table
       document.getElementById('auth-count').textContent = authReqs.length;
       renderSimpleTable('auth-table', authReqs);
 
-      // Error table
       document.getElementById('errors-count').textContent = errors.length;
       document.getElementById('errors-section').style.display = errors.length ? '' : 'none';
       renderSimpleTable('error-table', errors);
 
-      // All table
       document.getElementById('all-count').textContent = allHarRows.length + ' Requests';
       renderAllTable(allHarRows);
 
@@ -157,10 +183,11 @@ if ('serviceWorker' in navigator) {
       setTimeout(() => document.getElementById('results-section').scrollIntoView({ behavior:'smooth', block:'start' }), 150);
     }
 
-    function runHarRules(rows, errors, authReqs, first401Time, cookies) {
+    function runHarRules(rows, errors, authReqs, first401Time, cookies, telemetryPct) {
       const results = [];
+      const realRows = rows.filter(r => !r.noise);
 
-      // Built-in rules (from original analyzer logic)
+      // Built-in rules
       const err401 = errors.filter(e => e.status === 401);
       const authAfter401 = authReqs.filter(r => first401Time && r.time > first401Time);
 
@@ -242,6 +269,51 @@ if ('serviceWorker' in navigator) {
         }
       }
 
+      // ── JSON Rules from har-rules.json ───────────────────
+      HAR_RULES.forEach(rule => {
+        // urlPattern404: specific URL pattern returning 404
+        if (rule.check === 'urlPattern404' && rule.urlPattern) {
+          const re = new RegExp(rule.urlPattern, 'i');
+          const matched = errors.filter(e => e.status === 404 && re.test(e.url));
+          if (matched.length > 0) {
+            results.push({
+              severity: rule.severity, title: rule.name, count: matched.length,
+              desc: rule.description, recs: rule.recommendations || []
+            });
+          }
+        }
+
+        // telemetryFlood
+        if (rule.check === 'telemetryFlood' && telemetryPct > (rule.telemetryThreshold || 30)) {
+          results.push({
+            severity: rule.severity, title: rule.name + ` (${telemetryPct}%)`, count: 0,
+            desc: rule.description, recs: rule.recommendations || []
+          });
+        }
+
+        // substrateLongPoll
+        if (rule.check === 'substrateLongPoll') {
+          const n = rows.filter(r => r.url.includes('substrate.office.com') && r.dur > 10000).length;
+          if (n >= (rule.minCount || 10)) {
+            results.push({
+              severity: rule.severity, title: rule.name + ` (${n}×)`, count: n,
+              desc: rule.description, recs: rule.recommendations || []
+            });
+          }
+        }
+
+        // websocketLongDuration
+        if (rule.check === 'websocketLongDuration') {
+          const n = rows.filter(r => r.status === 101).length;
+          if (n > 0) {
+            results.push({
+              severity: rule.severity, title: rule.name + ` (${n} Verbindung${n>1?'en':''})`, count: n,
+              desc: rule.description, recs: rule.recommendations || []
+            });
+          }
+        }
+      });
+
       if (!results.length) {
         results.push({ severity:'info', title:'✅ Keine kritischen Probleme gefunden', count:0, desc:'Keine Auth-Fehler oder kritische Muster erkannt.', recs:[] });
       }
@@ -322,6 +394,7 @@ if ('serviceWorker' in navigator) {
       const frag = document.createDocumentFragment();
       rows.slice(0,1000).forEach(r => {
         const tr = document.createElement('tr');
+        if (r.noise) tr.style.opacity = '0.45';
         [
           { text: fmtTime(r.time), mono:true },
           { html: `<span class="${statusCls(r.status)}">${r.status}</span>` },
