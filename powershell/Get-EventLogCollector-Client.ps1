@@ -3,7 +3,7 @@
 .SYNOPSIS
     Event Log Collector fuer Windows 11 Clients - AdminSheet Event Log Analyzer
 .NOTES
-    Autor: AdminSheet | Version: 1.2
+    Autor: AdminSheet | Version: 1.3
     Benoetigt: PowerShell 5.1+, Admin-Rechte
     Kompatibel: Windows 10/11
 #>
@@ -138,6 +138,13 @@ Collect-Events 'Security' @(4648)             $null   'Anmeldung mit expliziten 
 Write-Host "[7] Windows Update" -ForegroundColor Yellow
 Collect-Events 'System' @(20,24,25,31,34,35) @(2,3)  'Windows Update Fehler'                 'Update'
 Collect-Events 'Setup'  $null                @(2)    'Setup Fehler'                           'Update'
+
+# --- Azure AD / Entra Authentifizierung ---
+Write-Host "[8] Azure AD / Entra Authentifizierung" -ForegroundColor Yellow
+Collect-Events 'Microsoft-Windows-AAD/Operational'       @(1098)       $null   'AAD Token Refresh fehlgeschlagen (1098)'   'Auth'
+Collect-Events 'Microsoft-Windows-AAD/Operational'       @(1104)       $null   'AAD Stiller Token Refresh Fehler (1104)'   'Auth'
+Collect-Events 'Microsoft-Windows-AAD/Operational'       $null         @(2,3)  'AAD Fehler/Warnungen allgemein'            'Auth'
+Collect-Events 'Microsoft-Windows-WebAuthN/Operational'  $null         @(2)    'WebAuthN Fehler'                           'Auth'
 
 # --- Metadaten ---
 Write-Host ""
