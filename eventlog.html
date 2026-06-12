@@ -108,6 +108,44 @@
         </div>
       </section>
 
+      <!-- Auth Block – nur sichtbar wenn Auth-Events vorhanden -->
+      <section class="el-section" id="auth-block" style="display:none">
+        <h2 class="section-title">🔐 Entra ID / AAD Authentifizierung</h2>
+
+        <!-- 1098 Warn-Banner -->
+        <div id="auth-1098-banner" style="display:none" class="auth-warn-banner">
+          <div class="auth-warn-icon">⚠️</div>
+          <div class="auth-warn-body">
+            <div class="auth-warn-title">Token Refresh Fehler erkannt (EventID 1098)</div>
+            <div class="auth-warn-desc">
+              EventID 1098 bedeutet dass das Entra ID Gerätezertifikat keinen neuen Access Token ausstellen konnte.
+              Alle Apps die Silent Authentication nutzen (Teams, Outlook, OneDrive) sind betroffen –
+              der Benutzer sieht Anmeldedialoge oder Apps starten nicht.
+              <strong><span id="auth-1098-count">0</span>× aufgetreten</strong>, erster Eintrag: <span id="auth-1098-first">–</span>.
+            </div>
+            <div class="auth-warn-steps">
+              <div class="auth-step"><span class="auth-step-num">1</span><code>dsregcmd /status</code> – PRT und AzureAdJoined prüfen</div>
+              <div class="auth-step"><span class="auth-step-num">2</span>Benutzer abmelden, alle M365-Apps schließen, neu anmelden</div>
+              <div class="auth-step"><span class="auth-step-num">3</span>Falls PRT fehlt: <code>dsregcmd /leave</code> → <code>dsregcmd /join</code></div>
+              <div class="auth-step"><span class="auth-step-num">4</span>Entra Sign-In Logs prüfen → im Entra Analyzer hochladen</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Auth Summary Grid -->
+        <div class="sys-grid" id="auth-grid" style="margin-bottom:14px"></div>
+
+        <!-- Auth Ereignistabelle -->
+        <div class="raw-table-wrap">
+          <table class="event-table">
+            <thead>
+              <tr><th>Zeit</th><th>ID</th><th>Level</th><th>Quelle</th><th>Nachricht</th></tr>
+            </thead>
+            <tbody id="auth-events-table"></tbody>
+          </table>
+        </div>
+      </section>
+
       <!-- Root Cause Correlations -->
       <section class="el-section" id="correlation-section" hidden>
         <h2 class="section-title">🎯 Wahrscheinliche Hauptursachen <span id="correlation-count" class="section-count">0</span></h2>
@@ -303,7 +341,29 @@
     /* Harmless badge */
     .harmless-badge { display:inline-block; margin-left:6px; font-size:.62rem; font-weight:700; padding:1px 6px; border-radius:4px; background:rgba(74,222,128,.1); color:var(--green); border:1px solid rgba(74,222,128,.25); cursor:help; white-space:nowrap; }
 
-    /* ── Upload Preview ──────────────────────────────────── */
+    /* ── Auth Block ──────────────────────────────────────── */
+    .auth-warn-banner {
+      display:flex; gap:14px; align-items:flex-start;
+      padding:16px; margin-bottom:16px;
+      background:rgba(248,113,113,.07);
+      border:1px solid rgba(248,113,113,.3);
+      border-left:4px solid var(--red);
+      border-radius:var(--r);
+    }
+    .auth-warn-icon { font-size:1.4rem; flex-shrink:0; margin-top:2px; }
+    .auth-warn-body { flex:1; }
+    .auth-warn-title { font-size:.9rem; font-weight:700; color:var(--red); margin-bottom:6px; }
+    .auth-warn-desc  { font-size:.8rem; color:var(--muted); line-height:1.6; margin-bottom:12px; }
+    .auth-warn-desc strong { color:var(--text); }
+    .auth-warn-steps { display:flex; flex-direction:column; gap:6px; }
+    .auth-step { display:flex; align-items:flex-start; gap:10px; font-size:.78rem; color:var(--muted); }
+    .auth-step code { font-family:var(--font-mono); font-size:.75rem; color:var(--accent); background:rgba(124,140,248,.1); padding:1px 6px; border-radius:4px; }
+    .auth-step-num {
+      width:20px; height:20px; border-radius:50%; flex-shrink:0;
+      background:rgba(248,113,113,.15); border:1px solid rgba(248,113,113,.3);
+      color:var(--red); font-size:.68rem; font-weight:700;
+      display:flex; align-items:center; justify-content:center; margin-top:1px;
+    }
     .upload-preview { margin-top:16px; }
     .upload-preview-title { font-size:.72rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
     .upload-preview-items { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; }
@@ -586,8 +646,91 @@
         sysGrid.appendChild(item);
       }
 
-      // Summary pills
-      const pills = document.getElementById('summary-pills');
+      // Auth Events – separat auswerten und als eigene Sektion anzeigen
+      const authEvents   = events.filter(e => (e.Category||'') === 'Auth');
+      const auth1098     = authEvents.filter(e => Number(e.Id) === 1098);
+      const auth1104     = authEvents.filter(e => Number(e.Id) === 1104);
+      const authOther    = authEvents.filter(e => ![1098,1104].includes(Number(e.Id)));
+
+      if (authEvents.length > 0) {
+        const authBlock = document.getElementById('auth-block');
+        if (authBlock) {
+          authBlock.style.display = '';
+
+          // 1098 Banner – prominenter Warnhinweis
+          const banner1098 = document.getElementById('auth-1098-banner');
+          if (banner1098) {
+            if (auth1098.length > 0) {
+              banner1098.style.display = '';
+              const countEl = document.getElementById('auth-1098-count');
+              if (countEl) countEl.textContent = auth1098.length;
+              const firstEl = document.getElementById('auth-1098-first');
+              if (firstEl && auth1098.length) {
+                const t = auth1098[auth1098.length-1].TimeCreated || '';
+                firstEl.textContent = t.replace('T',' ').substring(0,16);
+              }
+            } else {
+              banner1098.style.display = 'none';
+            }
+          }
+
+          // Auth Summary Grid
+          const authGrid = document.getElementById('auth-grid');
+          if (authGrid) {
+            authGrid.replaceChildren();
+            const authItems = [
+              ['🔐 Auth Events gesamt', authEvents.length, authEvents.length > 5 ? 'warn' : ''],
+              ['🔴 Token Refresh (1098)', auth1098.length, auth1098.length > 0 ? 'bad' : 'good'],
+              ['🟡 Silent Refresh (1104)', auth1104.length, auth1104.length > 3 ? 'warn' : auth1104.length > 0 ? '' : 'good'],
+              ['ℹ️ Sonstige AAD Events', authOther.length, ''],
+            ];
+            authItems.forEach(([label, value, cls]) => {
+              const item = document.createElement('div');
+              item.className = 'sys-item' + (cls === 'bad' ? ' item-bad' : cls === 'warn' ? ' item-warn' : cls === 'good' ? ' item-good' : '');
+              const lbl = document.createElement('div'); lbl.className = 'sys-label'; lbl.textContent = label;
+              const val = document.createElement('div'); val.className = 'sys-value' + (cls ? ' ' + cls : ''); val.textContent = value;
+              item.appendChild(lbl); item.appendChild(val);
+              authGrid.appendChild(item);
+            });
+          }
+
+          // Auth Ereignistabelle
+          const authTbody = document.getElementById('auth-events-table');
+          if (authTbody) {
+            const frag = document.createDocumentFragment();
+            authEvents.slice(0, 50).forEach(e => {
+              const tr = document.createElement('tr');
+              const is1098 = Number(e.Id) === 1098;
+              const is1104 = Number(e.Id) === 1104;
+              if (is1098) tr.style.background = 'rgba(248,113,113,.06)';
+
+              [
+                { text: (e.TimeCreated||'').replace('T',' ').substring(0,19), mono:true },
+                { html: is1098
+                    ? `<span style="font-family:var(--font-mono);font-weight:700;color:var(--red)">${e.Id} ⚠️</span>`
+                    : `<span style="font-family:var(--font-mono);color:var(--accent)">${e.Id}</span>` },
+                { text: e.Level || '' },
+                { text: (e.ProviderName||'').replace('Microsoft-Windows-',''), muted:true },
+                { text: (e.Message||'').substring(0,100), muted:true },
+              ].forEach(cell => {
+                const td = document.createElement('td');
+                if (cell.html) td.innerHTML = cell.html;
+                else {
+                  td.textContent = cell.text || '';
+                  if (cell.mono) td.style.fontFamily = 'var(--font-mono)';
+                  if (cell.muted) td.style.color = 'var(--muted)';
+                }
+                tr.appendChild(td);
+              });
+              frag.appendChild(tr);
+            });
+            authTbody.replaceChildren(frag);
+          }
+        }
+      } else {
+        const authBlock = document.getElementById('auth-block');
+        if (authBlock) authBlock.style.display = 'none';
+      }
       pills.replaceChildren();
       [
         { label: totalEvents + ' Ereignisse', cls: '' },
