@@ -1059,6 +1059,122 @@
         "absturz"
       ],
       "communityCount": 0
+    },
+    {
+      "id": "AAD_TOKEN_REFRESH_FAIL",
+      "name": "Entra ID Token Refresh fehlgeschlagen (1098)",
+      "severity": "error",
+      "category": "Auth",
+      "description": "EventID 1098 im AAD-Log bedeutet dass ein Token-Refresh gescheitert ist. Betrifft alle Apps die Silent Authentication nutzen (Teams, Outlook, OneDrive, SharePoint). Häufige Ursachen: abgelaufenes Refresh-Token, Conditional Access Richtlinie, Gerät nicht mehr konform oder AAD-Join-Problem.",
+      "eventIds": [
+        1098
+      ],
+      "sources": [
+        "Microsoft-Windows-AAD"
+      ],
+      "minOccurrences": 1,
+      "recommendations": [
+        {
+          "text": "Benutzer vollständig abmelden und neu anmelden (alle Apps schließen)",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "AAD Token Cache leeren",
+          "cmd": "dsregcmd /leave\ndsregcmd /join",
+          "type": "fix",
+          "risk": "medium"
+        },
+        {
+          "text": "Gerätestatus und AAD-Join prüfen",
+          "cmd": "dsregcmd /status",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Conditional Access Richtlinien im Entra Portal prüfen",
+          "cmd": "Start-Process 'https://entra.microsoft.com/#view/Microsoft_AAD_ConditionalAccess/ConditionalAccessBlade/~/Overview'",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Entra Sign-In Logs auf Fehlercode 70011/70008 prüfen",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "AAD_SILENT_TOKEN_FAIL",
+      "name": "AAD Stiller Token Refresh Fehler (1104)",
+      "severity": "warning",
+      "category": "Auth",
+      "description": "EventID 1104 bedeutet dass ein stiller Token-Refresh (ohne Benutzerinteraktion) fehlgeschlagen ist. Apps fallen auf interaktive Anmeldung zurück – der Benutzer sieht einen Anmeldedialog obwohl er bereits angemeldet ist. Tritt häufig nach Passwortänderung oder MFA-Konfigurationsänderung auf.",
+      "eventIds": [
+        1104
+      ],
+      "sources": [
+        "Microsoft-Windows-AAD"
+      ],
+      "minOccurrences": 3,
+      "recommendations": [
+        {
+          "text": "Benutzer auffordern sich erneut anzumelden",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "Passwortänderung prüfen – nach Passwort-Reset müssen alle Tokens neu ausgestellt werden",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "AAD-Status prüfen",
+          "cmd": "dsregcmd /status | Select-String 'AzureAdJoined|WamDefaultSet|AzureAdPrt'",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "AAD_AUTH_LOOP",
+      "name": "AAD Token Fehler-Häufung – mögliche Auth-Schleife",
+      "severity": "critical",
+      "category": "Auth",
+      "description": "Viele AAD Token-Fehler in kurzer Zeit deuten auf eine Auth-Schleife hin: Apps fordern wiederholt Tokens an, scheitern und versuchen es sofort erneut. Verursacht hohe CPU-Last, Teams/Outlook starten nicht und der Benutzer sieht dauerhaft Anmeldedialoge.",
+      "eventIds": [
+        1098,
+        1104
+      ],
+      "sources": [
+        "Microsoft-Windows-AAD"
+      ],
+      "minOccurrences": 10,
+      "recommendations": [
+        {
+          "text": "Alle Microsoft-Apps schließen und AAD Token Cache leeren",
+          "cmd": "Get-Process -Name 'Teams','OUTLOOK','OneDrive','msedge','chrome' -ErrorAction SilentlyContinue | Stop-Process -Force\ndsregcmd /leave\ndsregcmd /join",
+          "type": "fix",
+          "risk": "medium"
+        },
+        {
+          "text": "Windows Credential Manager bereinigen",
+          "cmd": "cmdkey /list | Where-Object {$_ -match 'MicrosoftOffice|microsoftoffice|MicrosoftEdge'} | ForEach-Object { if ($_ -match 'Ziel: (.+)') { cmdkey /delete:$matches[1] } }",
+          "type": "fix",
+          "risk": "medium"
+        },
+        {
+          "text": "AAD-Status und PRT (Primary Refresh Token) prüfen",
+          "cmd": "dsregcmd /status",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Entra Sign-In Logs auf Fehler prüfen und in Entra Analyzer hochladen",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
     }
   ]
 }

@@ -864,6 +864,51 @@
           "risk": "medium"
         }
       ]
+    },
+    {
+      "id": "AAD_TOKEN_AND_SERVICE_CRASH",
+      "name": "AAD Token-Fehler verursachen App-Abstürze",
+      "type": "correlation",
+      "operator": "AND",
+      "severity": "critical",
+      "category": "Auth",
+      "conditions": [
+        {
+          "eventIds": [
+            1098,
+            1104
+          ],
+          "source": "Microsoft-Windows-AAD",
+          "minCount": 3
+        },
+        {
+          "eventIds": [
+            1000,
+            1001
+          ],
+          "minCount": 2
+        }
+      ],
+      "description": "AAD Token-Refresh-Fehler treten gleichzeitig mit App-Abstürzen auf. Typisches Muster: Teams, Outlook oder andere M365-Apps stürzen ab weil sie kein gültiges Token bekommen. Nicht die App ist das Problem – sondern der Token-Refresh-Mechanismus.",
+      "recommendations": [
+        {
+          "text": "Gerätestatus und Primary Refresh Token prüfen",
+          "cmd": "dsregcmd /status",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Alle M365-Apps schließen und Token-Cache leeren",
+          "cmd": "Get-Process Teams,OUTLOOK,OneDrive -ErrorAction SilentlyContinue | Stop-Process -Force\ndsregcmd /leave && dsregcmd /join",
+          "type": "fix",
+          "risk": "medium"
+        },
+        {
+          "text": "Entra Sign-In Logs auf gleichzeitige Fehler prüfen",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
     }
   ]
 }
