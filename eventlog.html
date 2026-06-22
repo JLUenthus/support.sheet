@@ -123,6 +123,15 @@
               der Benutzer sieht Anmeldedialoge oder Apps starten nicht.
               <strong><span id="auth-1098-count">0</span>× aufgetreten</strong>, erster Eintrag: <span id="auth-1098-first">–</span>.
             </div>
+
+            <!-- 1097-spezifischer Hinweis -->
+            <div id="auth-1097-hint" style="display:none;margin-bottom:10px;padding:8px 12px;background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.3);border-radius:6px;font-size:.78rem;color:#fb923c">
+              🔌 Zusätzlich <strong><span id="auth-1097-count">0</span>× EventID 1097</strong> erkannt
+              (<em>Device information is missing / Device not joined to tenant</em>).
+              Das Gerät verliert bei Netzwerkunterbrechungen den Tenant-Kontext –
+              wahrscheinliche Ursache sind <strong>WLAN-Treiber-Probleme oder instabile Verbindung</strong>.
+              In diesem Fall zuerst Netzwerktreiber aktualisieren bevor AAD-Reset versucht wird.
+            </div>
             <div class="auth-warn-steps">
               <div class="auth-step"><span class="auth-step-num">1</span><code>dsregcmd /status</code> – PRT und AzureAdJoined prüfen</div>
               <div class="auth-step"><span class="auth-step-num">2</span>Benutzer abmelden, alle M365-Apps schließen, neu anmelden</div>
@@ -649,18 +658,22 @@
       // Auth Events – separat auswerten und als eigene Sektion anzeigen
       const authEvents   = events.filter(e => (e.Category||'') === 'Auth');
       const auth1098     = authEvents.filter(e => Number(e.Id) === 1098);
+      const auth1097     = authEvents.filter(e => Number(e.Id) === 1097);
       const auth1104     = authEvents.filter(e => Number(e.Id) === 1104);
-      const authOther    = authEvents.filter(e => ![1098,1104].includes(Number(e.Id)));
+      const authOther    = authEvents.filter(e => ![1097,1098,1104].includes(Number(e.Id)));
+
+      // 1097 = Gerät hat Tenant-Kontext verloren → Ursache der 1098-Kaskade
+      // 1098 ohne 1097 = Token-Refresh direkt gescheitert (CA, PRT-Problem)
+      const hasDeviceIssue = auth1097.length > 0;
 
       if (authEvents.length > 0) {
         const authBlock = document.getElementById('auth-block');
         if (authBlock) {
           authBlock.style.display = '';
 
-          // 1098 Banner – prominenter Warnhinweis
           const banner1098 = document.getElementById('auth-1098-banner');
           if (banner1098) {
-            if (auth1098.length > 0) {
+            if (auth1098.length > 0 || auth1097.length > 0) {
               banner1098.style.display = '';
               const countEl = document.getElementById('auth-1098-count');
               if (countEl) countEl.textContent = auth1098.length;
@@ -669,20 +682,32 @@
                 const t = auth1098[auth1098.length-1].TimeCreated || '';
                 firstEl.textContent = t.replace('T',' ').substring(0,16);
               }
+
+              // 1097-spezifischer Hinweis
+              const hint1097 = document.getElementById('auth-1097-hint');
+              if (hint1097) {
+                if (hasDeviceIssue) {
+                  hint1097.style.display = '';
+                  const cnt1097El = document.getElementById('auth-1097-count');
+                  if (cnt1097El) cnt1097El.textContent = auth1097.length;
+                } else {
+                  hint1097.style.display = 'none';
+                }
+              }
             } else {
               banner1098.style.display = 'none';
             }
           }
 
-          // Auth Summary Grid
           const authGrid = document.getElementById('auth-grid');
           if (authGrid) {
             authGrid.replaceChildren();
             const authItems = [
-              ['🔐 Auth Events gesamt', authEvents.length, authEvents.length > 5 ? 'warn' : ''],
-              ['🔴 Token Refresh (1098)', auth1098.length, auth1098.length > 0 ? 'bad' : 'good'],
-              ['🟡 Silent Refresh (1104)', auth1104.length, auth1104.length > 3 ? 'warn' : auth1104.length > 0 ? '' : 'good'],
-              ['ℹ️ Sonstige AAD Events', authOther.length, ''],
+              ['🔐 Auth Events gesamt',   authEvents.length,  authEvents.length > 5 ? 'warn' : ''],
+              ['🔴 Token Refresh (1098)',  auth1098.length,    auth1098.length > 0 ? 'bad' : 'good'],
+              ['🟠 Device-Fehler (1097)', auth1097.length,    auth1097.length > 0 ? 'bad' : 'good'],
+              ['🟡 Silent Refresh (1104)', auth1104.length,   auth1104.length > 3 ? 'warn' : auth1104.length > 0 ? '' : 'good'],
+              ['ℹ️ Sonstige AAD Events',  authOther.length,   ''],
             ];
             authItems.forEach(([label, value, cls]) => {
               const item = document.createElement('div');
@@ -694,20 +719,22 @@
             });
           }
 
-          // Auth Ereignistabelle
           const authTbody = document.getElementById('auth-events-table');
           if (authTbody) {
             const frag = document.createDocumentFragment();
             authEvents.slice(0, 50).forEach(e => {
               const tr = document.createElement('tr');
               const is1098 = Number(e.Id) === 1098;
-              const is1104 = Number(e.Id) === 1104;
+              const is1097 = Number(e.Id) === 1097;
               if (is1098) tr.style.background = 'rgba(248,113,113,.06)';
+              if (is1097) tr.style.background = 'rgba(251,146,60,.06)';
 
               [
                 { text: (e.TimeCreated||'').replace('T',' ').substring(0,19), mono:true },
                 { html: is1098
                     ? `<span style="font-family:var(--font-mono);font-weight:700;color:var(--red)">${e.Id} ⚠️</span>`
+                    : is1097
+                    ? `<span style="font-family:var(--font-mono);font-weight:700;color:#fb923c">${e.Id} ⚠️</span>`
                     : `<span style="font-family:var(--font-mono);color:var(--accent)">${e.Id}</span>` },
                 { text: e.Level || '' },
                 { text: (e.ProviderName||'').replace('Microsoft-Windows-',''), muted:true },
