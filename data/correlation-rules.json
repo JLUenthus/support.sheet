@@ -837,7 +837,7 @@
           "minCount": 1
         }
       ],
-      "description": "Netzwerkadapter-Verbindungsabbrüche (4201/4202/27) führen zu DNS-Auflösungsfehlern (1014). Typisches Kaskaden-Muster: instabile Netzwerkverbindung → DNS schlägt fehl → alle Dienste die Netzwerk brauchen (Defender-Updates, Windows Update, Domain-Kommunikation) funktionieren nicht mehr.",
+      "description": "Netzwerkadapter-Verbindungsabbrüche (4201/4202/27) führen zu DNS-Auflösungsfehlern (1014). Typisches Kaskaden-Muster: instabile Netzwerkverbindung → DNS schlägt fehl → alle Dienste die Netzwerk brauchen (Defender-Updates, Windows Update, Domain-Kommunikation) funktionieren nicht mehr. Wenn gleichzeitig AAD 1097/1098 Fehler auftreten, ist der WLAN-Treiber die wahrscheinlichste Ursache.",
       "recommendations": [
         {
           "text": "Netzwerkadapter-Status und Treiber prüfen",
@@ -905,6 +905,62 @@
         },
         {
           "text": "Entra Sign-In Logs auf gleichzeitige Fehler prüfen",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "WLAN_DROP_AAD_CASCADE",
+      "name": "WLAN-Verbindungsabbruch verursacht AAD Token-Fehler-Kaskade",
+      "type": "correlation",
+      "operator": "AND",
+      "severity": "critical",
+      "category": "Netzwerk",
+      "conditions": [
+        {
+          "eventIds": [
+            10001
+          ],
+          "minCount": 3
+        },
+        {
+          "eventIds": [
+            1097,
+            1098
+          ],
+          "source": "Microsoft-Windows-AAD",
+          "minCount": 10
+        }
+      ],
+      "description": "Netzwerk-Disconnects (10001) treten gemeinsam mit massenhaften AAD-Fehlern auf (1097/1098). Klassisches Muster: WLAN-Treiber-Bug oder instabile Verbindung → Gerät verliert Tenant-Kontext → alle M365-Apps verlieren Token → Benutzer sieht Anmeldedialoge oder Apps stürzen ab. Fix: WLAN-Treiber aktualisieren, Energiesparoptionen des Adapters deaktivieren.",
+      "recommendations": [
+        {
+          "text": "WLAN-Adapter Treiber-Version und -Datum prüfen",
+          "cmd": "Get-WmiObject Win32_NetworkAdapter | Where-Object {$_.PhysicalAdapter -and $_.Name -match 'WLAN|WiFi|Wireless|Wi-Fi'} | Select Name, DriverVersion, DriverDate | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Treiber über Gerätehersteller-Website oder Windows Update aktualisieren",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "WLAN-Adapter Energiesparoptionen deaktivieren",
+          "cmd": "Get-NetAdapter | Where-Object {$_.PhysicalMediaType -eq '802.11'} | ForEach-Object { Set-NetAdapterAdvancedProperty -Name $_.Name -RegistryKeyword 'PnPCapabilities' -RegistryValue 24 -ErrorAction SilentlyContinue }",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "Netzwerkadapter-Ereignisse der letzten Stunden prüfen",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='System';Id=10001,10000;StartTime=(Get-Date).AddHours(-24)} | Select TimeCreated, Id, Message | Sort TimeCreated | Format-Table -AutoSize -Wrap",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "AAD-Status nach Treiber-Update prüfen",
+          "cmd": "dsregcmd /status | Select-String 'AzureAdJoined|AzureAdPrt|WamDefaultSet'",
           "type": "diagnose",
           "risk": "low"
         }

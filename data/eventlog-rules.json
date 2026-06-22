@@ -1175,6 +1175,80 @@
           "risk": "low"
         }
       ]
+    },
+    {
+      "id": "AAD_DEVICE_NOT_JOINED",
+      "name": "AAD Gerätestatus verloren – Device not joined (1097)",
+      "severity": "error",
+      "category": "Auth",
+      "description": "EventID 1097 bedeutet dass Windows den Gerätestatus für den Entra-Tenant verloren hat ('Device information is missing' / 'Device is not joined to account's tenant'). Tritt typischerweise nach Netzwerkunterbrechungen auf wenn das Gerät den Tenant-Kontext nicht wiederherstellen kann. Folge: massenhaft 1098 Token-Refresh-Fehler und alle M365-Apps verlieren ihre Authentifizierung.",
+      "eventIds": [
+        1097
+      ],
+      "sources": [
+        "Microsoft-Windows-AAD"
+      ],
+      "minOccurrences": 5,
+      "recommendations": [
+        {
+          "text": "Gerätestatus prüfen – AzureAdJoined und AzureAdPrt müssen 'YES' sein",
+          "cmd": "dsregcmd /status | Select-String 'AzureAdJoined|AzureAdPrt|WamDefaultSet|TenantId'",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Netzwerktreiber prüfen und aktualisieren – 1097 nach WLAN-Drops deutet auf Treiber-Bug hin",
+          "cmd": "Get-WmiObject Win32_NetworkAdapter | Where-Object {$_.NetEnabled} | Select Name, DriverVersion, DriverDate | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "WLAN-Adapter Energiesparoptionen deaktivieren",
+          "cmd": "Get-NetAdapter | Where-Object {$_.PhysicalMediaType -eq '802.11'} | ForEach-Object { Set-NetAdapterAdvancedProperty -Name $_.Name -RegistryKeyword 'PnPCapabilities' -RegistryValue 24 -ErrorAction SilentlyContinue }",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "AAD-Verbindung neu aufbauen (nur wenn Gerät wirklich nicht joined)",
+          "cmd": "dsregcmd /leave\ndsregcmd /join",
+          "type": "fix",
+          "risk": "medium"
+        }
+      ]
+    },
+    {
+      "id": "NETLOGON_DC_UNREACHABLE",
+      "name": "Netlogon kann keine sichere DC-Session aufbauen (5719)",
+      "severity": "warning",
+      "category": "Netzwerk",
+      "description": "EventID 5719 bedeutet dass Windows keine gesicherte Session zum Domänencontroller aufbauen kann. Direkte Folge von Netzwerkunterbrechungen – der DC ist kurz nicht erreichbar. Verursacht Gruppenrichtlinien-Fehler, Login-Probleme und SYSVOL-Zugriffsprobleme wenn es wiederholt auftritt.",
+      "eventIds": [
+        5719
+      ],
+      "sources": [
+        "NETLOGON"
+      ],
+      "minOccurrences": 2,
+      "recommendations": [
+        {
+          "text": "DC-Erreichbarkeit prüfen",
+          "cmd": "nltest /dsgetdc:{domain} /force",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Netlogon-Dienst neu starten",
+          "cmd": "Restart-Service Netlogon -Force",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "Netzwerkverbindung zum DC testen",
+          "cmd": "Test-NetConnection -ComputerName {dc} -Port 445",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
     }
   ]
 }
