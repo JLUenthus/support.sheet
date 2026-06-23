@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-06-02",
+  "lastUpdated": "2026-06-23",
   "commands": [
     {
       "id": "msc-computerverwaltung",
@@ -2481,6 +2481,279 @@
         "remote",
         "powershell",
         "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "pt-install",
+      "name": "PowerToys installieren",
+      "cmd": "winget install Microsoft.PowerToys",
+      "desc": "PowerToys per winget installieren. Läuft danach im Hintergrund als System-Tray-App. Erfordert keinen Neustart.",
+      "tags": [
+        "powertoys",
+        "winget",
+        "windows",
+        "quick",
+        "admin"
+      ]
+    },
+    {
+      "id": "pt-update",
+      "name": "PowerToys aktualisieren",
+      "cmd": "winget upgrade Microsoft.PowerToys",
+      "desc": "PowerToys auf die neueste Version aktualisieren.",
+      "tags": [
+        "powertoys",
+        "winget",
+        "windows",
+        "update"
+      ]
+    },
+    {
+      "id": "pt-settings",
+      "name": "PowerToys Einstellungen öffnen",
+      "cmd": "start ms-settings:powertoys",
+      "desc": "PowerToys Einstellungen direkt öffnen. Alternativ: System Tray → PowerToys-Icon → Einstellungen.",
+      "tags": [
+        "powertoys",
+        "windows",
+        "quick"
+      ]
+    },
+    {
+      "id": "pt-fancyzones-activate",
+      "name": "FancyZones – Fenster in Zone einrasten",
+      "cmd": "Shift + Fenster ziehen",
+      "desc": "Shift gedrückt halten beim Ziehen eines Fensters → FancyZones-Raster erscheint. Fenster auf gewünschte Zone loslassen. Layout vorher in PowerToys Einstellungen → FancyZones konfigurieren.",
+      "tags": [
+        "powertoys",
+        "shortcuts",
+        "windows"
+      ]
+    },
+    {
+      "id": "pt-fancyzones-editor",
+      "name": "FancyZones – Layout-Editor öffnen",
+      "cmd": "Win + Shift + ``",
+      "desc": "Öffnet den FancyZones Layout-Editor. Eigene Zonen-Layouts erstellen, bearbeiten und Monitoren zuweisen. Standard-Shortcut: Win+Shift+` (Backtick).",
+      "tags": [
+        "powertoys",
+        "shortcuts",
+        "windows"
+      ]
+    },
+    {
+      "id": "pt-run-open",
+      "name": "PowerToys Run / Command Palette öffnen",
+      "cmd": "Alt + Space",
+      "desc": "Öffnet den schnellen App-Launcher. Apps, Dateien, Einstellungen, Rechner, DNS-Lookup und mehr per Tastatur. Deutlich schneller als das Start-Menü.",
+      "tags": [
+        "powertoys",
+        "shortcuts",
+        "windows",
+        "quick"
+      ]
+    },
+    {
+      "id": "pt-run-calculator",
+      "name": "PowerToys Run – Rechner",
+      "cmd": "Alt + Space → = 1920*1080",
+      "desc": "Im Run-Dialog mit = starten um direkt zu rechnen. Ergebnis per Enter in die Zwischenablage kopieren. Kein Öffnen des Taschenrechners nötig.",
+      "tags": [
+        "powertoys",
+        "shortcuts",
+        "windows",
+        "quick"
+      ]
+    },
+    {
+      "id": "pt-run-service",
+      "name": "PowerToys Run – Windows Dienste steuern",
+      "cmd": "Alt + Space → !status:running",
+      "desc": "Service-Plugin: ! am Anfang aktiviert Dienst-Suche. '!status:running' listet laufende Dienste, '!startup:automatic' zeigt Autostart-Dienste. Dienst starten/stoppen direkt aus Run.",
+      "tags": [
+        "powertoys",
+        "shortcuts",
+        "windows",
+        "quick",
+        "system"
+      ]
+    },
+    {
+      "id": "pt-alwaysontop",
+      "name": "Always On Top – Fenster anheften",
+      "cmd": "Win + Ctrl + T",
+      "desc": "Aktuelles Fenster über alle anderen Fenster pinnen. Nochmals drücken zum Lösen. Zeigt kurz einen blauen Rahmen als Bestätigung. Praktisch für Dokumentation, Tickets oder Chat während man in anderen Apps arbeitet.",
+      "tags": [
+        "powertoys",
+        "shortcuts",
+        "windows",
+        "quick"
+      ]
+    },
+    {
+      "id": "pt-colorpicker",
+      "name": "Color Picker – Farbe von Bildschirm aufnehmen",
+      "cmd": "Win + Shift + C",
+      "desc": "Öffnet die systemweite Farbpipette. Klick auf beliebige Stelle kopiert die Farbe als HEX, RGB, HSL oder CMYK in die Zwischenablage. Zeigt auch Farbverlauf und Verlauf zuletzt aufgenommener Farben.",
+      "tags": [
+        "powertoys",
+        "shortcuts",
+        "windows",
+        "quick"
+      ]
+    },
+    {
+      "id": "pt-textextractor",
+      "name": "Text Extractor – Text aus Bild/Screen kopieren",
+      "cmd": "Win + Shift + T",
+      "desc": "OCR-Tool: Bereich auf dem Bildschirm markieren → Text wird automatisch in die Zwischenablage kopiert. Funktioniert auf Screenshots, PDFs, Videos, Fehlermeldungen in VMs – überall wo kein Copy möglich ist.",
+      "tags": [
+        "powertoys",
+        "shortcuts",
+        "windows",
+        "quick"
+      ]
+    },
+    {
+      "id": "pt-peek",
+      "name": "Peek – Dateivorschau ohne Öffnen",
+      "cmd": "Ctrl + Space",
+      "desc": "Datei im Explorer markieren → Ctrl+Space öffnet Vorschau ohne die App zu starten. Unterstützt Bilder, PDFs, Office-Dokumente, Code-Dateien, Videos. Escape schließt die Vorschau.",
+      "tags": [
+        "powertoys",
+        "shortcuts",
+        "windows",
+        "quick"
+      ]
+    },
+    {
+      "id": "pt-powerrename",
+      "name": "PowerRename – Dateien massenhaft umbenennen",
+      "cmd": "Rechtsklick auf Dateien → PowerRename",
+      "desc": "Mehrere Dateien im Explorer markieren → Rechtsklick → PowerRename. Suchen & Ersetzen mit Regex, Nummerierung, Groß-/Kleinschreibung. Vorschau vor Umbenennung. Rückgängig per Ctrl+Z.",
+      "tags": [
+        "powertoys",
+        "windows",
+        "quick",
+        "files"
+      ]
+    },
+    {
+      "id": "pt-screenruler",
+      "name": "Screen Ruler – Pixel auf Bildschirm messen",
+      "cmd": "Win + Shift + M",
+      "desc": "Aktiviert Pixellineal auf dem Bildschirm. Kanten und Abstände messen per Maus. Nützlich für UI-Design, Ticket-Screenshots oder um Abstände in Anwendungen zu prüfen.",
+      "tags": [
+        "powertoys",
+        "shortcuts",
+        "windows",
+        "quick"
+      ]
+    },
+    {
+      "id": "pt-shortcutguide",
+      "name": "Shortcut Guide – alle Win-Shortcuts anzeigen",
+      "cmd": "Win + Shift + /",
+      "desc": "Öffnet eine Übersicht aller Windows-Shortcuts für die aktuell geöffnete App. Zeigt kontextbezogene Shortcuts – wechselt automatisch wenn man die App wechselt.",
+      "tags": [
+        "powertoys",
+        "shortcuts",
+        "windows",
+        "quick"
+      ]
+    },
+    {
+      "id": "pt-findmymouse",
+      "name": "Find My Mouse – Mauszeiger hervorheben",
+      "cmd": "Linke Ctrl-Taste 2× schnell drücken",
+      "desc": "Mauszeiger mit Spotlight-Effekt hervorheben wenn man ihn verloren hat. Besonders nützlich bei Präsentationen auf großen Monitoren oder Multi-Screen-Setups. Esc zum Ausblenden.",
+      "tags": [
+        "powertoys",
+        "shortcuts",
+        "windows",
+        "quick"
+      ]
+    },
+    {
+      "id": "pt-keyboardmanager",
+      "name": "Keyboard Manager – Tasten neu belegen",
+      "cmd": "PowerToys Einstellungen → Keyboard Manager → Taste neu belegen",
+      "desc": "Einzelne Tasten oder Shortcuts global neu belegen. Beispiel: Caps Lock → Escape, oder eigene Shortcuts für häufige Aktionen erstellen. Remapping bleibt aktiv solange PowerToys läuft.",
+      "tags": [
+        "powertoys",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "pt-keyboardmanager-toggle",
+      "name": "Keyboard Manager – Ein/Ausschalten",
+      "cmd": "Win + Shift + K",
+      "desc": "Keyboard Manager schnell ein- oder ausschalten ohne die Einstellungen zu öffnen. Praktisch wenn ein Remap vorübergehend stört.",
+      "tags": [
+        "powertoys",
+        "shortcuts",
+        "windows",
+        "quick"
+      ]
+    },
+    {
+      "id": "pt-workspaces",
+      "name": "Workspaces – Apps in Layout starten",
+      "cmd": "PowerToys Einstellungen → Workspaces → neuer Workspace",
+      "desc": "Mehrere Apps in bestimmten Fensterpositionen als Workspace speichern. Per Klick oder Shortcut alles auf einmal starten und positionieren. Gut für feste Arbeitsumgebungen.",
+      "tags": [
+        "powertoys",
+        "windows",
+        "admin"
+      ]
+    },
+    {
+      "id": "pt-advancedpaste",
+      "name": "Advanced Paste – Zwischenablage als Plain Text einfügen",
+      "cmd": "Win + Shift + V",
+      "desc": "Zwischenablage ohne Formatierung einfügen (kein fettes/kursives Format aus Word oder Browser). Zeigt auch Verlauf der letzten Einträge. Spart das Umwege über Notepad.",
+      "tags": [
+        "powertoys",
+        "shortcuts",
+        "windows",
+        "quick"
+      ]
+    },
+    {
+      "id": "pt-mousewithoutborders",
+      "name": "Mouse Without Borders – Maus zwischen PCs teilen",
+      "cmd": "PowerToys Einstellungen → Mouse Without Borders → Code eingeben",
+      "desc": "Maus und Tastatur über bis zu 4 PCs im selben Netzwerk teilen. Clipboard-Synchronisation zwischen den PCs. Kein KVM-Switch nötig. Gut für Helpdesk-Setups mit mehreren Rechnern.",
+      "tags": [
+        "powertoys",
+        "windows",
+        "network",
+        "admin"
+      ]
+    },
+    {
+      "id": "pt-zoomit-zoom",
+      "name": "ZoomIt – Bildschirm vergrößern",
+      "cmd": "Ctrl + 1",
+      "desc": "Bildschirm vergrößern und mit Maus navigieren. Ideal für Präsentationen und Remote-Support-Calls. Ctrl+2 für Zeichenmodus, Ctrl+3 für Textmodus. Esc zum Beenden.",
+      "tags": [
+        "powertoys",
+        "shortcuts",
+        "windows",
+        "quick"
+      ]
+    },
+    {
+      "id": "pt-envvars",
+      "name": "Environment Variables – Umgebungsvariablen verwalten",
+      "cmd": "PowerToys Einstellungen → Environment Variables",
+      "desc": "Systemumgebungsvariablen übersichtlich verwalten und in Profilen gruppieren. Sicherer und komfortabler als der Windows-Standard-Dialog.",
+      "tags": [
+        "powertoys",
+        "windows",
+        "system",
         "admin"
       ]
     }
