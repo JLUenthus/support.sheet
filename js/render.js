@@ -25,7 +25,7 @@ const CATEGORY_MAP = {
   'hyperv':           { label: 'Hyper-V',            dot: '#a78bfa', icon: '🖥️'  },
   'update':           { label: 'Windows Update',     dot: '#fbbf24', icon: '🔄'  },
   'rds':              { label: 'RDS / Terminal',     dot: '#60a5fa', icon: '🖥️'  },
-  'certificates':     { label: 'Zertifikate',        dot: '#4ade80', icon: '🔒'  },
+  'powertoys':        { label: 'PowerToys',          dot: '#fb923c', icon: '🔧'  },
   // Exchange
   'exchange':         { label: 'Exchange',          dot: '#e8b339', icon: '📧'  },
   'on-premises':      { label: 'On-Premises',       dot: '#e8b339', icon: '🏢'  },
