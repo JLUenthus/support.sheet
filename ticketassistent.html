@@ -83,7 +83,8 @@
     <iframe
       id="ta-iframe"
       src="https://jluenthus.github.io/Ticketassistent/"
-      allow="clipboard-write clipboard-read"
+      allow="clipboard-write clipboard-read; fullscreen"
+      allowfullscreen
       referrerpolicy="no-referrer-when-downgrade"
       title="Ticketassistent"
     ></iframe>
@@ -91,11 +92,19 @@
 
   <script>
     // Ladeindikator ausblenden sobald iframe geladen ist
-    document.getElementById('ta-iframe').addEventListener('load', () => {
+    const iframe = document.getElementById('ta-iframe');
+    iframe.addEventListener('load', () => {
       const loader = document.getElementById('ta-loading');
       loader.classList.add('hidden');
       setTimeout(() => loader.remove(), 350);
     });
+
+    // Fokus in den iframe lenken wenn der Benutzer darauf klickt
+    // → ermöglicht navigator.clipboard im iframe (browser requires focus)
+    const wrap = document.getElementById('ta-frame-wrap');
+    wrap.addEventListener('pointerdown', () => {
+      iframe.focus();
+    }, true);
 
     // Tab-Bar-Höhe beobachten und frame-wrap.top anpassen
     // nav.js injiziert die Tab-Bar nach dem Header → MutationObserver
