@@ -1,7 +1,7 @@
 // ============================================================
 // support.sheet – Service Worker v2
 // ============================================================
-const CACHE_VERSION = '20260623-1119';
+const CACHE_VERSION = '20260625-0827';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -22,6 +22,7 @@ const ASSETS = [
   './nav.js',
   './sw.js',
   './manifest.json',
+  './ticketassistent.html',
   './js/har.js',
   './js/entra.js',
   './css/har.css',
@@ -110,6 +111,9 @@ self.addEventListener('fetch', e => {
 
   // Nur GET, kein chrome-extension
   if (e.request.method !== 'GET' || url.protocol === 'chrome-extension:') return;
+
+  // Ticketassistent iframe-Inhalt: nie cachen, immer live laden
+  if (url.hostname === 'jluenthus.github.io' && url.pathname.startsWith('/Ticketassistent')) return;
 
   // ── HTML-Seiten: Network First ──────────────────────────
   // Immer frische HTML laden – fällt auf Cache zurück wenn offline

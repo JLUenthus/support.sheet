@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>support.sheet – Ticketassistent</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    /* Kein margin/padding unter dem Header – iframe füllt alles */
+    body { overflow: hidden; }
+
+    .ta-frame-wrap {
+      position: fixed;
+      /* top wird per JS gesetzt sobald nav.js die Tab-Bar injiziert hat */
+      top: 58px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1;
+      transition: top .1s ease;
+    }
+
+    .ta-frame-wrap iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+      background: #0f1117;
+    }
+
+    /* Ladeindikator */
+    .ta-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      background: #0f1117;
+      color: var(--muted, #8890aa);
+      font-family: var(--font-ui, inherit);
+      font-size: .88rem;
+      pointer-events: none;
+      transition: opacity .3s;
+    }
+    .ta-loading-icon { font-size: 2rem; animation: ta-spin 1.2s linear infinite; }
+    @keyframes ta-spin { to { transform: rotate(360deg); } }
+    .ta-loading.hidden { opacity: 0; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-icon" id="as-logo-icon">🎫</div>
+      <div class="logo-text" id="as-logo-label">support<span>.ticket</span></div>
+    </a>
+    <div class="header-right">
+      <div class="pill pill-count"
+           style="border-color:rgba(251,146,60,.3);background:rgba(251,146,60,.08);color:#fb923c;">
+        🎫 Ticketassistent
+      </div>
+    </div>
+  </header>
+
+  <!-- Tab-Bar wird von nav.js injiziert -->
+
+  <!-- iframe-Wrapper – top wird nach Tab-Bar-Injektion aktualisiert -->
+  <div class="ta-frame-wrap" id="ta-frame-wrap">
+    <div class="ta-loading" id="ta-loading">
+      <span class="ta-loading-icon">⟳</span>
+      <span>Ticketassistent wird geladen…</span>
+    </div>
+    <iframe
+      id="ta-iframe"
+      src="https://jluenthus.github.io/Ticketassistent/"
+      allow="clipboard-write clipboard-read"
+      referrerpolicy="no-referrer-when-downgrade"
+      title="Ticketassistent"
+    ></iframe>
+  </div>
+
+  <script>
+    // Ladeindikator ausblenden sobald iframe geladen ist
+    document.getElementById('ta-iframe').addEventListener('load', () => {
+      const loader = document.getElementById('ta-loading');
+      loader.classList.add('hidden');
+      setTimeout(() => loader.remove(), 350);
+    });
+
+    // Tab-Bar-Höhe beobachten und frame-wrap.top anpassen
+    // nav.js injiziert die Tab-Bar nach dem Header → MutationObserver
+    function adjustFrameTop() {
+      const tabBar = document.querySelector('.as-tab-bar');
+      const wrap   = document.getElementById('ta-frame-wrap');
+      if (!wrap) return;
+      if (tabBar) {
+        const rect = tabBar.getBoundingClientRect();
+        wrap.style.top = (rect.bottom) + 'px';
+      } else {
+        wrap.style.top = '58px';
+      }
+    }
+
+    // Run once after nav.js injects the tab bar
+    const observer = new MutationObserver(() => {
+      if (document.querySelector('.as-tab-bar')) {
+        adjustFrameTop();
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Fallback + resize
+    window.addEventListener('load',   adjustFrameTop);
+    window.addEventListener('resize', adjustFrameTop);
+  </script>
+
+  <script src="nav.js"></script>
+
+</body>
+</html>

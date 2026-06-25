@@ -3,10 +3,11 @@
 // ============================================================
 (function() {
   const PAGES = [
-    { id:'index',    href:'index.html',    label:'Windows',      icon:'⚡', color:'#7c8cf8', desc:'228 Befehle · 21 Kategorien' },
-    { id:'exchange', href:'exchange.html', label:'Exchange',     icon:'📧', color:'#e8b339', desc:'On-Prem & Exchange Online' },
-    { id:'forti',    href:'forti.html',    label:'Fortinet',     icon:'🔥', color:'#fb7124', desc:'FG · FMG · FAZ' },
-    { id:'scripts',  href:'scripts.html',  label:'PS Scripts',   icon:'💚', color:'#4ade80', desc:'Fertige .ps1 Skripte' },
+    { id:'index',    href:'index.html',    label:'Windows',        icon:'⚡', color:'#7c8cf8', desc:'228 Befehle · 21 Kategorien' },
+    { id:'exchange', href:'exchange.html', label:'Exchange',       icon:'📧', color:'#e8b339', desc:'On-Prem & Exchange Online' },
+    { id:'forti',    href:'forti.html',    label:'Fortinet',       icon:'🔥', color:'#fb7124', desc:'FG · FMG · FAZ' },
+    { id:'scripts',  href:'scripts.html',  label:'PS Scripts',     icon:'💚', color:'#4ade80', desc:'Fertige .ps1 Skripte' },
+    { id:'ticket',   href:'ticketassistent.html', label:'Ticketassistent', icon:'🎫', color:'#fb923c', desc:'KI-gestützter Ticketassistent' },
     {
       id:'analyzer', label:'Analyzer', icon:'📋', color:'#e8b339', group:true,
       children: [
@@ -162,13 +163,14 @@
   if (logoIconEl)  logoIconEl.textContent = currentPage.icon;
   if (logoLabelEl) {
     // "support" bleibt, nur der farbige Span ändert sich
-    const suffix = currentPage.id === 'index' ? '.sheet'
-                 : currentPage.id === 'exchange' ? '.exchange'
-                 : currentPage.id === 'forti' ? '.forti'
-                 : currentPage.id === 'scripts' ? '.scripts'
-                 : currentPage.id === 'eventlog' ? '.analyzer'
-                 : currentPage.id === 'entra' ? '.entra'
-                 : currentPage.id === 'har' ? '.har'
+    const suffix = currentPage.id === 'index'    ? '.sheet'
+                 : currentPage.id === 'exchange'  ? '.exchange'
+                 : currentPage.id === 'forti'     ? '.forti'
+                 : currentPage.id === 'scripts'   ? '.scripts'
+                 : currentPage.id === 'ticket'    ? '.ticket'
+                 : currentPage.id === 'eventlog'  ? '.analyzer'
+                 : currentPage.id === 'entra'     ? '.entra'
+                 : currentPage.id === 'har'       ? '.har'
                  : currentPage.id === 'mitmachen' ? '.mitmachen'
                  : '.tools';
     logoLabelEl.textContent = 'support';
