@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-06-23",
+  "lastUpdated": "2026-07-15",
   "commands": [
     {
       "id": "msc-computerverwaltung",
@@ -2755,6 +2755,167 @@
         "windows",
         "system",
         "admin"
+      ]
+    },
+    {
+      "id": "network-tnc-port",
+      "name": "TCP-Port Erreichbarkeit prüfen",
+      "cmd": "Test-NetConnection -ComputerName '{host}' -Port {port}",
+      "desc": "Prüft ob ein bestimmter TCP-Port auf einem Host erreichbar ist. Zeigt Latenz, TCP-Handshake-Status und Route. Unverzichtbar für SMTP (25/587), RDP (3389), HTTPS (443), LDAP (389/636) etc. Ersetzt Telnet in modernen Windows-Umgebungen.",
+      "tags": [
+        "network",
+        "powershell",
+        "windows",
+        "diag",
+        "quick"
+      ]
+    },
+    {
+      "id": "network-tnc-smtp",
+      "name": "SMTP-Port erreichbar? (25/587/465)",
+      "cmd": "# Standard SMTP\nTest-NetConnection -ComputerName '{smtpserver}' -Port 25\n# Submission\nTest-NetConnection -ComputerName '{smtpserver}' -Port 587\n# SMTPS\nTest-NetConnection -ComputerName '{smtpserver}' -Port 465",
+      "desc": "SMTP-Ports testen. Port 25 für Server-zu-Server, 587 für Clients (STARTTLS), 465 für SMTPS. TcpTestSucceeded muss True sein – sonst blockiert Firewall oder Relay ist nicht konfiguriert.",
+      "tags": [
+        "network",
+        "powershell",
+        "windows",
+        "diag",
+        "exchange"
+      ]
+    },
+    {
+      "id": "network-tnc-rdp",
+      "name": "RDP-Port erreichbar prüfen (3389)",
+      "cmd": "Test-NetConnection -ComputerName '{host}' -Port 3389",
+      "desc": "Prüft ob RDP auf einem Remotesystem erreichbar ist bevor man versucht sich zu verbinden. TcpTestSucceeded=False → Firewall, RDP deaktiviert oder falscher Port.",
+      "tags": [
+        "network",
+        "powershell",
+        "windows",
+        "diag",
+        "remote"
+      ]
+    },
+    {
+      "id": "network-tnc-diagnose",
+      "name": "Test-NetConnection mit Diagnose-Details",
+      "cmd": "Test-NetConnection -ComputerName '{host}' -Port {port} -InformationLevel Detailed",
+      "desc": "Ausführliche Diagnose: RTT, Hop-Count, Interface, Route. Gut wenn TcpTestSucceeded zwar True ist aber die Verbindung trotzdem Probleme macht.",
+      "tags": [
+        "network",
+        "powershell",
+        "windows",
+        "diag"
+      ]
+    },
+    {
+      "id": "network-tnc-mehrere-ports",
+      "name": "Mehrere Ports auf einmal prüfen",
+      "cmd": "@(25,80,443,587,3389,445) | ForEach-Object {\n    $r = Test-NetConnection -ComputerName '{host}' -Port $_ -WarningAction SilentlyContinue\n    [PSCustomObject]@{ Port=$_; Erreichbar=$r.TcpTestSucceeded; Latenz=\"$([math]::Round($r.PingReplyDetails.RoundtripTime,0))ms\" }\n} | Format-Table -AutoSize",
+      "desc": "Mehrere Ports in einem Durchgang testen. Ports anpassen je nach Bedarf. Gut für schnellen Firewall-Audit oder bei der Erstaufnahme eines neuen Kunden.",
+      "tags": [
+        "network",
+        "powershell",
+        "windows",
+        "diag"
+      ]
+    },
+    {
+      "id": "network-port-lokal-hoert",
+      "name": "Welcher Prozess hört auf Port X?",
+      "cmd": "Get-NetTCPConnection -LocalPort {port} | Select LocalAddress, LocalPort, State, OwningProcess | ForEach-Object { $_ | Add-Member -NotePropertyName 'Prozess' -NotePropertyValue (Get-Process -Id $_.OwningProcess -EA 0).Name -PassThru } | Format-Table -AutoSize",
+      "desc": "Zeigt welcher Prozess auf einem lokalen Port lauscht. Gut wenn ein Port belegt ist oder ein Dienst nicht startet weil der Port schon vergeben ist.",
+      "tags": [
+        "network",
+        "powershell",
+        "windows",
+        "diag"
+      ]
+    },
+    {
+      "id": "network-alle-listening-ports",
+      "name": "Alle lauschenden Ports anzeigen",
+      "cmd": "Get-NetTCPConnection -State Listen | Select LocalAddress, LocalPort, @{n='Prozess';e={(Get-Process -Id $_.OwningProcess -EA 0).Name}} | Sort-Object LocalPort | Format-Table -AutoSize",
+      "desc": "Alle TCP-Ports die aktuell lauschen mit zugehörigem Prozess. Schneller Überblick über offene Dienste auf dem System.",
+      "tags": [
+        "network",
+        "powershell",
+        "windows",
+        "diag",
+        "security"
+      ]
+    },
+    {
+      "id": "network-dns-resolve-detail",
+      "name": "DNS-Auflösung detailliert prüfen",
+      "cmd": "Resolve-DnsName -Name '{hostname}' -Type A | Select Name, Type, TTL, IPAddress\nResolve-DnsName -Name '{hostname}' -Type MX | Select Name, NameExchange, Preference",
+      "desc": "DNS-Auflösung für A- und MX-Records. Zeigt TTL und alle zurückgegebenen IPs. Gut bei Mail-Problemen (MX) oder wenn ein Hostname anders aufgelöst wird als erwartet.",
+      "tags": [
+        "network",
+        "powershell",
+        "windows",
+        "diag"
+      ]
+    },
+    {
+      "id": "network-dns-bestimmter-server",
+      "name": "DNS-Auflösung über bestimmten Server",
+      "cmd": "Resolve-DnsName -Name '{hostname}' -Server '{dnsserver}'",
+      "desc": "DNS-Abfrage über einen bestimmten Server statt den konfigurierten DNS. Gut um zu prüfen ob ein interner DNS-Server anders auflöst als z.B. 8.8.8.8 – klassisch bei Split-DNS Problemen.",
+      "tags": [
+        "network",
+        "powershell",
+        "windows",
+        "diag"
+      ]
+    },
+    {
+      "id": "network-dns-ptr",
+      "name": "Reverse DNS (PTR-Record) abfragen",
+      "cmd": "Resolve-DnsName -Name '{ip}' -Type PTR",
+      "desc": "Reverse DNS – IP zur Domain. Wichtig für Mail-Server (fehlender PTR → Mails landen im Spam) und für Firewall-Logs lesbar machen.",
+      "tags": [
+        "network",
+        "powershell",
+        "windows",
+        "diag"
+      ]
+    },
+    {
+      "id": "network-tnc-traceroute",
+      "name": "Traceroute mit Test-NetConnection",
+      "cmd": "Test-NetConnection -ComputerName '{host}' -TraceRoute | Select -ExpandProperty TraceRoute",
+      "desc": "Traceroute per PowerShell – zeigt jeden Hop auf dem Weg zum Ziel. Nützlich um zu sehen wo Pakete steckenbleiben. Sauberer als tracert weil direkt als Objekt nutzbar.",
+      "tags": [
+        "network",
+        "powershell",
+        "windows",
+        "diag"
+      ]
+    },
+    {
+      "id": "network-adapter-statistik",
+      "name": "Netzwerkadapter Statistik (Fehler, Drops)",
+      "cmd": "Get-NetAdapterStatistics | Select Name, ReceivedPackets, ReceivedDiscardedPackets, ReceivedPacketErrors, OutboundPackets, OutboundDiscardedPackets, OutboundPacketErrors | Format-Table -AutoSize",
+      "desc": "Zeigt verworfene Pakete und Fehler pro Adapter. ReceivedPacketErrors > 0 deutet auf Treiber- oder Hardware-Probleme hin. Gut als erster Check bei intermittierenden Netzwerkproblemen.",
+      "tags": [
+        "network",
+        "powershell",
+        "windows",
+        "diag"
+      ]
+    },
+    {
+      "id": "network-verbindungstest-m365",
+      "name": "M365 Endpunkte erreichbar prüfen",
+      "cmd": "@('outlook.office365.com','smtp.office365.com','login.microsoftonline.com','graph.microsoft.com') | ForEach-Object {\n    $r = Test-NetConnection -ComputerName $_ -Port 443 -WarningAction SilentlyContinue\n    [PSCustomObject]@{ Host=$_; Port=443; OK=$r.TcpTestSucceeded }\n} | Format-Table -AutoSize",
+      "desc": "Alle wichtigen M365-Endpunkte auf Port 443 in einem Durchgang prüfen. Schneller Überblick ob Firewall oder Proxy M365-Verbindungen blockiert.",
+      "tags": [
+        "network",
+        "powershell",
+        "windows",
+        "diag",
+        "quick"
       ]
     }
   ]
