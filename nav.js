@@ -3,7 +3,7 @@
 // ============================================================
 (function() {
   const PAGES = [
-    { id:'index',    href:'index.html',    label:'Windows',        icon:'⚡', color:'#7c8cf8', desc:'228 Befehle · 21 Kategorien' },
+    { id:'index',    href:'index.html',    label:'Windows',        icon:'⚡', color:'#7c8cf8', desc:'241 Befehle · 21 Kategorien' },
     { id:'exchange', href:'exchange.html', label:'Exchange',       icon:'📧', color:'#e8b339', desc:'On-Prem & Exchange Online' },
     { id:'forti',    href:'forti.html',    label:'Fortinet',       icon:'🔥', color:'#fb7124', desc:'FG · FMG · FAZ' },
     { id:'scripts',  href:'scripts.html',  label:'PS Scripts',     icon:'💚', color:'#4ade80', desc:'Fertige .ps1 Skripte' },
