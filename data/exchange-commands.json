@@ -667,5 +667,216 @@
       "info"
     ],
     "product": "exo"
+  },
+  {
+    "id": "op-queue-uebersicht",
+    "name": "Mail-Queues Übersicht",
+    "cmd": "Get-Queue | Format-Table Identity,DeliveryType,Status,MessageCount,NextHopDomain -AutoSize",
+    "desc": "Alle Mail-Queues mit Status, Anzahl Mails und Ziel. Vor einem Neustart prüfen ob alle Queues leer sind. Status: Ready=normal, Retry=temporärer Fehler, Suspended=angehalten.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "transport",
+      "diag",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-queue-nicht-leer",
+    "name": "Nicht-leere Queues anzeigen",
+    "cmd": "Get-Queue | Where-Object { $_.MessageCount -gt 0 } | Format-Table Identity,Status,MessageCount,NextHopDomain,LastRetryTime -AutoSize",
+    "desc": "Nur Queues mit Mails drin. Übersichtlicher als alle Queues – direkt sehen was noch offen ist. Vor Neustart warten bis dieser Befehl keine Ergebnisse mehr liefert.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "transport",
+      "diag",
+      "quick"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-queue-mails-anzeigen",
+    "name": "Mails in Queue anzeigen",
+    "cmd": "Get-Message -Queue '{identity}' | Select Subject, FromAddress, Status, LastError, DateReceived | Format-Table -AutoSize",
+    "desc": "Zeigt alle Mails in einer bestimmten Queue. Identity aus Get-Queue entnehmen (z.B. SERVER\\123). Gut um zu sehen welche Mails feststecken und warum.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "transport",
+      "diag"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-queue-retry",
+    "name": "Queue-Zustellung sofort erneut versuchen",
+    "cmd": "Retry-Queue -Identity '{identity}' -Resubmit $true",
+    "desc": "Zustellung für eine Queue sofort neu versuchen ohne auf den nächsten automatischen Retry zu warten. Sinnvoll nach Behebung eines Verbindungsproblems.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "transport",
+      "admin"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-queue-alle-retry",
+    "name": "Alle Retry-Queues sofort erneut versuchen",
+    "cmd": "Get-Queue | Where-Object { $_.Status -eq 'Retry' } | Retry-Queue -Resubmit $true",
+    "desc": "Alle Queues im Retry-Status auf einmal neu anstoßen. Nach Netzwerkproblemen oder DNS-Fixes nützlich.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "transport",
+      "admin"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-queue-mails-umleiten",
+    "name": "Mails zu anderem Server umleiten",
+    "cmd": "Redirect-Message -Server '{server}' -Target '{zielserver.domain.com}'",
+    "desc": "Alle Mails in Queues eines Servers zu einem anderen Exchange-Server umleiten. Wichtig vor geplantem Neustart damit keine Mails verloren gehen.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "transport",
+      "admin",
+      "caution"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-transport-dienst-status",
+    "name": "Exchange Transport-Dienst Status prüfen",
+    "cmd": "Get-Service MSExchangeTransport,MSExchangeFrontEndTransport | Select Name,Status,StartType | Format-Table -AutoSize",
+    "desc": "Status der beiden Transport-Dienste prüfen. MSExchangeTransport = Hub Transport (internes Routing), MSExchangeFrontEndTransport = Client Frontend (eingehend von extern).",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "transport",
+      "diag"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-alle-dienste-status",
+    "name": "Alle Exchange-Dienste Status",
+    "cmd": "Get-Service | Where-Object { $_.DisplayName -like 'Microsoft Exchange*' } | Select Name,DisplayName,Status,StartType | Sort-Object Status | Format-Table -AutoSize",
+    "desc": "Alle Exchange-Dienste mit Status. Vor dem Neustart prüfen, nach dem Neustart verifizieren ob alles wieder läuft. Gestoppte Dienste mit StartType=Automatic sind verdächtig.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "diag",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-server-health",
+    "name": "Exchange Server Health Check",
+    "cmd": "Get-ServerHealth -Identity '{server}' | Where-Object { $_.AlertValue -ne 'Healthy' } | Select Name,AlertValue,LastTransitionTime | Sort-Object AlertValue | Format-Table -AutoSize",
+    "desc": "Exchange Managed Availability Health Check – zeigt alle Komponenten die nicht 'Healthy' sind. Vor Neustart prüfen ob etwas bereits in Degraded/Unhealthy ist.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "diag",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-aktive-verbindungen",
+    "name": "Aktive SMTP-Verbindungen zählen",
+    "cmd": "Get-ServerComponentState -Identity '{server}' | Select Component,State | Format-Table -AutoSize",
+    "desc": "Serverkomponenten und deren Status. Vor Neustart prüfen ob alle Komponenten Active sind. Nach Neustart verifizieren dass alles zurückgekehrt ist.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "diag",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-db-status-vor-neustart",
+    "name": "Datenbankstatus vor Neustart prüfen",
+    "cmd": "Get-MailboxDatabaseCopyStatus * | Select Name,Status,CopyQueueLength,ReplayQueueLength,ActiveServerName | Sort-Object ActiveServerName | Format-Table -AutoSize",
+    "desc": "Alle Datenbankkopien mit Status und Replikations-Queues. Vor Neustart: CopyQueueLength und ReplayQueueLength sollten unter 10 sein. Status sollte Healthy oder Mounted sein.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "database",
+      "diag"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-aktive-dbs-auf-server",
+    "name": "Aktive Datenbanken auf Server anzeigen",
+    "cmd": "Get-MailboxDatabaseCopyStatus * | Where-Object { $_.ActiveServerName -eq '{server}' } | Select Name,Status,ActiveServerName | Format-Table -AutoSize",
+    "desc": "Welche Datenbanken sind aktuell auf diesem Server aktiv gemountet? Vor Neustart per Move-ActiveMailboxDatabase auf anderen Server verschieben.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "database",
+      "diag"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-db-verschieben",
+    "name": "Aktive Datenbanken vor Neustart verschieben",
+    "cmd": "Move-ActiveMailboxDatabase -Server '{server}' -ActivateOnServer '{zielserver}'",
+    "desc": "Alle aktiven Datenbanken von einem Server auf einen anderen verschieben. Vor Neustart ausführen damit Benutzer keine Unterbrechung merken. Danach Get-MailboxDatabaseCopyStatus prüfen.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "database",
+      "admin",
+      "caution"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-wartungsmodus-an",
+    "name": "Wartungsmodus aktivieren",
+    "cmd": "# 1. Transport auf Draining\nSet-ServerComponentState '{server}' -Component HubTransport -State Draining -Requester Maintenance\n# 2. Mails umleiten\nRedirect-Message -Server '{server}' -Target '{zielserver.fqdn}'\n# 3. Cluster suspendieren\nSuspend-ClusterNode -Name '{server}'\n# 4. DB-Aktivierung blockieren\nSet-MailboxServer '{server}' -DatabaseCopyActivationDisabledAndMoveNow $true\nSet-MailboxServer '{server}' -DatabaseCopyAutoActivationPolicy Blocked\n# 5. Offline setzen\nSet-ServerComponentState '{server}' -Component ServerWideOffline -State Inactive -Requester Maintenance",
+    "desc": "Vollständige Wartungsmodus-Sequenz vor Exchange-Neustart. Schritte: Transport drainieren → Mails umleiten → Cluster suspendieren → DB-Aktivierung blockieren → Server offline. Danach sicher neustarten.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "admin",
+      "caution"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-wartungsmodus-aus",
+    "name": "Wartungsmodus deaktivieren (nach Neustart)",
+    "cmd": "# 1. Server wieder online\nSet-ServerComponentState '{server}' -Component ServerWideOffline -State Active -Requester Maintenance\n# 2. Transport aktivieren\nSet-ServerComponentState '{server}' -Component HubTransport -State Active -Requester Maintenance\n# 3. DB-Aktivierung wieder erlauben\nSet-MailboxServer '{server}' -DatabaseCopyAutoActivationPolicy Unrestricted\nSet-MailboxServer '{server}' -DatabaseCopyActivationDisabledAndMoveNow $false\n# 4. Cluster-Node reaktivieren\nResume-ClusterNode -Name '{server}'",
+    "desc": "Wartungsmodus nach Neustart deaktivieren. Reihenfolge wichtig: erst Online, dann Transport, dann DB, dann Cluster. Danach Get-ServerHealth und Queue-Status prüfen.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "admin"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-wartungsmodus-status",
+    "name": "Wartungsmodus Status prüfen",
+    "cmd": "Get-ServerComponentState -Identity '{server}' | Where-Object { $_.State -ne 'Active' } | Select Component,State,TimeStamp | Format-Table -AutoSize",
+    "desc": "Zeigt alle Komponenten die nicht Active sind. Wenn leer → kein Wartungsmodus aktiv. Nach Reaktivierung prüfen ob wirklich alles zurück auf Active ist.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "diag",
+      "info"
+    ],
+    "product": "onprem"
   }
 ]
