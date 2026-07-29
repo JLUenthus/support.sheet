@@ -202,6 +202,71 @@
 }
 .gs-add-cat:hover { color: var(--green); border-color: var(--green); }
 
+/* ── Tag-Wolke (Sidebar, guides.html) ─────────────────────── */
+.gg-tag-cloud { display: flex; flex-wrap: wrap; gap: 6px; }
+.gg-tag-cloud-empty { font-size: .74rem; color: var(--dim); padding: 4px 2px; }
+.gg-tag-chip {
+  font-size: .68rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+}
+.gg-tag-chip:hover  { color: var(--text); border-color: var(--border2); }
+.gg-tag-chip.active { background: var(--accent-bg); border-color: rgba(124,140,248,.5); color: var(--accent); }
+
+/* ── How-To-Anleitung-Hinweis (guides.html) ──────────────── */
+.gg-howto-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  background: var(--accent-bg);
+  border: 1px solid rgba(124,140,248,.3);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r);
+  font-size: .82rem;
+  color: var(--text);
+}
+.gg-howto-hint[hidden] { display: none; }
+.gg-howto-hint a { color: var(--accent); font-weight: 600; text-decoration: underline; }
+
+.gg-howto-hint-dismiss {
+  background: none;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+  font-size: .9rem;
+  padding: 2px 6px;
+  flex-shrink: 0;
+  transition: color .15s;
+}
+.gg-howto-hint-dismiss:hover { color: var(--red); }
+
+.gg-howto-hint-reopen {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border2);
+  background: var(--panel2);
+  color: var(--dim);
+  cursor: pointer;
+  font-size: .9rem;
+  transition: all .15s;
+}
+.gg-howto-hint-reopen[hidden] { display: none; }
+.gg-howto-hint-reopen:hover { color: var(--accent); border-color: var(--accent); }
+
 /* ── Hauptinhalt ──────────────────────────────────────────── */
 .gs-main {
   flex: 1;
@@ -350,6 +415,20 @@
 .gv-content li { margin-bottom: 4px; }
 .gv-content a  { color: var(--accent); }
 .gv-content img { max-width: 100%; border-radius: var(--r); border: 1px solid var(--border); margin: 10px 0; }
+
+.gv-img-broken {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  margin: 10px 0;
+  background: var(--panel2);
+  border: 1px dashed var(--border2);
+  border-radius: var(--r);
+  color: var(--dim);
+  font-size: .82rem;
+}
+.gv-img-broken-icon { font-size: 1.3rem; opacity: .6; flex-shrink: 0; }
 .gv-content blockquote {
   border-left: 3px solid var(--accent);
   background: var(--accent-bg);

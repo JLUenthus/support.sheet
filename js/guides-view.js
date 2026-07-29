@@ -111,6 +111,26 @@
     });
   }
 
+  // Bilder, deren Asset nicht (mehr) gefunden wird, durch eine saubere
+  // Platzhalter-Box ersetzen statt des hässlichen nativen Broken-Image-Icons.
+  function enhanceImages(container) {
+    container.querySelectorAll('img').forEach(img => {
+      img.addEventListener('error', () => {
+        const box = document.createElement('div');
+        box.className = 'gv-img-broken';
+        const icon = document.createElement('span');
+        icon.className = 'gv-img-broken-icon';
+        icon.textContent = '🖼️';
+        const label = document.createElement('span');
+        label.className = 'gv-img-broken-label';
+        label.textContent = (img.getAttribute('alt') || 'Bild nicht gefunden') + ' – Datei fehlt';
+        box.appendChild(icon);
+        box.appendChild(label);
+        img.replaceWith(box);
+      }, { once: true });
+    });
+  }
+
   function setAmpel(id, iso) {
     const el = document.getElementById(id);
     el.className = 'gv-ampel';
@@ -172,6 +192,7 @@
       contentEl.replaceChildren(pre);
     }
     enhanceCodeBlocks(contentEl);
+    enhanceImages(contentEl);
   }
 
   async function loadGuide() {

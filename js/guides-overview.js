@@ -97,12 +97,14 @@
       if (!guidesRes.success) {
         notify(guidesRes.error || 'Guides konnten nicht geladen werden.', 'error');
         renderCategoryTree();
+        renderTagCloud();
         showState('noGuides');
         return;
       }
 
       allGuides = guidesRes.guides || [];
       renderCategoryTree();
+      renderTagCloud();
 
       if (!allGuides.length) {
         showState('noGuides');
@@ -198,6 +200,49 @@
     });
     const sel = document.getElementById('gg-filter-category');
     if (sel) sel.value = state.category || '';
+  }
+
+  // ── Sidebar-Tag-Wolke (echte Daten, klickbar zum Filtern) ─
+  function renderTagCloud() {
+    const container = document.getElementById('gg-tag-cloud');
+    if (!container) return;
+    container.replaceChildren();
+
+    const tagCounts = {};
+    allGuides.forEach(g => (g.meta.tags || []).forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; }));
+    const tagNames = Object.keys(tagCounts).sort((a, b) => a.localeCompare(b, 'de'));
+
+    if (!tagNames.length) {
+      const empty = document.createElement('div');
+      empty.className = 'gg-tag-cloud-empty';
+      empty.textContent = 'Noch keine Tags';
+      container.appendChild(empty);
+      return;
+    }
+
+    tagNames.forEach((tag) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'gg-tag-chip';
+      btn.dataset.tag = tag;
+      btn.textContent = tag + ' (' + tagCounts[tag] + ')';
+      btn.addEventListener('click', () => {
+        state.tag = state.tag === tag ? '' : tag; // erneuter Klick hebt den Filter wieder auf
+        updateTagActiveState();
+        const sel = document.getElementById('gg-filter-tag');
+        if (sel) sel.value = state.tag;
+        renderGrid();
+      });
+      container.appendChild(btn);
+    });
+
+    updateTagActiveState();
+  }
+
+  function updateTagActiveState() {
+    document.querySelectorAll('.gg-tag-chip').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.tag === state.tag && state.tag !== '');
+    });
   }
 
   // "+ Neue Kategorie" von der Phase-1-Platzhalterlogik in guides.js lösen
@@ -423,6 +468,7 @@
 
     document.getElementById('gg-filter-tag').addEventListener('change', (e) => {
       state.tag = e.target.value;
+      updateTagActiveState();
       renderGrid();
     });
 
@@ -458,11 +504,38 @@
     });
   }
 
+  // ── Hinweis auf die How-To-Anleitung (dismiss-/wiedereinblendbar) ──
+  const HOWTO_HINT_KEY = 'gs-howto-hint-dismissed';
+
+  function initHowtoHint() {
+    const hint      = document.getElementById('gg-howto-hint');
+    const reopenBtn = document.getElementById('gg-howto-hint-reopen');
+    if (!hint || !reopenBtn) return;
+
+    const dismissed = localStorage.getItem(HOWTO_HINT_KEY) === '1';
+    hint.hidden = dismissed;
+    reopenBtn.hidden = !dismissed;
+
+    const dismissBtn = document.getElementById('gg-howto-hint-dismiss');
+    dismissBtn.addEventListener('click', () => {
+      localStorage.setItem(HOWTO_HINT_KEY, '1');
+      hint.hidden = true;
+      reopenBtn.hidden = false;
+    });
+
+    reopenBtn.addEventListener('click', () => {
+      localStorage.removeItem(HOWTO_HINT_KEY);
+      hint.hidden = false;
+      reopenBtn.hidden = true;
+    });
+  }
+
   document.addEventListener('guides-db-connected', loadAndRender);
   document.addEventListener('guides-db-disconnected', loadAndRender);
 
   document.addEventListener('DOMContentLoaded', () => {
     initToolbar();
+    initHowtoHint();
     init();
   });
 })();

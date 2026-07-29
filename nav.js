@@ -12,7 +12,6 @@
       id:'guides', label:'guide.sheet', icon:'📚', color:'#4ade80', group:true,
       children: [
         { id:'guides-overview', href:'guides.html',        label:'Guides',        icon:'📚', color:'#4ade80', desc:'Kachel-Übersicht aller Guides' },
-        { id:'guides-howto',    href:'guides-howto.html',  label:'How-To',        icon:'📋', color:'#4ade80', desc:'Schritt-für-Schritt-Anleitungen' },
         { id:'guides-create',   href:'guides-create.html',label:'Guide anlegen', icon:'✏️', color:'#4ade80', desc:'Neuen Guide erstellen oder importieren' },
         { id:'guides-manage',   href:'guides-manage.html',label:'Lokale DB',     icon:'🗄️', color:'#4ade80', desc:'Backup, Restore, Merge, Papierkorb' },
       ]
@@ -32,7 +31,7 @@
   // Detail-Seiten ohne eigenen Tab (z.B. Guide-Ansicht) auf ihre
   // zugehörige Übersichtsseite mappen – zählen für Icon/Farbe/Highlight
   // als "guides.html".
-  const HREF_ALIASES = { 'guides-view.html': 'guides.html' };
+  const HREF_ALIASES = { 'guides-view.html': 'guides.html', 'guides-howto.html': 'guides.html' };
   const currentFile = HREF_ALIASES[location.pathname.split('/').pop()] || location.pathname.split('/').pop() || 'index.html';
 
   // Flache Liste aller Seiten (inkl. Kinder aus Gruppen)
@@ -185,7 +184,6 @@
                  : currentPage.id === 'entra'           ? '.entra'
                  : currentPage.id === 'har'             ? '.har'
                  : currentPage.id === 'guides-overview' ? '.guides'
-                 : currentPage.id === 'guides-howto'    ? '.guides'
                  : currentPage.id === 'guides-create'   ? '.guides'
                  : currentPage.id === 'guides-manage'   ? '.guides'
                  : currentPage.id === 'mitmachen'       ? '.mitmachen'

@@ -48,7 +48,6 @@
           <div class="gs-section-title">Navigation</div>
           <nav class="gs-nav">
             <a href="guides.html"         class="gs-nav-item" data-page="overview"><span class="gs-nav-icon">📚</span>Guides</a>
-            <a href="guides-howto.html"   class="gs-nav-item" data-page="howto"><span class="gs-nav-icon">📋</span>How-To</a>
             <a href="guides-create.html"  class="gs-nav-item" data-page="create"><span class="gs-nav-icon">✏️</span>Guide anlegen</a>
             <a href="guides-manage.html"  class="gs-nav-item" data-page="manage"><span class="gs-nav-icon">🗄️</span>Lokale DB</a>
           </nav>
@@ -96,12 +95,23 @@
           <button class="gs-add-cat" id="gs-add-cat-btn">+ Neue Kategorie</button>
         </div>
 
+        <div>
+          <div class="gs-section-title">Tags</div>
+          <div class="gg-tag-cloud" id="gg-tag-cloud"></div>
+        </div>
+
       </aside>
 
       <!-- ── HAUPTINHALT ─────────────────────────────────── -->
       <section class="gs-main">
         <h1>Guides</h1>
         <p class="gs-main-sub">Kachel-Übersicht aller Guides – Suche, Filter, Kategoriebaum.</p>
+
+        <div class="gg-howto-hint" id="gg-howto-hint" hidden>
+          <span>💡 Neu hier? <a href="guides-howto.html">Hier geht's zur Anleitung: Wie funktionieren Guides?</a></span>
+          <button type="button" class="gg-howto-hint-dismiss" id="gg-howto-hint-dismiss" title="Ausblenden">✕</button>
+        </div>
+        <button type="button" class="gg-howto-hint-reopen" id="gg-howto-hint-reopen" hidden title="Anleitungs-Hinweis wieder einblenden">›</button>
 
         <div class="gg-toolbar">
           <div class="gg-search-wrap">

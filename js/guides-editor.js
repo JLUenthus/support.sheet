@@ -238,7 +238,34 @@
   }
 
   // ── Entwurf (localStorage) ───────────────────────────────
-  function saveDraft() {
+  // Bilder aus pendingAssets müssen als Base64 mitgesichert werden – sonst
+  // verweist der wiederhergestellte Text auf assets/*, die nie gespeichert
+  // wurden (kaputtes Bild beim späteren Anzeigen des Guides).
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload  = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function dataUrlToBlob(dataUrl) {
+    const [header, base64] = dataUrl.split(',');
+    const mime = (header.match(/data:(.*?);base64/) || [, 'image/png'])[1];
+    const byteChars = atob(base64);
+    const bytes = new Uint8Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+  }
+
+  async function saveDraft() {
+    const assets = {};
+    for (const [filename, file] of pendingAssets.entries()) {
+      try { assets[filename] = await fileToDataUrl(file); }
+      catch { /* einzelnes Bild überspringen, Rest des Entwurfs trotzdem sichern */ }
+    }
+
     const draft = {
       title: titleInput.value,
       category: categorySelect.value,
@@ -246,13 +273,14 @@
       tags: [...tags],
       type,
       content: textarea.value,
+      assets,
       savedAt: new Date().toISOString(),
     };
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
       notify('Entwurf gespeichert.', 'success');
     } catch (err) {
-      notify('Entwurf konnte nicht gespeichert werden: ' + (err?.message || err), 'error');
+      notify('Entwurf konnte nicht gespeichert werden (evtl. zu groß mit Bildern): ' + (err?.message || err), 'error');
     }
   }
 
@@ -264,6 +292,17 @@
     renderTagPills();
     setType(draft.type || 'guide');
     textarea.value = draft.content || '';
+
+    if (draft.assets) {
+      Object.entries(draft.assets).forEach(([filename, dataUrl]) => {
+        try {
+          const blob = dataUrlToBlob(dataUrl);
+          pendingAssets.set(filename, blob);
+          assetPreviewUrls.set(filename, URL.createObjectURL(blob));
+        } catch { /* einzelnes Bild überspringen */ }
+      });
+    }
+
     updatePreview();
   }
 
@@ -339,6 +378,8 @@
     }
 
     localStorage.removeItem(DRAFT_KEY);
+    pendingAssets.clear();
+    assetPreviewUrls.clear();
     notify('Guide gespeichert.', 'success');
     window.location.href = 'guides-view.html?id=' + encodeURIComponent(id);
   }
