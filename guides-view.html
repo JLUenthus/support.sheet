@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>support.sheet – Guide</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/guides.css">
+</head>
+<body data-gs-page="overview">
+
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-icon" id="as-logo-icon">📚</div>
+      <div class="logo-text" id="as-logo-label">support<span>.sheet</span></div>
+    </a>
+    <div class="header-right">
+      <div class="pill pill-count" style="border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.08);color:#4ade80;">📚 guide.sheet</div>
+    </div>
+  </header>
+
+  <main style="padding-top:20px">
+    <div class="gs-layout">
+
+      <!-- ── SIDEBAR ─────────────────────────────────────── -->
+      <aside class="gs-sidebar">
+
+        <div class="gs-idb-banner" id="gs-idb-banner" hidden>
+          ⚠️ Eingeschränkter Modus – kein Dateizugriff. Export/Import per ZIP verfügbar.
+        </div>
+
+        <div>
+          <div class="gs-section-title">Navigation</div>
+          <nav class="gs-nav">
+            <a href="guides.html"         class="gs-nav-item" data-page="overview"><span class="gs-nav-icon">📚</span>Guides</a>
+            <a href="guides-howto.html"   class="gs-nav-item" data-page="howto"><span class="gs-nav-icon">📋</span>How-To</a>
+            <a href="guides-create.html"  class="gs-nav-item" data-page="create"><span class="gs-nav-icon">✏️</span>Guide anlegen</a>
+            <a href="guides-manage.html"  class="gs-nav-item" data-page="manage"><span class="gs-nav-icon">🗄️</span>Lokale DB</a>
+          </nav>
+        </div>
+
+        <div>
+          <div class="gs-section-title">Ordner-Status</div>
+          <div class="gs-folder-status" id="gs-folder-status">
+            <div class="gs-folder-row">
+              <span class="gs-folder-dot"></span>
+              <span class="gs-folder-label" id="gs-folder-label">Kein Ordner verbunden</span>
+            </div>
+            <span class="gs-folder-path" id="gs-folder-path" hidden></span>
+            <button class="gs-folder-btn" id="gs-folder-connect">📁 Ordner auswählen</button>
+            <button class="gs-folder-btn gs-folder-btn--warn" id="gs-folder-reconnect" hidden>🔓 Zugriff bestätigen</button>
+            <button class="gs-folder-disconnect" id="gs-folder-disconnect" hidden>Trennen</button>
+            <span class="gs-folder-hint" id="gs-folder-hint">Ordner-Handle wird lokal gecacht (IndexedDB).</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="gs-section-title">Kategorien</div>
+          <div class="gs-cat-list">
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Exchange</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Active Directory</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Windows Client</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Windows Server</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Microsoft 365</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Netzwerk</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Sicherheit</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">RDS</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Kunden</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Allgemein</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+          </div>
+          <button class="gs-add-cat" id="gs-add-cat-btn">+ Neue Kategorie</button>
+        </div>
+
+      </aside>
+
+      <!-- ── HAUPTINHALT ─────────────────────────────────── -->
+      <section class="gs-main">
+        <a href="guides.html" class="gv-back-link">← Zurück zur Übersicht</a>
+
+        <div id="gv-loading" class="gs-placeholder">Lade Guide…</div>
+        <div id="gv-error" class="gs-placeholder" hidden></div>
+
+        <article id="gv-article" hidden>
+          <header class="gv-header">
+            <div class="gv-header-top">
+              <h1 id="gv-title"></h1>
+              <button class="gv-fav-btn" id="gv-fav-btn" aria-label="Favorit" aria-pressed="false">★</button>
+            </div>
+
+            <div class="gv-badges">
+              <span class="gv-cat-badge" id="gv-cat-badge"></span>
+              <div class="gv-tags" id="gv-tags"></div>
+            </div>
+
+            <div class="gv-meta-row">
+              <span class="gv-meta-item">Erstellt: <span id="gv-created"></span><span class="gv-ampel" id="gv-created-ampel"></span></span>
+              <span class="gv-meta-sep">|</span>
+              <span class="gv-meta-item">Geändert: <span id="gv-modified"></span><span class="gv-ampel" id="gv-modified-ampel"></span></span>
+              <span class="gv-meta-sep">|</span>
+              <span class="gv-meta-item">Quelle: <span id="gv-source"></span></span>
+              <span class="gv-meta-sep" id="gv-import-sep" hidden>|</span>
+              <span class="gv-meta-item" id="gv-import-row" hidden>Import: <span id="gv-import-tag"></span></span>
+            </div>
+
+            <div class="gv-actions">
+              <button class="gs-folder-btn" id="gv-edit-btn">✏️ Bearbeiten</button>
+              <button class="gs-folder-btn gv-delete-btn" id="gv-delete-btn">🗑️ Löschen</button>
+            </div>
+          </header>
+
+          <div class="gv-content" id="gv-content"></div>
+        </article>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ── LÖSCH-BESTÄTIGUNG ────────────────────────────────── -->
+  <div class="gv-confirm-overlay" id="gv-confirm-overlay" hidden>
+    <div class="gv-confirm-box">
+      <h3>Guide in Papierkorb verschieben?</h3>
+      <p>Der Guide wird nicht endgültig gelöscht und kann über „Lokale DB“ wiederhergestellt werden.</p>
+      <div class="gv-confirm-btns">
+        <button class="gv-confirm-btn gv-confirm-btn--cancel" id="gv-confirm-cancel">Abbrechen</button>
+        <button class="gv-confirm-btn gv-confirm-btn--danger" id="gv-confirm-ok">In Papierkorb</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-links">
+      <a href="index.html"    class="footer-mitmachen">⚡ Windows</a>
+      <a href="eventlog.html" class="footer-mitmachen footer-mitmachen--amber">📋 Log Analyzer</a>
+      <a href="exchange.html" class="footer-mitmachen footer-mitmachen--amber">📧 Exchange</a>
+      <a href="forti.html"    class="footer-mitmachen footer-mitmachen--orange">🔥 Fortinet</a>
+      <a href="scripts.html"  class="footer-mitmachen footer-mitmachen--green">💚 PS Scripts</a>
+      <a href="mitmachen.html" class="footer-mitmachen">🤝 Mitmachen</a>
+    </div>
+    <p class="footer-copy">support.sheet · <span>guide.sheet · Daten bleiben lokal im Browser</span></p>
+  </footer>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+    }
+  </script>
+
+  <script src="js/toast.js"></script>
+  <script src="js/marked.min.js"></script>
+  <script src="js/guides-db.js"></script>
+  <script src="js/guides.js"></script>
+  <script src="js/guides-view.js"></script>
+  <script src="nav.js"></script>
+
+</body>
+</html>

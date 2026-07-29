@@ -4,6 +4,58 @@ Kein Framework, kein Build-Schritt, keine Magie. Das Projekt ist eine Sammlung v
 
 ---
 
+## Bekannte technische Schulden (TODO)
+
+### eventlog.html – Split ausstehend
+`eventlog.html` ist mit ~675 Zeilen zu groß. Geplante Aufteilung:
+```
+js/eventlog/analyzer.js          ← analyzeEvents(), Rule-Matching
+js/eventlog/render-system.js     ← renderSysGrid(), Summary Pills
+js/eventlog/render-findings.js   ← renderFindings(), buildRecList(), Category Filter
+js/eventlog/render-improvements.js ← renderImprovements()
+css/eventlog.css                 ← alle eventlog-spezifischen Styles
+```
+Nicht jetzt anfassen – erst wenn weitere Features dazukommen.
+
+### improvement-rules.json – Collector-Abhängigkeiten
+Folgende Checks funktionieren nur wenn der Collector die Felder exportiert.
+Vor dem Aktivieren neuer Checks prüfen ob das Feld zuverlässig im JSON steht:
+
+| Check | Benötigtes Feld | Status |
+|-------|----------------|--------|
+| powerPlan | `Metadata.PowerPlan` | Prüfen |
+| ramUsedPercent | `Metadata.RAM_Used_GB` | Prüfen |
+| windowsBuild | `Metadata.BuildNumber` | Prüfen |
+| diskFreePercent | `Metadata.Disks[].Free_GB` | Vorhanden |
+| uptimeHours | `Metadata.Uptime_Hours` | Vorhanden |
+| errorCount | `Summary.Critical/Error` | Vorhanden |
+
+### eventlog-rules.json – Fix-Command Labels + Risiko-Level
+Empfehlungen brauchen zwei zusätzliche Felder:
+```json
+{
+  "text": "DISM /Online /Cleanup-Image /RestoreHealth",
+  "cmd": "DISM /Online /Cleanup-Image /RestoreHealth",
+  "type": "fix",
+  "risk": "medium"
+}
+```
+
+**`type`** – unterscheidet was der Command tut:
+- `diagnose` – liest nur, ändert nichts (sfc /verifyonly, Get-*, nslookup)
+- `fix` – behebt etwas, kann Nebenwirkungen haben (sfc /scannow, Dienst-Restart)
+- `maintenance` – Wartung, nicht dringend (DISM /ResetBase, Temp-Cleanup)
+
+**`risk`** – zeigt dem Techniker wie vorsichtig er sein muss:
+- `low` – harmlos, jederzeit ausführbar
+- `medium` – Auswirkungen möglich, vorher prüfen (Dienst-Restart, powercfg)
+- `high` – kann Datenverlust/Ausfall verursachen, nur im Wartungsfenster (DISM /ResetBase, chkdsk /r, Neustart-Tasks)
+
+UI-Änderung nötig: `buildRecList()` in `eventlog.html` muss risk-Badge + type-Label anzeigen.
+Nicht als "Fix" verkaufen was nur Diagnose ist – `sfc /scannow` ist kein "sofort ausführen".
+
+---
+
 ## Wie eine Seite startet
 
 Am Beispiel von `index.html`:

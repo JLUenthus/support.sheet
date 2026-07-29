@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>support.sheet – Lokale DB</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/guides.css">
+</head>
+<body data-gs-page="manage">
+
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-icon" id="as-logo-icon">🗄️</div>
+      <div class="logo-text" id="as-logo-label">support<span>.sheet</span></div>
+    </a>
+    <div class="header-right">
+      <div class="pill pill-count" style="border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.08);color:#4ade80;">🗄️ Lokale DB</div>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="hero-badge" style="border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.08);color:#4ade80;">🗄️ guide.sheet</div>
+    <h1>Deine Datenbank.<br>Unter Kontrolle.</h1>
+    <p>Backup, Wiederherstellung, Merge und Papierkorb für deine lokale Guide-Datenbank.</p>
+  </div>
+
+  <main>
+    <div class="gs-layout">
+
+      <!-- ── SIDEBAR ─────────────────────────────────────── -->
+      <aside class="gs-sidebar">
+
+        <div class="gs-idb-banner" id="gs-idb-banner" hidden>
+          ⚠️ Eingeschränkter Modus – kein Dateizugriff. Export/Import per ZIP verfügbar.
+        </div>
+
+        <div>
+          <div class="gs-section-title">Navigation</div>
+          <nav class="gs-nav">
+            <a href="guides.html"         class="gs-nav-item" data-page="overview"><span class="gs-nav-icon">📚</span>Guides</a>
+            <a href="guides-howto.html"   class="gs-nav-item" data-page="howto"><span class="gs-nav-icon">📋</span>How-To</a>
+            <a href="guides-create.html"  class="gs-nav-item" data-page="create"><span class="gs-nav-icon">✏️</span>Guide anlegen</a>
+            <a href="guides-manage.html"  class="gs-nav-item" data-page="manage"><span class="gs-nav-icon">🗄️</span>Lokale DB</a>
+          </nav>
+        </div>
+
+        <div>
+          <div class="gs-section-title">Ordner-Status</div>
+          <div class="gs-folder-status" id="gs-folder-status">
+            <div class="gs-folder-row">
+              <span class="gs-folder-dot"></span>
+              <span class="gs-folder-label" id="gs-folder-label">Kein Ordner verbunden</span>
+            </div>
+            <span class="gs-folder-path" id="gs-folder-path" hidden></span>
+            <button class="gs-folder-btn" id="gs-folder-connect">📁 Ordner auswählen</button>
+            <button class="gs-folder-btn gs-folder-btn--warn" id="gs-folder-reconnect" hidden>🔓 Zugriff bestätigen</button>
+            <button class="gs-folder-disconnect" id="gs-folder-disconnect" hidden>Trennen</button>
+            <span class="gs-folder-hint" id="gs-folder-hint">Ordner-Handle wird lokal gecacht (IndexedDB).</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="gs-section-title">Kategorien</div>
+          <div class="gs-cat-list">
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Exchange</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Active Directory</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Windows Client</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Windows Server</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Microsoft 365</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Netzwerk</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Sicherheit</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">RDS</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Kunden</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Allgemein</span><span class="gs-cat-count">0</span></button>
+            <div class="gs-cat-sub">Noch keine Guides</div>
+          </div>
+          <button class="gs-add-cat" id="gs-add-cat-btn">+ Neue Kategorie</button>
+        </div>
+
+      </aside>
+
+      <!-- ── HAUPTINHALT ─────────────────────────────────── -->
+      <section class="gs-main gm-main">
+        <h1>Lokale DB verwalten</h1>
+        <p class="gs-main-sub">Backup, Restore, Merge, Papierkorb, Statistik.</p>
+
+        <!-- 1. Datenbankstatus -->
+        <div class="gm-card">
+          <h2 class="gm-card-title">📊 Datenbankstatus</h2>
+          <div class="gm-status-grid">
+            <div class="gm-stat"><span class="gm-stat-label">Ordner</span><span class="gm-stat-value" id="gm-status-folder">–</span></div>
+            <div class="gm-stat"><span class="gm-stat-label">Guides</span><span class="gm-stat-value" id="gm-status-guides">–</span></div>
+            <div class="gm-stat"><span class="gm-stat-label">Kategorien</span><span class="gm-stat-value" id="gm-status-categories">–</span></div>
+            <div class="gm-stat"><span class="gm-stat-label">Assets</span><span class="gm-stat-value" id="gm-status-assets">–</span></div>
+            <div class="gm-stat"><span class="gm-stat-label">Letzter Export</span><span class="gm-stat-value" id="gm-status-lastexport">–</span></div>
+          </div>
+          <div class="gm-status-actions">
+            <button type="button" class="gs-folder-btn" id="gm-switch-folder">📁 Ordner wechseln</button>
+            <button type="button" class="gs-folder-btn gv-delete-btn" id="gm-disconnect-folder">🔌 Ordner trennen</button>
+          </div>
+        </div>
+
+        <!-- 2. Export -->
+        <div class="gm-card">
+          <h2 class="gm-card-title">📤 Export</h2>
+
+          <div class="gm-export-row">
+            <div class="gm-export-group">
+              <div class="gm-group-label">Was exportieren?</div>
+              <label class="gm-radio"><input type="radio" name="gm-scope" value="all" checked> Alle Guides</label>
+              <label class="gm-radio"><input type="radio" name="gm-scope" value="category"> Kategorie: <select id="gm-export-category" class="gg-select"></select></label>
+              <label class="gm-radio"><input type="radio" name="gm-scope" value="favorites"> Nur Favoriten</label>
+            </div>
+
+            <div class="gm-export-group">
+              <div class="gm-group-label">Format</div>
+              <label class="gm-radio"><input type="radio" name="gm-format" value="readable" checked> Lesbar / Archiv (Markdown + ZIP)</label>
+              <label class="gm-radio"><input type="radio" name="gm-format" value="package"> Merge-Paket (für guide.sheet)</label>
+            </div>
+          </div>
+
+          <div class="gm-export-name">
+            <label for="gm-export-name">Dein Name (für Import-Tag)</label>
+            <input type="text" id="gm-export-name" class="ge-subcategory-input" placeholder="z.B. jan-lukas" autocomplete="off">
+          </div>
+
+          <button type="button" class="ge-save-btn" id="gm-export-btn">📤 Exportieren</button>
+        </div>
+
+        <!-- 3. Import / Merge -->
+        <div class="gm-card">
+          <h2 class="gm-card-title">📥 Import / Merge</h2>
+
+          <div class="gm-import-zone" id="gm-import-zone">
+            <div class="gm-import-icon">📦</div>
+            <div class="gm-import-text">ZIP-Datei hier ablegen oder klicken</div>
+            <div class="gm-import-sub">Lesbares Archiv oder Merge-Paket wird automatisch erkannt</div>
+            <input type="file" id="gm-import-file" accept=".zip" hidden>
+          </div>
+
+          <div class="gm-import-preview" id="gm-import-preview" hidden>
+            <div class="gm-import-preview-title" id="gm-import-preview-title"></div>
+            <div class="raw-table-wrap">
+              <table class="event-table gm-import-table">
+                <thead><tr><th>Titel</th><th>Kategorie</th><th>Aktion</th></tr></thead>
+                <tbody id="gm-import-rows"></tbody>
+              </table>
+            </div>
+            <button type="button" class="ge-save-btn" id="gm-import-confirm">Import bestätigen</button>
+          </div>
+        </div>
+
+        <!-- 5. Kategorien verwalten -->
+        <div class="gm-card">
+          <h2 class="gm-card-title">📁 Kategorien verwalten</h2>
+          <div class="gm-cat-manage-list" id="gm-cat-manage-list"></div>
+          <button type="button" class="gs-add-cat" id="gm-add-category">+ Neue Kategorie</button>
+        </div>
+
+        <!-- 6. Papierkorb -->
+        <div class="gm-card">
+          <div class="gm-card-title-row">
+            <h2 class="gm-card-title">🗑️ Papierkorb</h2>
+            <button type="button" class="gv-delete-btn gs-folder-btn" id="gm-empty-trash">🗑️ Papierkorb leeren</button>
+          </div>
+          <div class="gm-trash-list" id="gm-trash-list"></div>
+          <p class="gm-trash-empty" id="gm-trash-empty" hidden>Papierkorb ist leer.</p>
+        </div>
+
+        <!-- 7. Statistik -->
+        <div class="gm-card">
+          <h2 class="gm-card-title">📈 Statistik</h2>
+          <div class="gm-stats" id="gm-stats"></div>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-links">
+      <a href="index.html"    class="footer-mitmachen">⚡ Windows</a>
+      <a href="eventlog.html" class="footer-mitmachen footer-mitmachen--amber">📋 Log Analyzer</a>
+      <a href="exchange.html" class="footer-mitmachen footer-mitmachen--amber">📧 Exchange</a>
+      <a href="forti.html"    class="footer-mitmachen footer-mitmachen--orange">🔥 Fortinet</a>
+      <a href="scripts.html"  class="footer-mitmachen footer-mitmachen--green">💚 PS Scripts</a>
+      <a href="mitmachen.html" class="footer-mitmachen">🤝 Mitmachen</a>
+    </div>
+    <p class="footer-copy">support.sheet · <span>guide.sheet · Daten bleiben lokal im Browser</span></p>
+  </footer>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+    }
+  </script>
+
+  <script src="js/toast.js"></script>
+  <script src="js/jszip.min.js"></script>
+  <script src="js/guides-db.js"></script>
+  <script src="js/guides.js"></script>
+  <script src="js/guides-manage.js"></script>
+  <script src="nav.js"></script>
+
+</body>
+</html>

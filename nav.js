@@ -9,6 +9,15 @@
     { id:'scripts',  href:'scripts.html',  label:'PS Scripts',     icon:'💚', color:'#4ade80', desc:'Fertige .ps1 Skripte' },
     { id:'ticket',   href:'ticketassistent.html', label:'Ticketassistent', icon:'🎫', color:'#fb923c', desc:'KI-gestützter Ticketassistent' },
     {
+      id:'guides', label:'guide.sheet', icon:'📚', color:'#4ade80', group:true,
+      children: [
+        { id:'guides-overview', href:'guides.html',        label:'Guides',        icon:'📚', color:'#4ade80', desc:'Kachel-Übersicht aller Guides' },
+        { id:'guides-howto',    href:'guides-howto.html',  label:'How-To',        icon:'📋', color:'#4ade80', desc:'Schritt-für-Schritt-Anleitungen' },
+        { id:'guides-create',   href:'guides-create.html',label:'Guide anlegen', icon:'✏️', color:'#4ade80', desc:'Neuen Guide erstellen oder importieren' },
+        { id:'guides-manage',   href:'guides-manage.html',label:'Lokale DB',     icon:'🗄️', color:'#4ade80', desc:'Backup, Restore, Merge, Papierkorb' },
+      ]
+    },
+    {
       id:'analyzer', label:'Analyzer', icon:'📋', color:'#e8b339', group:true,
       children: [
         { id:'eventlog', href:'eventlog.html', label:'Log Analyzer',   icon:'📋', color:'#e8b339', desc:'Windows Event Logs analysieren' },
@@ -20,7 +29,11 @@
     { id:'tools',     href:'tools.html',     label:'support.tools', icon:'⚙️',  color:'#94a3b8', desc:'App installieren · Offline · Einstellungen', tools:true },
   ];
 
-  const currentFile = location.pathname.split('/').pop() || 'index.html';
+  // Detail-Seiten ohne eigenen Tab (z.B. Guide-Ansicht) auf ihre
+  // zugehörige Übersichtsseite mappen – zählen für Icon/Farbe/Highlight
+  // als "guides.html".
+  const HREF_ALIASES = { 'guides-view.html': 'guides.html' };
+  const currentFile = HREF_ALIASES[location.pathname.split('/').pop()] || location.pathname.split('/').pop() || 'index.html';
 
   // Flache Liste aller Seiten (inkl. Kinder aus Gruppen)
   const ALL_PAGES = PAGES.flatMap(p => p.group ? p.children : [p]);
@@ -163,15 +176,19 @@
   if (logoIconEl)  logoIconEl.textContent = currentPage.icon;
   if (logoLabelEl) {
     // "support" bleibt, nur der farbige Span ändert sich
-    const suffix = currentPage.id === 'index'    ? '.sheet'
-                 : currentPage.id === 'exchange'  ? '.exchange'
-                 : currentPage.id === 'forti'     ? '.forti'
-                 : currentPage.id === 'scripts'   ? '.scripts'
-                 : currentPage.id === 'ticket'    ? '.ticket'
-                 : currentPage.id === 'eventlog'  ? '.analyzer'
-                 : currentPage.id === 'entra'     ? '.entra'
-                 : currentPage.id === 'har'       ? '.har'
-                 : currentPage.id === 'mitmachen' ? '.mitmachen'
+    const suffix = currentPage.id === 'index'          ? '.sheet'
+                 : currentPage.id === 'exchange'        ? '.exchange'
+                 : currentPage.id === 'forti'           ? '.forti'
+                 : currentPage.id === 'scripts'         ? '.scripts'
+                 : currentPage.id === 'ticket'          ? '.ticket'
+                 : currentPage.id === 'eventlog'        ? '.analyzer'
+                 : currentPage.id === 'entra'           ? '.entra'
+                 : currentPage.id === 'har'             ? '.har'
+                 : currentPage.id === 'guides-overview' ? '.guides'
+                 : currentPage.id === 'guides-howto'    ? '.guides'
+                 : currentPage.id === 'guides-create'   ? '.guides'
+                 : currentPage.id === 'guides-manage'   ? '.guides'
+                 : currentPage.id === 'mitmachen'       ? '.mitmachen'
                  : '.tools';
     logoLabelEl.textContent = 'support';
     const span = document.createElement('span');

@@ -1,7 +1,7 @@
 // ============================================================
 // support.sheet – Service Worker v2
 // ============================================================
-const CACHE_VERSION = '20260716-0553';
+const CACHE_VERSION = '20260728-1930';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -31,6 +31,22 @@ const ASSETS = [
   './data/entra-rules.json',
   './har.html',
   './entra.html',
+  './guides.html',
+  './guides-howto.html',
+  './guides-create.html',
+  './guides-manage.html',
+  './guides-view.html',
+  './css/guides.css',
+  './js/guides.js',
+  './js/guides-db.js',
+  './js/guides-view.js',
+  './js/guides-overview.js',
+  './js/guides-editor.js',
+  './js/guides-manage.js',
+  './js/marked.min.js',
+  './js/mammoth.min.js',
+  './js/turndown.min.js',
+  './js/jszip.min.js',
   './fonts/fonts.css',
   './fonts/jetbrains-mono-400.ttf',
   './fonts/jetbrains-mono-500.ttf',

@@ -585,6 +585,10 @@ body.page-exchange .hero h1 { background: linear-gradient(135deg, #e0e4f0 0%, #e
 body.page-forti    .hero h1 { background: linear-gradient(135deg, #e0e4f0 0%, #fb7124 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
 body.page-scripts  .hero h1 { background: linear-gradient(135deg, #e0e4f0 0%, #4ade80 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
 body.page-eventlog .hero h1 { background: linear-gradient(135deg, #e0e4f0 0%, #e8b339 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+body.page-guides-overview .hero h1,
+body.page-guides-howto    .hero h1,
+body.page-guides-create   .hero h1,
+body.page-guides-manage   .hero h1 { background: linear-gradient(135deg, #e0e4f0 0%, #4ade80 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
 body.page-mitmachen .hero h1 { background: linear-gradient(135deg, #e0e4f0 0%, #a78bfa 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
 body.page-tools    .hero h1 { background: linear-gradient(135deg, #e0e4f0 0%, #94a3b8 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
 
