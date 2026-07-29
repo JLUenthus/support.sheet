@@ -127,15 +127,15 @@
           <div class="ge-form-row">
             <select id="ge-category" class="gg-select"></select>
             <input type="text" id="ge-subcategory" class="ge-subcategory-input" placeholder="Unterkategorie (optional)" autocomplete="off">
-            <div class="ge-type-toggle">
-              <button type="button" class="ge-type-btn active" data-type="guide">Guide</button>
-              <button type="button" class="ge-type-btn" data-type="howto">How-To</button>
-            </div>
           </div>
 
-          <div class="ge-tags-row">
-            <div class="ge-tags-pills" id="ge-tags-pills"></div>
-            <input type="text" id="ge-tag-input" class="ge-tag-input" placeholder="Tag eingeben, Enter oder Komma…" autocomplete="off">
+          <div class="ge-tags-block">
+            <div class="ge-tags-row">
+              <div class="ge-tags-pills" id="ge-tags-pills"></div>
+              <input type="text" id="ge-tag-input" class="ge-tag-input" placeholder="Tag eingeben (Enter, Komma oder Klick woanders)…" autocomplete="off">
+              <button type="button" class="ge-tag-add-btn" id="ge-tag-add-btn">+ Hinzufügen</button>
+            </div>
+            <div class="ge-tag-suggestions" id="ge-tag-suggestions"></div>
           </div>
         </div>
 
@@ -161,7 +161,7 @@
         </div>
 
         <div class="ge-editor-wrap" id="ge-editor-wrap" data-mode="split">
-          <textarea id="ge-textarea" class="ge-textarea" placeholder="Inhalt in Markdown schreiben oder Bild hierher ziehen…" spellcheck="false"></textarea>
+          <textarea id="ge-textarea" class="ge-textarea" placeholder="Inhalt in Markdown schreiben. Bild hierher ziehen oder mit Strg+V einfügen…" spellcheck="false"></textarea>
           <div class="ge-preview gv-content" id="ge-preview"></div>
         </div>
         <input type="file" id="ge-image-input" accept="image/*" hidden>

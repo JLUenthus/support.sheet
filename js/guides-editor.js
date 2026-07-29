@@ -11,7 +11,6 @@
 
   let categories       = [];
   let tags             = [];
-  let type              = 'guide';
   let currentGuideId   = null;
   let existingMeta      = null;
   const pendingAssets     = new Map(); // filename -> File|Blob (noch nicht gespeichert)
@@ -19,6 +18,9 @@
   let importImageCounter = 0;
 
   let titleInput, categorySelect, subcategoryInput, tagInput, tagsPillsEl, textarea, preview;
+
+  // Vorschläge für häufige Status-Tags – per Klick an/abwählbar.
+  const SUGGESTED_TAGS = ['unfertig', 'überarbeiten', 'wichtig', 'geprüft', 'veraltet'];
 
   function notify(message, type_) {
     if (typeof showToast === 'function') showToast(message, type_);
@@ -65,11 +67,40 @@
       pill.appendChild(remove);
       tagsPillsEl.appendChild(pill);
     });
+    renderTagSuggestions();
+  }
+
+  // Vorgefertigte Status-Tags, an/abwählbar per Klick – kein Enter nötig.
+  function renderTagSuggestions() {
+    const container = document.getElementById('ge-tag-suggestions');
+    if (!container) return;
+    container.replaceChildren();
+    SUGGESTED_TAGS.forEach((tag) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'ge-tag-suggestion' + (tags.includes(tag) ? ' active' : '');
+      btn.textContent = tag;
+      btn.addEventListener('click', () => {
+        if (tags.includes(tag)) tags = tags.filter((t) => t !== tag);
+        else tags.push(tag);
+        renderTagPills();
+      });
+      container.appendChild(btn);
+    });
   }
 
   function commitTag(raw) {
     const val = raw.trim();
     if (val && !tags.includes(val)) tags.push(val);
+  }
+
+  // Text aus dem Eingabefeld als Tag übernehmen – von Enter, Komma,
+  // Blur (Klick woanders) und dem "+ Hinzufügen"-Button gemeinsam genutzt.
+  function commitFromInput() {
+    if (!tagInput.value.trim()) return;
+    commitTag(tagInput.value);
+    tagInput.value = '';
+    renderTagPills();
   }
 
   function initTagsInput() {
@@ -85,24 +116,12 @@
     tagInput.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter') return;
       e.preventDefault();
-      commitTag(tagInput.value);
-      tagInput.value = '';
-      renderTagPills();
+      commitFromInput();
     });
-  }
+    // Wer einfach woanders hinklickt, soll den getippten Tag nicht verlieren.
+    tagInput.addEventListener('blur', commitFromInput);
 
-  // ── Typ-Toggle ───────────────────────────────────────────
-  function setType(value) {
-    type = value === 'howto' ? 'howto' : 'guide';
-    document.querySelectorAll('.ge-type-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.type === type);
-    });
-  }
-
-  function initTypeToggle() {
-    document.querySelectorAll('.ge-type-btn').forEach(btn => {
-      btn.addEventListener('click', () => setType(btn.dataset.type));
-    });
+    document.getElementById('ge-tag-add-btn').addEventListener('click', commitFromInput);
   }
 
   // ── Split/Editor/Vorschau-Umschalter ─────────────────────
@@ -181,6 +200,22 @@
       textarea.classList.remove('ge-drag');
       const file = e.dataTransfer.files && e.dataTransfer.files[0];
       if (file) handleImageFile(file);
+    });
+
+    // Screenshot/Bild per Strg+V direkt aus der Zwischenablage einfügen.
+    // Nur abfangen wenn wirklich ein Bild im Clipboard liegt – normales
+    // Text-Einfügen bleibt sonst unangetastet.
+    textarea.addEventListener('paste', (e) => {
+      const items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) handleImageFile(file);
+          break;
+        }
+      }
     });
   }
 
@@ -271,7 +306,6 @@
       category: categorySelect.value,
       subcategory: subcategoryInput.value,
       tags: [...tags],
-      type,
       content: textarea.value,
       assets,
       savedAt: new Date().toISOString(),
@@ -290,7 +324,6 @@
     subcategoryInput.value = draft.subcategory || '';
     tags = Array.isArray(draft.tags) ? draft.tags : [];
     renderTagPills();
-    setType(draft.type || 'guide');
     textarea.value = draft.content || '';
 
     if (draft.assets) {
@@ -339,7 +372,6 @@
     subcategoryInput.value = res.meta.subcategory || '';
     tags = Array.isArray(res.meta.tags) ? [...res.meta.tags] : [];
     renderTagPills();
-    setType(res.meta.type || 'guide');
     textarea.value = res.content || '';
 
     document.getElementById('ge-page-title').textContent = 'Guide bearbeiten';
@@ -359,7 +391,6 @@
       category: categorySelect.value || 'Allgemein',
       subcategory: subcategoryInput.value.trim(),
       tags: [...tags],
-      type,
       favorite:  existingMeta ? existingMeta.favorite  : false,
       source:    existingMeta ? existingMeta.source    : 'manual',
       importTag: existingMeta ? existingMeta.importTag : null,
@@ -471,7 +502,7 @@
     preview          = document.getElementById('ge-preview');
 
     initTagsInput();
-    initTypeToggle();
+    renderTagPills(); // zeigt die Tag-Vorschläge auch ohne vorhandene Tags sofort an
     initViewToggle();
     initToolbar();
     initImageUpload();

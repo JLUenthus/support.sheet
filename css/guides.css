@@ -226,13 +226,15 @@
   justify-content: space-between;
   gap: 10px;
   padding: 10px 14px;
-  margin-bottom: 16px;
+  margin: 8px auto 0;
+  max-width: 560px;
   background: var(--accent-bg);
   border: 1px solid rgba(124,140,248,.3);
   border-left: 3px solid var(--accent);
   border-radius: var(--r);
   font-size: .82rem;
   color: var(--text);
+  text-align: left;
 }
 .gg-howto-hint[hidden] { display: none; }
 .gg-howto-hint a { color: var(--accent); font-weight: 600; text-decoration: underline; }
@@ -255,8 +257,8 @@
   justify-content: center;
   width: 26px;
   height: 26px;
+  margin: 8px auto 0;
   border-radius: 6px;
-  margin-bottom: 16px;
   border: 1px solid var(--border2);
   background: var(--panel2);
   color: var(--dim);
@@ -812,29 +814,16 @@
 }
 .ge-subcategory-input:focus { border-color: var(--accent); }
 
-.ge-type-toggle { display: flex; border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; margin-left: auto; }
-.ge-type-btn {
-  padding: 7px 14px;
-  border: none;
-  background: var(--panel2);
-  color: var(--muted);
-  cursor: pointer;
-  font-family: var(--font-ui);
-  font-size: .78rem;
-  font-weight: 600;
-  transition: all .15s;
+.ge-tags-block {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
 }
-.ge-type-btn:hover  { color: var(--text); }
-.ge-type-btn.active { background: rgba(74,222,128,.12); color: var(--green); }
-
 .ge-tags-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  margin-bottom: 18px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--border);
 }
 .ge-tags-pills { display: flex; flex-wrap: wrap; gap: 6px; }
 .ge-tag-pill {
@@ -860,6 +849,41 @@
   font-size: .8rem;
   outline: none;
   padding: 4px;
+}
+.ge-tag-add-btn {
+  padding: 5px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--border2);
+  background: var(--panel2);
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: .72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.ge-tag-add-btn:hover { color: var(--text); border-color: var(--accent); }
+
+.ge-tag-suggestions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.ge-tag-suggestion {
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px dashed var(--border2);
+  background: none;
+  color: var(--dim);
+  font-family: var(--font-ui);
+  font-size: .72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.ge-tag-suggestion:hover  { color: var(--text); border-color: var(--accent); }
+.ge-tag-suggestion.active {
+  border-style: solid;
+  border-color: rgba(74,222,128,.4);
+  background: rgba(74,222,128,.12);
+  color: var(--green);
 }
 
 /* ── Markdown-Toolbar ─────────────────────────────────────── */
@@ -936,7 +960,6 @@
 @media (max-width: 900px) {
   .ge-editor-wrap { flex-direction: column; }
   .ge-editor-wrap .ge-textarea, .ge-editor-wrap .ge-preview { min-height: 280px; }
-  .ge-type-toggle { margin-left: 0; }
 }
 
 /* ============================================================
