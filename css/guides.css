@@ -312,19 +312,33 @@
 }
 .gv-back-link:hover { color: var(--green); }
 
+/* Kopf als eigene Karte, klar vom Inhalt getrennt (margin-bottom).
+   Zwei Spalten: links Titel/Kategorie/Tags/Notiz untereinander (wie im
+   Editor), rechts Erstellt/Geändert/Quelle + Bearbeiten/Löschen. */
 .gv-header {
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 24px;
+  padding: 18px 20px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+
+.gv-header-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .gv-header-top {
   display: flex;
-  flex-wrap: wrap;
   align-items: flex-start;
-  gap: 6px 12px;
-  width: 100%;
-  margin-bottom: 10px;
+  gap: 12px;
 }
 .gv-header-top h1 {
   flex: 1;
@@ -352,7 +366,7 @@
 .gv-fav-btn:hover  { color: var(--amber); transform: scale(1.1); }
 .gv-fav-btn.active { color: var(--amber); }
 
-.gv-badges { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; width: 100%; margin-bottom: 10px; }
+.gv-badges { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 
 .gv-cat-badge {
   font-size: .72rem;
@@ -376,18 +390,6 @@
   letter-spacing: .03em;
 }
 
-.gv-meta-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  font-size: .76rem;
-  color: var(--muted);
-  margin-bottom: 14px;
-}
-.gv-meta-sep { color: var(--border2); }
-
 .gv-ampel {
   display: inline-block;
   width: 7px;
@@ -404,9 +406,7 @@
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  width: 100%;
   box-sizing: border-box;
-  margin-bottom: 14px;
   padding: 10px 14px;
   border: 1px dashed rgba(251,191,36,.4);
   border-radius: 8px;
@@ -417,7 +417,27 @@
 .gv-private-note-label { font-size: .7rem; font-weight: 700; color: var(--amber); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 4px; }
 .gv-private-note-text { font-size: .82rem; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
 
-.gv-actions { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+.gv-header-side {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  min-width: 160px;
+}
+
+.gv-meta-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-size: .76rem;
+  color: var(--muted);
+  text-align: right;
+}
+.gv-meta-item { white-space: nowrap; }
+
+.gv-actions { display: flex; flex-direction: column; gap: 8px; }
 .gv-delete-btn { color: var(--red); }
 .gv-delete-btn:hover { border-color: var(--red); color: var(--red); background: rgba(248,113,113,.08); }
 
@@ -429,7 +449,7 @@
 #gv-article { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 
 /* ── Markdown-Inhalt ──────────────────────────────────────── */
-.gv-content { font-size: .88rem; line-height: 1.7; color: var(--text); margin-bottom: 20px; }
+.gv-content { flex-shrink: 0; font-size: .88rem; line-height: 1.7; color: var(--text); margin-bottom: 20px; }
 .gv-content h1, .gv-content h2, .gv-content h3 { font-weight: 700; color: var(--text); margin: 24px 0 10px; line-height: 1.3; }
 .gv-content h1 { font-size: 1.3rem; }
 .gv-content h2 { font-size: 1.15rem; }
@@ -546,7 +566,10 @@
 
 @media (max-width: 640px) {
   .gv-header-top h1 { font-size: 1.25rem; }
-  .gv-actions { flex-wrap: wrap; }
+  .gv-header { flex-direction: column; }
+  .gv-header-side { width: 100%; min-width: 0; }
+  .gv-meta-col { align-items: flex-start; text-align: left; }
+  .gv-actions { flex-direction: row; flex-wrap: wrap; }
 }
 
 /* ── Ähnliche Guides (Phase 12) ───────────────────────────────
@@ -556,6 +579,7 @@
    bei langem Inhalt folgt er wie gehabt direkt darunter. Bleedet aus
    dem .gs-main-Padding heraus und hebt sich farblich vom Inhalt ab. */
 .gv-related {
+  flex-shrink: 0;
   margin-top: auto;
   margin-right: -24px;
   margin-bottom: -24px;

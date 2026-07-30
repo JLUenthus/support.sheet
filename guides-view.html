@@ -84,37 +84,38 @@
 
         <article id="gv-article" hidden>
           <header class="gv-header">
-            <div class="gv-header-top">
-              <h1 id="gv-title"></h1>
-              <button class="gv-fav-btn" id="gv-fav-btn" aria-label="Favorit" aria-pressed="false">★</button>
-            </div>
+            <div class="gv-header-main">
+              <div class="gv-header-top">
+                <h1 id="gv-title"></h1>
+                <button class="gv-fav-btn" id="gv-fav-btn" aria-label="Favorit" aria-pressed="false">★</button>
+              </div>
 
-            <div class="gv-badges">
-              <span class="gv-cat-badge" id="gv-cat-badge"></span>
-              <div class="gv-tags" id="gv-tags"></div>
-            </div>
+              <div class="gv-badges">
+                <span class="gv-cat-badge" id="gv-cat-badge"></span>
+                <div class="gv-tags" id="gv-tags"></div>
+              </div>
 
-            <div class="gv-meta-row">
-              <span class="gv-meta-item">Erstellt: <span id="gv-created"></span><span class="gv-ampel" id="gv-created-ampel"></span></span>
-              <span class="gv-meta-sep">|</span>
-              <span class="gv-meta-item">Geändert: <span id="gv-modified"></span><span class="gv-ampel" id="gv-modified-ampel"></span></span>
-              <span class="gv-meta-sep">|</span>
-              <span class="gv-meta-item">Quelle: <span id="gv-source"></span></span>
-              <span class="gv-meta-sep" id="gv-import-sep" hidden>|</span>
-              <span class="gv-meta-item" id="gv-import-row" hidden>Import: <span id="gv-import-tag"></span></span>
-            </div>
-
-            <div class="gv-private-note" id="gv-private-note" hidden>
-              <span class="gv-private-note-icon">🔒</span>
-              <div class="gv-private-note-body">
-                <div class="gv-private-note-label">Private Notiz (nur lokal, wird nie exportiert)</div>
-                <div class="gv-private-note-text" id="gv-private-note-text"></div>
+              <div class="gv-private-note" id="gv-private-note" hidden>
+                <span class="gv-private-note-icon">🔒</span>
+                <div class="gv-private-note-body">
+                  <div class="gv-private-note-label">Private Notiz (nur lokal, wird nie exportiert)</div>
+                  <div class="gv-private-note-text" id="gv-private-note-text"></div>
+                </div>
               </div>
             </div>
 
-            <div class="gv-actions">
-              <button class="gs-folder-btn" id="gv-edit-btn">✏️ Bearbeiten</button>
-              <button class="gs-folder-btn gv-delete-btn" id="gv-delete-btn">🗑️ Löschen</button>
+            <div class="gv-header-side">
+              <div class="gv-meta-col">
+                <span class="gv-meta-item">Erstellt: <span id="gv-created"></span><span class="gv-ampel" id="gv-created-ampel"></span></span>
+                <span class="gv-meta-item">Geändert: <span id="gv-modified"></span><span class="gv-ampel" id="gv-modified-ampel"></span></span>
+                <span class="gv-meta-item">Quelle: <span id="gv-source"></span></span>
+                <span class="gv-meta-item" id="gv-import-row" hidden>Import: <span id="gv-import-tag"></span></span>
+              </div>
+
+              <div class="gv-actions">
+                <button class="gs-folder-btn" id="gv-edit-btn">✏️ Bearbeiten</button>
+                <button class="gs-folder-btn gv-delete-btn" id="gv-delete-btn">🗑️ Löschen</button>
+              </div>
             </div>
           </header>
 
