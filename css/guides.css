@@ -3,6 +3,14 @@
    Phase 1 – Shell (Navigation, Ordner-Status, Kategorien)
    ============================================================ */
 
+/* Hero-Untertitel reserviert auf allen guide.sheet-Seiten immer 2 Zeilen
+   Höhe – die Seiten haben unterschiedlich lange Untertitel, die je nach
+   Fensterbreite unterschiedlich oft umbrechen. Ohne das hier würde .hero
+   (und damit .gs-layout darunter) je nach Seite unterschiedlich hoch
+   ausfallen und Sidebar/Hauptinhalt "springen" beim Seitenwechsel sichtbar
+   nicht auf gleicher Höhe. */
+body[data-gs-page] .hero p { min-height: 2.85rem; }
+
 /* ── Layout Grid ──────────────────────────────────────────── */
 .gs-layout {
   display: flex;
@@ -205,15 +213,19 @@
 .gg-tag-chip:hover  { color: var(--text); border-color: var(--border2); }
 .gg-tag-chip.active { background: var(--accent-bg); border-color: rgba(124,140,248,.5); color: var(--accent); }
 
-/* ── How-To-Anleitung-Hinweis (guides.html) ──────────────── */
+/* ── How-To-Anleitung-Hinweis (guides.html) ──────────────────
+   Sitzt im .gs-main, oberhalb der "Guides"-Überschrift – NICHT im
+   .hero, damit die Hero-Höhe auf allen guide.sheet-Seiten identisch
+   bleibt (sonst verspringt .gs-layout beim Seitenwechsel). */
 .gg-howto-hint {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   padding: 10px 14px;
-  margin: 8px auto 0;
-  max-width: 560px;
+  margin: 0 0 16px;
+  width: 100%;
+  box-sizing: border-box;
   background: var(--accent-bg);
   border: 1px solid rgba(124,140,248,.3);
   border-left: 3px solid var(--accent);
@@ -243,7 +255,7 @@
   justify-content: center;
   width: 26px;
   height: 26px;
-  margin: 8px auto 0;
+  margin: 0 0 16px;
   border-radius: 6px;
   border: 1px solid var(--border2);
   background: var(--panel2);
