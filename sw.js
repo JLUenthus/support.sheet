@@ -1,7 +1,7 @@
 // ============================================================
 // support.sheet – Service Worker v2
 // ============================================================
-const CACHE_VERSION = '20260730-1800';
+const CACHE_VERSION = '20260730-2100';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -59,6 +59,7 @@ const ASSETS = [
   './favicon-512.png',
   './favicon-192.png',
   './favicon-32.png',
+  './favicon-16.png',
   './favicon.ico',
   './css/main.css',
   './css/toast.css',
