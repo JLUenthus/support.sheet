@@ -124,6 +124,31 @@
       if (res.success) { notify('Ordner getrennt.', 'success'); await loadAll(); }
       else if (res.error) notify(res.error, 'error');
     });
+    document.getElementById('gm-cleanup-assets').addEventListener('click', cleanupAllOrphanedAssets);
+  }
+
+  async function cleanupAllOrphanedAssets() {
+    const db = window.GuidesDB;
+    const listRes = await db.listGuides();
+    if (!listRes.success) { notify(listRes.error || 'Guides konnten nicht gelesen werden.', 'error'); return; }
+    const guides = listRes.guides || [];
+    if (!guides.length) { notify('Keine Guides vorhanden.', 'success'); return; }
+
+    let totalDeleted = 0;
+    let failedGuides = 0;
+    for (const g of guides) {
+      const full = await db.getGuide(g.id);
+      if (!full.success) { failedGuides++; continue; }
+      const res = await db.cleanupOrphanedAssets(g.id, full.content || '');
+      if (res.success) totalDeleted += res.deletedCount;
+      else failedGuides++;
+    }
+
+    notify(
+      totalDeleted + ' verwaiste Asset(s) entfernt' + (failedGuides ? ' (' + failedGuides + ' Guide(s) übersprungen)' : '') + '.',
+      'success'
+    );
+    await updateStatusPanel(allGuidesCache);
   }
 
   // ── Export ───────────────────────────────────────────────
@@ -143,7 +168,9 @@
     const tocLines = [];
 
     for (const g of guides) {
-      const meta = g.meta;
+      // Kopie statt g.meta direkt – privateNote darf niemals in eine Export-Datei gelangen.
+      const meta = { ...g.meta };
+      delete meta.privateNote;
       const categoryFolder = sanitizeForFilename(meta.category || 'Allgemein');
       let titleSlug = sanitizeForFilename(meta.title || 'Unbenannt');
 
@@ -179,7 +206,10 @@
   async function buildMergePackage(zip, guides, exportedBy, dateStr) {
     for (const g of guides) {
       const base = 'guides/' + g.id + '/';
-      zip.file(base + 'meta.json', JSON.stringify(g.meta, null, 2));
+      // Kopie statt g.meta direkt – privateNote darf niemals in eine Export-Datei gelangen.
+      const meta = { ...g.meta };
+      delete meta.privateNote;
+      zip.file(base + 'meta.json', JSON.stringify(meta, null, 2));
       zip.file(base + 'content.md', g.content || '');
 
       const assetsRes = await window.GuidesDB.listAssets(g.id);

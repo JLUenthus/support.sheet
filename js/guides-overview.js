@@ -5,10 +5,11 @@
 // Erwartet js/guides-db.js + js/fuse.min.js vor dieser Datei.
 // ============================================================
 (function() {
-  let allGuides  = [];   // [{ id, meta, content, contentPreview }]
-  let categories = [];   // [{ name, color, subcategories }]
-  let fuse       = null;
-  let loading    = false;
+  let allGuides   = [];   // [{ id, meta, content, contentPreview }]
+  let categories  = [];   // [{ name, color, subcategories }]
+  let fuse        = null;
+  let loading     = false;
+  let selectedIds = new Set(); // Phase 13 – Mehrfachauswahl
 
   const state = {
     query:   '',
@@ -136,13 +137,14 @@
 
   function buildFuse() {
     fuse = new Fuse(allGuides, {
-      threshold: 0.35,
+      threshold: 0.3,
       minMatchCharLength: 2,
+      ignoreLocation: true, // Content kann lang sein – Treffer sollen unabhängig von der Position zählen
       keys: [
         { name: 'meta.title',    weight: 0.5 },
         { name: 'meta.tags',     weight: 0.25 },
         { name: 'meta.category', weight: 0.15 },
-        { name: 'contentPreview', weight: 0.1 },
+        { name: 'content',       weight: 0.1 },
       ],
     });
   }
@@ -346,6 +348,7 @@
 
     if (!list.length) {
       showState('noResults');
+      updateBulkBar();
       return;
     }
 
@@ -353,6 +356,7 @@
     grid.classList.toggle('gg-grid--list', state.view === 'list');
     grid.replaceChildren();
     list.forEach(g => grid.appendChild(buildTile(g)));
+    updateBulkBar();
   }
 
   function buildTile(g) {
@@ -360,10 +364,24 @@
     const color = categoryColor(meta.category);
 
     const tile = document.createElement('div');
-    tile.className = 'gg-tile';
+    tile.className = 'gg-tile' + (selectedIds.has(g.id) ? ' gg-tile--selected' : '');
     tile.style.setProperty('--gg-cat-color', color);
     tile.tabIndex = 0;
     tile.setAttribute('role', 'button');
+
+    const selectBox = document.createElement('input');
+    selectBox.type = 'checkbox';
+    selectBox.className = 'gg-tile-select';
+    selectBox.setAttribute('aria-label', 'Guide auswählen');
+    selectBox.checked = selectedIds.has(g.id);
+    selectBox.addEventListener('click', (e) => e.stopPropagation());
+    selectBox.addEventListener('change', () => {
+      if (selectBox.checked) selectedIds.add(g.id);
+      else selectedIds.delete(g.id);
+      tile.classList.toggle('gg-tile--selected', selectBox.checked);
+      updateBulkBar();
+    });
+    tile.appendChild(selectBox);
 
     const top = document.createElement('div');
     top.className = 'gg-tile-top';
@@ -504,6 +522,123 @@
     });
   }
 
+  // ── Mehrfachauswahl + Bulk-Aktionen (Phase 13) ──────────
+  function updateBulkBar() {
+    const toolbar = document.getElementById('gg-toolbar');
+    const bulkBar = document.getElementById('gg-bulk-bar');
+    const grid    = document.getElementById('gg-grid');
+    const count   = selectedIds.size;
+
+    grid.classList.toggle('gg-has-selection', count > 0);
+    toolbar.hidden = count > 0;
+    bulkBar.hidden = count === 0;
+    if (count > 0) {
+      document.getElementById('gg-bulk-count').textContent = count + ' ausgewählt';
+    }
+  }
+
+  function clearSelection() {
+    selectedIds.clear();
+    renderGrid(); // aktualisiert Kacheln (Checkboxen) und die Bulk-Leiste in einem Zug
+  }
+
+  async function bulkAddTag() {
+    const tag = (prompt('Tag-Name für alle ausgewählten Guides:') || '').trim();
+    if (!tag) return;
+    const ids = [...selectedIds];
+    let errors = 0;
+    for (const id of ids) {
+      const guide = allGuides.find((g) => g.id === id);
+      if (!guide) continue;
+      const tags = Array.isArray(guide.meta.tags) ? [...guide.meta.tags] : [];
+      if (tags.includes(tag)) continue;
+      tags.push(tag);
+      const res = await window.GuidesDB.saveGuide(id, Object.assign({}, guide.meta, { tags }), guide.content || '');
+      if (!res.success) errors++;
+    }
+    notify(
+      'Tag „' + tag + '“ zu ' + ids.length + ' Guide(s) hinzugefügt' + (errors ? ' (' + errors + ' Fehler)' : '') + '.',
+      errors ? 'error' : 'success'
+    );
+    selectedIds.clear();
+    await loadAndRender();
+  }
+
+  function populateBulkCategorySelect() {
+    const sel = document.getElementById('gg-bulk-category-select');
+    sel.replaceChildren();
+    categories.forEach((cat) => {
+      const o = document.createElement('option');
+      o.value = cat.name;
+      o.textContent = cat.name;
+      sel.appendChild(o);
+    });
+  }
+
+  async function bulkChangeCategory() {
+    const menu = document.getElementById('gg-bulk-category-menu');
+    const newCategory = document.getElementById('gg-bulk-category-select').value;
+    menu.hidden = true;
+    if (!newCategory) return;
+
+    const ids = [...selectedIds];
+    let errors = 0;
+    for (const id of ids) {
+      const guide = allGuides.find((g) => g.id === id);
+      if (!guide) continue;
+      const res = await window.GuidesDB.saveGuide(id, Object.assign({}, guide.meta, { category: newCategory }), guide.content || '');
+      if (!res.success) errors++;
+    }
+    notify(
+      'Kategorie für ' + ids.length + ' Guide(s) auf „' + newCategory + '“ gesetzt' + (errors ? ' (' + errors + ' Fehler)' : '') + '.',
+      errors ? 'error' : 'success'
+    );
+    selectedIds.clear();
+    await loadAndRender();
+  }
+
+  async function bulkDeleteConfirmed() {
+    document.getElementById('gg-bulk-delete-overlay').hidden = true;
+    const ids = [...selectedIds];
+    let errors = 0;
+    for (const id of ids) {
+      const res = await window.GuidesDB.deleteGuide(id);
+      if (!res.success) errors++;
+    }
+    notify(
+      (ids.length - errors) + ' Guide(s) in den Papierkorb verschoben' + (errors ? ' (' + errors + ' Fehler)' : '') + '.',
+      errors ? 'error' : 'success'
+    );
+    selectedIds.clear();
+    await loadAndRender();
+  }
+
+  function initBulkActions() {
+    document.getElementById('gg-bulk-tag').addEventListener('click', bulkAddTag);
+
+    document.getElementById('gg-bulk-category').addEventListener('click', () => {
+      populateBulkCategorySelect();
+      document.getElementById('gg-bulk-category-menu').hidden = false;
+    });
+    document.getElementById('gg-bulk-category-apply').addEventListener('click', bulkChangeCategory);
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('gg-bulk-category-menu');
+      if (!menu.hidden && !e.target.closest('.gg-bulk-category-wrap')) menu.hidden = true;
+    });
+
+    document.getElementById('gg-bulk-delete').addEventListener('click', () => {
+      document.getElementById('gg-bulk-delete-text').textContent =
+        selectedIds.size + ' Guide(s) werden in den Papierkorb verschoben. Sie können in „Lokale DB“ wiederhergestellt werden.';
+      document.getElementById('gg-bulk-delete-overlay').hidden = false;
+    });
+    document.getElementById('gg-bulk-delete-cancel').addEventListener('click', () => {
+      document.getElementById('gg-bulk-delete-overlay').hidden = true;
+    });
+    document.getElementById('gg-bulk-delete-confirm').addEventListener('click', bulkDeleteConfirmed);
+
+    document.getElementById('gg-bulk-clear').addEventListener('click', clearSelection);
+  }
+
   // ── Hinweis auf die How-To-Anleitung (dismiss-/wiedereinblendbar) ──
   const HOWTO_HINT_KEY = 'gs-howto-hint-dismissed';
 
@@ -535,6 +670,7 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     initToolbar();
+    initBulkActions();
     initHowtoHint();
     init();
   });

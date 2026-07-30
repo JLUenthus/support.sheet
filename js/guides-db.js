@@ -281,6 +281,7 @@
       const fullMeta = Object.assign({
         id, title: '', category: '', subcategory: '', tags: [], type: 'guide',
         created: now, modified: now, favorite: false, source: 'manual', importTag: null, version: 1,
+        privateNote: '',
       }, meta, { id, modified: now });
 
       if (isFilesystemMode()) {
@@ -488,6 +489,45 @@
     }
   }
 
+  async function deleteAsset(guideId, filename) {
+    try {
+      if (isFilesystemMode()) {
+        const root = _requireRoot();
+        const guideDir  = await root.getDirectoryHandle(guideId);
+        const assetsDir = await guideDir.getDirectoryHandle('assets');
+        await assetsDir.removeEntry(filename);
+      } else {
+        await idbDelete(ASSETS_STORE, guideId + '/' + filename);
+      }
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: 'Asset "' + filename + '" konnte nicht gelöscht werden: ' + (err?.message || err) };
+    }
+  }
+
+  // Löscht alle Assets eines Guides, die im aktuellen content-Text nicht mehr
+  // per "assets/<dateiname>" referenziert werden (z.B. nach Entfernen eines
+  // Bildes im Editor).
+  async function cleanupOrphanedAssets(guideId, content) {
+    try {
+      const listRes = await listAssets(guideId);
+      if (!listRes.success) return { success: false, error: listRes.error };
+
+      const referenced = new Set();
+      const regex = /assets\/([^\s)"'\]]+)/g;
+      let m;
+      while ((m = regex.exec(content || ''))) referenced.add(m[1]);
+
+      const orphaned = listRes.assets.filter((filename) => !referenced.has(filename));
+      for (const filename of orphaned) {
+        await deleteAsset(guideId, filename);
+      }
+      return { success: true, deletedCount: orphaned.length, deletedFiles: orphaned };
+    } catch (err) {
+      return { success: false, error: 'Verwaiste Assets konnten nicht bereinigt werden: ' + (err?.message || err) };
+    }
+  }
+
   // ── Public API ───────────────────────────────────────────
   window.GuidesDB = {
     // Ordner-Freigabe
@@ -499,6 +539,6 @@
     // Kategorien
     getCategories, saveCategories,
     // Assets
-    saveAsset, getAssetUrl, listAssets,
+    saveAsset, getAssetUrl, listAssets, deleteAsset, cleanupOrphanedAssets,
   };
 })();

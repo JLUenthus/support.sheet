@@ -120,6 +120,14 @@
               <span class="gv-meta-item" id="gv-import-row" hidden>Import: <span id="gv-import-tag"></span></span>
             </div>
 
+            <div class="gv-private-note" id="gv-private-note" hidden>
+              <span class="gv-private-note-icon">🔒</span>
+              <div class="gv-private-note-body">
+                <div class="gv-private-note-label">Private Notiz (nur lokal, wird nie exportiert)</div>
+                <div class="gv-private-note-text" id="gv-private-note-text"></div>
+              </div>
+            </div>
+
             <div class="gv-actions">
               <button class="gs-folder-btn" id="gv-edit-btn">✏️ Bearbeiten</button>
               <button class="gs-folder-btn gv-delete-btn" id="gv-delete-btn">🗑️ Löschen</button>
@@ -127,6 +135,11 @@
           </header>
 
           <div class="gv-content" id="gv-content"></div>
+
+          <div class="gv-related" id="gv-related" hidden>
+            <div class="gv-related-title">Ähnliche Guides</div>
+            <div class="gv-related-grid" id="gv-related-grid"></div>
+          </div>
         </article>
       </section>
 

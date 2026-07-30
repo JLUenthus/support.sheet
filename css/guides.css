@@ -402,6 +402,21 @@
 .gv-ampel--warn { background: var(--amber); }
 .gv-ampel--bad  { background: var(--red); }
 
+.gv-private-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border: 1px dashed rgba(251,191,36,.4);
+  border-radius: 8px;
+  background: var(--amber-bg);
+}
+.gv-private-note[hidden] { display: none; }
+.gv-private-note-icon { font-size: .95rem; line-height: 1.4; }
+.gv-private-note-label { font-size: .7rem; font-weight: 700; color: var(--amber); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 4px; }
+.gv-private-note-text { font-size: .82rem; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
+
 .gv-actions { display: flex; gap: 8px; }
 .gv-delete-btn { color: var(--red); }
 .gv-delete-btn:hover { border-color: var(--red); color: var(--red); background: rgba(248,113,113,.08); }
@@ -415,7 +430,15 @@
 .gv-content p  { margin-bottom: 14px; }
 .gv-content ul, .gv-content ol { margin: 0 0 14px 22px; }
 .gv-content li { margin-bottom: 4px; }
+.gv-content li:has(> input.gv-checkbox) { list-style: none; }
 .gv-content a  { color: var(--accent); }
+
+.gv-checkbox {
+  cursor: pointer;
+  margin-right: 6px;
+  vertical-align: middle;
+  accent-color: var(--green);
+}
 .gv-content img { max-width: 100%; border-radius: var(--r); border: 1px solid var(--border); margin: 10px 0; }
 
 .gv-img-broken {
@@ -519,6 +542,30 @@
   .gv-actions { flex-wrap: wrap; }
 }
 
+/* ── Ähnliche Guides (Phase 12) ───────────────────────────── */
+.gv-related {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.gv-related[hidden] { display: none; }
+.gv-related-title {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 12px;
+}
+.gv-related-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+}
+/* Kompaktere Variante der .gg-tile aus guides.html – nur Titel + Kategorie */
+.gv-related-tile { padding: 10px 12px; gap: 5px; }
+.gv-related-tile .gg-tile-title { font-size: .8rem; }
+
 /* ============================================================
    Guides-Übersicht (guides.html) – Phase 3
    ============================================================ */
@@ -597,6 +644,38 @@
 .gg-view-btn:hover  { color: var(--text); }
 .gg-view-btn.active { background: var(--accent-bg); color: var(--accent); }
 
+/* ── Bulk-Aktionsleiste (Mehrfachauswahl, Phase 13) ───────── */
+.gg-bulk-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.gg-bulk-bar[hidden] { display: none; }
+.gg-bulk-count { font-size: .84rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
+.gg-bulk-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.gg-bulk-category-wrap { position: relative; }
+.gg-bulk-category-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 8px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.4);
+  white-space: nowrap;
+}
+.gg-bulk-category-menu[hidden] { display: none; }
+
 /* ── Kategorie-Filter (dynamisch, Sidebar) ────────────────── */
 .gg-cat-filter.active {
   background: rgba(124,140,248,.1);
@@ -636,6 +715,7 @@
 }
 
 .gg-tile {
+  position: relative;
   background: var(--panel);
   border: 1px solid var(--border);
   border-left: 3px solid var(--gg-cat-color, var(--accent));
@@ -654,6 +734,27 @@
   background: var(--panel2);
 }
 .gg-tile:active { transform: scale(.99); }
+.gg-tile--selected { background: var(--panel2); border-color: rgba(124,140,248,.5); }
+
+/* Auswahl-Checkbox: unsichtbar bis Hover / Checked / aktive Auswahl im Grid */
+.gg-tile-select {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
+  accent-color: var(--accent);
+  transition: opacity .15s;
+}
+.gg-tile:hover .gg-tile-select,
+.gg-tile-select:checked,
+.gg-grid.gg-has-selection .gg-tile-select {
+  opacity: 1;
+}
 
 .gg-tile-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .gg-tile-title { font-size: .9rem; font-weight: 700; color: var(--text); line-height: 1.35; }
@@ -885,6 +986,39 @@
   background: rgba(74,222,128,.12);
   color: var(--green);
 }
+
+.ge-private-note {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.ge-private-note-summary {
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-ui);
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--amber);
+  user-select: none;
+}
+.ge-private-note-summary::-webkit-details-marker { display: none; }
+.ge-private-note-summary::before { content: '▸ '; display: inline-block; transition: transform .15s; }
+.ge-private-note[open] .ge-private-note-summary::before { transform: rotate(90deg); }
+.ge-private-note-textarea {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px dashed rgba(251,191,36,.4);
+  background: var(--amber-bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: .8rem;
+  resize: vertical;
+  outline: none;
+  transition: border-color .15s;
+}
+.ge-private-note-textarea:focus { border-color: var(--amber); }
 
 /* ── Markdown-Toolbar ─────────────────────────────────────── */
 .ge-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-bottom: 8px; }

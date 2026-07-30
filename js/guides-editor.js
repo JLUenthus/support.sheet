@@ -17,7 +17,7 @@
   const assetPreviewUrls  = new Map(); // filename -> Blob-URL (nur für Live-Vorschau)
   let importImageCounter = 0;
 
-  let titleInput, categorySelect, subcategoryInput, tagInput, tagsPillsEl, textarea, preview;
+  let titleInput, categorySelect, subcategoryInput, tagInput, tagsPillsEl, textarea, preview, privateNoteInput, privateNoteDetails;
 
   // Vorschläge für häufige Status-Tags – per Klick an/abwählbar.
   const SUGGESTED_TAGS = ['unfertig', 'überarbeiten', 'wichtig', 'geprüft', 'veraltet'];
@@ -307,6 +307,7 @@
       subcategory: subcategoryInput.value,
       tags: [...tags],
       content: textarea.value,
+      privateNote: privateNoteInput.value,
       assets,
       savedAt: new Date().toISOString(),
     };
@@ -325,6 +326,8 @@
     tags = Array.isArray(draft.tags) ? draft.tags : [];
     renderTagPills();
     textarea.value = draft.content || '';
+    privateNoteInput.value = draft.privateNote || '';
+    if (draft.privateNote) privateNoteDetails.open = true;
 
     if (draft.assets) {
       Object.entries(draft.assets).forEach(([filename, dataUrl]) => {
@@ -373,6 +376,8 @@
     tags = Array.isArray(res.meta.tags) ? [...res.meta.tags] : [];
     renderTagPills();
     textarea.value = res.content || '';
+    privateNoteInput.value = res.meta.privateNote || '';
+    if (res.meta.privateNote) privateNoteDetails.open = true;
 
     document.getElementById('ge-page-title').textContent = 'Guide bearbeiten';
     document.title = 'support.sheet – Guide bearbeiten';
@@ -385,12 +390,14 @@
     const title = titleInput.value.trim();
     if (!title) { notify('Bitte einen Titel eingeben.', 'error'); titleInput.focus(); return; }
 
+    const isEditMode = !!currentGuideId;
     const id = currentGuideId || window.GuidesDB.generateId();
     const meta = {
       title,
       category: categorySelect.value || 'Allgemein',
       subcategory: subcategoryInput.value.trim(),
       tags: [...tags],
+      privateNote: privateNoteInput.value.trim(),
       favorite:  existingMeta ? existingMeta.favorite  : false,
       source:    existingMeta ? existingMeta.source    : 'manual',
       importTag: existingMeta ? existingMeta.importTag : null,
@@ -406,6 +413,16 @@
     if (!res.success) {
       notify(res.error || 'Guide konnte nicht gespeichert werden.', 'error');
       return;
+    }
+
+    // Nur beim Bearbeiten kann es überhaupt schon alte, jetzt nicht mehr
+    // referenzierte Assets geben – bei einem neuen Guide gibt es nichts
+    // aufzuräumen.
+    if (isEditMode) {
+      const cleanupRes = await window.GuidesDB.cleanupOrphanedAssets(id, textarea.value);
+      if (!cleanupRes.success) {
+        notify(cleanupRes.error || 'Verwaiste Assets konnten nicht bereinigt werden.', 'error');
+      }
     }
 
     localStorage.removeItem(DRAFT_KEY);
@@ -500,6 +517,8 @@
     tagsPillsEl      = document.getElementById('ge-tags-pills');
     textarea         = document.getElementById('ge-textarea');
     preview          = document.getElementById('ge-preview');
+    privateNoteInput   = document.getElementById('ge-private-note');
+    privateNoteDetails = document.getElementById('ge-private-note-details');
 
     initTagsInput();
     renderTagPills(); // zeigt die Tag-Vorschläge auch ohne vorhandene Tags sofort an

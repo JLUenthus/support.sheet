@@ -113,7 +113,7 @@
         <h1>Guides</h1>
         <p class="gs-main-sub">Kachel-Übersicht aller Guides – Suche, Filter, Kategoriebaum.</p>
 
-        <div class="gg-toolbar">
+        <div class="gg-toolbar" id="gg-toolbar">
           <div class="gg-search-wrap">
             <span class="gg-search-icon">🔍</span>
             <input type="text" id="gg-search" class="gg-search-input" placeholder="Guides durchsuchen…" autocomplete="off" spellcheck="false">
@@ -139,6 +139,24 @@
           <div class="gg-view-toggle">
             <button type="button" class="gg-view-btn active" id="gg-view-grid" aria-pressed="true" title="Kachelansicht">▦</button>
             <button type="button" class="gg-view-btn" id="gg-view-list" aria-pressed="false" title="Listenansicht">☰</button>
+          </div>
+        </div>
+
+        <div class="gg-bulk-bar" id="gg-bulk-bar" hidden>
+          <span class="gg-bulk-count" id="gg-bulk-count">0 ausgewählt</span>
+          <div class="gg-bulk-actions">
+            <button type="button" class="gs-folder-btn" id="gg-bulk-tag">🏷️ Tag hinzufügen</button>
+
+            <div class="gg-bulk-category-wrap">
+              <button type="button" class="gs-folder-btn" id="gg-bulk-category">📁 Kategorie ändern</button>
+              <div class="gg-bulk-category-menu" id="gg-bulk-category-menu" hidden>
+                <select id="gg-bulk-category-select" class="gg-select"></select>
+                <button type="button" class="ge-save-btn" id="gg-bulk-category-apply">Anwenden</button>
+              </div>
+            </div>
+
+            <button type="button" class="gs-folder-btn gv-delete-btn" id="gg-bulk-delete">🗑️ Löschen</button>
+            <button type="button" class="gs-folder-btn" id="gg-bulk-clear">✕ Auswahl aufheben</button>
           </div>
         </div>
 
@@ -171,6 +189,18 @@
 
     </div>
   </main>
+
+  <!-- ── BULK-LÖSCH-BESTÄTIGUNG ────────────────────────────── -->
+  <div class="gv-confirm-overlay" id="gg-bulk-delete-overlay" hidden>
+    <div class="gv-confirm-box">
+      <h3>Ausgewählte Guides in den Papierkorb verschieben?</h3>
+      <p id="gg-bulk-delete-text"></p>
+      <div class="gv-confirm-btns">
+        <button class="gv-confirm-btn gv-confirm-btn--cancel" id="gg-bulk-delete-cancel">Abbrechen</button>
+        <button class="gv-confirm-btn gv-confirm-btn--danger" id="gg-bulk-delete-confirm">In Papierkorb</button>
+      </div>
+    </div>
+  </div>
 
   <footer>
     <div class="footer-links">

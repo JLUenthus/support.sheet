@@ -8,6 +8,7 @@
   let currentId = null;
   let currentMeta = null;
   let currentContent = '';
+  let allCategories = [];
 
   function notify(message, type) {
     if (typeof showToast === 'function') showToast(message, type);
@@ -111,6 +112,52 @@
     });
   }
 
+  // ── Interaktive Checklisten (GFM "- [ ]") ────────────────
+  // marked rendert Task-Listen als <input type="checkbox" disabled> –
+  // die n-te Checkbox im HTML entspricht der n-ten "- [ ]"/"- [x]"-Zeile
+  // im rohen Markdown (marked parst linear). Zeilen innerhalb von
+  // ```Code-Blöcken``` werden dabei übersprungen, damit z.B. eine
+  // Doku-Zeile "- [ ] Beispiel" in einem Codebeispiel nicht mitzählt.
+  function toggleCheckboxLine(content, targetIndex) {
+    const lines = content.split('\n');
+    let count = 0;
+    let inFence = false;
+    for (let i = 0; i < lines.length; i++) {
+      if (/^\s*```/.test(lines[i])) { inFence = !inFence; continue; }
+      if (inFence) continue;
+      const m = lines[i].match(/^(\s*[-*+]\s+\[)([ xX])(\].*)$/);
+      if (!m) continue;
+      if (count === targetIndex) {
+        const newMark = m[2].trim() ? ' ' : 'x'; // aktuell markiert -> leeren, sonst -> "x"
+        lines[i] = m[1] + newMark + m[3];
+        return lines.join('\n');
+      }
+      count++;
+    }
+    return content;
+  }
+
+  async function toggleChecklistItem(index, box) {
+    const updated = toggleCheckboxLine(currentContent, index);
+    if (updated === currentContent) return;
+    const previousContent = currentContent;
+    currentContent = updated;
+    const res = await window.GuidesDB.saveGuide(currentId, currentMeta, currentContent);
+    if (!res.success) {
+      currentContent = previousContent;
+      box.checked = !box.checked;
+      notify(res.error || 'Checkliste konnte nicht gespeichert werden.', 'error');
+    }
+  }
+
+  function enhanceChecklists(container) {
+    container.querySelectorAll('li > input[type="checkbox"]').forEach((box, index) => {
+      box.disabled = false;
+      box.classList.add('gv-checkbox');
+      box.addEventListener('change', () => toggleChecklistItem(index, box));
+    });
+  }
+
   // Bilder, deren Asset nicht (mehr) gefunden wird, durch eine saubere
   // Platzhalter-Box ersetzen statt des hässlichen nativen Broken-Image-Icons.
   function enhanceImages(container) {
@@ -129,6 +176,79 @@
         img.replaceWith(box);
       }, { once: true });
     });
+  }
+
+  function categoryColor(name) {
+    const cat = allCategories.find(c => c.name === name);
+    return (cat && cat.color) || 'var(--dim)';
+  }
+
+  // ── Ähnliche Guides (Phase 12) ───────────────────────────
+  // Bewusst keine [[Wiki-Link]]-Syntax (bricht bei Titel-Änderungen,
+  // bräuchte Autocomplete im Editor) – stattdessen automatisches Ranking
+  // nach gleicher Kategorie (+2) und gemeinsamen Tags (+1 je Tag).
+  function buildRelatedTile(guide) {
+    const color = categoryColor(guide.meta.category);
+
+    const tile = document.createElement('div');
+    tile.className = 'gg-tile gv-related-tile';
+    tile.style.setProperty('--gg-cat-color', color);
+    tile.tabIndex = 0;
+    tile.setAttribute('role', 'button');
+
+    const top = document.createElement('div');
+    top.className = 'gg-tile-top';
+    const title = document.createElement('h4');
+    title.className = 'gg-tile-title';
+    title.textContent = guide.meta.title || '(Ohne Titel)';
+    top.appendChild(title);
+
+    const badges = document.createElement('div');
+    badges.className = 'gg-tile-badges';
+    const badge = document.createElement('span');
+    badge.className = 'gg-cat-badge';
+    badge.style.setProperty('--gg-cat-color', color);
+    badge.textContent = guide.meta.category || 'Allgemein';
+    badges.appendChild(badge);
+
+    tile.appendChild(top);
+    tile.appendChild(badges);
+
+    function open() { window.location.href = 'guides-view.html?id=' + encodeURIComponent(guide.id); }
+    tile.addEventListener('click', open);
+    tile.addEventListener('keydown', (e) => { if (e.key === 'Enter') open(); });
+
+    return tile;
+  }
+
+  async function renderRelatedGuides() {
+    const section = document.getElementById('gv-related');
+    const grid = document.getElementById('gv-related-grid');
+    if (!section || !grid) return;
+
+    const listRes = await window.GuidesDB.listGuides();
+    if (!listRes.success) { section.hidden = true; return; }
+
+    const myTags = Array.isArray(currentMeta.tags) ? currentMeta.tags : [];
+
+    const scored = (listRes.guides || [])
+      .filter((g) => g.id !== currentId)
+      .map((g) => {
+        let score = 0;
+        if (currentMeta.category && g.meta.category === currentMeta.category) score += 2;
+        const otherTags = Array.isArray(g.meta.tags) ? g.meta.tags : [];
+        score += myTags.filter((t) => otherTags.includes(t)).length;
+        return { guide: g, score };
+      })
+      .filter((s) => s.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+
+    if (!scored.length) { section.hidden = true; return; }
+
+    grid.replaceChildren();
+    scored.forEach(({ guide }) => grid.appendChild(buildRelatedTile(guide)));
+    section.hidden = false;
   }
 
   function setAmpel(id, iso) {
@@ -180,6 +300,14 @@
       importSep.hidden = true;
     }
 
+    const privateNoteBox = document.getElementById('gv-private-note');
+    if (currentMeta.privateNote) {
+      privateNoteBox.hidden = false;
+      document.getElementById('gv-private-note-text').textContent = currentMeta.privateNote;
+    } else {
+      privateNoteBox.hidden = true;
+    }
+
     updateFavButton();
 
     const contentEl = document.getElementById('gv-content');
@@ -193,6 +321,7 @@
     }
     enhanceCodeBlocks(contentEl);
     enhanceImages(contentEl);
+    enhanceChecklists(contentEl);
   }
 
   async function loadGuide() {
@@ -218,6 +347,10 @@
     currentMeta    = res.meta;
     currentContent = res.content || '';
     await renderGuide();
+
+    const catRes = await db.getCategories();
+    allCategories = catRes.categories || [];
+    await renderRelatedGuides();
   }
 
   async function toggleFavorite() {
