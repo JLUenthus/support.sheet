@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <title>support.sheet – Lokale DB</title>
+  <title>support.sheet – Einstellungen</title>
   <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
@@ -24,7 +24,7 @@
       <div class="logo-text" id="as-logo-label">support<span>.sheet</span></div>
     </a>
     <div class="header-right">
-      <div class="pill pill-count" style="border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.08);color:#4ade80;">🗄️ Lokale DB</div>
+      <div class="pill pill-count" style="border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.08);color:#4ade80;">🗄️ Einstellungen</div>
     </div>
   </header>
 
@@ -49,7 +49,7 @@
           <nav class="gs-nav">
             <a href="guides.html"         class="gs-nav-item" data-page="overview"><span class="gs-nav-icon">📚</span>Guides</a>
             <a href="guides-create.html"  class="gs-nav-item" data-page="create"><span class="gs-nav-icon">✏️</span>Guide anlegen</a>
-            <a href="guides-manage.html"  class="gs-nav-item" data-page="manage"><span class="gs-nav-icon">🗄️</span>Lokale DB</a>
+            <a href="guides-manage.html"  class="gs-nav-item" data-page="manage"><span class="gs-nav-icon">🗄️</span>Einstellungen</a>
           </nav>
         </div>
 
@@ -70,37 +70,21 @@
 
         <div>
           <div class="gs-section-title">Kategorien</div>
-          <div class="gs-cat-list">
-            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Exchange</span><span class="gs-cat-count">0</span></button>
-            <div class="gs-cat-sub">Noch keine Guides</div>
-            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Active Directory</span><span class="gs-cat-count">0</span></button>
-            <div class="gs-cat-sub">Noch keine Guides</div>
-            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Windows Client</span><span class="gs-cat-count">0</span></button>
-            <div class="gs-cat-sub">Noch keine Guides</div>
-            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Windows Server</span><span class="gs-cat-count">0</span></button>
-            <div class="gs-cat-sub">Noch keine Guides</div>
-            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Microsoft 365</span><span class="gs-cat-count">0</span></button>
-            <div class="gs-cat-sub">Noch keine Guides</div>
-            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Netzwerk</span><span class="gs-cat-count">0</span></button>
-            <div class="gs-cat-sub">Noch keine Guides</div>
-            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Sicherheit</span><span class="gs-cat-count">0</span></button>
-            <div class="gs-cat-sub">Noch keine Guides</div>
-            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">RDS</span><span class="gs-cat-count">0</span></button>
-            <div class="gs-cat-sub">Noch keine Guides</div>
-            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Kunden</span><span class="gs-cat-count">0</span></button>
-            <div class="gs-cat-sub">Noch keine Guides</div>
-            <button class="gs-cat-item"><span class="gs-cat-chevron">▸</span><span class="gs-cat-dot"></span><span class="gs-cat-name">Allgemein</span><span class="gs-cat-count">0</span></button>
-            <div class="gs-cat-sub">Noch keine Guides</div>
-          </div>
+          <div class="gs-cat-list"></div>
           <button class="gs-add-cat" id="gs-add-cat-btn">+ Neue Kategorie</button>
+        </div>
+
+        <div>
+          <div class="gs-section-title">Tags</div>
+          <div class="gg-tag-cloud" id="gg-tag-cloud"></div>
         </div>
 
       </aside>
 
       <!-- ── HAUPTINHALT ─────────────────────────────────── -->
       <section class="gs-main gm-main">
-        <h1>Lokale DB verwalten</h1>
-        <p class="gs-main-sub">Backup, Restore, Merge, Papierkorb, Statistik.</p>
+        <h1>Einstellungen</h1>
+        <p class="gs-main-sub">Lokale DB: Backup, Restore, Merge, Papierkorb, Statistik.</p>
 
         <!-- 1. Datenbankstatus -->
         <div class="gm-card">

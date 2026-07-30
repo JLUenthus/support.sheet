@@ -16,23 +16,115 @@
     });
   }
 
+  // Kategorien + Tag-Wolke mit echten Daten befüllen. Läuft auf allen
+  // guide.sheet-Seiten AUSSER guides.html selbst – dort rendert
+  // guides-overview.js dieselben Container bereits mit Klick-Filter und
+  // Live-Suche. Beide Skripte sind async; welches zuletzt fertig wird,
+  // ist nicht garantiert (Registrierungsreihenfolge ≠ Abschlussreihenfolge),
+  // daher hier explizit per #gg-grid (existiert nur auf guides.html)
+  // komplett aussteigen, statt auf ein "wird sowieso überschrieben" zu bauen.
   function initCategories() {
-    document.querySelectorAll('.gs-cat-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const sub = btn.nextElementSibling;
-        const isOpen = btn.classList.toggle('open');
-        if (sub && sub.classList.contains('gs-cat-sub')) sub.classList.toggle('open', isOpen);
-      });
-    });
+    if (document.getElementById('gg-grid')) return;
 
+    const listEl = document.querySelector('.gs-cat-list');
+    const tagEl  = document.getElementById('gg-tag-cloud');
     const addBtn = document.getElementById('gs-add-cat-btn');
-    if (addBtn) {
-      addBtn.addEventListener('click', () => {
-        const name = (prompt('Name der neuen Kategorie:') || '').trim();
-        if (!name) return;
-        notify('„' + name + '“ – Kategorieverwaltung im Kategoriebaum folgt in Phase 3.', 'success');
+    const db     = window.GuidesDB;
+    if (!db || (!listEl && !tagEl)) return;
+
+    let categories = [];
+
+    function renderCategoryList(guides) {
+      if (!listEl) return;
+      listEl.replaceChildren();
+      const counts = {};
+      guides.forEach(g => {
+        const c = g.meta.category || 'Allgemein';
+        counts[c] = (counts[c] || 0) + 1;
+      });
+      categories.forEach(cat => {
+        const link = document.createElement('a');
+        link.className = 'gs-cat-item';
+        link.href = 'guides.html?category=' + encodeURIComponent(cat.name);
+
+        const dot = document.createElement('span');
+        dot.className = 'gs-cat-dot';
+        dot.style.background = cat.color || 'var(--dim)';
+
+        const name = document.createElement('span');
+        name.className = 'gs-cat-name';
+        name.textContent = cat.name;
+
+        const count = document.createElement('span');
+        count.className = 'gs-cat-count';
+        count.textContent = String(counts[cat.name] || 0);
+
+        link.append(dot, name, count);
+        listEl.appendChild(link);
       });
     }
+
+    function renderTagCloud(guides) {
+      if (!tagEl) return;
+      tagEl.replaceChildren();
+      const tagCounts = {};
+      guides.forEach(g => (g.meta.tags || []).forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; }));
+      const tagNames = Object.keys(tagCounts).sort((a, b) => a.localeCompare(b, 'de'));
+
+      if (!tagNames.length) {
+        const empty = document.createElement('div');
+        empty.className = 'gg-tag-cloud-empty';
+        empty.textContent = 'Noch keine Tags';
+        tagEl.appendChild(empty);
+        return;
+      }
+
+      tagNames.forEach(tag => {
+        const link = document.createElement('a');
+        link.className = 'gg-tag-chip';
+        link.href = 'guides.html?tag=' + encodeURIComponent(tag);
+        link.textContent = tag + ' (' + tagCounts[tag] + ')';
+        tagEl.appendChild(link);
+      });
+    }
+
+    // Ruft bewusst KEIN restoreFolder() auf: initFolderStatus() (unten)
+    // erledigt das bereits einmalig und feuert dabei "guides-db-connected" –
+    // würde refresh() das hier erneut tun, löst das im IndexedDB-Modus
+    // (der Event bei jedem restoreFolder()-Aufruf unbedingt feuert) eine
+    // Endlosschleife aus. getCategories()/listGuides() liefern ohne
+    // Verbindung einfach eine leere Liste statt zu werfen.
+    async function refresh() {
+      const catRes = await db.getCategories();
+      categories = catRes.categories || [];
+      const guidesRes = await db.listGuides();
+      const guides = guidesRes.guides || [];
+      renderCategoryList(guides);
+      renderTagCloud(guides);
+    }
+
+    if (addBtn) {
+      addBtn.addEventListener('click', async () => {
+        const name = (prompt('Name der neuen Kategorie:') || '').trim();
+        if (!name) return;
+        if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+          notify('Kategorie „' + name + '“ existiert bereits.', 'error');
+          return;
+        }
+        const updated = [...categories, { name, color: 'var(--accent2)', subcategories: [] }];
+        const res = await db.saveCategories(updated);
+        if (res.success) {
+          notify('Kategorie „' + name + '“ angelegt.', 'success');
+          await refresh();
+        } else {
+          notify(res.error || 'Kategorie konnte nicht gespeichert werden.', 'error');
+        }
+      });
+    }
+
+    refresh();
+    document.addEventListener('guides-db-connected', refresh);
+    document.addEventListener('guides-db-disconnected', refresh);
   }
 
   function initFolderStatus() {

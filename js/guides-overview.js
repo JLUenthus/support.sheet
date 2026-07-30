@@ -72,7 +72,18 @@
   }
 
   // ── Laden ────────────────────────────────────────────────
+  // Kategorie/Tag können per Link aus der Sidebar anderer Seiten
+  // (js/guides.js) vorausgewählt werden, z.B. guides.html?category=Exchange.
+  function applyUrlFilterParams() {
+    const params = new URLSearchParams(location.search);
+    const cat = params.get('category');
+    const tag = params.get('tag');
+    if (cat) state.category = cat;
+    if (tag) state.tag = tag;
+  }
+
   async function init() {
+    applyUrlFilterParams();
     await window.GuidesDB.restoreFolder();
     await loadAndRender();
   }
@@ -310,6 +321,7 @@
       o.textContent = t;
       sel.appendChild(o);
     });
+    sel.value = state.tag || '';
   }
 
   // ── Filtern + Sortieren + Rendern ────────────────────────
@@ -381,14 +393,19 @@
       tile.classList.toggle('gg-tile--selected', selectBox.checked);
       updateBulkBar();
     });
-    tile.appendChild(selectBox);
 
     const top = document.createElement('div');
     top.className = 'gg-tile-top';
 
+    const heading = document.createElement('div');
+    heading.className = 'gg-tile-heading';
+
     const title = document.createElement('h3');
     title.className = 'gg-tile-title';
     title.textContent = meta.title || '(Ohne Titel)';
+
+    heading.appendChild(selectBox);
+    heading.appendChild(title);
 
     const favBtn = document.createElement('button');
     favBtn.type = 'button';
@@ -397,7 +414,7 @@
     favBtn.setAttribute('aria-pressed', String(!!meta.favorite));
     favBtn.textContent = '★';
 
-    top.appendChild(title);
+    top.appendChild(heading);
     top.appendChild(favBtn);
 
     const badges = document.createElement('div');
@@ -628,7 +645,7 @@
 
     document.getElementById('gg-bulk-delete').addEventListener('click', () => {
       document.getElementById('gg-bulk-delete-text').textContent =
-        selectedIds.size + ' Guide(s) werden in den Papierkorb verschoben. Sie können in „Lokale DB“ wiederhergestellt werden.';
+        selectedIds.size + ' Guide(s) werden in den Papierkorb verschoben. Sie können in „Einstellungen“ wiederhergestellt werden.';
       document.getElementById('gg-bulk-delete-overlay').hidden = false;
     });
     document.getElementById('gg-bulk-delete-cancel').addEventListener('click', () => {

@@ -13,7 +13,7 @@
       children: [
         { id:'guides-overview', href:'guides.html',        label:'Guides',        icon:'📚', color:'#4ade80', desc:'Kachel-Übersicht aller Guides' },
         { id:'guides-create',   href:'guides-create.html',label:'Guide anlegen', icon:'✏️', color:'#4ade80', desc:'Neuen Guide erstellen oder importieren' },
-        { id:'guides-manage',   href:'guides-manage.html',label:'Lokale DB',     icon:'🗄️', color:'#4ade80', desc:'Backup, Restore, Merge, Papierkorb' },
+        { id:'guides-manage',   href:'guides-manage.html',label:'Einstellungen', icon:'🗄️', color:'#4ade80', desc:'Backup, Restore, Merge, Papierkorb' },
       ]
     },
     {
