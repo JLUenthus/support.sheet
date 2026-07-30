@@ -394,15 +394,6 @@
       updateBulkBar();
     });
 
-    // Größere Hover-/Klickzone um die Checkbox herum: taucht erst auf,
-    // wenn man in ihre Nähe kommt, statt schon bei jedem Hover irgendwo
-    // auf der Kachel – die Zone reserviert dabei immer den gleichen Platz,
-    // damit der Titel auf allen Kacheln an derselben Stelle beginnt.
-    const selectZone = document.createElement('label');
-    selectZone.className = 'gg-tile-select-zone';
-    selectZone.addEventListener('click', (e) => e.stopPropagation());
-    selectZone.appendChild(selectBox);
-
     const top = document.createElement('div');
     top.className = 'gg-tile-top';
 
@@ -413,7 +404,7 @@
     title.className = 'gg-tile-title';
     title.textContent = meta.title || '(Ohne Titel)';
 
-    heading.appendChild(selectZone);
+    heading.appendChild(selectBox);
     heading.appendChild(title);
 
     const favBtn = document.createElement('button');

@@ -9,7 +9,7 @@
     { id:'scripts',  href:'scripts.html',  label:'PS Scripts',     icon:'💚', color:'#4ade80', desc:'Fertige .ps1 Skripte' },
     { id:'ticket',   href:'ticketassistent.html', label:'Ticketassistent', icon:'🎫', color:'#fb923c', desc:'KI-gestützter Ticketassistent' },
     {
-      id:'guides', label:'guide.sheet', icon:'📚', color:'#4ade80', group:true,
+      id:'guides', label:'Guide', icon:'📚', color:'#4ade80', group:true,
       children: [
         { id:'guides-overview', href:'guides.html',        label:'Guides',        icon:'📚', color:'#4ade80', desc:'Kachel-Übersicht aller Guides' },
         { id:'guides-create',   href:'guides-create.html',label:'Guide anlegen', icon:'✏️', color:'#4ade80', desc:'Neuen Guide erstellen oder importieren' },

@@ -308,11 +308,14 @@
     document.getElementById('gv-source').textContent = currentMeta.source || 'manual';
 
     const importRow = document.getElementById('gv-import-row');
+    const importSep = document.getElementById('gv-import-sep');
     if (currentMeta.importTag) {
       importRow.hidden = false;
+      importSep.hidden = false;
       document.getElementById('gv-import-tag').textContent = currentMeta.importTag;
     } else {
       importRow.hidden = true;
+      importSep.hidden = true;
     }
 
     const privateNoteBox = document.getElementById('gv-private-note');
