@@ -14,6 +14,24 @@
     if (typeof showToast === 'function') showToast(message, type);
   }
 
+  // Markdown kollabiert normalerweise JEDE Anzahl Leerzeilen zu genau einem
+  // Absatzabstand. Damit mehrfaches Enter im Editor auch im gerenderten
+  // Guide zusätzlichen Abstand ergibt, wird jede Leerzeile über die erste
+  // hinaus als eigener Spacer-Block eingefügt – außer innerhalb von
+  // Code-Blöcken (```...```), da dort Whitespace ohnehin 1:1 erhalten
+  // bleibt und nicht angefasst werden darf.
+  function preserveBlankLines(md) {
+    if (!md) return md;
+    const parts = md.split(/(```[\s\S]*?```)/g);
+    return parts.map((part, i) => {
+      if (i % 2 === 1) return part; // Code-Block – unverändert
+      return part.replace(/\n{3,}/g, (match) => {
+        const extra = match.length - 2;
+        return '\n\n' + Array(extra).fill('<div class="gv-blank-line"></div>').join('\n\n') + '\n\n';
+      });
+    }).join('');
+  }
+
   function resolveGuideId() {
     const hash = decodeURIComponent(location.hash || '').replace(/^#/, '');
     if (hash) return hash;
@@ -310,7 +328,7 @@
     const contentEl = document.getElementById('gv-content');
     if (typeof marked !== 'undefined') {
       const resolved = await resolveAssetUrls(currentId, currentContent);
-      contentEl.innerHTML = marked.parse(resolved);
+      contentEl.innerHTML = marked.parse(preserveBlankLines(resolved));
     } else {
       const pre = document.createElement('pre');
       pre.textContent = currentContent;

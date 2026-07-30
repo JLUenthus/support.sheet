@@ -467,6 +467,10 @@ body[data-gs-page] .hero p { min-height: 2.85rem; }
 .gv-content h2 { font-size: 1.15rem; }
 .gv-content h3 { font-size: 1rem; }
 .gv-content p  { margin-bottom: 14px; }
+/* Jede zusätzliche Leerzeile im Editor über die erste hinaus wird als
+   eigener Spacer ins gerenderte HTML übernommen (siehe preserveBlankLines
+   in guides-view.js / guides-editor.js). */
+.gv-content .gv-blank-line { height: 1.5em; }
 .gv-content ul, .gv-content ol { margin: 0 0 14px 22px; }
 .gv-content li { margin-bottom: 4px; }
 .gv-content li:has(> input.gv-checkbox) { list-style: none; }
@@ -789,26 +793,40 @@ body[data-gs-page] .hero p { min-height: 2.85rem; }
 .gg-tile:active { transform: scale(.99); }
 .gg-tile--selected { background: var(--panel2); border-color: rgba(124,140,248,.5); }
 
-/* Auswahl-Checkbox: unsichtbar bis Hover / Checked / aktive Auswahl im Grid.
-   Sitzt als eigenes Flex-Item VOR der Überschrift, damit sie nichts überlagert. */
-.gg-tile-select {
+/* Auswahl-Checkbox: unsichtbar bis man in ihre Nähe kommt (Hover auf der
+   vergrößerten Klickzone) / Checked / aktive Auswahl im Grid. Die Zone
+   reserviert IMMER denselben Platz vor der Überschrift, damit der Titel
+   auf jeder Kachel an derselben Stelle beginnt – unabhängig davon, ob die
+   Checkbox gerade sichtbar ist. */
+.gg-tile-select-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   width: 16px;
   height: 16px;
-  margin: 2px 0 0;
+  padding: 8px;
+  margin: -6px 0 -6px -8px;
+  box-sizing: content-box;
+  cursor: pointer;
+}
+.gg-tile-select {
+  width: 16px;
+  height: 16px;
+  margin: 0;
   cursor: pointer;
   opacity: 0;
   accent-color: var(--accent);
   transition: opacity .15s;
 }
-.gg-tile:hover .gg-tile-select,
+.gg-tile-select-zone:hover .gg-tile-select,
 .gg-tile-select:checked,
 .gg-grid.gg-has-selection .gg-tile-select {
   opacity: 1;
 }
 
 .gg-tile-top { display: flex; align-items: flex-start; gap: 8px; }
-.gg-tile-heading { display: flex; align-items: flex-start; gap: 8px; flex: 1; min-width: 0; }
+.gg-tile-heading { display: flex; align-items: flex-start; gap: 0; flex: 1; min-width: 0; }
 .gg-tile-title { flex: 1; font-size: .95rem; font-weight: 700; color: var(--text); line-height: 1.35; }
 
 .gg-fav-btn {
