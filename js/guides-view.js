@@ -63,11 +63,32 @@
     window.print();
   }
 
-  // Baut aus dem bereits gerenderten Guide-Inhalt (Bilder sind dort schon
-  // als Blob-URLs aufgelöst) ein eigenständiges HTML-Dokument und lässt
-  // html-docx-js daraus eine echte .docx-Datei erzeugen. Die private
-  // Notiz ist hier nie Teil der Quelle (steht nur im Header, nicht in
-  // #gv-content), wird also nie mit exportiert.
+  // blob:-URLs (aus resolveAssetUrls) gelten nur innerhalb der aktuellen
+  // Seite/Session – eine gespeicherte .docx, die später (oder auf einem
+  // anderen Gerät) geöffnet wird, kann sie nicht mehr auflösen und zeigt
+  // ein kaputtes Bild-Symbol. Deshalb hier jedes <img> auf ein
+  // eigenständiges Base64-Data-URL umstellen, bevor das Dokument gebaut
+  // wird – das Bild ist dann fest im Dokument eingebettet.
+  async function inlineImagesAsDataUrls(container) {
+    const imgs = [...container.querySelectorAll('img[src^="blob:"]')];
+    await Promise.all(imgs.map(async (img) => {
+      try {
+        const blob = await (await fetch(img.src)).blob();
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        img.src = dataUrl;
+      } catch { /* einzelnes Bild überspringen, Rest des Dokuments trotzdem exportieren */ }
+    }));
+  }
+
+  // Baut aus dem bereits gerenderten Guide-Inhalt ein eigenständiges
+  // HTML-Dokument und lässt html-docx-js daraus eine echte .docx-Datei
+  // erzeugen. Die private Notiz ist hier nie Teil der Quelle (steht nur
+  // im Header, nicht in #gv-content), wird also nie mit exportiert.
   async function exportDocx() {
     if (typeof htmlDocx === 'undefined') {
       notify('Word-Export ist gerade nicht verfügbar (html-docx.min.js nicht geladen).', 'error');
@@ -80,6 +101,7 @@
     // Dokument und werden vor dem Export entfernt.
     const clone = contentEl.cloneNode(true);
     clone.querySelectorAll('.gv-code-copy').forEach(btn => btn.remove());
+    await inlineImagesAsDataUrls(clone);
     const html = '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>'
       + '<h1>' + title.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</h1>'
       + clone.innerHTML

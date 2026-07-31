@@ -656,8 +656,11 @@ body[data-gs-page] .hero p { min-height: 2.85rem; }
    exportiert" gilt auch für den PDF/Druck-Weg. Dunkles Theme wird
    für den Ausdruck auf helles Papier/schwarze Schrift umgestellt. */
 @media print {
-  header, footer, .gs-sidebar, .gv-back-link,
-  .gv-actions, .gv-related, .gv-private-note,
+  /* .as-tab-bar/.as-update-bar werden von nav.js dynamisch NEBEN (nicht
+     innerhalb) <header> eingefügt – müssen separat ausgeblendet werden,
+     sonst rutscht die komplette Seiten-Navigation mit ins PDF. */
+  header, footer, .gs-sidebar, .gv-back-link, .as-tab-bar, .as-update-bar,
+  .gv-actions, .gv-related, .gv-private-note, .gv-meta-row, .gv-fav-btn,
   .gg-howto-hint, .gg-howto-hint-reopen { display: none !important; }
 
   body, main, .gs-layout, .gs-main { background: #fff !important; height: auto !important; overflow: visible !important; }
@@ -666,12 +669,12 @@ body[data-gs-page] .hero p { min-height: 2.85rem; }
 
   .gv-header { background: none !important; border: none !important; padding: 0 0 12px !important; margin-bottom: 16px !important; }
   .gv-header-top h1, .gv-content, .gv-content h1, .gv-content h2, .gv-content h3,
-  .gv-meta-row, .gv-cat-badge, .gv-tag { color: #000 !important; }
+  .gv-cat-badge, .gv-tag { color: #000 !important; }
   .gv-content a { color: #1a4fd6 !important; }
   .gv-content code, .gv-content pre { background: #f2f2f2 !important; color: #000 !important; }
   .gv-cat-badge { background: none !important; border: 1px solid #000 !important; }
   .gv-tag { background: none !important; border: 1px solid #666 !important; }
-  .gv-ampel { display: none !important; }
+  .gv-content img { border-color: #ccc !important; max-width: 100% !important; page-break-inside: avoid; }
 }
 
 /* ============================================================
