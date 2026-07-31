@@ -69,6 +69,22 @@
     ta.dispatchEvent(new Event('input'));
   }
 
+  // Ohne Auswahl: eine leere Aufgabenzeile einfügen. Mit mehrzeiliger
+  // Auswahl: jede nicht-leere Zeile in eine eigene Checklisten-Zeile
+  // umwandeln – passt zu den anklickbaren Checklisten in der Guide-Ansicht.
+  function insertChecklist(ta) {
+    const start = ta.selectionStart, end = ta.selectionEnd;
+    const value = ta.value;
+    const selected = value.slice(start, end);
+    const inserted = selected
+      ? selected.split('\n').map(line => line ? '- [ ] ' + line : line).join('\n')
+      : '- [ ] Aufgabe';
+    ta.value = value.slice(0, start) + inserted + value.slice(end);
+    ta.focus();
+    ta.setSelectionRange(start, start + inserted.length);
+    ta.dispatchEvent(new Event('input'));
+  }
+
   // ── Tags ─────────────────────────────────────────────────
   function renderTagPills() {
     tagsPillsEl.replaceChildren();
@@ -86,6 +102,7 @@
       tagsPillsEl.appendChild(pill);
     });
     renderTagSuggestions();
+    if (typeof scheduleAutosave === 'function') scheduleAutosave();
   }
 
   // Vorgefertigte Status-Tags, an/abwählbar per Klick – kein Enter nötig.
@@ -170,6 +187,7 @@
           case 'link':      insertWrap(textarea, '[', '](https://)', 'Linktext'); break;
           case 'image':     document.getElementById('ge-image-input').click(); break;
           case 'table':     insertRaw(textarea, '\n| Spalte 1 | Spalte 2 |\n|----------|----------|\n| Wert     | Wert     |\n'); break;
+          case 'checklist': insertChecklist(textarea); break;
         }
       });
     });
@@ -312,7 +330,7 @@
     return new Blob([bytes], { type: mime });
   }
 
-  async function saveDraft() {
+  async function saveDraft(silent) {
     const assets = {};
     for (const [filename, file] of pendingAssets.entries()) {
       try { assets[filename] = await fileToDataUrl(file); }
@@ -331,10 +349,35 @@
     };
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-      notify('Entwurf gespeichert.', 'success');
+      if (silent) updateAutosaveStatus();
+      else notify('Entwurf gespeichert.', 'success');
     } catch (err) {
-      notify('Entwurf konnte nicht gespeichert werden (evtl. zu groß mit Bildern): ' + (err?.message || err), 'error');
+      if (!silent) notify('Entwurf konnte nicht gespeichert werden (evtl. zu groß mit Bildern): ' + (err?.message || err), 'error');
     }
+  }
+
+  function updateAutosaveStatus() {
+    const el = document.getElementById('ge-autosave-status');
+    if (!el) return;
+    const time = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    el.textContent = 'Automatisch gespeichert um ' + time;
+  }
+
+  // Automatisches Zwischenspeichern: 3 Sekunden nach der letzten Eingabe
+  // (Titel, Kategorie, Tags, Inhalt, private Notiz) wird der Entwurf still
+  // im Hintergrund gesichert – ohne Toast, nur der Status-Text unten
+  // aktualisiert sich. Ergänzt (ersetzt nicht) den manuellen "Entwurf
+  // speichern"-Button.
+  let autosaveTimer = null;
+  function scheduleAutosave() {
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(() => { saveDraft(true); }, 3000);
+  }
+  function initAutosave() {
+    [titleInput, categorySelect, subcategoryInput, textarea, privateNoteInput].forEach(el => {
+      el.addEventListener('input', scheduleAutosave);
+      el.addEventListener('change', scheduleAutosave);
+    });
   }
 
   function applyDraft(draft) {
@@ -545,8 +588,9 @@
     initImageUpload();
     initLivePreview();
     initImportMenu();
+    initAutosave();
 
-    document.getElementById('ge-save-draft').addEventListener('click', saveDraft);
+    document.getElementById('ge-save-draft').addEventListener('click', () => saveDraft(false));
     document.getElementById('ge-save').addEventListener('click', handleSave);
 
     await window.GuidesDB.restoreFolder();

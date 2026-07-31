@@ -1,7 +1,7 @@
 // ============================================================
 // support.sheet – Service Worker v2
 // ============================================================
-const CACHE_VERSION = '20260730-3000';
+const CACHE_VERSION = '20260731-0800';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -47,6 +47,7 @@ const ASSETS = [
   './js/mammoth.min.js',
   './js/turndown.min.js',
   './js/jszip.min.js',
+  './js/html-docx.min.js',
   './fonts/fonts.css',
   './fonts/jetbrains-mono-400.ttf',
   './fonts/jetbrains-mono-500.ttf',

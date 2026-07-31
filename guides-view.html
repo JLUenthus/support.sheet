@@ -113,6 +113,14 @@
             </div>
 
             <div class="gv-actions">
+              <div class="gv-export-wrap">
+                <button class="gs-folder-btn" id="gv-export-btn">📤 Exportieren</button>
+                <div class="gv-export-menu" id="gv-export-menu" hidden>
+                  <button type="button" id="gv-export-md">📄 Als Markdown (.md)</button>
+                  <button type="button" id="gv-export-pdf">🖨️ Als PDF (Drucken)</button>
+                  <button type="button" id="gv-export-docx">📝 Als Word (.docx)</button>
+                </div>
+              </div>
               <button class="gs-folder-btn" id="gv-edit-btn">✏️ Bearbeiten</button>
               <button class="gs-folder-btn gv-delete-btn" id="gv-delete-btn">🗑️ Löschen</button>
             </div>
@@ -162,6 +170,7 @@
 
   <script src="js/toast.js"></script>
   <script src="js/marked.min.js"></script>
+  <script src="js/html-docx.min.js"></script>
   <script src="js/guides-db.js"></script>
   <script src="js/guides.js"></script>
   <script src="js/guides-view.js"></script>

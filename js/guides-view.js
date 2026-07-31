@@ -32,6 +32,86 @@
     }).join('');
   }
 
+  // ── Export (Markdown / PDF / Word) ──────────────────────
+  function sanitizeForFilename(str) {
+    const cleaned = (str || 'Unbenannt').replace(/[/\\:*?"<>|]/g, '').trim().replace(/\s+/g, '-');
+    return cleaned || 'Unbenannt';
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function exportMarkdown() {
+    const blob = new Blob([currentContent || ''], { type: 'text/markdown;charset=utf-8' });
+    downloadBlob(blob, sanitizeForFilename(currentMeta.title) + '.md');
+    notify('Als Markdown exportiert.', 'success');
+  }
+
+  // Nutzt den Browser-Druckdialog ("Als PDF speichern") statt einer
+  // eigenen PDF-Bibliothek – liefert echten, durchsuchbaren Text statt
+  // eines gerasterten Bilds. Die Druckansicht (siehe @media print in
+  // guides.css) blendet Sidebar/Aktionen/Private Notiz aus.
+  function exportPdf() {
+    window.print();
+  }
+
+  // Baut aus dem bereits gerenderten Guide-Inhalt (Bilder sind dort schon
+  // als Blob-URLs aufgelöst) ein eigenständiges HTML-Dokument und lässt
+  // html-docx-js daraus eine echte .docx-Datei erzeugen. Die private
+  // Notiz ist hier nie Teil der Quelle (steht nur im Header, nicht in
+  // #gv-content), wird also nie mit exportiert.
+  async function exportDocx() {
+    if (typeof htmlDocx === 'undefined') {
+      notify('Word-Export ist gerade nicht verfügbar (html-docx.min.js nicht geladen).', 'error');
+      return;
+    }
+    const contentEl = document.getElementById('gv-content');
+    const title = currentMeta.title || '(Ohne Titel)';
+    // Klon statt Original: UI-Elemente, die nur in der Live-Ansicht Sinn
+    // ergeben (Code-Kopieren-Button), gehören nicht in ein statisches
+    // Dokument und werden vor dem Export entfernt.
+    const clone = contentEl.cloneNode(true);
+    clone.querySelectorAll('.gv-code-copy').forEach(btn => btn.remove());
+    const html = '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>'
+      + '<h1>' + title.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</h1>'
+      + clone.innerHTML
+      + '</body></html>';
+    try {
+      const blob = htmlDocx.asBlob(html);
+      downloadBlob(blob, sanitizeForFilename(title) + '.docx');
+      notify('Als Word-Dokument exportiert.', 'success');
+    } catch (err) {
+      notify('Word-Export fehlgeschlagen: ' + (err?.message || err), 'error');
+    }
+  }
+
+  function initExportMenu() {
+    const wrap = document.querySelector('.gv-export-wrap');
+    const btn = document.getElementById('gv-export-btn');
+    const menu = document.getElementById('gv-export-menu');
+    if (!wrap || !btn || !menu) return;
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu.hidden = !menu.hidden;
+    });
+    document.addEventListener('click', (e) => {
+      if (!menu.hidden && !wrap.contains(e.target)) menu.hidden = true;
+    });
+
+    document.getElementById('gv-export-md').addEventListener('click', () => { menu.hidden = true; exportMarkdown(); });
+    document.getElementById('gv-export-pdf').addEventListener('click', () => { menu.hidden = true; exportPdf(); });
+    document.getElementById('gv-export-docx').addEventListener('click', () => { menu.hidden = true; exportDocx(); });
+  }
+
   function resolveGuideId() {
     const hash = decodeURIComponent(location.hash || '').replace(/^#/, '');
     if (hash) return hash;
@@ -404,6 +484,7 @@
       if (currentId) window.location.href = 'guides-create.html?id=' + encodeURIComponent(currentId);
     });
     document.getElementById('gv-delete-btn').addEventListener('click', openConfirm);
+    initExportMenu();
     document.getElementById('gv-confirm-cancel').addEventListener('click', closeConfirm);
     document.getElementById('gv-confirm-ok').addEventListener('click', confirmDelete);
 

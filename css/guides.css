@@ -615,6 +615,65 @@ body[data-gs-page] .hero p { min-height: 2.85rem; }
 .gv-related-tile { padding: 10px 12px; gap: 5px; }
 .gv-related-tile .gg-tile-title { font-size: .8rem; }
 
+/* ── Export-Menü (guides-view.html) ───────────────────────── */
+.gv-export-wrap { position: relative; }
+.gv-export-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 60;
+  background: var(--panel2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 6px;
+  min-width: 190px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.4);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gv-export-menu[hidden] { display: none; }
+.gv-export-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all .15s;
+}
+.gv-export-menu button:hover { background: var(--panel); color: var(--text); }
+
+/* ── Druckansicht (PDF-Export über den Browser-Druckdialog) ───
+   Private Notiz wird hier bewusst mit ausgeblendet – "wird nie
+   exportiert" gilt auch für den PDF/Druck-Weg. Dunkles Theme wird
+   für den Ausdruck auf helles Papier/schwarze Schrift umgestellt. */
+@media print {
+  header, footer, .gs-sidebar, .gv-back-link,
+  .gv-actions, .gv-related, .gv-private-note,
+  .gg-howto-hint, .gg-howto-hint-reopen { display: none !important; }
+
+  body, main, .gs-layout, .gs-main { background: #fff !important; height: auto !important; overflow: visible !important; }
+  .gs-layout { display: block !important; padding: 0 !important; gap: 0 !important; }
+  .gs-main { padding: 0 !important; border: none !important; }
+
+  .gv-header { background: none !important; border: none !important; padding: 0 0 12px !important; margin-bottom: 16px !important; }
+  .gv-header-top h1, .gv-content, .gv-content h1, .gv-content h2, .gv-content h3,
+  .gv-meta-row, .gv-cat-badge, .gv-tag { color: #000 !important; }
+  .gv-content a { color: #1a4fd6 !important; }
+  .gv-content code, .gv-content pre { background: #f2f2f2 !important; color: #000 !important; }
+  .gv-cat-badge { background: none !important; border: 1px solid #000 !important; }
+  .gv-tag { background: none !important; border: 1px solid #666 !important; }
+  .gv-ampel { display: none !important; }
+}
+
 /* ============================================================
    Guides-Übersicht (guides.html) – Phase 3
    ============================================================ */
@@ -1130,7 +1189,8 @@ body[data-gs-page] .hero p { min-height: 2.85rem; }
 .ge-editor-wrap[data-mode="preview"] .ge-preview  { flex: 1 1 100%; }
 
 /* ── Speichern-Zeile ──────────────────────────────────────── */
-.ge-save-row { display: flex; justify-content: flex-end; gap: 10px; }
+.ge-save-row { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.ge-autosave-status { margin-right: auto; font-size: .74rem; color: var(--dim); }
 .ge-save-btn {
   padding: 9px 20px;
   border-radius: 8px;
