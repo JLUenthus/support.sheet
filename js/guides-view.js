@@ -356,6 +356,9 @@
   }
 
   function buildLinkRow(link) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'gv-link-item';
+
     const row = document.createElement('div');
     row.className = 'gv-link-row';
 
@@ -399,7 +402,26 @@
     }
 
     row.appendChild(actions);
-    return row;
+    wrapper.appendChild(row);
+
+    // Fehlermeldung bleibt eingeblendet (statt Toast, der zu schnell
+    // verschwindet) und lässt sich per X gezielt schließen.
+    const errorBox = document.createElement('div');
+    errorBox.className = 'gv-link-error';
+    errorBox.hidden = true;
+    const errorText = document.createElement('span');
+    errorText.className = 'gv-link-error-text';
+    errorBox.appendChild(errorText);
+    const errorClose = document.createElement('button');
+    errorClose.type = 'button';
+    errorClose.className = 'gv-link-error-close';
+    errorClose.setAttribute('aria-label', 'Fehlermeldung schließen');
+    errorClose.textContent = '×';
+    errorClose.addEventListener('click', () => { errorBox.hidden = true; });
+    errorBox.appendChild(errorClose);
+    wrapper.appendChild(errorBox);
+
+    return wrapper;
   }
 
   // Best-Effort: klappt nur bei Seiten, die Cross-Origin-Lesezugriff
@@ -427,11 +449,11 @@
       renderLinks();
       notify('Offline-Kopie gespeichert.', 'success');
     } catch (err) {
-      notify(
+      const errorBox = btn.closest('.gv-link-item').querySelector('.gv-link-error');
+      errorBox.querySelector('.gv-link-error-text').textContent =
         'Offline-Kopie fehlgeschlagen – die Seite blockiert vermutlich Cross-Origin-Zugriff (CORS), das kann bei den meisten Websites nicht umgangen werden. ' +
-        'Alternative: Seite öffnen, Strg+P → „Als PDF speichern“, und die PDF-Datei manuell in den Guide-Inhalt einfügen.',
-        'error'
-      );
+        'Alternative: Seite öffnen, Strg+P → „Als PDF speichern“, und die PDF-Datei manuell in den Guide-Inhalt einfügen.';
+      errorBox.hidden = false;
       btn.disabled = false;
       btn.textContent = originalText;
     }
@@ -620,12 +642,36 @@
     const copyBtn = document.createElement('button');
     copyBtn.type = 'button';
     copyBtn.className = 'gv-link-copy-btn';
-    copyBtn.textContent = '📋 Markdown kopieren';
+    copyBtn.textContent = '📋 Zum Einfügen kopieren';
     copyBtn.addEventListener('click', () => copyText('![' + filename + '](assets/' + filename + ')', copyBtn));
     actions.appendChild(copyBtn);
 
+    const downloadBtn = document.createElement('button');
+    downloadBtn.type = 'button';
+    downloadBtn.className = 'gs-folder-btn';
+    downloadBtn.textContent = '📥 Herunterladen';
+    downloadBtn.addEventListener('click', () => downloadImage(filename, downloadBtn));
+    actions.appendChild(downloadBtn);
+
     row.appendChild(actions);
     return row;
+  }
+
+  async function downloadImage(filename, btn) {
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Lade…';
+    try {
+      const urlRes = await window.GuidesDB.getAssetUrl(currentId, filename);
+      if (!urlRes.success) throw new Error(urlRes.error || 'Bild nicht gefunden.');
+      const blob = await (await fetch(urlRes.url)).blob();
+      downloadBlob(blob, filename);
+    } catch (err) {
+      notify('Download fehlgeschlagen: ' + (err?.message || err), 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
   }
 
   async function renderImageBrowser() {

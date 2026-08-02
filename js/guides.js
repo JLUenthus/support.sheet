@@ -227,9 +227,58 @@
     })();
   }
 
+  // ── Backup-Ampel ─────────────────────────────────────────
+  // Grün: letzter Export (gs-last-export) ist neuer/gleich der letzten
+  // Guide-Änderung über alle Guides hinweg – Rot: es gibt ungesicherte
+  // Änderungen oder es wurde noch nie exportiert. Nutzt bewusst keinen
+  // eigenen Speicher – der Export-Zeitstempel existiert bereits
+  // (guides-manage.js), die letzte Guide-Änderung wird aus den
+  // vorhandenen Metadaten abgeleitet.
+  function initBackupStatus() {
+    const db  = window.GuidesDB;
+    const row = document.getElementById('gs-backup-row');
+    const dot = document.getElementById('gs-backup-dot');
+    if (!row || !dot || !db) return;
+
+    function fmt(iso) {
+      if (!iso) return 'nie';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return iso;
+      return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        + ', ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr';
+    }
+
+    async function refresh() {
+      const lastBackup = localStorage.getItem('gs-last-export');
+
+      let lastGuideChange = null;
+      if (!(db.isFilesystemMode() && !db.isConnected())) {
+        const res = await db.listGuides();
+        const guides = (res.success && res.guides) || [];
+        guides.forEach((g) => {
+          const modified = g.meta && g.meta.modified;
+          if (modified && (!lastGuideChange || new Date(modified) > new Date(lastGuideChange))) {
+            lastGuideChange = modified;
+          }
+        });
+      }
+
+      const isOk = !!lastBackup && (!lastGuideChange || new Date(lastBackup) >= new Date(lastGuideChange));
+      row.classList.toggle('ok', isOk);
+      row.classList.toggle('stale', !isOk);
+      row.title = 'Letzte Guide-Änderung: ' + fmt(lastGuideChange) + '\nLetztes Backup: ' + fmt(lastBackup);
+    }
+
+    refresh();
+    document.addEventListener('guides-db-connected', refresh);
+    document.addEventListener('guides-db-disconnected', refresh);
+    document.addEventListener('guides-backup-updated', refresh);
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     initSidebarNav();
     initCategories();
     initFolderStatus();
+    initBackupStatus();
   });
 })();

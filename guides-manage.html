@@ -65,6 +65,11 @@
             <button class="gs-folder-btn gs-folder-btn--warn" id="gs-folder-reconnect" hidden>🔓 Zugriff bestätigen</button>
             <button class="gs-folder-disconnect" id="gs-folder-disconnect" hidden>Trennen</button>
             <span class="gs-folder-hint" id="gs-folder-hint">Ordner-Handle wird lokal gecacht (IndexedDB).</span>
+
+            <div class="gs-backup-row" id="gs-backup-row">
+              <span class="gs-backup-dot" id="gs-backup-dot"></span>
+              <span class="gs-backup-label">Letztes Backup</span>
+            </div>
           </div>
         </div>
 
@@ -105,7 +110,11 @@
 
         <!-- 2. Export -->
         <div class="gm-card">
-          <h2 class="gm-card-title">📤 Export</h2>
+          <div class="gm-card-title-row">
+            <h2 class="gm-card-title">📤 Export</h2>
+            <button type="button" class="gs-folder-btn" id="gm-quick-backup-btn">⚡ Jetzt Backup erstellen</button>
+          </div>
+          <p class="gm-quick-backup-hint">Sichert sofort alle Guides als lesbares Archiv, ohne die Optionen unten anzupassen.</p>
 
           <div class="gm-export-row">
             <div class="gm-export-group">

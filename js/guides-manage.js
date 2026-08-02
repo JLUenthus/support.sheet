@@ -282,6 +282,7 @@
         await downloadZip(zip, 'guide-sheet-package-' + sanitizeForFilename(exportedBy) + '-' + dateStr + '.zip');
       }
       localStorage.setItem(LAST_EXPORT_KEY, new Date().toISOString());
+      document.dispatchEvent(new CustomEvent('guides-backup-updated'));
       notify('Export erstellt (' + guides.length + ' Guide(s)).', 'success');
       await updateStatusPanel(allGuidesCache);
     } catch (err) {
@@ -817,6 +818,11 @@
     initEmptyTrash();
     initFileManager();
     document.getElementById('gm-export-btn').addEventListener('click', handleExport);
+    document.getElementById('gm-quick-backup-btn').addEventListener('click', () => {
+      document.querySelector('input[name="gm-scope"][value="all"]').checked = true;
+      document.querySelector('input[name="gm-format"][value="readable"]').checked = true;
+      handleExport();
+    });
 
     await window.GuidesDB.restoreFolder();
     await loadAll();

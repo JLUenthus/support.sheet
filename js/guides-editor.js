@@ -433,8 +433,43 @@
     insertBtn.addEventListener('click', () => insertRaw(textarea, '![' + filename + '](assets/' + filename + ')'));
     actions.appendChild(insertBtn);
 
+    const downloadBtn = document.createElement('button');
+    downloadBtn.type = 'button';
+    downloadBtn.className = 'gs-folder-btn';
+    downloadBtn.textContent = '📥 Herunterladen';
+    downloadBtn.addEventListener('click', () => downloadImage(filename, downloadBtn));
+    actions.appendChild(downloadBtn);
+
     row.appendChild(actions);
     return row;
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  async function downloadImage(filename, btn) {
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Lade…';
+    try {
+      const urlRes = await window.GuidesDB.getAssetUrl(currentGuideId, filename);
+      if (!urlRes.success) throw new Error(urlRes.error || 'Bild nicht gefunden.');
+      const blob = await (await fetch(urlRes.url)).blob();
+      downloadBlob(blob, filename);
+    } catch (err) {
+      notify('Download fehlgeschlagen: ' + (err?.message || err), 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
   }
 
   async function renderImageBrowser() {

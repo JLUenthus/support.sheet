@@ -59,6 +59,11 @@
             <button class="gs-folder-btn gs-folder-btn--warn" id="gs-folder-reconnect" hidden>🔓 Zugriff bestätigen</button>
             <button class="gs-folder-disconnect" id="gs-folder-disconnect" hidden>Trennen</button>
             <span class="gs-folder-hint" id="gs-folder-hint">Ordner-Handle wird lokal gecacht (IndexedDB).</span>
+
+            <div class="gs-backup-row" id="gs-backup-row">
+              <span class="gs-backup-dot" id="gs-backup-dot"></span>
+              <span class="gs-backup-label">Letztes Backup</span>
+            </div>
           </div>
         </div>
 
@@ -145,7 +150,7 @@
 
           <div class="gv-images" id="gv-images">
             <div class="gv-images-header">
-              <div class="gv-images-title">Bilder</div>
+              <div class="gv-images-title">Dem Guide angefügte Bilder</div>
               <button type="button" class="gs-folder-btn" id="gv-images-toggle">🖼️ Bilder anzeigen</button>
             </div>
             <div class="gv-images-list" id="gv-images-list" hidden></div>
