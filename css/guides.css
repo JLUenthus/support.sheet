@@ -507,6 +507,21 @@ body[data-gs-page] .hero p { min-height: 2.85rem; }
 .gv-content pre { background: none; padding: 0; margin: 0; }
 .gv-content pre code { background: none; padding: 0; color: var(--text); border-radius: 0; }
 
+/* ── How-To: Screenshot-Platzhalter ───────────────────────── */
+.howto-content { max-width: 720px; }
+.howto-shot {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  margin: 0 0 18px;
+  background: var(--panel2);
+  border: 1px dashed var(--border2);
+  border-radius: var(--r);
+}
+.howto-shot-icon { font-size: 1.3rem; flex-shrink: 0; line-height: 1.2; }
+.howto-shot-desc { font-size: .82rem; color: var(--muted); line-height: 1.5; }
+
 .gv-code-block { position: relative; margin-bottom: 14px; }
 .gv-code-block pre {
   background: var(--panel2);
@@ -579,6 +594,173 @@ body[data-gs-page] .hero p { min-height: 2.85rem; }
   .gv-header-top h1 { font-size: 1.25rem; }
   .gv-actions { justify-content: flex-start; }
 }
+
+/* ── Links (mit optionaler Offline-Kopie) ─────────────────── */
+.gv-links {
+  flex-shrink: 0;
+  margin-bottom: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.gv-links[hidden] { display: none; }
+.gv-links-title {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 12px;
+}
+.gv-links-list { display: flex; flex-direction: column; gap: 8px; }
+.gv-link-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r);
+  background: var(--panel2);
+  border: 1px solid var(--border);
+}
+.gv-link-url {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  color: var(--accent);
+}
+.gv-link-actions { display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
+.gv-link-copy-btn {
+  font-size: .7rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border2);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+}
+.gv-link-copy-btn:hover  { color: var(--text); border-color: var(--green); }
+.gv-link-copy-btn.copied { color: var(--green); border-color: rgba(74,222,128,.4); }
+
+/* ── Dateien (Anhänge, direkt in der Guide-Ansicht verwaltbar) ── */
+.gv-attachments {
+  flex-shrink: 0;
+  margin-bottom: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.gv-attachments-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.gv-attachments-title {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.gv-attachment-add-btn {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px dashed var(--border2);
+  background: none;
+  color: var(--dim);
+  font-size: .95rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all .15s;
+}
+.gv-attachment-add-btn:hover { color: var(--accent); border-color: var(--accent); }
+.gv-attachments-hint {
+  font-size: .74rem;
+  color: var(--amber);
+  background: var(--amber-bg);
+  border: 1px dashed rgba(251,191,36,.4);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+.gv-attachments-empty { font-size: .82rem; color: var(--dim); }
+.gv-attachments-list { display: flex; flex-direction: column; gap: 8px; }
+.gv-attachment-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r);
+  background: var(--panel2);
+  border: 1px solid var(--border);
+}
+.gv-attachment-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  font-size: .82rem;
+  color: var(--text);
+}
+.gv-attachment-actions { display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
+.gv-attachment-remove-btn {
+  font-size: .78rem;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border2);
+  background: none;
+  color: var(--dim);
+  cursor: pointer;
+  transition: all .15s;
+}
+.gv-attachment-remove-btn:hover { color: var(--red); border-color: var(--red); }
+
+/* ── Bilder-Browser (Assets-Ordner anzeigen/umbenennen) ───── */
+.gv-images {
+  flex-shrink: 0;
+  margin-bottom: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.gv-images-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.gv-images-title {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.gv-images-list[hidden] { display: none; }
+.gv-images-list { display: flex; flex-direction: column; gap: 8px; }
+.gv-images-empty { font-size: .82rem; color: var(--dim); }
+.gv-image-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r);
+  background: var(--panel2);
+  border: 1px solid var(--border);
+}
+.gv-image-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border2);
+  background: var(--panel);
+  flex-shrink: 0;
+}
+.gv-image-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  color: var(--text);
+}
+.gv-image-actions { display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
 
 /* ── Ähnliche Guides (Phase 12) ───────────────────────────────
    Bleibt immer als Fußzeile ganz unten in der Guide-Kachel – dank
@@ -741,7 +923,7 @@ body[data-gs-page] .hero p { min-height: 2.85rem; }
 .gg-toggle-btn:hover  { color: var(--text); }
 .gg-toggle-btn.active { background: rgba(251,191,36,.12); border-color: rgba(251,191,36,.4); color: var(--amber); }
 
-.gg-view-toggle { display: flex; border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; }
+.gg-view-toggle { display: inline-flex; border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; }
 .gg-view-btn {
   padding: 7px 10px;
   border: none;
@@ -978,13 +1160,8 @@ body[data-gs-page] .hero p { min-height: 2.85rem; }
 }
 .ge-import-menu button:hover { background: var(--panel); color: var(--text); }
 
-/* ── Entwurf-Banner ───────────────────────────────────────── */
-.ge-draft-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
+/* ── Entwurf-Panel (mehrere parallele Entwürfe) ──────────── */
+.ge-draft-panel {
   padding: 12px 14px;
   margin-bottom: 16px;
   background: rgba(124,140,248,.08);
@@ -994,8 +1171,24 @@ body[data-gs-page] .hero p { min-height: 2.85rem; }
   color: var(--text);
   font-size: .82rem;
 }
-.ge-draft-banner[hidden] { display: none; }
-.ge-draft-actions { display: flex; gap: 8px; }
+.ge-draft-panel[hidden] { display: none; }
+.ge-draft-panel-title { font-weight: 600; margin-bottom: 10px; }
+.ge-draft-list { display: flex; flex-direction: column; gap: 8px; }
+.ge-draft-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.ge-draft-row-info { display: flex; flex-direction: column; gap: 2px; }
+.ge-draft-row-title { font-size: .84rem; color: var(--text); }
+.ge-draft-row-meta { font-size: .72rem; color: var(--muted); }
+.ge-draft-row-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
 /* ── Formular-Kopf ────────────────────────────────────────── */
 .ge-title-input {
@@ -1135,6 +1328,114 @@ body[data-gs-page] .hero p { min-height: 2.85rem; }
   transition: border-color .15s;
 }
 .ge-private-note-textarea:focus { border-color: var(--amber); }
+
+.ge-links-block { margin-bottom: 18px; }
+.ge-links-label {
+  font-family: var(--font-ui);
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.ge-links-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.ge-link-row { display: flex; align-items: center; gap: 8px; }
+.ge-link-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: var(--panel2);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: .8rem;
+  outline: none;
+  transition: border-color .15s;
+}
+.ge-link-input:focus { border-color: var(--accent); }
+.ge-link-remove {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--border2);
+  background: none;
+  color: var(--dim);
+  font-size: .95rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all .15s;
+}
+.ge-link-remove:hover { color: var(--red); border-color: var(--red); }
+.ge-link-add-btn {
+  padding: 7px 12px;
+  border-radius: 7px;
+  border: 1px dashed var(--border2);
+  background: none;
+  color: var(--dim);
+  font-family: var(--font-ui);
+  font-size: .76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.ge-link-add-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+.ge-attachments-block { margin-bottom: 18px; }
+.ge-attachments-hint {
+  font-size: .74rem;
+  color: var(--amber);
+  background: var(--amber-bg);
+  border: 1px dashed rgba(251,191,36,.4);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+}
+.ge-attachments-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.ge-attachment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: var(--panel2);
+}
+.ge-attachment-name { font-family: var(--font-ui); font-size: .8rem; color: var(--text); overflow-wrap: break-word; }
+
+.ge-images-row { margin-bottom: 8px; }
+.ge-images-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.ge-images-list[hidden] { display: none; }
+.ge-images-empty { font-size: .82rem; color: var(--dim); }
+.ge-image-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: var(--panel2);
+}
+.ge-image-thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border2);
+  background: var(--panel);
+  flex-shrink: 0;
+}
+.ge-image-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  color: var(--text);
+}
+.ge-image-actions { display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
 
 /* ── Markdown-Toolbar ─────────────────────────────────────── */
 .ge-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-bottom: 8px; }
@@ -1316,6 +1617,14 @@ body[data-gs-page] .hero p { min-height: 2.85rem; }
 .gm-trash-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .gm-trash-empty { color: var(--muted); font-size: .84rem; text-align: center; padding: 20px; }
 .gm-trash-empty[hidden] { display: none; }
+
+/* ── Dateiverwaltung ──────────────────────────────────────── */
+.gm-files-list { display: flex; flex-direction: column; gap: 16px; }
+.gm-files-list[hidden] { display: none; }
+.gm-files-guide-group { display: flex; flex-direction: column; gap: 6px; }
+.gm-files-guide-title { font-size: .82rem; font-weight: 700; color: var(--text); }
+.gm-files-empty { color: var(--muted); font-size: .84rem; text-align: center; padding: 20px; }
+.gm-files-empty[hidden] { display: none; }
 
 /* ── Statistik ────────────────────────────────────────────── */
 .gm-stat-total { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 14px; }

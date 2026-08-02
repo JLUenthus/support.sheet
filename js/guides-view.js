@@ -341,6 +341,359 @@
     return tile;
   }
 
+  // ── Links (mit optionaler Offline-Kopie) ────────────────
+  function renderLinks() {
+    const section = document.getElementById('gv-links');
+    const list = document.getElementById('gv-links-list');
+    if (!section || !list) return;
+
+    const links = Array.isArray(currentMeta.links) ? currentMeta.links : [];
+    if (!links.length) { section.hidden = true; return; }
+
+    list.replaceChildren();
+    links.forEach((link) => list.appendChild(buildLinkRow(link)));
+    section.hidden = false;
+  }
+
+  function buildLinkRow(link) {
+    const row = document.createElement('div');
+    row.className = 'gv-link-row';
+
+    const urlText = document.createElement('span');
+    urlText.className = 'gv-link-url';
+    urlText.textContent = link.url;
+    row.appendChild(urlText);
+
+    const actions = document.createElement('div');
+    actions.className = 'gv-link-actions';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'gv-link-copy-btn';
+    copyBtn.textContent = '📋 Kopieren';
+    copyBtn.addEventListener('click', () => copyText(link.url, copyBtn));
+    actions.appendChild(copyBtn);
+
+    if (link.offlineAsset) {
+      const savedLabel = fmtDate(link.offlineSavedAt);
+      const viewBtn = document.createElement('button');
+      viewBtn.type = 'button';
+      viewBtn.className = 'gs-folder-btn';
+      viewBtn.textContent = '🕓 Offline-Version vom ' + savedLabel + ' anzeigen';
+      viewBtn.addEventListener('click', () => viewOfflineSnapshot(link));
+      actions.appendChild(viewBtn);
+
+      const refreshBtn = document.createElement('button');
+      refreshBtn.type = 'button';
+      refreshBtn.className = 'gs-folder-btn';
+      refreshBtn.textContent = '🔄 Aktualisieren';
+      refreshBtn.addEventListener('click', () => downloadLinkOffline(link, refreshBtn));
+      actions.appendChild(refreshBtn);
+    } else {
+      const downloadBtn = document.createElement('button');
+      downloadBtn.type = 'button';
+      downloadBtn.className = 'gs-folder-btn';
+      downloadBtn.textContent = '📥 Offline speichern';
+      downloadBtn.addEventListener('click', () => downloadLinkOffline(link, downloadBtn));
+      actions.appendChild(downloadBtn);
+    }
+
+    row.appendChild(actions);
+    return row;
+  }
+
+  // Best-Effort: klappt nur bei Seiten, die Cross-Origin-Lesezugriff
+  // erlauben (CORS) – bei den meisten echten Websites blockiert das der
+  // Browser aus Sicherheitsgründen. In dem Fall: klare Fehlermeldung mit
+  // Hinweis auf die manuelle Alternative (Drucken/Als PDF speichern).
+  async function downloadLinkOffline(link, btn) {
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Lade…';
+    try {
+      const res = await fetch(link.url, { mode: 'cors' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const html = await res.text();
+      const blob = new Blob([html], { type: 'text/html' });
+      const filename = 'link-' + link.id + '.html';
+      const saveRes = await window.GuidesDB.saveAsset(currentId, filename, blob);
+      if (!saveRes.success) throw new Error(saveRes.error || 'Speichern fehlgeschlagen.');
+
+      link.offlineAsset = filename;
+      link.offlineSavedAt = new Date().toISOString();
+      const saveGuideRes = await window.GuidesDB.saveGuide(currentId, currentMeta, currentContent);
+      if (!saveGuideRes.success) throw new Error(saveGuideRes.error || 'Guide konnte nicht aktualisiert werden.');
+
+      renderLinks();
+      notify('Offline-Kopie gespeichert.', 'success');
+    } catch (err) {
+      notify(
+        'Offline-Kopie fehlgeschlagen – die Seite blockiert vermutlich Cross-Origin-Zugriff (CORS), das kann bei den meisten Websites nicht umgangen werden. ' +
+        'Alternative: Seite öffnen, Strg+P → „Als PDF speichern“, und die PDF-Datei manuell in den Guide-Inhalt einfügen.',
+        'error'
+      );
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+
+  async function viewOfflineSnapshot(link) {
+    const res = await window.GuidesDB.getAssetUrl(currentId, link.offlineAsset);
+    if (!res.success) { notify(res.error || 'Offline-Version konnte nicht geladen werden.', 'error'); return; }
+    window.open(res.url, '_blank');
+  }
+
+  // ── Dateien (Anhänge) ────────────────────────────────────
+  // Anders als Links/Bilder werden Anhänge direkt in der Guide-Ansicht
+  // hinzugefügt (kein Umweg über den Editor) – deshalb schreibt
+  // addAttachmentFile()/removeAttachment() sofort über saveAsset/saveGuide.
+  function formatFileSize(bytes) {
+    if (bytes == null) return '';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let i = 0, val = bytes;
+    while (val >= 1024 && i < units.length - 1) { val /= 1024; i++; }
+    return (i === 0 ? val : val.toFixed(1)) + ' ' + units[i];
+  }
+
+  function sanitizeAttachmentName(name) {
+    return (name || 'datei').replace(/[^a-zA-Z0-9._-]/g, '_');
+  }
+
+  function usesCacheStorage() {
+    const db = window.GuidesDB;
+    return !db.isFilesystemMode() || !db.isConnected();
+  }
+
+  function updateAttachmentsHint() {
+    const hint = document.getElementById('gv-attachments-hint');
+    if (hint) hint.hidden = !usesCacheStorage();
+  }
+
+  function renderAttachments() {
+    const list = document.getElementById('gv-attachments-list');
+    if (!list) return;
+    const attachments = Array.isArray(currentMeta.attachments) ? currentMeta.attachments : [];
+    list.replaceChildren();
+    if (!attachments.length) {
+      const empty = document.createElement('div');
+      empty.className = 'gv-attachments-empty';
+      empty.textContent = 'Noch keine Dateien hinterlegt.';
+      list.appendChild(empty);
+      return;
+    }
+    attachments.forEach((att) => list.appendChild(buildAttachmentRow(att)));
+  }
+
+  function buildAttachmentRow(att) {
+    const row = document.createElement('div');
+    row.className = 'gv-attachment-row';
+
+    const name = document.createElement('span');
+    name.className = 'gv-attachment-name';
+    name.textContent = att.name + (att.size != null ? ' (' + formatFileSize(att.size) + ')' : '');
+    row.appendChild(name);
+
+    const actions = document.createElement('div');
+    actions.className = 'gv-attachment-actions';
+
+    const downloadBtn = document.createElement('button');
+    downloadBtn.type = 'button';
+    downloadBtn.className = 'gs-folder-btn';
+    downloadBtn.textContent = '📥 Herunterladen';
+    downloadBtn.addEventListener('click', () => downloadAttachment(att, downloadBtn));
+    actions.appendChild(downloadBtn);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'gv-attachment-remove-btn';
+    removeBtn.textContent = '🗑️';
+    removeBtn.setAttribute('aria-label', 'Datei entfernen');
+    removeBtn.addEventListener('click', () => removeAttachment(att));
+    actions.appendChild(removeBtn);
+
+    row.appendChild(actions);
+    return row;
+  }
+
+  async function downloadAttachment(att, btn) {
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Lade…';
+    try {
+      const res = await window.GuidesDB.getAssetUrl(currentId, att.assetFile);
+      if (!res.success) throw new Error(res.error || 'Datei nicht gefunden.');
+      const blob = await (await fetch(res.url)).blob();
+      downloadBlob(blob, att.name);
+    } catch (err) {
+      notify('Download fehlgeschlagen: ' + (err?.message || err), 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+
+  async function removeAttachment(att) {
+    if (!confirm('Datei „' + att.name + '“ wirklich entfernen?')) return;
+    const previous = currentMeta.attachments;
+    currentMeta.attachments = (currentMeta.attachments || []).filter((a) => a.id !== att.id);
+    const res = await window.GuidesDB.saveGuide(currentId, currentMeta, currentContent);
+    if (!res.success) {
+      currentMeta.attachments = previous;
+      notify(res.error || 'Datei konnte nicht entfernt werden.', 'error');
+      return;
+    }
+    await window.GuidesDB.deleteAsset(currentId, att.assetFile);
+    renderAttachments();
+    notify('Datei entfernt.', 'success');
+  }
+
+  async function addAttachmentFile(file) {
+    if (usesCacheStorage()) {
+      notify('Kein Ordner verbunden – große Dateien können im Browser-Cache (IndexedDB) zu Problemen führen.', 'error');
+    }
+    const attId = 'att-' + Date.now();
+    const assetFile = 'attachment-' + attId + '-' + sanitizeAttachmentName(file.name);
+    const saveRes = await window.GuidesDB.saveAsset(currentId, assetFile, file);
+    if (!saveRes.success) { notify(saveRes.error || 'Datei konnte nicht gespeichert werden.', 'error'); return; }
+
+    const attachments = Array.isArray(currentMeta.attachments) ? currentMeta.attachments : [];
+    attachments.push({ id: attId, name: file.name, size: file.size, type: file.type || '', assetFile });
+    currentMeta.attachments = attachments;
+    const res = await window.GuidesDB.saveGuide(currentId, currentMeta, currentContent);
+    if (!res.success) { notify(res.error || 'Guide konnte nicht aktualisiert werden.', 'error'); return; }
+
+    renderAttachments();
+    notify('Datei hinzugefügt.', 'success');
+  }
+
+  function initAttachments() {
+    updateAttachmentsHint();
+    document.addEventListener('guides-db-connected', updateAttachmentsHint);
+    document.addEventListener('guides-db-disconnected', updateAttachmentsHint);
+
+    document.getElementById('gv-attachment-add-btn').addEventListener('click', () => {
+      updateAttachmentsHint();
+      document.getElementById('gv-attachment-input').click();
+    });
+    document.getElementById('gv-attachment-input').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      e.target.value = '';
+      if (file) await addAttachmentFile(file);
+    });
+  }
+
+  // ── Bilder-Browser (Assets-Ordner anzeigen, umbenennen, Referenz kopieren) ──
+  // Direkte Antwort auf "Bilder manchmal kaputt": zeigt was tatsächlich im
+  // assets/-Ordner liegt, damit kaputte/doppelte Bild-Referenzen von Hand
+  // repariert werden können, ohne den Ordner selbst öffnen zu müssen.
+  const IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|svg|bmp)$/i;
+
+  function escapeRegExp(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  async function buildImageRow(filename) {
+    const row = document.createElement('div');
+    row.className = 'gv-image-row';
+
+    const thumb = document.createElement('img');
+    thumb.className = 'gv-image-thumb';
+    const urlRes = await window.GuidesDB.getAssetUrl(currentId, filename);
+    if (urlRes.success) thumb.src = urlRes.url;
+    row.appendChild(thumb);
+
+    const name = document.createElement('span');
+    name.className = 'gv-image-name';
+    name.textContent = filename;
+    row.appendChild(name);
+
+    const actions = document.createElement('div');
+    actions.className = 'gv-image-actions';
+
+    const renameBtn = document.createElement('button');
+    renameBtn.type = 'button';
+    renameBtn.className = 'gs-folder-btn';
+    renameBtn.textContent = '✏️ Umbenennen';
+    renameBtn.addEventListener('click', () => renameImage(filename));
+    actions.appendChild(renameBtn);
+
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'gv-link-copy-btn';
+    copyBtn.textContent = '📋 Markdown kopieren';
+    copyBtn.addEventListener('click', () => copyText('![' + filename + '](assets/' + filename + ')', copyBtn));
+    actions.appendChild(copyBtn);
+
+    row.appendChild(actions);
+    return row;
+  }
+
+  async function renderImageBrowser() {
+    const listEl = document.getElementById('gv-images-list');
+    if (!listEl) return;
+    const res = await window.GuidesDB.listAssets(currentId);
+    const images = (res.success ? res.assets : []).filter((name) => IMAGE_EXT_RE.test(name));
+    listEl.replaceChildren();
+    if (!images.length) {
+      const empty = document.createElement('div');
+      empty.className = 'gv-images-empty';
+      empty.textContent = 'Keine Bilder gespeichert.';
+      listEl.appendChild(empty);
+      return;
+    }
+    for (const name of images) {
+      listEl.appendChild(await buildImageRow(name));
+    }
+  }
+
+  async function renameImage(oldName) {
+    const input = (prompt('Neuer Dateiname:', oldName) || '').trim();
+    if (!input || input === oldName) return;
+    const newName = sanitizeAttachmentName(input);
+
+    const listRes = await window.GuidesDB.listAssets(currentId);
+    if ((listRes.assets || []).includes(newName)) {
+      notify('Datei „' + newName + '“ existiert bereits.', 'error');
+      return;
+    }
+
+    const urlRes = await window.GuidesDB.getAssetUrl(currentId, oldName);
+    if (!urlRes.success) { notify(urlRes.error || 'Bild nicht gefunden.', 'error'); return; }
+    const blob = await (await fetch(urlRes.url)).blob();
+
+    const saveRes = await window.GuidesDB.saveAsset(currentId, newName, blob);
+    if (!saveRes.success) { notify(saveRes.error || 'Umbenennen fehlgeschlagen.', 'error'); return; }
+    await window.GuidesDB.deleteAsset(currentId, oldName);
+
+    const oldPattern = new RegExp('assets/' + escapeRegExp(oldName), 'g');
+    const updatedContent = currentContent.replace(oldPattern, 'assets/' + newName);
+    let metaChanged = updatedContent !== currentContent;
+    (currentMeta.attachments || []).forEach((a) => { if (a.assetFile === oldName) { a.assetFile = newName; metaChanged = true; } });
+    (currentMeta.links || []).forEach((l) => { if (l.offlineAsset === oldName) { l.offlineAsset = newName; metaChanged = true; } });
+
+    if (metaChanged) {
+      currentContent = updatedContent;
+      const saveGuideRes = await window.GuidesDB.saveGuide(currentId, currentMeta, currentContent);
+      if (!saveGuideRes.success) { notify(saveGuideRes.error || 'Guide konnte nicht aktualisiert werden.', 'error'); return; }
+    }
+
+    notify('Bild umbenannt.', 'success');
+    await renderGuide();
+    await renderImageBrowser();
+  }
+
+  function initImageBrowser() {
+    const toggleBtn = document.getElementById('gv-images-toggle');
+    const listEl = document.getElementById('gv-images-list');
+    if (!toggleBtn || !listEl) return;
+    toggleBtn.addEventListener('click', async () => {
+      const willShow = listEl.hidden;
+      listEl.hidden = !willShow;
+      toggleBtn.textContent = willShow ? '🖼️ Bilder ausblenden' : '🖼️ Bilder anzeigen';
+      if (willShow) await renderImageBrowser();
+    });
+  }
+
   async function renderRelatedGuides() {
     const section = document.getElementById('gv-related');
     const grid = document.getElementById('gv-related-grid');
@@ -442,6 +795,9 @@
     enhanceCodeBlocks(contentEl);
     enhanceImages(contentEl);
     enhanceChecklists(contentEl);
+
+    renderLinks();
+    renderAttachments();
   }
 
   async function loadGuide() {
@@ -507,6 +863,8 @@
     });
     document.getElementById('gv-delete-btn').addEventListener('click', openConfirm);
     initExportMenu();
+    initAttachments();
+    initImageBrowser();
     document.getElementById('gv-confirm-cancel').addEventListener('click', closeConfirm);
     document.getElementById('gv-confirm-ok').addEventListener('click', confirmDelete);
 

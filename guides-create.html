@@ -97,12 +97,9 @@
           </div>
         </div>
 
-        <div class="ge-draft-banner" id="ge-draft-banner" hidden>
-          <span>📝 Nicht gespeicherter Entwurf gefunden – wiederherstellen?</span>
-          <div class="ge-draft-actions">
-            <button type="button" class="gs-folder-btn" id="ge-draft-restore">Wiederherstellen</button>
-            <button type="button" class="gv-confirm-btn gv-confirm-btn--cancel" id="ge-draft-dismiss">Verwerfen</button>
-          </div>
+        <div class="ge-draft-panel" id="ge-draft-panel" hidden>
+          <div class="ge-draft-panel-title">📝 Nicht gespeicherte Entwürfe gefunden</div>
+          <div class="ge-draft-list" id="ge-draft-list"></div>
         </div>
 
         <div class="ge-form-header">
@@ -126,6 +123,20 @@
             <summary class="ge-private-note-summary">🔒 Private Notiz (wird nie exportiert)</summary>
             <textarea id="ge-private-note" class="ge-private-note-textarea" rows="3" placeholder="Nur für dich sichtbar – z.B. Kundendetails, interne Hinweise… Wird bei Export/Merge-Paket nie mitgeschickt."></textarea>
           </details>
+
+          <div class="ge-links-block">
+            <div class="ge-links-label">🔗 Links</div>
+            <div class="ge-links-rows" id="ge-links-rows"></div>
+            <button type="button" class="ge-link-add-btn" id="ge-link-add-btn">+ Weiteren Link hinzufügen</button>
+          </div>
+
+          <div class="ge-attachments-block">
+            <div class="ge-links-label">📎 Dateien</div>
+            <div class="ge-attachments-hint" id="ge-attachments-hint" hidden>⚠️ Kein Ordner verbunden – große Dateien können im Browser-Cache (IndexedDB) zu Problemen führen.</div>
+            <div class="ge-attachments-rows" id="ge-attachments-rows"></div>
+            <button type="button" class="ge-link-add-btn" id="ge-attachment-add-btn">+ Datei hinzufügen</button>
+            <input type="file" id="ge-attachment-input" hidden>
+          </div>
         </div>
 
         <div class="gg-view-toggle" id="ge-view-toggle">
@@ -147,8 +158,17 @@
           <button type="button" data-action="link" title="Link">🔗</button>
           <button type="button" data-action="image" title="Bild einfügen">🖼️</button>
           <button type="button" data-action="table" title="Tabelle">▦</button>
-          <button type="button" data-action="checklist" title="Checkliste">☑️</button>
+          <button type="button" data-action="checklist" title="Checkliste – [ ] leer lassen = offen, [x] = erledigt">☑️</button>
+          <span class="ge-toolbar-sep"></span>
+          <button type="button" data-action="align-left" title="Linksbündig">⬅</button>
+          <button type="button" data-action="align-center" title="Zentriert">↔</button>
+          <button type="button" data-action="align-right" title="Rechtsbündig">➡</button>
         </div>
+
+        <div class="ge-images-row">
+          <button type="button" class="gs-folder-btn" id="ge-images-toggle">🖼️ Gespeicherte Bilder anzeigen</button>
+        </div>
+        <div class="ge-images-list" id="ge-images-list" hidden></div>
 
         <div class="ge-editor-wrap" id="ge-editor-wrap" data-mode="split">
           <textarea id="ge-textarea" class="ge-textarea" placeholder="Inhalt in Markdown schreiben. Bild hierher ziehen oder mit Strg+V einfügen…" spellcheck="false"></textarea>

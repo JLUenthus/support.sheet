@@ -85,7 +85,131 @@
       <section class="gs-main">
         <h1>How-To</h1>
         <p class="gs-main-sub">Hier wird erklärt wie Guides zu verwenden ist</p>
-        <div class="gs-placeholder">📋 Wird noch befüllt.</div>
+
+        <div class="gv-content howto-content">
+
+          <p>guide.sheet ist deine private Wissensdatenbank für IT-Doku, Anleitungen und Notizen. Alles bleibt lokal – entweder in einem Ordner auf deiner Festplatte oder, wenn kein Ordner verbunden ist, im Speicher deines Browsers. Es gibt keinen Server und keinen Account.</p>
+
+          <h2>1. Einen neuen Guide anlegen</h2>
+          <p>Klicke in der Navigation auf <strong>„Guide anlegen"</strong>. Du siehst oben ein Formular für die Eckdaten und darunter den Editor für den eigentlichen Inhalt.</p>
+
+          <h3>Titel, Kategorie, Unterkategorie und Tags</h3>
+          <ul>
+            <li><strong>Titel</strong> – Pflichtfeld, ohne Titel kann nicht gespeichert werden.</li>
+            <li><strong>Kategorie</strong> – ordnet den Guide einem Themenbereich zu (z.B. Exchange, Windows Client). Kategorien legst du in der Seitenleiste oder unter „Lokale DB | Einstellungen" an.</li>
+            <li><strong>Unterkategorie</strong> – optionales Freitextfeld für eine feinere Einordnung.</li>
+            <li><strong>Tags</strong> – beliebig viele Schlagworte, per Enter/Komma bestätigen oder einen der vorgeschlagenen Status-Tags (z.B. „unfertig", „geprüft") anklicken.</li>
+          </ul>
+
+          <div class="howto-shot">
+            <div class="howto-shot-icon">📸</div>
+            <div class="howto-shot-desc">Screenshot-Platzhalter: Das obere Formular von „Guide anlegen" – Titelfeld, Kategorie/Unterkategorie-Zeile und die Tag-Leiste mit ein paar Beispiel-Tags.</div>
+          </div>
+
+          <h3>Private Notiz</h3>
+          <p>Über „🔒 Private Notiz" kannst du dir interne Vermerke machen (z.B. Kundendetails), die <strong>nie</strong> exportiert oder geteilt werden – auch nicht in ZIP-Exports oder Merge-Paketen. Sie erscheint nur dir in der Guide-Ansicht.</p>
+
+          <h3>Links hinterlegen</h3>
+          <p>Unter „🔗 Links" kannst du beliebig viele URLs hinterlegen (z.B. Hersteller-Doku, Microsoft-Learn-Artikel). Über „+ Weiteren Link hinzufügen" fügst du weitere Zeilen hinzu. Die Links tauchen später im fertigen Guide auf – dort lässt sich jeder Link kopieren, und du kannst versuchen, eine Offline-Kopie der Seite herunterzuladen (klappt nur, wenn die Zielseite das technisch erlaubt).</p>
+
+          <h3>Dateien anhängen</h3>
+          <p>Unter „📎 Dateien" kannst du beliebige Dateien anhängen (PDF, Word, Bilder, Setup-Dateien …) – über „+ Datei hinzufügen". Ist kein Ordner verbunden, warnt dich ein Hinweis, dass große Dateien im Browser-Speicher (IndexedDB) zu Problemen führen können – in dem Fall lieber vorher unter „Lokale DB" einen Ordner verbinden.</p>
+
+          <div class="howto-shot">
+            <div class="howto-shot-icon">📸</div>
+            <div class="howto-shot-desc">Screenshot-Platzhalter: Die Bereiche „Links" und „Dateien" im Formular, jeweils mit einem Beispiel-Eintrag.</div>
+          </div>
+
+          <h3>Inhalt schreiben</h3>
+          <p>Der Inhalt wird in Markdown geschrieben – einer einfachen Auszeichnungssprache für Überschriften, Listen, Links usw. Über den drei Buttons „Split", „Nur Editor" und „Nur Vorschau" wechselst du die Ansicht: im Split siehst du links den Text, rechts direkt die formatierte Vorschau.</p>
+          <p>Die Werkzeugleiste darüber hilft beim Formatieren, ohne die Markdown-Syntax auswendig zu können:</p>
+          <ul>
+            <li><strong>H1 / H2 / H3</strong> – Überschriften</li>
+            <li><strong>B / I</strong> – Fett / Kursiv</li>
+            <li><strong>`Code` / ```</strong> – Inline-Code bzw. ganzer Code-Block</li>
+            <li><strong>🔗</strong> – Link einfügen</li>
+            <li><strong>🖼️</strong> – Bild einfügen (öffnet die Dateiauswahl)</li>
+            <li><strong>▦</strong> – Beispiel-Tabelle einfügen</li>
+            <li><strong>☑️</strong> – Checkliste (leeres „[ ]" = offen, „[x]" = erledigt – im fertigen Guide anklickbar)</li>
+            <li><strong>⬅ ↔ ➡</strong> – markierten Text links-, mittig- oder rechtsbündig ausrichten</li>
+          </ul>
+          <p>Tipp: Mehrere leere Zeilen hintereinander werden im fertigen Guide auch als entsprechend größerer Abstand dargestellt – nützlich, um Abschnitte optisch zu trennen.</p>
+
+          <div class="howto-shot">
+            <div class="howto-shot-icon">📸</div>
+            <div class="howto-shot-desc">Screenshot-Platzhalter: Die Werkzeugleiste über dem Editor mit allen Buttons, darunter der Split-Bereich (Markdown links, Vorschau rechts) mit etwas Beispieltext.</div>
+          </div>
+
+          <h3>Bilder einfügen und verwalten</h3>
+          <p>Ein Bild fügst du per Klick auf den 🖼️-Button, per Ziehen-und-Ablegen in das Textfeld oder direkt mit <strong>Strg+V</strong> (z.B. ein kopierter Screenshot) ein. Im bereits gespeicherten Guide gibt es zusätzlich die Kachel „🖼️ Bilder anzeigen" (im Editor unter der Werkzeugleiste, in der Guide-Ansicht über „Ähnliche Guides") – dort siehst du alle gespeicherten Bilder mit Vorschaubild und kannst sie umbenennen oder ihre Markdown-Referenz erneut einfügen bzw. kopieren, falls du sie an anderer Stelle im Text nochmal brauchst.</p>
+
+          <div class="howto-shot">
+            <div class="howto-shot-icon">📸</div>
+            <div class="howto-shot-desc">Screenshot-Platzhalter: Die geöffnete „Bilder"-Kachel mit 2–3 Beispielbildern, jeweils mit Vorschau-Thumbnail und den Buttons „Umbenennen" / „In Guide einfügen".</div>
+          </div>
+
+          <h3>Automatisches Speichern & Entwürfe</h3>
+          <p>Während du schreibst, wird dein Stand alle paar Sekunden automatisch als Entwurf zwischengespeichert (Status unten links). Verlässt du die Seite ohne zu speichern und kommst später zurück, bietet dir „Guide anlegen" eine Liste aller offenen Entwürfe zum Wiederherstellen an – mehrere Entwürfe können dabei parallel bestehen, ohne sich gegenseitig zu überschreiben.</p>
+
+          <div class="howto-shot">
+            <div class="howto-shot-icon">📸</div>
+            <div class="howto-shot-desc">Screenshot-Platzhalter: Das Banner „Nicht gespeicherte Entwürfe gefunden" mit zwei Beispiel-Entwürfen (Titel, Datum/Uhrzeit, Wiederherstellen/Verwerfen-Buttons).</div>
+          </div>
+
+          <h3>Aus Word oder Markdown importieren</h3>
+          <p>Über „📥 Importieren" oben rechts kannst du bestehenden Text übernehmen: als Markdown- oder Text-Datei (1:1) oder als Word-Dokument (.docx) – dabei werden Formatierung und enthaltene Bilder automatisch in Markdown umgewandelt. Bitte danach kurz prüfen, ob alles sauber übernommen wurde.</p>
+
+          <p>Zum Schluss auf <strong>„✅ Speichern"</strong> klicken – fertig ist der Guide.</p>
+
+          <h2>2. Den Guide ansehen und bearbeiten</h2>
+          <p>Ein gespeicherter Guide zeigt oben Titel, Kategorie, Tags sowie Erstellt-/Geändert-Datum mit einer kleinen Ampel (grün = aktuell, gelb = älter, rot = lange nicht mehr geprüft). Über den Stern favorisierst du den Guide.</p>
+          <ul>
+            <li><strong>📤 Exportieren</strong> – als Markdown (.md), PDF (über den Druckdialog) oder Word (.docx). Die private Notiz wird dabei nie mit exportiert.</li>
+            <li><strong>✏️ Bearbeiten</strong> – öffnet den Guide wieder im Editor.</li>
+            <li><strong>🗑️ Löschen</strong> – verschiebt den Guide in den Papierkorb (endgültiges Löschen erst über „Lokale DB").</li>
+          </ul>
+          <p>Checklisten-Punkte lassen sich direkt in der Ansicht anklicken. Unten findest du – falls hinterlegt – die Links- und Dateien-Bereiche sowie automatisch vorgeschlagene „Ähnliche Guides" (gleiche Kategorie oder gemeinsame Tags).</p>
+
+          <div class="howto-shot">
+            <div class="howto-shot-icon">📸</div>
+            <div class="howto-shot-desc">Screenshot-Platzhalter: Kopf eines Guides in der Ansicht – Titel, Badges/Tags, Meta-Zeile mit Ampel und die Buttons Exportieren/Bearbeiten/Löschen.</div>
+          </div>
+
+          <h2>3. Die Übersicht nutzen</h2>
+          <p>Unter „Guides" siehst du alle vorhandenen Einträge als Kacheln oder als Liste (Umschalter oben rechts). Über der Kachel-Ansicht kannst du nach Kategorie, Tag filtern, nur Favoriten anzeigen und die Sortierung ändern. In der Seitenleiste findest du alle Kategorien mit Anzahl sowie eine Tag-Wolke – ein Klick filtert direkt danach.</p>
+          <p>Fährst du mit der Maus über eine Kachel, erscheint links ein Auswahlkästchen – damit lassen sich mehrere Guides markieren und gemeinsam löschen.</p>
+
+          <div class="howto-shot">
+            <div class="howto-shot-icon">📸</div>
+            <div class="howto-shot-desc">Screenshot-Platzhalter: Die Guides-Übersicht mit mehreren Kacheln, Filterleiste (Kategorie/Tag/Favoriten/Sortierung) und der Seitenleiste mit Kategorien und Tags.</div>
+          </div>
+
+          <h2>4. Lokale DB | Einstellungen</h2>
+          <p>Hier verwaltest du die Datenbank als Ganzes:</p>
+          <ul>
+            <li><strong>📊 Datenbankstatus</strong> – zeigt, ob ein echter Ordner verbunden ist oder der Browser-Speicher genutzt wird, plus Anzahl Guides/Kategorien/Assets. Über einen Ordner statt Browser-Speicher hast du echte Dateien auf der Festplatte, die z.B. mit OneDrive gesichert werden können.</li>
+            <li><strong>📤 Export</strong> – als lesbares ZIP-Archiv (Markdown + Bilder, gut zum Durchstöbern) oder als Merge-Paket (zum späteren Re-Import in guide.sheet, z.B. auf einem anderen Rechner).</li>
+            <li><strong>📥 Import/Merge</strong> – ZIP-Datei hineinziehen, Vorschau prüfen und übernehmen. Konflikte mit bereits vorhandenen Guides werden erkannt und lassen sich einzeln auflösen.</li>
+            <li><strong>📎 Dateiverwaltung</strong> – zeigt alle in Guides hinterlegten Dateien (siehe „Dateien anhängen") über alle Guides hinweg, gruppiert nach Guide, mit erneutem Download.</li>
+            <li><strong>📁 Kategorien verwalten</strong> – Farbe/Name ändern, Reihenfolge per Pfeil anpassen, leere Kategorien löschen.</li>
+            <li><strong>🗑️ Papierkorb</strong> – gelöschte Guides wiederherstellen oder endgültig entfernen.</li>
+            <li><strong>📈 Statistik</strong> – Verteilung nach Kategorie sowie Alters-Ampel über alle Guides.</li>
+          </ul>
+
+          <div class="howto-shot">
+            <div class="howto-shot-icon">📸</div>
+            <div class="howto-shot-desc">Screenshot-Platzhalter: Die Karte „Datenbankstatus" oben auf der Seite „Lokale DB | Einstellungen" mit ausgefüllten Werten.</div>
+          </div>
+
+          <h2>Kurz zusammengefasst</h2>
+          <ul>
+            <li>Alles bleibt lokal – am besten früh einen Ordner verbinden, damit nichts im begrenzten Browser-Speicher landet.</li>
+            <li>Titel, Kategorie und Tags sorgen dafür, dass du Guides später wiederfindest.</li>
+            <li>Private Notiz ist wirklich privat – wird nie exportiert.</li>
+            <li>Regelmäßig über „Lokale DB" ein Export-Backup ziehen.</li>
+          </ul>
+
+        </div>
       </section>
 
     </div>

@@ -7,17 +7,24 @@
 // mammoth.min.js, turndown.min.js.
 // ============================================================
 (function() {
-  const DRAFT_KEY = 'gs-draft';
+  const DRAFTS_KEY = 'gs-drafts'; // Sammlung statt Einzel-Key – mehrere Entwürfe können parallel existieren
+  let currentDraftId = null; // wird beim ersten Autosave dieser Session vergeben (oder beim Wiederherstellen übernommen)
 
   let categories       = [];
   let tags             = [];
+  let links            = []; // [{ id, url, offlineAsset, offlineSavedAt }]
+  let linkIdCounter    = 0;
+  let attachments        = []; // [{ id, name, size, type, assetFile }]
+  let attachmentIdCounter = 0;
+  const pendingAttachmentFiles = new Map(); // assetFile -> File (noch nicht gespeichert)
   let currentGuideId   = null;
   let existingMeta      = null;
   const pendingAssets     = new Map(); // filename -> File|Blob (noch nicht gespeichert)
   const assetPreviewUrls  = new Map(); // filename -> Blob-URL (nur für Live-Vorschau)
+  let existingAssetNames  = new Set(); // bereits auf der Platte gespeicherte Asset-Dateinamen (Edit-Modus)
   let importImageCounter = 0;
 
-  let titleInput, categorySelect, subcategoryInput, tagInput, tagsPillsEl, textarea, preview, privateNoteInput, privateNoteDetails;
+  let titleInput, categorySelect, subcategoryInput, tagInput, tagsPillsEl, textarea, preview, privateNoteInput, privateNoteDetails, linksRowsEl, attachmentsRowsEl, attachmentsHintEl;
 
   // Vorschläge für häufige Status-Tags – per Klick an/abwählbar.
   const SUGGESTED_TAGS = ['unfertig', 'überarbeiten', 'wichtig', 'geprüft', 'veraltet'];
@@ -159,6 +166,128 @@
     document.getElementById('ge-tag-add-btn').addEventListener('click', commitFromInput);
   }
 
+  // ── Links ────────────────────────────────────────────────
+  // offlineAsset/offlineSavedAt werden hier nur durchgereicht (nicht im
+  // Editor bearbeitet) – die Offline-Kopie wird ausschließlich in der
+  // Guide-Ansicht angelegt/aktualisiert, damit ein erneutes Speichern im
+  // Editor eine bereits heruntergeladene Kopie nicht verwirft.
+  function renderLinks() {
+    linksRowsEl.replaceChildren();
+    links.forEach((link) => {
+      const row = document.createElement('div');
+      row.className = 'ge-link-row';
+
+      const input = document.createElement('input');
+      input.type = 'url';
+      input.className = 'ge-link-input';
+      input.placeholder = 'https://…';
+      input.value = link.url || '';
+      input.addEventListener('input', () => { link.url = input.value; scheduleAutosave(); });
+
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'ge-link-remove';
+      remove.setAttribute('aria-label', 'Link entfernen');
+      remove.textContent = '×';
+      remove.addEventListener('click', () => {
+        links = links.filter((l) => l.id !== link.id);
+        renderLinks();
+        scheduleAutosave();
+      });
+
+      row.appendChild(input);
+      row.appendChild(remove);
+      linksRowsEl.appendChild(row);
+    });
+  }
+
+  function addLinkRow(prefill) {
+    links.push(Object.assign({
+      id: 'link-' + Date.now() + '-' + (++linkIdCounter),
+      url: '', offlineAsset: null, offlineSavedAt: null,
+    }, prefill || {}));
+    renderLinks();
+  }
+
+  function initLinksInput() {
+    document.getElementById('ge-link-add-btn').addEventListener('click', () => { addLinkRow(); scheduleAutosave(); });
+  }
+
+  // ── Dateien (Anhänge) ────────────────────────────────────
+  // Anders als Bilder werden Anhänge nicht im Entwurf (localStorage)
+  // zwischengespeichert – Setup-Dateien etc. können beliebig groß sein und
+  // würden das Draft-Quota sofort sprengen. Die Datei selbst wird erst beim
+  // finalen Speichern (handleSave) über GuidesDB.saveAsset abgelegt.
+  function formatFileSize(bytes) {
+    if (bytes == null) return '';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let i = 0, val = bytes;
+    while (val >= 1024 && i < units.length - 1) { val /= 1024; i++; }
+    return (i === 0 ? val : val.toFixed(1)) + ' ' + units[i];
+  }
+
+  function sanitizeAttachmentName(name) {
+    return (name || 'datei').replace(/[^a-zA-Z0-9._-]/g, '_');
+  }
+
+  function updateAttachmentsHint() {
+    if (!attachmentsHintEl) return;
+    const db = window.GuidesDB;
+    attachmentsHintEl.hidden = !(!db.isFilesystemMode() || !db.isConnected());
+  }
+
+  function renderAttachments() {
+    attachmentsRowsEl.replaceChildren();
+    attachments.forEach((att) => {
+      const row = document.createElement('div');
+      row.className = 'ge-attachment-row';
+
+      const name = document.createElement('span');
+      name.className = 'ge-attachment-name';
+      name.textContent = att.name + (att.size != null ? ' (' + formatFileSize(att.size) + ')' : '');
+      row.appendChild(name);
+
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'ge-link-remove';
+      remove.setAttribute('aria-label', 'Datei entfernen');
+      remove.textContent = '×';
+      remove.addEventListener('click', () => {
+        attachments = attachments.filter((a) => a.id !== att.id);
+        pendingAttachmentFiles.delete(att.assetFile);
+        renderAttachments();
+        scheduleAutosave();
+      });
+      row.appendChild(remove);
+
+      attachmentsRowsEl.appendChild(row);
+    });
+  }
+
+  function addAttachmentFile(file) {
+    const id = 'att-' + Date.now() + '-' + (++attachmentIdCounter);
+    const assetFile = 'attachment-' + id + '-' + sanitizeAttachmentName(file.name);
+    attachments.push({ id, name: file.name, size: file.size, type: file.type || '', assetFile });
+    pendingAttachmentFiles.set(assetFile, file);
+    renderAttachments();
+  }
+
+  function initAttachmentsInput() {
+    updateAttachmentsHint();
+    document.addEventListener('guides-db-connected', updateAttachmentsHint);
+    document.addEventListener('guides-db-disconnected', updateAttachmentsHint);
+
+    document.getElementById('ge-attachment-add-btn').addEventListener('click', () => {
+      updateAttachmentsHint();
+      document.getElementById('ge-attachment-input').click();
+    });
+    document.getElementById('ge-attachment-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      e.target.value = '';
+      if (file) { addAttachmentFile(file); scheduleAutosave(); }
+    });
+  }
+
   // ── Split/Editor/Vorschau-Umschalter ─────────────────────
   function initViewToggle() {
     const buttons = document.querySelectorAll('#ge-view-toggle .gg-view-btn');
@@ -188,6 +317,9 @@
           case 'image':     document.getElementById('ge-image-input').click(); break;
           case 'table':     insertRaw(textarea, '\n| Spalte 1 | Spalte 2 |\n|----------|----------|\n| Wert     | Wert     |\n'); break;
           case 'checklist': insertChecklist(textarea); break;
+          case 'align-left':   insertWrap(textarea, '<div style="text-align:left">\n\n', '\n\n</div>', 'Text'); break;
+          case 'align-center': insertWrap(textarea, '<div style="text-align:center">\n\n', '\n\n</div>', 'Text'); break;
+          case 'align-right':  insertWrap(textarea, '<div style="text-align:right">\n\n', '\n\n</div>', 'Text'); break;
         }
       });
     });
@@ -198,10 +330,16 @@
     return (name || '').replace(/[^a-zA-Z0-9._-]/g, '_') || ('image-' + Date.now() + '.png');
   }
 
+  // Muss sowohl gegen bereits ausgewählte (pendingAssets) als auch gegen
+  // bereits auf der Platte gespeicherte Bilder (existingAssetNames) prüfen –
+  // sonst bekommt ein zweites eingefügtes Bild mit gleichem Namen (z.B. zwei
+  // per Strg+V eingefügte Screenshots heißen oft beide "image.png") beim
+  // Speichern denselben Dateinamen und überschreibt so lautlos das zuvor
+  // bereits gespeicherte Bild (Ursache für "Bilder manchmal kaputt").
   function uniqueAssetName(name) {
     let candidate = sanitizeFilename(name);
     let i = 1;
-    while (pendingAssets.has(candidate)) {
+    while (pendingAssets.has(candidate) || existingAssetNames.has(candidate)) {
       const dot = candidate.lastIndexOf('.');
       const base = dot > -1 ? candidate.slice(0, dot) : candidate;
       const ext  = dot > -1 ? candidate.slice(dot) : '';
@@ -252,6 +390,109 @@
           break;
         }
       }
+    });
+  }
+
+  // ── Bilder-Browser (bereits gespeicherte Bilder anzeigen/umbenennen) ────
+  // Zeigt nur Bilder, die schon auf der Platte liegen (Edit-Modus) – neu
+  // eingefügte, noch ungespeicherte Bilder (pendingAssets) landen ohnehin
+  // sofort als Referenz im Text und müssen hier nicht separat auftauchen.
+  const IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|svg|bmp)$/i;
+
+  async function buildImageRow(filename) {
+    const row = document.createElement('div');
+    row.className = 'ge-image-row';
+
+    const thumb = document.createElement('img');
+    thumb.className = 'ge-image-thumb';
+    if (currentGuideId) {
+      const urlRes = await window.GuidesDB.getAssetUrl(currentGuideId, filename);
+      if (urlRes.success) thumb.src = urlRes.url;
+    }
+    row.appendChild(thumb);
+
+    const name = document.createElement('span');
+    name.className = 'ge-image-name';
+    name.textContent = filename;
+    row.appendChild(name);
+
+    const actions = document.createElement('div');
+    actions.className = 'ge-image-actions';
+
+    const renameBtn = document.createElement('button');
+    renameBtn.type = 'button';
+    renameBtn.className = 'gs-folder-btn';
+    renameBtn.textContent = '✏️ Umbenennen';
+    renameBtn.addEventListener('click', () => renameExistingImage(filename));
+    actions.appendChild(renameBtn);
+
+    const insertBtn = document.createElement('button');
+    insertBtn.type = 'button';
+    insertBtn.className = 'gs-folder-btn';
+    insertBtn.textContent = '📋 In Guide einfügen';
+    insertBtn.addEventListener('click', () => insertRaw(textarea, '![' + filename + '](assets/' + filename + ')'));
+    actions.appendChild(insertBtn);
+
+    row.appendChild(actions);
+    return row;
+  }
+
+  async function renderImageBrowser() {
+    const listEl = document.getElementById('ge-images-list');
+    if (!listEl) return;
+    const images = [...existingAssetNames].filter((name) => IMAGE_EXT_RE.test(name));
+    listEl.replaceChildren();
+    if (!images.length) {
+      const empty = document.createElement('div');
+      empty.className = 'ge-images-empty';
+      empty.textContent = currentGuideId ? 'Keine Bilder gespeichert.' : 'Noch kein Guide gespeichert – hier erscheinen Bilder erst nach dem ersten Speichern.';
+      listEl.appendChild(empty);
+      return;
+    }
+    for (const name of images) {
+      listEl.appendChild(await buildImageRow(name));
+    }
+  }
+
+  async function renameExistingImage(oldName) {
+    const input = (prompt('Neuer Dateiname:', oldName) || '').trim();
+    if (!input || input === oldName) return;
+    const newName = sanitizeAttachmentName(input);
+
+    if (existingAssetNames.has(newName) || pendingAssets.has(newName)) {
+      notify('Datei „' + newName + '“ existiert bereits.', 'error');
+      return;
+    }
+
+    const urlRes = await window.GuidesDB.getAssetUrl(currentGuideId, oldName);
+    if (!urlRes.success) { notify(urlRes.error || 'Bild nicht gefunden.', 'error'); return; }
+    const blob = await (await fetch(urlRes.url)).blob();
+
+    const saveRes = await window.GuidesDB.saveAsset(currentGuideId, newName, blob);
+    if (!saveRes.success) { notify(saveRes.error || 'Umbenennen fehlgeschlagen.', 'error'); return; }
+    await window.GuidesDB.deleteAsset(currentGuideId, oldName);
+
+    existingAssetNames.delete(oldName);
+    existingAssetNames.add(newName);
+
+    // Referenzen im gerade offenen (evtl. noch ungespeicherten) Text
+    // aktualisieren, damit nichts verloren geht.
+    textarea.value = textarea.value.split('assets/' + oldName).join('assets/' + newName);
+    await updatePreview();
+
+    notify('Bild umbenannt.', 'success');
+    await renderImageBrowser();
+  }
+
+  function initImageBrowser() {
+    const toggleBtn = document.getElementById('ge-images-toggle');
+    const listEl = document.getElementById('ge-images-list');
+    if (!toggleBtn || !listEl) return;
+    toggleBtn.addEventListener('click', async () => {
+      const willShow = listEl.hidden;
+      listEl.hidden = !willShow;
+      toggleBtn.textContent = willShow ? '🖼️ Gespeicherte Bilder ausblenden' : '🖼️ Gespeicherte Bilder anzeigen';
+      if (willShow) await renderImageBrowser();
     });
   }
 
@@ -330,6 +571,23 @@
     return new Blob([bytes], { type: mime });
   }
 
+  function loadDrafts() {
+    const raw = localStorage.getItem(DRAFTS_KEY);
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
+  }
+
+  function persistDrafts(drafts) {
+    localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+  }
+
+  function removeDraftById(id) {
+    persistDrafts(loadDrafts().filter((d) => d.id !== id));
+  }
+
   async function saveDraft(silent) {
     const assets = {};
     for (const [filename, file] of pendingAssets.entries()) {
@@ -337,18 +595,27 @@
       catch { /* einzelnes Bild überspringen, Rest des Entwurfs trotzdem sichern */ }
     }
 
+    // Erster Autosave dieser Session vergibt eine eigene Draft-ID – dadurch
+    // überschreibt das Bearbeiten eines Guides oder ein zweiter, parallel
+    // begonnener neuer Guide nie mehr den Entwurf einer anderen Session.
+    if (!currentDraftId) currentDraftId = 'draft-' + Date.now();
+
     const draft = {
+      id: currentDraftId,
       title: titleInput.value,
       category: categorySelect.value,
       subcategory: subcategoryInput.value,
       tags: [...tags],
       content: textarea.value,
       privateNote: privateNoteInput.value,
+      links: links.map((l) => ({ ...l })),
       assets,
       savedAt: new Date().toISOString(),
     };
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+      const drafts = loadDrafts().filter((d) => d.id !== currentDraftId);
+      drafts.push(draft);
+      persistDrafts(drafts);
       if (silent) updateAutosaveStatus();
       else notify('Entwurf gespeichert.', 'success');
     } catch (err) {
@@ -381,6 +648,7 @@
   }
 
   function applyDraft(draft) {
+    currentDraftId = draft.id;
     titleInput.value = draft.title || '';
     if (draft.category) categorySelect.value = draft.category;
     subcategoryInput.value = draft.subcategory || '';
@@ -389,6 +657,8 @@
     textarea.value = draft.content || '';
     privateNoteInput.value = draft.privateNote || '';
     if (draft.privateNote) privateNoteDetails.open = true;
+    links = Array.isArray(draft.links) ? draft.links.map((l) => ({ ...l })) : [];
+    renderLinks();
 
     if (draft.assets) {
       Object.entries(draft.assets).forEach(([filename, dataUrl]) => {
@@ -403,22 +673,66 @@
     updatePreview();
   }
 
-  function checkForDraft() {
-    const raw = localStorage.getItem(DRAFT_KEY);
-    if (!raw) return;
-    let draft;
-    try { draft = JSON.parse(raw); } catch { localStorage.removeItem(DRAFT_KEY); return; }
+  function fmtDraftDate(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('de-DE', { year: 'numeric', month: '2-digit', day: '2-digit' })
+      + ', ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr';
+  }
 
-    const banner = document.getElementById('ge-draft-banner');
-    banner.hidden = false;
-    document.getElementById('ge-draft-restore').addEventListener('click', () => {
+  function buildDraftRow(draft, panel, listEl) {
+    const row = document.createElement('div');
+    row.className = 'ge-draft-row';
+
+    const info = document.createElement('div');
+    info.className = 'ge-draft-row-info';
+    const title = document.createElement('strong');
+    title.className = 'ge-draft-row-title';
+    title.textContent = draft.title ? draft.title : '(Ohne Titel)';
+    const meta = document.createElement('span');
+    meta.className = 'ge-draft-row-meta';
+    meta.textContent = fmtDraftDate(draft.savedAt);
+    info.append(title, meta);
+
+    const actions = document.createElement('div');
+    actions.className = 'ge-draft-row-actions';
+
+    const restoreBtn = document.createElement('button');
+    restoreBtn.type = 'button';
+    restoreBtn.className = 'gs-folder-btn';
+    restoreBtn.textContent = 'Wiederherstellen';
+    restoreBtn.addEventListener('click', () => {
       applyDraft(draft);
-      banner.hidden = true;
-    }, { once: true });
-    document.getElementById('ge-draft-dismiss').addEventListener('click', () => {
-      localStorage.removeItem(DRAFT_KEY);
-      banner.hidden = true;
-    }, { once: true });
+      panel.hidden = true;
+    });
+
+    const dismissBtn = document.createElement('button');
+    dismissBtn.type = 'button';
+    dismissBtn.className = 'gv-confirm-btn gv-confirm-btn--cancel';
+    dismissBtn.textContent = 'Verwerfen';
+    dismissBtn.addEventListener('click', () => {
+      removeDraftById(draft.id);
+      row.remove();
+      if (!listEl.children.length) panel.hidden = true;
+    });
+
+    actions.append(restoreBtn, dismissBtn);
+    row.append(info, actions);
+    return row;
+  }
+
+  function checkForDrafts() {
+    const drafts = loadDrafts();
+    if (!drafts.length) return;
+
+    const panel  = document.getElementById('ge-draft-panel');
+    const listEl = document.getElementById('ge-draft-list');
+    listEl.replaceChildren();
+    drafts
+      .slice()
+      .sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt))
+      .forEach((draft) => listEl.appendChild(buildDraftRow(draft, panel, listEl)));
+    panel.hidden = false;
   }
 
   // ── Bestehenden Guide laden (Bearbeiten-Modus) ──────────
@@ -430,6 +744,8 @@
     }
     currentGuideId = id;
     existingMeta = res.meta;
+    const assetsRes = await window.GuidesDB.listAssets(id);
+    existingAssetNames = new Set(assetsRes.assets || []);
 
     titleInput.value = res.meta.title || '';
     if (res.meta.category) categorySelect.value = res.meta.category;
@@ -439,6 +755,10 @@
     textarea.value = res.content || '';
     privateNoteInput.value = res.meta.privateNote || '';
     if (res.meta.privateNote) privateNoteDetails.open = true;
+    links = Array.isArray(res.meta.links) ? res.meta.links.map((l) => ({ ...l })) : [];
+    renderLinks();
+    attachments = Array.isArray(res.meta.attachments) ? res.meta.attachments.map((a) => ({ ...a })) : [];
+    renderAttachments();
 
     document.getElementById('ge-page-title').textContent = 'Guide bearbeiten';
     document.title = 'support.sheet – Guide bearbeiten';
@@ -459,6 +779,8 @@
       subcategory: subcategoryInput.value.trim(),
       tags: [...tags],
       privateNote: privateNoteInput.value.trim(),
+      links: links.filter((l) => l.url && l.url.trim()).map((l) => ({ ...l, url: l.url.trim() })),
+      attachments: attachments.map((a) => ({ ...a })),
       favorite:  existingMeta ? existingMeta.favorite  : false,
       source:    existingMeta ? existingMeta.source    : 'manual',
       importTag: existingMeta ? existingMeta.importTag : null,
@@ -468,6 +790,10 @@
     for (const [filename, file] of pendingAssets.entries()) {
       const res = await window.GuidesDB.saveAsset(id, filename, file);
       if (!res.success) notify('Bild „' + filename + '“ konnte nicht gespeichert werden: ' + res.error, 'error');
+    }
+    for (const [assetFile, file] of pendingAttachmentFiles.entries()) {
+      const res = await window.GuidesDB.saveAsset(id, assetFile, file);
+      if (!res.success) notify('Datei „' + assetFile + '“ konnte nicht gespeichert werden: ' + res.error, 'error');
     }
 
     const res = await window.GuidesDB.saveGuide(id, meta, textarea.value);
@@ -480,15 +806,16 @@
     // referenzierte Assets geben – bei einem neuen Guide gibt es nichts
     // aufzuräumen.
     if (isEditMode) {
-      const cleanupRes = await window.GuidesDB.cleanupOrphanedAssets(id, textarea.value);
+      const cleanupRes = await window.GuidesDB.cleanupOrphanedAssets(id, textarea.value, meta);
       if (!cleanupRes.success) {
         notify(cleanupRes.error || 'Verwaiste Assets konnten nicht bereinigt werden.', 'error');
       }
     }
 
-    localStorage.removeItem(DRAFT_KEY);
+    if (currentDraftId) { removeDraftById(currentDraftId); currentDraftId = null; }
     pendingAssets.clear();
     assetPreviewUrls.clear();
+    pendingAttachmentFiles.clear();
     notify('Guide gespeichert.', 'success');
     window.location.href = 'guides-view.html?id=' + encodeURIComponent(id);
   }
@@ -580,12 +907,18 @@
     preview          = document.getElementById('ge-preview');
     privateNoteInput   = document.getElementById('ge-private-note');
     privateNoteDetails = document.getElementById('ge-private-note-details');
+    linksRowsEl        = document.getElementById('ge-links-rows');
+    attachmentsRowsEl  = document.getElementById('ge-attachments-rows');
+    attachmentsHintEl  = document.getElementById('ge-attachments-hint');
 
     initTagsInput();
     renderTagPills(); // zeigt die Tag-Vorschläge auch ohne vorhandene Tags sofort an
+    initLinksInput();
+    initAttachmentsInput();
     initViewToggle();
     initToolbar();
     initImageUpload();
+    initImageBrowser();
     initLivePreview();
     initImportMenu();
     initAutosave();
@@ -600,7 +933,7 @@
     if (editId) {
       await loadForEdit(editId);
     } else {
-      checkForDraft();
+      checkForDrafts();
     }
   });
 })();

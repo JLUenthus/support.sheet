@@ -89,6 +89,7 @@
       renderCategoryManageList();
       await loadTrash();
       renderStats(guides);
+      if (!document.getElementById('gm-files-list').hidden) renderFileManager(guides);
     } finally {
       loading = false;
     }
@@ -639,6 +640,94 @@
     });
   }
 
+  // ── Dateiverwaltung (Anhänge über alle Guides hinweg) ────
+  // Zeigt nur guide.meta.attachments (das "📎 Dateien"-Feature aus Guide
+  // anlegen/-Ansicht) – Bilder und Link-Offline-Kopien sind hier bewusst
+  // nicht mit aufgeführt, die gehören konzeptionell zum Guide-Inhalt selbst.
+  function formatFileSize(bytes) {
+    if (bytes == null) return '';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let i = 0, val = bytes;
+    while (val >= 1024 && i < units.length - 1) { val /= 1024; i++; }
+    return (i === 0 ? val : val.toFixed(1)) + ' ' + units[i];
+  }
+
+  function renderFileManager(guides) {
+    const listEl  = document.getElementById('gm-files-list');
+    const emptyEl = document.getElementById('gm-files-empty');
+    listEl.replaceChildren();
+    const withFiles = guides.filter(g => Array.isArray(g.meta.attachments) && g.meta.attachments.length);
+    emptyEl.hidden = withFiles.length > 0;
+    withFiles.forEach(g => listEl.appendChild(buildFileGuideGroup(g)));
+  }
+
+  function buildFileGuideGroup(guide) {
+    const group = document.createElement('div');
+    group.className = 'gm-files-guide-group';
+
+    const title = document.createElement('div');
+    title.className = 'gm-files-guide-title';
+    title.textContent = guide.meta.title || '(Ohne Titel)';
+    group.appendChild(title);
+
+    guide.meta.attachments.forEach((att) => group.appendChild(buildFileRow(guide.id, att)));
+    return group;
+  }
+
+  function buildFileRow(guideId, att) {
+    const row = document.createElement('div');
+    row.className = 'gv-attachment-row';
+
+    const name = document.createElement('span');
+    name.className = 'gv-attachment-name';
+    name.textContent = att.name + (att.size != null ? ' (' + formatFileSize(att.size) + ')' : '');
+    row.appendChild(name);
+
+    const downloadBtn = document.createElement('button');
+    downloadBtn.type = 'button';
+    downloadBtn.className = 'gs-folder-btn';
+    downloadBtn.textContent = '📥 Herunterladen';
+    downloadBtn.addEventListener('click', () => downloadManagedFile(guideId, att, downloadBtn));
+    row.appendChild(downloadBtn);
+
+    return row;
+  }
+
+  async function downloadManagedFile(guideId, att, btn) {
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Lade…';
+    try {
+      const res = await window.GuidesDB.getAssetUrl(guideId, att.assetFile);
+      if (!res.success) throw new Error(res.error || 'Datei nicht gefunden.');
+      const blob = await (await fetch(res.url)).blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = att.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      notify('Download fehlgeschlagen: ' + (err?.message || err), 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+
+  function initFileManager() {
+    const toggleBtn = document.getElementById('gm-files-toggle');
+    const listEl = document.getElementById('gm-files-list');
+    toggleBtn.addEventListener('click', () => {
+      const willShow = listEl.hidden;
+      listEl.hidden = !willShow;
+      toggleBtn.textContent = willShow ? '📂 Dateien ausblenden' : '📂 Dateien anzeigen';
+      if (willShow) renderFileManager(allGuidesCache);
+    });
+  }
+
   // ── Statistik ────────────────────────────────────────────
   function renderStats(guides) {
     const container = document.getElementById('gm-stats');
@@ -726,6 +815,7 @@
     initImportZone();
     initAddCategory();
     initEmptyTrash();
+    initFileManager();
     document.getElementById('gm-export-btn').addEventListener('click', handleExport);
 
     await window.GuidesDB.restoreFolder();

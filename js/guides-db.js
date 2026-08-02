@@ -281,7 +281,7 @@
       const fullMeta = Object.assign({
         id, title: '', category: '', subcategory: '', tags: [], type: 'guide',
         created: now, modified: now, favorite: false, source: 'manual', importTag: null, version: 1,
-        privateNote: '',
+        privateNote: '', links: [], attachments: [],
       }, meta, { id, modified: now });
 
       if (isFilesystemMode()) {
@@ -507,8 +507,11 @@
 
   // Löscht alle Assets eines Guides, die im aktuellen content-Text nicht mehr
   // per "assets/<dateiname>" referenziert werden (z.B. nach Entfernen eines
-  // Bildes im Editor).
-  async function cleanupOrphanedAssets(guideId, content) {
+  // Bildes im Editor). Link-Offline-Kopien und Datei-Anhänge stehen nicht im
+  // content-Text, sondern nur in meta.links/meta.attachments – müssen also
+  // explizit mit als "referenziert" gezählt werden, sonst löscht der nächste
+  // Editor-Speichervorgang sie sofort wieder.
+  async function cleanupOrphanedAssets(guideId, content, meta) {
     try {
       const listRes = await listAssets(guideId);
       if (!listRes.success) return { success: false, error: listRes.error };
@@ -517,6 +520,11 @@
       const regex = /assets\/([^\s)"'\]]+)/g;
       let m;
       while ((m = regex.exec(content || ''))) referenced.add(m[1]);
+
+      if (meta) {
+        (meta.links || []).forEach((l) => { if (l.offlineAsset) referenced.add(l.offlineAsset); });
+        (meta.attachments || []).forEach((a) => { if (a.assetFile) referenced.add(a.assetFile); });
+      }
 
       const orphaned = listRes.assets.filter((filename) => !referenced.has(filename));
       for (const filename of orphaned) {

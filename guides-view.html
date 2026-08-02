@@ -128,6 +128,29 @@
 
           <div class="gv-content" id="gv-content"></div>
 
+          <div class="gv-links" id="gv-links" hidden>
+            <div class="gv-links-title">Links</div>
+            <div class="gv-links-list" id="gv-links-list"></div>
+          </div>
+
+          <div class="gv-attachments" id="gv-attachments">
+            <div class="gv-attachments-header">
+              <div class="gv-attachments-title">Dateien</div>
+              <button type="button" class="gv-attachment-add-btn" id="gv-attachment-add-btn" title="Datei hinzufügen" aria-label="Datei hinzufügen">+</button>
+            </div>
+            <div class="gv-attachments-hint" id="gv-attachments-hint" hidden>⚠️ Kein Ordner verbunden – große Dateien können im Browser-Cache (IndexedDB) zu Problemen führen.</div>
+            <div class="gv-attachments-list" id="gv-attachments-list"></div>
+            <input type="file" id="gv-attachment-input" hidden>
+          </div>
+
+          <div class="gv-images" id="gv-images">
+            <div class="gv-images-header">
+              <div class="gv-images-title">Bilder</div>
+              <button type="button" class="gs-folder-btn" id="gv-images-toggle">🖼️ Bilder anzeigen</button>
+            </div>
+            <div class="gv-images-list" id="gv-images-list" hidden></div>
+          </div>
+
           <div class="gv-related" id="gv-related" hidden>
             <div class="gv-related-title">Ähnliche Guides</div>
             <div class="gv-related-grid" id="gv-related-grid"></div>
