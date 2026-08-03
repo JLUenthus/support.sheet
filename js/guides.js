@@ -263,7 +263,12 @@
         });
       }
 
-      const isOk = !!lastBackup && (!lastGuideChange || new Date(lastBackup) >= new Date(lastGuideChange));
+      // Auf Minuten abrunden – die Anzeige zeigt ebenfalls nur Stunde:Minute,
+      // ein Vergleich auf volle Millisekunden würde sonst bei zwei optisch
+      // gleichen Zeiten (z.B. durch ein triviales Zwischenspeichern wie
+      // Favorit setzen) fälschlich Rot anzeigen.
+      const toMinute = (iso) => Math.floor(new Date(iso).getTime() / 60000);
+      const isOk = !!lastBackup && (!lastGuideChange || toMinute(lastBackup) >= toMinute(lastGuideChange));
       row.classList.toggle('ok', isOk);
       row.classList.toggle('stale', !isOk);
       row.title = 'Letzte Guide-Änderung: ' + fmt(lastGuideChange) + '\nLetztes Backup: ' + fmt(lastBackup);

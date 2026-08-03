@@ -152,9 +152,15 @@
 
           <div class="gm-import-preview" id="gm-import-preview" hidden>
             <div class="gm-import-preview-title" id="gm-import-preview-title"></div>
+
+            <div class="gm-import-tag-all">
+              <label for="gm-import-tag-all">Tag für alle ausgewählten Guides (optional)</label>
+              <input type="text" id="gm-import-tag-all" class="ge-subcategory-input" placeholder="z.B. import-2026-08" autocomplete="off">
+            </div>
+
             <div class="raw-table-wrap">
               <table class="event-table gm-import-table">
-                <thead><tr><th>Titel</th><th>Kategorie</th><th>Aktion</th></tr></thead>
+                <thead><tr><th><input type="checkbox" id="gm-import-select-all" checked title="Alle aus-/abwählen"></th><th>Titel</th><th>Kategorie</th><th>Tag</th><th>Aktion</th></tr></thead>
                 <tbody id="gm-import-rows"></tbody>
               </table>
             </div>

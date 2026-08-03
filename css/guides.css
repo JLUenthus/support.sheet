@@ -1629,6 +1629,23 @@ body[data-gs-page] .hero p { min-height: 2.85rem; }
   background: rgba(74,222,128,.12); color: var(--green); border: 1px solid rgba(74,222,128,.3);
 }
 .gm-import-preview .ge-save-btn { margin-top: 14px; }
+.gm-import-tag-all { margin-bottom: 14px; }
+.gm-import-tag-all label { display: block; font-size: .76rem; color: var(--muted); margin-bottom: 6px; }
+.gm-import-table th:first-child, .gm-import-table td:first-child { width: 28px; text-align: center; }
+.gm-import-tag-input {
+  width: 100%;
+  min-width: 90px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border2);
+  background: var(--panel2);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: .76rem;
+  outline: none;
+  transition: border-color .15s;
+}
+.gm-import-tag-input:focus { border-color: var(--accent); }
 
 /* ── Kategorien verwalten ─────────────────────────────────── */
 .gm-cat-manage-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }

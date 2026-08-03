@@ -325,7 +325,7 @@
       const content = await zip.file('guides/' + id + '/content.md').async('string');
       const assetPaths = Object.keys(zip.files).filter(p =>
         p.startsWith('guides/' + id + '/assets/') && !zip.files[p].dir);
-      items.push({ id, meta, content, assetPaths, conflict: false, chosenAction: 'new' });
+      items.push({ id, meta, content, assetPaths, conflict: false, chosenAction: 'new', selected: true, extraTag: '' });
     }
 
     let categoriesFromPkg = [];
@@ -362,7 +362,7 @@
         id,
         meta: { id, title, category, tags: [], type: 'guide', favorite: false, source: 'import' },
         content, assetPaths, assetsFolderPrefix: assetsFolder,
-        conflict: false, chosenAction: 'new',
+        conflict: false, chosenAction: 'new', selected: true, extraTag: '',
       });
     }
     return { kind: 'readable', items, categoriesFromPkg: [] };
@@ -380,10 +380,27 @@
   function buildImportRow(item) {
     const tr = document.createElement('tr');
 
+    const tdSelect = document.createElement('td');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = item.selected;
+    checkbox.addEventListener('change', () => { item.selected = checkbox.checked; });
+    tdSelect.appendChild(checkbox);
+
     const tdTitle = document.createElement('td');
     tdTitle.textContent = item.meta.title || '(Ohne Titel)';
     const tdCat = document.createElement('td');
     tdCat.textContent = item.meta.category || 'Allgemein';
+
+    const tdTag = document.createElement('td');
+    const tagInput = document.createElement('input');
+    tagInput.type = 'text';
+    tagInput.className = 'gm-import-tag-input';
+    tagInput.placeholder = 'Tag…';
+    tagInput.value = item.extraTag;
+    tagInput.addEventListener('input', () => { item.extraTag = tagInput.value.trim(); });
+    tdTag.appendChild(tagInput);
+
     const tdAction = document.createElement('td');
 
     if (item.conflict) {
@@ -408,20 +425,25 @@
       tdAction.appendChild(badge);
     }
 
-    tr.append(tdTitle, tdCat, tdAction);
+    tr.append(tdSelect, tdTitle, tdCat, tdTag, tdAction);
     return tr;
   }
 
   function renderImportPreview(parsed) {
-    const wrap  = document.getElementById('gm-import-preview');
-    const title = document.getElementById('gm-import-preview-title');
-    const tbody = document.getElementById('gm-import-rows');
+    const wrap    = document.getElementById('gm-import-preview');
+    const title   = document.getElementById('gm-import-preview-title');
+    const tbody   = document.getElementById('gm-import-rows');
+    const tagAll  = document.getElementById('gm-import-tag-all');
+    const selectAll = document.getElementById('gm-import-select-all');
 
     wrap.hidden = false;
     title.textContent = (parsed.kind === 'package' ? 'Merge-Paket erkannt – ' : 'Lesbares Archiv erkannt – ')
       + parsed.items.length + ' Guide(s)';
     tbody.replaceChildren();
     parsed.items.forEach(item => tbody.appendChild(buildImportRow(item)));
+
+    tagAll.value = '';
+    selectAll.checked = true;
   }
 
   async function handleZipFile(file) {
@@ -444,14 +466,19 @@
     const exportedBy = (parsedImport.pkg && parsedImport.pkg.exportedBy) || 'import';
     const dateStr = new Date().toISOString().slice(0, 10);
     const importTag = 'import:' + dateStr + ':' + exportedBy;
+    const tagForAll = (document.getElementById('gm-import-tag-all').value || '').trim();
 
     let imported = 0, skipped = 0;
 
     for (const item of parsedImport.items) {
+      if (!item.selected) { skipped++; continue; }
       if (item.conflict && item.chosenAction === 'keep') { skipped++; continue; }
 
       const targetId = (item.conflict && item.chosenAction === 'both') ? generateUniqueId() : item.id;
-      const meta = Object.assign({}, item.meta, { id: targetId, importTag });
+      const tags = new Set(item.meta.tags || []);
+      if (tagForAll) tags.add(tagForAll);
+      if (item.extraTag) tags.add(item.extraTag);
+      const meta = Object.assign({}, item.meta, { id: targetId, importTag, tags: [...tags] });
 
       for (const assetPath of item.assetPaths) {
         const entry = parsedImport.zip.file(assetPath);
@@ -502,6 +529,12 @@
     });
 
     document.getElementById('gm-import-confirm').addEventListener('click', confirmImport);
+
+    document.getElementById('gm-import-select-all').addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      if (parsedImport) parsedImport.items.forEach((item) => { item.selected = checked; });
+      document.querySelectorAll('#gm-import-rows input[type="checkbox"]').forEach((cb) => { cb.checked = checked; });
+    });
   }
 
   // ── Kategorien verwalten ─────────────────────────────────
