@@ -140,7 +140,7 @@
     for (const g of guides) {
       const full = await db.getGuide(g.id);
       if (!full.success) { failedGuides++; continue; }
-      const res = await db.cleanupOrphanedAssets(g.id, full.content || '');
+      const res = await db.cleanupOrphanedAssets(g.id, full.content || '', full.meta);
       if (res.success) totalDeleted += res.deletedCount;
       else failedGuides++;
     }
@@ -183,7 +183,27 @@
       const mdPath = categoryFolder + '/' + titleSlug + '.md';
       const assetsFolder = categoryFolder + '/' + titleSlug + '-assets/';
 
-      const content = (g.content || '').split('assets/').join(assetsFolder);
+      let content = (g.content || '').split('assets/').join(assetsFolder);
+
+      // Links/Dateien stehen nur in meta, nicht im Content-Text – im lesbaren
+      // Archiv (reines Markdown, kein meta.json) müssen sie deshalb explizit
+      // angehängt werden, sonst gehen sie beim Export unsichtbar verloren.
+      const links = Array.isArray(meta.links) ? meta.links.filter((l) => l.url) : [];
+      if (links.length) {
+        const linkLines = links.map((l) => {
+          let line = '- ' + l.url;
+          if (l.offlineAsset) line += ' ([Offline-Kopie](' + assetsFolder + l.offlineAsset + '))';
+          return line;
+        });
+        content += '\n\n## Links\n' + linkLines.join('\n') + '\n';
+      }
+
+      const attachments = Array.isArray(meta.attachments) ? meta.attachments : [];
+      if (attachments.length) {
+        const attachmentLines = attachments.map((a) => '- [' + a.name + '](' + assetsFolder + a.assetFile + ')');
+        content += '\n\n## Dateien\n' + attachmentLines.join('\n') + '\n';
+      }
+
       zip.file(mdPath, content);
 
       const assetsRes = await window.GuidesDB.listAssets(g.id);

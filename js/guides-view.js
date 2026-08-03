@@ -49,8 +49,24 @@
     URL.revokeObjectURL(url);
   }
 
+  // Links/Dateien stehen nur in meta, nicht im Content-Text – ohne diesen
+  // Anhang würden sie beim reinen Markdown-Export unsichtbar verloren gehen.
+  function appendLinksAndAttachmentsMarkdown(content, meta) {
+    let result = content;
+    const links = Array.isArray(meta.links) ? meta.links.filter((l) => l.url) : [];
+    if (links.length) {
+      result += '\n\n## Links\n' + links.map((l) => '- ' + l.url).join('\n') + '\n';
+    }
+    const attachments = Array.isArray(meta.attachments) ? meta.attachments : [];
+    if (attachments.length) {
+      result += '\n\n## Dateien\n' + attachments.map((a) => '- ' + a.name).join('\n') + '\n';
+    }
+    return result;
+  }
+
   function exportMarkdown() {
-    const blob = new Blob([currentContent || ''], { type: 'text/markdown;charset=utf-8' });
+    const content = appendLinksAndAttachmentsMarkdown(currentContent || '', currentMeta);
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
     downloadBlob(blob, sanitizeForFilename(currentMeta.title) + '.md');
     notify('Als Markdown exportiert.', 'success');
   }
@@ -102,9 +118,27 @@
     const clone = contentEl.cloneNode(true);
     clone.querySelectorAll('.gv-code-copy').forEach(btn => btn.remove());
     await inlineImagesAsDataUrls(clone);
+
+    const escapeHtml = (str) => str.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+    // Links/Dateien stehen nur in meta, nicht in #gv-content – ohne diesen
+    // Anhang würden sie beim Word-Export unsichtbar verloren gehen.
+    let extraHtml = '';
+    const links = Array.isArray(currentMeta.links) ? currentMeta.links.filter((l) => l.url) : [];
+    if (links.length) {
+      extraHtml += '<h2>Links</h2><ul>' + links.map((l) =>
+        '<li><a href="' + escapeHtml(l.url) + '">' + escapeHtml(l.url) + '</a></li>').join('') + '</ul>';
+    }
+    const attachments = Array.isArray(currentMeta.attachments) ? currentMeta.attachments : [];
+    if (attachments.length) {
+      extraHtml += '<h2>Dateien</h2><ul>' + attachments.map((a) =>
+        '<li>' + escapeHtml(a.name) + '</li>').join('') + '</ul>';
+    }
+
     const html = '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>'
-      + '<h1>' + title.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</h1>'
+      + '<h1>' + escapeHtml(title) + '</h1>'
       + clone.innerHTML
+      + extraHtml
       + '</body></html>';
     try {
       const blob = htmlDocx.asBlob(html);
