@@ -45,6 +45,21 @@
     .priv-spin { display: inline-block; animation: priv-spin 1s linear infinite; }
     @keyframes priv-spin { to { transform: rotate(360deg); } }
 
+    .priv-banner-error {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(248,113,113,.06);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--red);
+      border-radius: var(--r);
+      padding: 20px;
+      margin-bottom: 20px;
+      color: var(--red);
+      font-weight: 700;
+      font-size: .95rem;
+    }
+
     .priv-banner-ok {
       display: flex;
       flex-direction: column;
@@ -168,6 +183,8 @@
 
     <!-- ZUSTAND B – Einrichtungsanleitung (Standard beim Laden) -->
     <div id="priv-state-setup" hidden>
+
+      <div class="priv-banner-error">❌ Privater Bereich nicht erreichbar</div>
 
       <div class="priv-card">
         <h2>Voraussetzungen</h2>
