@@ -229,9 +229,20 @@
   </footer>
 
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
-    }
+    // Der Service Worker fängt (wenn registriert) auch Cross-Origin-Anfragen
+    // wie den Localhost-Check ab. Läuft der allererste Check, BEVOR die
+    // Registrierung abgeschlossen ist, nimmt er einen anderen Weg als jeder
+    // spätere Klick auf "Erneut prüfen" – mit teils abweichendem Ergebnis.
+    // swReady löst deshalb erst, wenn die Registrierung (falls unterstützt)
+    // abgeschlossen ist, damit der erste Check denselben Weg nimmt wie alle
+    // folgenden.
+    const swReady = ('serviceWorker' in navigator)
+      ? new Promise((resolve) => {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').catch(() => {}).finally(resolve);
+          });
+        })
+      : Promise.resolve();
 
     const PATH_KEY = 'private-project-path';
 
@@ -376,7 +387,7 @@
 
     // ── Init ───────────────────────────────────────────────────
     renderPathUI();
-    checkLocalhost();
+    swReady.then(checkLocalhost);
   </script>
 
   <script src="nav.js"></script>
