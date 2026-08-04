@@ -27,6 +27,24 @@
     .priv-card p { font-size: .84rem; color: var(--muted); margin-bottom: 8px; line-height: 1.5; }
     .priv-card a { color: var(--accent); }
 
+    .priv-banner-checking {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(251,191,36,.06);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--amber);
+      border-radius: var(--r);
+      padding: 20px;
+      margin-bottom: 20px;
+      color: var(--amber);
+      font-weight: 700;
+      font-size: .95rem;
+    }
+    .priv-banner-checking[hidden] { display: none; }
+    .priv-spin { display: inline-block; animation: priv-spin 1s linear infinite; }
+    @keyframes priv-spin { to { transform: rotate(360deg); } }
+
     .priv-banner-ok {
       display: flex;
       flex-direction: column;
@@ -39,6 +57,7 @@
       padding: 20px;
       margin-bottom: 20px;
     }
+    .priv-banner-ok[hidden] { display: none; }
     .priv-banner-ok-title { font-size: .95rem; font-weight: 700; color: var(--text); }
 
     .priv-btn {
@@ -135,6 +154,11 @@
 
   <main class="priv-main">
 
+    <!-- ZUSTAND – Wird geprüft (Übergangszustand) -->
+    <div class="priv-banner-checking" id="priv-state-checking">
+      <span class="priv-spin">🔄</span> Wird geprüft…
+    </div>
+
     <!-- ZUSTAND A – Localhost erreichbar -->
     <div class="priv-banner-ok" id="priv-state-connected" hidden>
       <div class="priv-banner-ok-title">✅ Privater Bereich ist erreichbar</div>
@@ -143,7 +167,7 @@
     </div>
 
     <!-- ZUSTAND B – Einrichtungsanleitung (Standard beim Laden) -->
-    <div id="priv-state-setup">
+    <div id="priv-state-setup" hidden>
 
       <div class="priv-card">
         <h2>Voraussetzungen</h2>
@@ -346,11 +370,18 @@
     });
 
     // ── Localhost-Check ───────────────────────────────────────
+    function showChecking() {
+      document.getElementById('priv-state-checking').hidden = false;
+      document.getElementById('priv-state-connected').hidden = true;
+      document.getElementById('priv-state-setup').hidden = true;
+    }
     function showConnected() {
+      document.getElementById('priv-state-checking').hidden = true;
       document.getElementById('priv-state-connected').hidden = false;
       document.getElementById('priv-state-setup').hidden = true;
     }
     function showSetup() {
+      document.getElementById('priv-state-checking').hidden = true;
       document.getElementById('priv-state-connected').hidden = true;
       document.getElementById('priv-state-setup').hidden = false;
     }
@@ -363,6 +394,7 @@
     // Datei mit Erfolg ausgeliefert wird – eine 404 von irgendeinem
     // fremden Dienst auf demselben Port führt korrekt zu onerror.
     function checkLocalhost() {
+      showChecking();
       return new Promise((resolve) => {
         const img = new Image();
         let settled = false;
