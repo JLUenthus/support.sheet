@@ -431,6 +431,7 @@
       downloadBtn.type = 'button';
       downloadBtn.className = 'gs-folder-btn';
       downloadBtn.textContent = '📥 Offline speichern';
+      downloadBtn.title = 'Best-Effort – funktioniert nur bei Seiten, die Cross-Origin-Zugriff (CORS) erlauben. Bei den meisten Websites (z.B. gewöhnliche Blogs/Wikis) blockiert der Browser das aus Sicherheitsgründen – dann bitte Strg+P → „Als PDF speichern" nutzen.';
       downloadBtn.addEventListener('click', () => downloadLinkOffline(link, downloadBtn));
       actions.appendChild(downloadBtn);
     }

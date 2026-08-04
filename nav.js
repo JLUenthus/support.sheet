@@ -8,6 +8,7 @@
     { id:'forti',    href:'forti.html',    label:'Fortinet',       icon:'🔥', color:'#fb7124', desc:'FG · FMG · FAZ' },
     { id:'scripts',  href:'scripts.html',  label:'PS Scripts',     icon:'💚', color:'#4ade80', desc:'Fertige .ps1 Skripte' },
     { id:'ticket',   href:'ticketassistent.html', label:'Ticketassistent', icon:'🎫', color:'#fb923c', desc:'KI-gestützter Ticketassistent' },
+    { id:'private',  href:'private.html',  label:'Privat',          icon:'🔒', color:'#f87171', desc:'Lokaler privater Bereich' },
     {
       id:'guides', label:'Guide', icon:'📚', color:'#4ade80', group:true,
       children: [
@@ -180,6 +181,7 @@
                  : currentPage.id === 'forti'           ? '.forti'
                  : currentPage.id === 'scripts'         ? '.scripts'
                  : currentPage.id === 'ticket'          ? '.ticket'
+                 : currentPage.id === 'private'         ? '.privat'
                  : currentPage.id === 'eventlog'        ? '.analyzer'
                  : currentPage.id === 'entra'           ? '.entra'
                  : currentPage.id === 'har'             ? '.har'

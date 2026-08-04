@@ -337,6 +337,51 @@
     return { kind: 'package', pkg, items, categoriesFromPkg };
   }
 
+  // buildReadableArchive() hängt "## Links"/"## Dateien" ans Ende des
+  // Markdown-Texts an (die einzige Stelle für diese Infos, da das lesbare
+  // Archiv kein meta.json hat). Beim Reimport muss das wieder herausgelöst
+  // werden – sonst landet der Abschnitt als toter Text im Guide-Inhalt UND
+  // die eigentlichen Links/Dateien-Bereiche bleiben leer.
+  function extractTrailingSection(content, heading) {
+    const marker = '\n\n## ' + heading + '\n';
+    const idx = content.indexOf(marker);
+    if (idx === -1) return { content, block: null };
+    return { content: content.slice(0, idx), block: content.slice(idx + marker.length) };
+  }
+
+  function extractLinksAndAttachmentsFromContent(rawContent) {
+    let content = rawContent;
+    const attachments = [];
+    const links = [];
+
+    // Dateien steht immer als letzter Abschnitt – zuerst abtrennen, damit
+    // der Links-Marker danach wieder das Ende des verbleibenden Texts ist.
+    const dateien = extractTrailingSection(content, 'Dateien');
+    content = dateien.content;
+    if (dateien.block) {
+      dateien.block.split('\n').filter(Boolean).forEach((line, i) => {
+        const m = line.match(/^- \[(.+?)\]\(assets\/(.+)\)$/);
+        if (m) attachments.push({ id: 'att-' + Date.now() + '-' + i, name: m[1], size: null, type: '', assetFile: m[2] });
+      });
+    }
+
+    const linksSection = extractTrailingSection(content, 'Links');
+    content = linksSection.content;
+    if (linksSection.block) {
+      linksSection.block.split('\n').filter(Boolean).forEach((line, i) => {
+        const m = line.match(/^- (\S+)(?: \(\[Offline-Kopie\]\(assets\/(.+?)\)\))?$/);
+        if (m) links.push({
+          id: 'link-' + Date.now() + '-' + i,
+          url: m[1],
+          offlineAsset: m[2] || null,
+          offlineSavedAt: m[2] ? new Date().toISOString() : null,
+        });
+      });
+    }
+
+    return { content, attachments, links };
+  }
+
   async function parseReadableArchive(zip) {
     const items = [];
     const mdPaths = Object.keys(zip.files).filter(p =>
@@ -355,13 +400,15 @@
       let content = await zip.file(path).async('string');
       content = content.split(assetsFolder).join('assets/');
 
+      const { content: cleanContent, attachments, links } = extractLinksAndAttachmentsFromContent(content);
+
       const assetPaths = Object.keys(zip.files).filter(p => p.startsWith(assetsFolder) && !zip.files[p].dir);
       const id = generateUniqueId();
 
       items.push({
         id,
-        meta: { id, title, category, tags: [], type: 'guide', favorite: false, source: 'import' },
-        content, assetPaths, assetsFolderPrefix: assetsFolder,
+        meta: { id, title, category, tags: [], type: 'guide', favorite: false, source: 'import', attachments, links },
+        content: cleanContent, assetPaths, assetsFolderPrefix: assetsFolder,
         conflict: false, chosenAction: 'new', selected: true, extraTag: '',
       });
     }
