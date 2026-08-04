@@ -8,7 +8,6 @@
     { id:'forti',    href:'forti.html',    label:'Fortinet',       icon:'🔥', color:'#fb7124', desc:'FG · FMG · FAZ' },
     { id:'scripts',  href:'scripts.html',  label:'PS Scripts',     icon:'💚', color:'#4ade80', desc:'Fertige .ps1 Skripte' },
     { id:'ticket',   href:'ticketassistent.html', label:'Ticketassistent', icon:'🎫', color:'#fb923c', desc:'KI-gestützter Ticketassistent' },
-    { id:'private',  href:'private.html',  label:'Privat',          icon:'🔒', color:'#f87171', desc:'Lokaler privater Bereich' },
     {
       id:'guides', label:'Guide', icon:'📚', color:'#4ade80', group:true,
       children: [
@@ -25,6 +24,7 @@
         { id:'har',      href:'har.html',      label:'HAR Analyzer',   icon:'🌐', color:'#60a5fa', desc:'Browser Sessions analysieren' },
       ]
     },
+    { id:'private',  href:'private.html',  label:'Privat',          icon:'🔒', color:'#f87171', desc:'Lokaler privater Bereich' },
     { id:'mitmachen',href:'mitmachen.html',label:'Mitmachen',    icon:'🤝', color:'#a78bfa', desc:'Ideen & Befehle einreichen' },
     { id:'tools',     href:'tools.html',     label:'support.tools', icon:'⚙️',  color:'#94a3b8', desc:'App installieren · Offline · Einstellungen', tools:true },
   ];

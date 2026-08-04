@@ -138,7 +138,7 @@
     <!-- ZUSTAND A – Localhost erreichbar -->
     <div class="priv-banner-ok" id="priv-state-connected" hidden>
       <div class="priv-banner-ok-title">✅ Privater Bereich ist erreichbar</div>
-      <a href="http://localhost:5000" target="_blank" rel="noopener" class="priv-btn priv-btn-primary">🔒 Privaten Bereich öffnen</a>
+      <a href="http://localhost:5000" class="priv-btn priv-btn-primary">🔒 Privaten Bereich öffnen</a>
       <button type="button" class="priv-btn" id="priv-recheck-connected">🔄 Erneut prüfen</button>
     </div>
 
@@ -282,7 +282,7 @@
         commandsSection.hidden = false;
         recheckSection.hidden = false;
         document.getElementById('priv-cmd-cd').textContent = 'cd "' + path + '"';
-        document.getElementById('priv-cmd-combined').textContent = 'cd "' + path + '" && python -m http.server 5000 --bind 127.0.0.1';
+        document.getElementById('priv-cmd-combined').textContent = 'cd "' + path + '" ; python -m http.server 5000 --bind 127.0.0.1';
       } else {
         inputWrap.hidden = false;
         savedWrap.hidden = true;
@@ -344,11 +344,29 @@
       document.getElementById('priv-state-setup').hidden = false;
     }
 
+    // Ein no-cors fetch() kann wegen CORS nur "kam irgendeine Antwort an?"
+    // erkennen, nicht ob es WIRKLICH unser Server ist – jede Antwort auf
+    // Port 5000 (auch von einem ganz anderen Programm) zählt dann als
+    // "erreichbar". Ein <img>-Ladeversuch auf eine feste Marker-Datei
+    // (.private/ping.png) ist präziser: onload feuert nur, wenn genau diese
+    // Datei mit Erfolg ausgeliefert wird – eine 404 von irgendeinem
+    // fremden Dienst auf demselben Port führt korrekt zu onerror.
     function checkLocalhost() {
-      return fetch('http://localhost:5000/health', {
-        signal: AbortSignal.timeout(2000),
-        mode: 'no-cors',
-      }).then(() => showConnected()).catch(() => showSetup());
+      return new Promise((resolve) => {
+        const img = new Image();
+        let settled = false;
+        const timer = setTimeout(() => finish(false), 2000);
+        function finish(ok) {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          if (ok) showConnected(); else showSetup();
+          resolve();
+        }
+        img.onload  = () => finish(true);
+        img.onerror = () => finish(false);
+        img.src = 'http://localhost:5000/ping.png?t=' + Date.now();
+      });
     }
 
     document.getElementById('priv-recheck-connected').addEventListener('click', checkLocalhost);
