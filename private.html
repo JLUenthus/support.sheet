@@ -355,16 +355,18 @@
       return new Promise((resolve) => {
         const img = new Image();
         let settled = false;
-        const timer = setTimeout(() => finish(false), 2000);
+        const startedAt = Date.now();
+        const timer = setTimeout(() => { console.log('[priv-check] TIMEOUT nach', Date.now() - startedAt, 'ms'); finish(false); }, 2000);
         function finish(ok) {
           if (settled) return;
           settled = true;
           clearTimeout(timer);
+          console.log('[priv-check] Ergebnis:', ok ? 'ONLOAD (verbunden)' : 'ONERROR/TIMEOUT (nicht verbunden)', '– nach', Date.now() - startedAt, 'ms – URL:', img.src);
           if (ok) showConnected(); else showSetup();
           resolve();
         }
-        img.onload  = () => finish(true);
-        img.onerror = () => finish(false);
+        img.onload  = () => { console.log('[priv-check] img.onload gefeuert', img.naturalWidth, 'x', img.naturalHeight); finish(true); };
+        img.onerror = (e) => { console.log('[priv-check] img.onerror gefeuert', e); finish(false); };
         img.src = 'http://localhost:5000/ping.png?t=' + Date.now();
       });
     }
