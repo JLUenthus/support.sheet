@@ -5,7 +5,7 @@
   const PAGES = [
     { id:'home',     href:'index.html',    label:'Home',           icon:'🏠', color:'#94a3b8', desc:'Übersicht aller Tools' },
     {
-      id:'commands', label:'commands.sheet', icon:'💻', color:'#7c8cf8', group:true,
+      id:'commands', label:'Commands', icon:'💻', color:'#7c8cf8', group:true,
       children: [
         { id:'windows',  href:'windows.html',  label:'Windows',  icon:'⚡', color:'#7c8cf8', desc:'241 Befehle · 21 Kategorien' },
         { id:'exchange', href:'exchange.html', label:'Exchange', icon:'📧', color:'#e8b339', desc:'On-Prem & Exchange Online' },
