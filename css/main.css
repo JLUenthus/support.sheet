@@ -273,6 +273,10 @@ main {
   padding: 0 24px 80px;
 }
 
+/* Seiten ohne Hero: etwas Luft zwischen Tab-Leiste und Content,
+   sonst klebt der Inhalt direkt an der Tab-Leiste. */
+body:not(.page-home) main { padding-top: 24px; }
+
 /* ── Command Card ────────────────────────────────────────── */
 .command-card {
   background: var(--panel);

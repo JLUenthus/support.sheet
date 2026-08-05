@@ -3,21 +3,13 @@
    Phase 1 – Shell (Navigation, Ordner-Status, Kategorien)
    ============================================================ */
 
-/* Hero-Untertitel reserviert auf allen guide.sheet-Seiten immer 2 Zeilen
-   Höhe – die Seiten haben unterschiedlich lange Untertitel, die je nach
-   Fensterbreite unterschiedlich oft umbrechen. Ohne das hier würde .hero
-   (und damit .gs-layout darunter) je nach Seite unterschiedlich hoch
-   ausfallen und Sidebar/Hauptinhalt "springen" beim Seitenwechsel sichtbar
-   nicht auf gleicher Höhe. */
-body[data-gs-page] .hero p { min-height: 2.85rem; }
-
 /* ── Layout Grid ──────────────────────────────────────────── */
 .gs-layout {
   display: flex;
   align-items: flex-start;
   gap: 20px;
-  /* header 58px + tab-bar ~40px + hero + Luft */
-  height: calc(100vh - 260px);
+  /* header 58px + tab-bar ~40px + main padding-top 24px + Luft */
+  height: calc(100vh - 154px);
   min-height: 420px;
 }
 
