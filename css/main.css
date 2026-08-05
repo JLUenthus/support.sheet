@@ -388,52 +388,6 @@ main {
 .copy-btn.copied               { color: var(--green)  !important; border-color: rgba(74, 222, 128, .3)  !important; background: var(--green-bg)  !important; pointer-events: none; }
 .copy-btn.copy-error           { color: var(--red)    !important; border-color: rgba(248, 113, 113, .3) !important; background: var(--red-bg)    !important; pointer-events: none; }
 
-/* ── Footer ──────────────────────────────────────────────── */
-footer {
-  position: relative;
-  z-index: 1;
-  border-top: 1px solid var(--border);
-  padding: 20px 24px;
-  text-align: center;
-  color: var(--dim);
-  font-size: .78rem;
-}
-
-footer span { color: var(--muted); }
-
-.footer-links {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
-
-.footer-mitmachen {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 16px;
-  border-radius: 9px;
-  border: 1px solid rgba(167, 139, 250, .35);
-  background: rgba(167, 139, 250, .08);
-  color: var(--accent2);
-  text-decoration: none;
-  font-size: .78rem;
-  font-weight: 600;
-  transition: all .15s;
-}
-
-.footer-mitmachen:hover            { background: rgba(167, 139, 250, .18); }
-.footer-mitmachen--amber           { border-color: rgba(232, 179, 57, .35);  background: rgba(232, 179, 57, .08);  color: #e8b339; }
-.footer-mitmachen--amber:hover     { background: rgba(232, 179, 57, .18); }
-.footer-mitmachen--orange          { border-color: rgba(251, 113, 36, .35);  background: rgba(251, 113, 36, .08);  color: var(--orange); }
-.footer-mitmachen--orange:hover    { background: rgba(251, 113, 36, .18); }
-.footer-mitmachen--green           { border-color: rgba(74, 222, 128, .35);  background: rgba(74, 222, 128, .08);  color: var(--green); }
-.footer-mitmachen--green:hover     { background: rgba(74, 222, 128, .18); }
-
-.footer-copy { color: var(--dim); }
 
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 600px) {
@@ -580,7 +534,8 @@ footer span { color: var(--muted); }
 }
 
 /* ── Hero H1 Farbiger Gradient je Seite ─────────────────── */
-body.page-index    .hero h1 { background: linear-gradient(135deg, #e0e4f0 0%, #7c8cf8 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+body.page-windows  .hero h1 { background: linear-gradient(135deg, #e0e4f0 0%, #7c8cf8 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+body.page-home     .hero h1 { background: linear-gradient(135deg, #7c8cf8 0%, #4ade80 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
 body.page-exchange .hero h1 { background: linear-gradient(135deg, #e0e4f0 0%, #e8b339 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
 body.page-forti    .hero h1 { background: linear-gradient(135deg, #e0e4f0 0%, #fb7124 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
 body.page-scripts  .hero h1 { background: linear-gradient(135deg, #e0e4f0 0%, #4ade80 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }

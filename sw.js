@@ -1,11 +1,12 @@
 // ============================================================
 // support.sheet – Service Worker v2
 // ============================================================
-const CACHE_VERSION = '20260803-1500';
+const CACHE_VERSION = '20260805-1400';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
   './index.html',
+  './windows.html',
   './exchange.html',
   './forti.html',
   './scripts.html',

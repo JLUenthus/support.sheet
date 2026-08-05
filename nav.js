@@ -3,9 +3,15 @@
 // ============================================================
 (function() {
   const PAGES = [
-    { id:'index',    href:'index.html',    label:'Windows',        icon:'⚡', color:'#7c8cf8', desc:'241 Befehle · 21 Kategorien' },
-    { id:'exchange', href:'exchange.html', label:'Exchange',       icon:'📧', color:'#e8b339', desc:'On-Prem & Exchange Online' },
-    { id:'forti',    href:'forti.html',    label:'Fortinet',       icon:'🔥', color:'#fb7124', desc:'FG · FMG · FAZ' },
+    { id:'home',     href:'index.html',    label:'Home',           icon:'🏠', color:'#94a3b8', desc:'Übersicht aller Tools' },
+    {
+      id:'commands', label:'commands.sheet', icon:'💻', color:'#7c8cf8', group:true,
+      children: [
+        { id:'windows',  href:'windows.html',  label:'Windows',  icon:'⚡', color:'#7c8cf8', desc:'241 Befehle · 21 Kategorien' },
+        { id:'exchange', href:'exchange.html', label:'Exchange', icon:'📧', color:'#e8b339', desc:'On-Prem & Exchange Online' },
+        { id:'forti',    href:'forti.html',    label:'Fortinet', icon:'🔥', color:'#fb7124', desc:'FG · FMG · FAZ' },
+      ]
+    },
     { id:'scripts',  href:'scripts.html',  label:'PS Scripts',     icon:'💚', color:'#4ade80', desc:'Fertige .ps1 Skripte' },
     { id:'ticket',   href:'ticketassistent.html', label:'Ticketassistent', icon:'🎫', color:'#fb923c', desc:'KI-gestützter Ticketassistent' },
     {
@@ -176,9 +182,11 @@
   if (logoIconEl)  logoIconEl.textContent = currentPage.icon;
   if (logoLabelEl) {
     // "support" bleibt, nur der farbige Span ändert sich
-    const suffix = currentPage.id === 'index'          ? '.sheet'
+    const suffix = currentPage.id === 'home'           ? '.sheet'
+                 : currentPage.id === 'windows'         ? '.windows'
                  : currentPage.id === 'exchange'        ? '.exchange'
                  : currentPage.id === 'forti'           ? '.forti'
+                 : currentPage.id === 'commands'        ? '.commands'
                  : currentPage.id === 'scripts'         ? '.scripts'
                  : currentPage.id === 'ticket'          ? '.ticket'
                  : currentPage.id === 'private'         ? '.privat'
@@ -212,6 +220,8 @@
     const dd = document.createElement('div');
     dd.className = 'as-dropdown';
     PAGES.forEach((p, i) => {
+      if (p.hidden) return;
+
       // Divider before last item
       if (p.id === 'mitmachen') {
         const div = document.createElement('div');
@@ -261,7 +271,7 @@
 
     // Dynamische Befehlszähler aus JSON nachladen
     const COUNT_SOURCES = [
-      { id: 'index',    url: './data/commands.json',          label: (n, c) => `${n} Befehle · ${c} Kategorien` },
+      { id: 'windows',  url: './data/commands.json',          label: (n, c) => `${n} Befehle · ${c} Kategorien` },
       { id: 'exchange', url: './data/exchange-commands.json', label: (n)    => `${n} Befehle · On-Prem & EXO` },
       { id: 'forti',    url: './data/forti-commands.json',    label: (n)    => `${n} Befehle · FG · FMG · FAZ` },
     ];
@@ -274,7 +284,7 @@
           const n    = cmds.length;
           const cats = new Set(cmds.map(c => c.tags?.[0]).filter(Boolean)).size;
           // Desc-Text im Dropdown aktualisieren
-          const descEl = dd.querySelector(`.as-dd-item[href="${id === 'index' ? 'index.html' : id + '.html'}"] .as-dd-desc`);
+          const descEl = dd.querySelector(`.as-dd-item[href="${id}.html"] .as-dd-desc`);
           if (descEl) descEl.textContent = label(n, cats);
         })
         .catch(() => {}); // Fehler still ignorieren – hardcoded Fallback bleibt
@@ -299,6 +309,8 @@
     tabBar.setAttribute('aria-label', 'Seitennavigation');
 
     PAGES.forEach(p => {
+      if (p.hidden) return;
+
       if (p.tools) {
         const spacer = document.createElement('div');
         spacer.style.cssText = 'flex:1';

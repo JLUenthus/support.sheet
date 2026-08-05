@@ -10,137 +10,196 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <title>support.sheet – Windows Admin Cheatsheet</title>
-
+  <title>support.sheet</title>
   <link rel="stylesheet" href="fonts/fonts.css">
-
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
-  <link rel="stylesheet" href="css/variables.css">
-  <link rel="stylesheet" href="css/recent.css">
-  <link rel="stylesheet" href="css/favorites.css">
-  <link rel="stylesheet" href="css/search.css">
 </head>
 <body>
 
-  <!-- ── HEADER ──────────────────────────────────────────── -->
   <header>
-    <!-- Logo -->
     <a href="index.html" class="logo">
-      <div class="logo-icon" id="as-logo-icon">⚡</div>
+      <div class="logo-icon" id="as-logo-icon">🏠</div>
       <div class="logo-text" id="as-logo-label">support<span>.sheet</span></div>
     </a>
-
-    <!-- Suchfeld – mittig im Header -->
-    <div class="header-search" id="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input type="text" id="search-input"
-             placeholder="Befehle suchen…"
-             autocomplete="off"
-             spellcheck="false"
-             aria-label="Commands durchsuchen">
-      <button class="search-clear" id="search-clear" aria-label="Suche leeren" hidden>✕</button>
-      <span class="search-shortcut">Ctrl K</span>
-    </div>
-
-    <!-- Zähler rechts -->
     <div class="header-right">
-      <div class="pill pill-count" id="cmd-count">0 Befehle</div>
+      <div class="pill pill-count" style="border-color:rgba(148,163,184,.3);background:rgba(148,163,184,.08);color:#94a3b8;">🏠 Übersicht</div>
     </div>
   </header>
 
-  <!-- ── HERO ────────────────────────────────────────────── -->
   <div class="hero">
-    <div class="hero-badge">⚡ support.sheet</div>
-    <h1>Alle Befehle.<br>Sofort zur Hand.</h1>
-    <p>Professionelle Referenz für Windows-Administratoren. Einmal klicken – direkt in die Zwischenablage.</p>
-    <div class="hero-stats">
-      <div class="hero-stat">
-        <span class="hero-stat-num" id="stat-total">–</span>
-        <span class="hero-stat-label">Befehle</span>
-      </div>
-      <div class="hero-stat">
-        <span class="hero-stat-num">Win 10/11</span>
-        <span class="hero-stat-label">kompatibel</span>
-      </div>
-      <div class="hero-stat">
-        <span class="hero-stat-num">Server</span>
-        <span class="hero-stat-label">2019/2022</span>
-      </div>
-    </div>
+    <div class="hero-badge">🛠️ support.sheet</div>
+    <h1>Dein IT-Admin<br>Werkzeugkasten.</h1>
+    <p>
+      Commands, Analyzer, Scripts und Guides –
+      alles an einem Ort. Lokal, privat, offline-fähig.
+    </p>
   </div>
 
-  <!-- ── TEMPLATE ────────────────────────────────────────── -->
-  <template id="command-template">
-    <div class="command-card">
-      <div class="card-header">
-        <h3 data-field="name"></h3>
-        <button class="star-btn" data-action="star"
-                aria-label="Zu Favoriten hinzufügen"
-                aria-pressed="false">★</button>
-      </div>
-      <p data-field="desc"></p>
-      <code data-field="cmd"></code>
-      <div class="card-footer">
-        <div data-field="tags"></div>
-        <button class="copy-btn" data-action="copy">📋 Kopieren</button>
-      </div>
-    </div>
-  </template>
-
-  <!-- ── MAIN ────────────────────────────────────────────── -->
   <main>
 
-    <section id="favorites-section" hidden>
-      <h2 class="section-title">⭐ Meine Favoriten</h2>
-      <div id="favorites-container"></div>
-    </section>
+    <div class="landing-grid">
 
-    <section id="recent-section" hidden>
-      <h2 class="section-title">🕐 Zuletzt verwendet</h2>
-      <div id="recent-container"></div>
-    </section>
+      <a href="windows.html" class="landing-card" style="border-left-color:#7c8cf8">
+        <div class="landing-card-head">
+          <span class="landing-card-icon">💻</span>
+          <span class="landing-card-title">commands.sheet</span>
+          <span class="landing-card-badge" style="border-color:#7c8cf844;background:#7c8cf811;color:#7c8cf8">Commands</span>
+        </div>
+        <p class="landing-card-desc">Windows, Exchange & Fortinet Commands</p>
+        <div class="landing-card-stats">241 Windows · 69 Exchange · 78 Fortinet</div>
+      </a>
 
-    <div id="filter-bar"></div>
-    <div id="commands-container"></div>
+      <a href="scripts.html" class="landing-card" style="border-left-color:#4ade80">
+        <div class="landing-card-head">
+          <span class="landing-card-icon">💚</span>
+          <span class="landing-card-title">PS Scripts</span>
+          <span class="landing-card-badge" style="border-color:#4ade8044;background:#4ade8011;color:#4ade80">Scripts</span>
+        </div>
+        <p class="landing-card-desc">Fertige PowerShell-Skripte zum direkten Einsatz</p>
+        <div class="landing-card-stats">9 Scripts · PS 5.1+</div>
+      </a>
+
+      <a href="eventlog.html" class="landing-card" style="border-left-color:#e8b339">
+        <div class="landing-card-head">
+          <span class="landing-card-icon">📋</span>
+          <span class="landing-card-title">Log Analyzer</span>
+          <span class="landing-card-badge" style="border-color:#e8b33944;background:#e8b33911;color:#e8b339">Analyzer</span>
+        </div>
+        <p class="landing-card-desc">Windows Event Logs analysieren – Correlation Engine</p>
+        <div class="landing-card-stats">25 Rules · Client & Server</div>
+      </a>
+
+      <a href="entra.html" class="landing-card" style="border-left-color:#7c8cf8">
+        <div class="landing-card-head">
+          <span class="landing-card-icon">🔐</span>
+          <span class="landing-card-title">Entra Analyzer</span>
+          <span class="landing-card-badge" style="border-color:#7c8cf844;background:#7c8cf811;color:#7c8cf8">Analyzer</span>
+        </div>
+        <p class="landing-card-desc">Sign-In Logs auf Fehler und Muster analysieren</p>
+        <div class="landing-card-stats">10 Rules · CSV Import</div>
+      </a>
+
+      <a href="har.html" class="landing-card" style="border-left-color:#60a5fa">
+        <div class="landing-card-head">
+          <span class="landing-card-icon">🌐</span>
+          <span class="landing-card-title">HAR Analyzer</span>
+          <span class="landing-card-badge" style="border-color:#60a5fa44;background:#60a5fa11;color:#60a5fa">Analyzer</span>
+        </div>
+        <p class="landing-card-desc">Browser Sessions und Auth-Flows analysieren</p>
+        <div class="landing-card-stats">11 Rules · M365 fokussiert</div>
+      </a>
+
+      <a href="ticketassistent.html" class="landing-card" style="border-left-color:#fb923c">
+        <div class="landing-card-head">
+          <span class="landing-card-icon">🎫</span>
+          <span class="landing-card-title">Ticketassistent</span>
+          <span class="landing-card-badge" style="border-color:#fb923c44;background:#fb923c11;color:#fb923c">Tool</span>
+        </div>
+        <p class="landing-card-desc">KI-gestützter Assistent für Ticket-Erstellung</p>
+        <div class="landing-card-stats">Jira Integration</div>
+      </a>
+
+      <a href="guides.html" class="landing-card" style="border-left-color:#4ade80">
+        <div class="landing-card-head">
+          <span class="landing-card-icon">📚</span>
+          <span class="landing-card-title">guide.sheet</span>
+          <span class="landing-card-badge" style="border-color:#4ade8044;background:#4ade8011;color:#4ade80">Guides</span>
+        </div>
+        <p class="landing-card-desc">Persönliche IT-Wissensdatenbank – lokal & privat</p>
+        <div class="landing-card-stats">Guides · How-Tos · Import</div>
+      </a>
+
+      <a href="private.html" class="landing-card" style="border-left-color:#f87171">
+        <div class="landing-card-head">
+          <span class="landing-card-icon">🔒</span>
+          <span class="landing-card-title">Privater Bereich</span>
+          <span class="landing-card-badge" style="border-color:#f8717144;background:#f8717111;color:#f87171">Privat</span>
+        </div>
+        <p class="landing-card-desc">Lokale private Inhalte – läuft nur auf deinem Gerät</p>
+        <div class="landing-card-stats">localhost · kein Cloud</div>
+      </a>
+
+    </div>
 
   </main>
 
-  <!-- ── FOOTER ──────────────────────────────────────────── -->
-  <footer>
-    <div class="footer-links">
-      <a href="eventlog.html" class="footer-mitmachen footer-mitmachen--amber">📋 Log Analyzer</a>
-      <a href="exchange.html" class="footer-mitmachen footer-mitmachen--amber">📧 Exchange</a>
-      <a href="forti.html"    class="footer-mitmachen footer-mitmachen--orange">🔥 Fortinet</a>
-      <a href="scripts.html"  class="footer-mitmachen footer-mitmachen--green">💚 PS Scripts</a>
-      <a href="mitmachen.html" class="footer-mitmachen">🤝 Mitmachen</a>
-      <a href="tools.html"    class="footer-mitmachen">⚙️ support.tools</a>
-    </div>
-    <p class="footer-copy">support.sheet · <span>Windows 10/11 & Server 2019/2022</span> · Klick kopiert den Befehl</p>
-  </footer>
 
-  <!-- ── SCRIPTS ─────────────────────────────────────────── -->
-  <script src="js/fuse.min.js"></script>
-  <script src="js/loader.js"></script>
-  <script src="js/toast.js"></script>
-  <script src="js/settings-store.js"></script>
-  <script src="js/variables.js"></script>
-  <script src="js/recent.js"></script>
-  <script src="js/favorites.js"></script>
-  <script src="js/search.js"></script>
-  <script src="js/render.js"></script>
+  <style>
+    .landing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      padding: 0 0 40px;
+    }
+
+    .landing-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      border-left: 3px solid;
+      padding: 20px;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color .15s, background .15s;
+      cursor: pointer;
+    }
+
+    .landing-card:hover {
+      border-color: var(--border2);
+      background: var(--panel2);
+    }
+
+    .landing-card-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .landing-card-icon {
+      font-size: 1.6rem;
+      flex-shrink: 0;
+    }
+
+    .landing-card-title {
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .landing-card-badge {
+      font-size: .62rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .landing-card-desc {
+      font-size: .8rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .landing-card-stats {
+      font-size: .72rem;
+      color: var(--dim);
+      font-family: var(--font-mono);
+      margin-top: auto;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
 
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch(() => {});
       });
-    }
-    function updateCommandCount(n) {
-      const stat  = document.getElementById('stat-total');
-      const count = document.getElementById('cmd-count');
-      if (stat)  stat.textContent  = n;
-      if (count) count.textContent = n + ' Befehle';
     }
   </script>
 

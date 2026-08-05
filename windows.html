@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <title>support.sheet – Fortinet Cheatsheet</title>
+  <title>support.sheet – Windows Admin Cheatsheet</title>
 
   <link rel="stylesheet" href="fonts/fonts.css">
 
@@ -25,18 +25,25 @@
 
   <!-- ── HEADER ──────────────────────────────────────────── -->
   <header>
+    <!-- Logo -->
     <a href="index.html" class="logo">
-      <div class="logo-icon" id="as-logo-icon">🔥</div>
+      <div class="logo-icon" id="as-logo-icon">⚡</div>
       <div class="logo-text" id="as-logo-label">support<span>.sheet</span></div>
     </a>
+
+    <!-- Suchfeld – mittig im Header -->
     <div class="header-search" id="search-wrap">
       <span class="search-icon">🔍</span>
       <input type="text" id="search-input"
-             placeholder="Fortinet-Befehle suchen…"
-             autocomplete="off" spellcheck="false"
+             placeholder="Befehle suchen…"
+             autocomplete="off"
+             spellcheck="false"
              aria-label="Commands durchsuchen">
+      <button class="search-clear" id="search-clear" aria-label="Suche leeren" hidden>✕</button>
       <span class="search-shortcut">Ctrl K</span>
     </div>
+
+    <!-- Zähler rechts -->
     <div class="header-right">
       <div class="pill pill-count" id="cmd-count">0 Befehle</div>
     </div>
@@ -44,31 +51,23 @@
 
   <!-- ── HERO ────────────────────────────────────────────── -->
   <div class="hero">
-    <div class="hero-badge">🔥 Fortinet Cheatsheet</div>
-    <h1>FortiGate, FortiManager<br>&amp; FortiAnalyzer.</h1>
-    <p>CLI-Referenz für Fortinet-Produkte. FortiGate Firewall/VPN, FortiManager Zentralverwaltung und FortiAnalyzer Logging.</p>
+    <div class="hero-badge">⚡ support.sheet</div>
+    <h1>Alle Befehle.<br>Sofort zur Hand.</h1>
+    <p>Professionelle Referenz für Windows-Administratoren. Einmal klicken – direkt in die Zwischenablage.</p>
     <div class="hero-stats">
       <div class="hero-stat">
         <span class="hero-stat-num" id="stat-total">–</span>
         <span class="hero-stat-label">Befehle</span>
       </div>
       <div class="hero-stat">
-        <span class="hero-stat-num">FortiOS</span>
-        <span class="hero-stat-label">7.x / 6.x</span>
+        <span class="hero-stat-num">Win 10/11</span>
+        <span class="hero-stat-label">kompatibel</span>
       </div>
       <div class="hero-stat">
-        <span class="hero-stat-num">FG · FMG</span>
-        <span class="hero-stat-label">FAZ</span>
+        <span class="hero-stat-num">Server</span>
+        <span class="hero-stat-label">2019/2022</span>
       </div>
     </div>
-  </div>
-
-  <!-- ── PRODUKT-FILTER ───────────────────────────────────── -->
-  <div class="product-filter-wrap">
-    <button class="product-btn active" data-product="all">Alle</button>
-    <button class="product-btn" data-product="fg">🔥 FortiGate</button>
-    <button class="product-btn" data-product="fmg">🖥️ FortiManager</button>
-    <button class="product-btn" data-product="faz">📊 FortiAnalyzer</button>
   </div>
 
   <!-- ── TEMPLATE ────────────────────────────────────────── -->
@@ -91,16 +90,20 @@
 
   <!-- ── MAIN ────────────────────────────────────────────── -->
   <main>
+
     <section id="favorites-section" hidden>
       <h2 class="section-title">⭐ Meine Favoriten</h2>
       <div id="favorites-container"></div>
     </section>
+
     <section id="recent-section" hidden>
       <h2 class="section-title">🕐 Zuletzt verwendet</h2>
       <div id="recent-container"></div>
     </section>
+
     <div id="filter-bar"></div>
     <div id="commands-container"></div>
+
   </main>
 
 
@@ -121,47 +124,15 @@
         navigator.serviceWorker.register('./sw.js').catch(() => {});
       });
     }
-
-    // Load forti-specific JSON
-    // Remap: use tag[1] (basics/network/policy etc.) as first tag for grouping
-    async function loadCommands() {
-      const response = await fetch('./data/forti-commands.json');
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const commands = await response.json();
-      if (!Array.isArray(commands)) return [];
-      return commands.map(cmd => {
-        const tags = Array.isArray(cmd.tags) ? cmd.tags : [];
-        // tags[1] = subcategory (basics, network, policy, vpn, diag, log, user)
-        const sub = tags[1];
-        const reordered = sub ? [sub, ...tags.filter(t => t !== sub)] : tags;
-        return { ...cmd, tags: reordered };
-      });
-    }
-
     function updateCommandCount(n) {
       const stat  = document.getElementById('stat-total');
       const count = document.getElementById('cmd-count');
       if (stat)  stat.textContent  = n;
       if (count) count.textContent = n + ' Befehle';
     }
-
-    // Product filter
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.product-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const product = btn.dataset.product;
-          document.querySelectorAll('.product-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          const filtered = product === 'all'
-            ? _allCommands
-            : _allCommands.filter(c => c.product === product);
-          renderFilterBar(filtered);    // Unterkategorien neu aufbauen
-          renderCommandGroups(filtered);
-        });
-      });
-    });
   </script>
 
   <script src="nav.js"></script>
+
 </body>
 </html>
