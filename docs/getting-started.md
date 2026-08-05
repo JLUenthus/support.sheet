@@ -3,10 +3,17 @@
 ## Was ist support.sheet?
 
 support.sheet ist ein internes Nachschlagewerk für IT-Admins und MSP-Techniker.  
-Du findest dort Windows-Befehle, Exchange-PowerShell, Fortinet-CLI-Kommandos und fertige Skripte – alles auf einen Klick kopierbar.
+Im Kern (**commands.sheet**) findest du Windows-Befehle, Exchange-PowerShell, Fortinet-CLI-Kommandos und fertige Skripte – alles auf einen Klick kopierbar.
 
-Das Projekt läuft komplett im Browser. Es gibt keinen Server, keine Datenbank, kein Login.  
-Alle Daten (Favoriten, Einstellungen) werden lokal auf deinem Gerät gespeichert.
+Daneben gibt es ein paar weitere Bereiche, kurz zusammengefasst:
+
+- **Ticketassistent** – KI-gestützter Assistent, der beim Formulieren von Tickets hilft.
+- **guide.sheet** – deine persönliche, lokale IT-Wissensdatenbank für eigene Guides und How-Tos.
+- **Analyzer** (Log Analyzer, Entra Analyzer, HAR Analyzer) – lädt Logs/Exports hoch und wertet sie automatisch nach Regeln aus.
+- **Privater Bereich** – kein öffentlicher Teil des Repos, sondern ein privat eingebundener Bereich, den man auf Anfrage bekommt.
+
+Das Projekt läuft komplett im Browser. Es gibt keinen zentralen Server, keine Datenbank, kein Login.  
+Alle Daten (Favoriten, Einstellungen, Guides) werden lokal auf deinem Gerät gespeichert.
 
 ---
 
@@ -56,8 +63,8 @@ Nur so bekommen Nutzer mit gecachter Version den Update-Hinweis.
 
 1. Repo klonen oder ZIP herunterladen
 2. Lokalen Webserver starten (siehe oben)
-3. `index.html` im Browser aufrufen
-4. Für Änderungen an Commands: `/data/commands.json` bearbeiten
+3. `index.html` im Browser aufrufen – das ist die Startseite mit Kacheln zu allen Bereichen
+4. Für Änderungen an Windows-Commands: `/data/commands.json` bearbeiten
 5. Änderungen pushen → GitHub Pages aktualisiert sich automatisch
 
 Mehr dazu in [adding-commands.md](adding-commands.md).

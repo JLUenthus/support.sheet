@@ -84,6 +84,20 @@
       </div>
     </section>
 
+    <!-- ── 1b. GUIDE.SHEET EINSTELLUNGEN ─────────────────── -->
+    <section class="tools-section">
+      <h2 class="section-title">📚 guide.sheet Einstellungen</h2>
+      <div class="tools-card">
+        <p class="tools-intro">
+          guide.sheet hat eine eigene lokale Datenhaltung (Ordner-Anbindung oder Browser-Datenbank)
+          mit eigenem Backup/Restore und Papierkorb – getrennt von den Einstellungen hier auf dieser Seite.
+        </p>
+        <a href="guides-manage.html" class="tools-btn tools-btn--primary" style="text-decoration:none;width:fit-content;">
+          🗄️ Zu guide.sheet – Lokale DB | Einstellungen
+        </a>
+      </div>
+    </section>
+
     <!-- ── 2. LOKALE DATEN ───────────────────────────────── -->
     <section class="tools-section">
       <h2 class="section-title">📊 Lokale Daten</h2>
@@ -126,6 +140,11 @@
           exportieren und auf einem anderen Gerät oder nach einem Browser-Reset importieren.
         </p>
 
+        <div class="tools-note">
+          ⚠️ <strong>guide.sheet ist hier nicht enthalten.</strong> Guides, Bilder und Anhänge
+          werden separat gesichert – siehe <a href="guides-manage.html">guide.sheet – Lokale DB | Einstellungen</a>.
+        </div>
+
         <div class="backup-row">
           <button class="tools-btn tools-btn--green" id="export-btn">⬇️ Backup exportieren</button>
           <button class="tools-btn" id="import-btn">⬆️ Backup importieren</button>
@@ -141,6 +160,12 @@
         <p class="tools-intro">
           Ausgewählte lokale Daten dauerhaft löschen. Tipp: vorher ein Backup erstellen.
         </p>
+
+        <div class="tools-note">
+          ℹ️ Betrifft nur Einstellungen, Favoriten und Verlauf. guide.sheet-Daten (Guides, Papierkorb,
+          Anhänge) werden separat verwaltet – siehe <a href="guides-manage.html">guide.sheet – Lokale DB | Einstellungen</a>.
+        </div>
+
         <div class="clear-options">
           <label class="clear-label">
             <input type="checkbox" class="clear-check" value="settings">

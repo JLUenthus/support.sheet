@@ -58,9 +58,11 @@ Nicht als "Fix" verkaufen was nur Diagnose ist – `sfc /scannow` ist kein "sofo
 
 ## Wie eine Seite startet
 
-Am Beispiel von `index.html`:
+`index.html` ist nur eine statische Landingpage (Hero + Kachel-Grid, verlinkt alle Bereiche) – sie durchläuft die Render-Pipeline unten nicht.
 
-1. Browser lädt `index.html`
+Am Beispiel von `windows.html` (dem eigentlichen Commands-Rendering):
+
+1. Browser lädt `windows.html`
 2. CSS-Dateien werden geladen (Layout, Farben, Komponenten)
 3. JavaScript-Dateien werden in Reihenfolge geladen
 4. `render.js` wartet auf `DOMContentLoaded` und startet dann:
@@ -144,8 +146,17 @@ Abhängig von `settings-store.js` für `getSettings()`.
 
 Läuft auf jeder Seite und baut die gemeinsame Navigation.  
 Setzt eine `page-{id}` Klasse auf `<body>` (für seitenspezifisches CSS wie die H1-Farbe).  
-Baut Tab-Leiste, Logo-Dropdown, Profil-Status-Link, Update-Banner und Scroll-to-Top.  
+Baut Tab-Leiste (inkl. Gruppen-Dropdowns wie „commands.sheet", „Guide", „Analyzer"), Logo-Dropdown, Profil-Status-Link, Update-Banner und Scroll-to-Top.  
 Ctrl+K fokussiert das Suchfeld. ESC leert es.
+
+---
+
+## Weitere Module (kurz)
+
+Nur der Vollständigkeit halber, keine Details – jedes davon ist in sich abgeschlossen und hängt nicht an der oben beschriebenen Render-Pipeline:
+
+- **guide.sheet** (`js/guides*.js`) – eigener Datenlayer (`guides-db.js`) mit eigener lokaler Speicherung (Ordner-Anbindung via File System Access API oder IndexedDB-Fallback), eigenem Export/Import und Editor. Komplett getrennt von `tools.js`.
+- **Analyzer** (`js/entra.js`, `js/har.js`, sowie die Logik direkt in `eventlog.html`) – jede Analyzer-Seite lädt eine Datei (CSV/JSON/HAR), matcht sie gegen die passende `data/*-rules.json` und rendert Findings. Kein gemeinsamer Code zwischen den dreien.
 
 ---
 

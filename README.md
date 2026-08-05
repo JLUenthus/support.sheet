@@ -3,28 +3,40 @@
 Interaktives Nachschlagewerk für IT-Admins und MSP-Techniker.  
 Befehle suchen, filtern, per Klick kopieren – komplett im Browser, kein Backend, kein Login.
 
+Mittlerweile mehr als nur Commands: Log-/Sign-In-/HAR-Analyzer, ein Ticketassistent und guide.sheet für eigene Notizen sind mit drin.
+
 🔗 **[→ https://jluenthus.github.io/support.sheet](https://jluenthus.github.io/support.sheet)**
 
 ---
 
 ## Was ist drin?
 
+`index.html` ist die Startseite – ein Kachel-Grid, das auf alles unten verlinkt.
+
 | Seite | Inhalt | Commands |
 |-------|--------|----------|
-| [Windows](index.html) | CMD, PowerShell, MSC-Konsolen, AD, Netzwerk, DHCP, Hyper-V, RDS, Zertifikate, Winget u.v.m. | 185 |
-| [Exchange](exchange.html) | On-Premises 2016/2019 & Exchange Online | 45 |
+| [Windows](windows.html) | CMD, PowerShell, MSC-Konsolen, AD, Netzwerk, DHCP, Hyper-V, RDS, Zertifikate, Winget u.v.m. | 241 |
+| [Exchange](exchange.html) | On-Premises 2016/2019 & Exchange Online | 69 |
 | [Fortinet](forti.html) | FortiGate, FortiManager, FortiAnalyzer CLI | 78 |
 | [PS Scripts](scripts.html) | Fertige .ps1 Skripte zum Download | 9 |
 | [Log Analyzer](eventlog.html) | Event Log JSON hochladen → automatische Analyse mit Correlation Engine | – |
+| [Entra Analyzer](entra.html) | Sign-In Logs als CSV hochladen, Fehlermuster erkennen | – |
+| [HAR Analyzer](har.html) | Browser-Sessions/Auth-Flows aus HAR-Export analysieren | – |
+| [Ticketassistent](ticketassistent.html) | KI-gestützt Tickets formulieren | – |
+| [guide.sheet](guides.html) | Eigene Guides anlegen und lokal verwalten | – |
 | [Mitmachen](mitmachen.html) | Commands einreichen, Feedback geben | – |
 | [support.tools](tools.html) | Einstellungen, Backup/Restore, PWA, Dokumentation | – |
+
+Dazu ein privater Bereich (`private.html`) – kein öffentlicher Teil des Repos, den bekommt man auf Anfrage.
+
+Windows, Exchange und Fortinet stehen in der Navigation unter einer gemeinsamen Gruppe (commands.sheet).
 
 ---
 
 ## Features
 
 - **Suche** – Fuzzy-Suche über alle Commands (Ctrl+K)
-- **Kategorie-Filter** – 20 Kategorien, Filter-Bar mit einem Klick
+- **Kategorie-Filter** – 21 Kategorien, Filter-Bar mit einem Klick
 - **Shell-Badge** – CMD / PowerShell / EMS / EXO / Shortcut automatisch erkannt
 - **Favoriten** – Stern klicken, bleibt gespeichert
 - **Zuletzt verwendet** – Cross-Page, automatisch als Filter verfügbar
@@ -79,13 +91,17 @@ Alle Commands liegen in `/data/*.json`. Einfach einen Eintrag hinzufügen:
 
 | Datei | Inhalt |
 |-------|--------|
-| `data/commands.json` | Windows-Commands (185) |
-| `data/exchange-commands.json` | Exchange-Commands (45) |
+| `data/commands.json` | Windows-Commands (241) |
+| `data/exchange-commands.json` | Exchange-Commands (69) |
 | `data/forti-commands.json` | Fortinet-Commands (78) |
 | `data/eventlog-rules.json` | Log Analyzer Erkennungsregeln |
 | `data/correlation-rules.json` | Correlation Engine Regeln (19) |
 | `data/improvement-rules.json` | Proaktive Systemchecks (12) |
 | `data/known-harmless.json` | Bekannte harmlose Events |
+| `data/entra-rules.json` | Entra Analyzer Erkennungsregeln |
+| `data/har-rules.json` | HAR Analyzer Erkennungsregeln |
+
+Gilt nur für Windows/Exchange/Fortinet. guide.sheet-Einträge legt man über den Editor in `guides-create.html` an, keine JSON-Datei.
 
 Mehr dazu in [docs/adding-commands.md](docs/adding-commands.md).
 
@@ -107,8 +123,11 @@ Platzhalter in geschweiften Klammern werden beim Kopieren per Dialog ersetzt:
 
 ```
 support.sheet/
-├── index.html / exchange.html / forti.html / scripts.html
-├── eventlog.html / mitmachen.html / tools.html
+├── index.html          ← Startseite / Kachel-Übersicht
+├── windows.html / exchange.html / forti.html / scripts.html
+├── eventlog.html / entra.html / har.html
+├── ticketassistent.html / guides*.html / private.html
+├── mitmachen.html / tools.html
 ├── nav.js              ← Navigation (alle Seiten)
 ├── sw.js               ← Service Worker (Offline-Cache)
 ├── fonts/              ← Lokal gehostete Schriften (DSGVO-konform)
@@ -118,6 +137,8 @@ support.sheet/
 │   ├── loader.js / render.js / search.js
 │   ├── variables.js / favorites.js / recent.js
 │   ├── toast.js / tools.js / fuse.min.js
+│   ├── guides*.js          ← guide.sheet, eigene lokale Datenhaltung
+│   └── entra.js / har.js   ← Analyzer-Logik
 ├── data/               ← Commands + Analyzer-Regeln als JSON
 ├── powershell/         ← 9 fertige .ps1 Skripte
 └── docs/               ← Projektdokumentation
@@ -153,6 +174,8 @@ Ausführlichere Dokumentation: [docs/](docs/)
 
 Alle Daten bleiben lokal auf dem Gerät. Kein Backend, kein Cloud-Sync, keine externen Server.
 
+guide.sheet nutzt kein localStorage, sondern eine eigene lokale Datenbank (Ordner-Anbindung oder IndexedDB) mit eigenem Backup – siehe [docs/project-structure.md](docs/project-structure.md).
+
 ---
 
 ## Deployen
@@ -170,4 +193,5 @@ const CACHE_VERSION = '20260603-0900';
 ## Lizenz
 
 Frei verwendbar für private und kommerzielle Zwecke.  
-Kein Gewähr für die Korrektheit der Befehle – immer in einer Testumgebung prüfen.
+Kein Gewähr für die Korrektheit der Befehle. Immer in einer Testumgebung prüfen.
+Bugs und Fehler gerne melden.

@@ -4,6 +4,8 @@ Das ist der häufigste Anwendungsfall: du hast einen nützlichen Befehl und will
 
 Alle Commands liegen in JSON-Dateien im `/data` Ordner. Kein HTML, kein JavaScript – nur JSON editieren und fertig.
 
+> Gilt nur für commands.sheet (Windows/Exchange/Fortinet). Eigene Guides in guide.sheet legst du direkt über den Editor in guides-create.html an – keine JSON-Datei nötig.
+
 ---
 
 ## Die Grundstruktur
@@ -146,7 +148,7 @@ Der Dialog fragt dann nacheinander nach `server`, `domain` und `username`.
 ## Testen
 
 1. Lokalen Webserver starten (`python -m http.server 8080`)
-2. `index.html` (oder die jeweilige Seite) im Browser öffnen
+2. `windows.html` (oder die jeweilige Seite, z.B. `exchange.html`) im Browser öffnen
 3. Nach dem neuen Befehl suchen
 4. Kopieren testen – erscheint der Variablen-Dialog korrekt?
 
