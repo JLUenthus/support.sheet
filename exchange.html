@@ -29,14 +29,6 @@
       <div class="logo-icon" id="as-logo-icon">📧</div>
       <div class="logo-text" id="as-logo-label">support<span>.sheet</span></div>
     </a>
-    <div class="header-search" id="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input type="text" id="search-input"
-             placeholder="Exchange-Befehle suchen…"
-             autocomplete="off" spellcheck="false"
-             aria-label="Commands durchsuchen">
-      <span class="search-shortcut">Ctrl K</span>
-    </div>
     <div class="header-right">
       <div class="pill pill-count" id="cmd-count">0 Befehle</div>
     </div>
@@ -78,7 +70,20 @@
       <h2 class="section-title">🕐 Zuletzt verwendet</h2>
       <div id="recent-container"></div>
     </section>
-    <div id="filter-bar"></div>
+    <div id="search-filter-bar">
+      <div class="search-wrap-inline">
+        <span class="search-icon">🔍</span>
+        <input type="text"
+               id="search-input"
+               class="search-input-inline"
+               placeholder="Exchange-Befehle suchen... (Ctrl+K)"
+               autocomplete="off"
+               spellcheck="false">
+        <button class="search-clear" id="search-clear"
+                aria-label="Suche leeren" hidden>✕</button>
+      </div>
+      <div id="filter-bar"></div>
+    </div>
     <div id="commands-container"></div>
   </main>
 

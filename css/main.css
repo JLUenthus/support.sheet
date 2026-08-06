@@ -403,7 +403,7 @@ body:not(.page-home) main { padding-top: 24px; }
 /* ── Produkt-Filter (exchange.html, forti.html) ──────────── */
 .product-filter-wrap {
   position: sticky;
-  top: 58px;
+  top: 101px; /* header 58px + tab-bar 43px – sonst überlappt es beim Scrollen mit der Tab-Leiste */
   z-index: 98;
   background: rgba(15,17,23,.95);
   backdrop-filter: blur(12px);
@@ -458,10 +458,10 @@ body:not(.page-home) main { padding-top: 24px; }
   background: rgba(15,17,23,.95);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
-  padding: 10px 24px;
+  padding: 16px 24px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
 }
 
 .search-wrap-inline {
@@ -519,6 +519,14 @@ body:not(.page-home) main { padding-top: 24px; }
   background: transparent;
   border: none;
   backdrop-filter: none;
+}
+
+/* exchange.html/forti.html haben zusätzlich die Produkt-Filter-Leiste
+   zwischen Tab-Leiste und Such-/Kategorie-Leiste – die braucht mehr
+   Abstand von oben (header 58px + tab-bar 43px + produkt-filter 47px). */
+body.page-exchange #search-filter-bar,
+body.page-forti    #search-filter-bar {
+  top: 148px;
 }
 
 .filter-btn {
