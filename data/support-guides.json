@@ -3,17 +3,792 @@
   "description": "Support-Guides fuer support.sheet – readonly, nicht exportierbar",
   "guides": [
     {
-      "id": "support-platzhalter",
-      "title": "Platzhalter – wird ersetzt",
+      "id": "support-howto-guide",
+      "originalId": "guide-1785999019091",
+      "title": "How-To Guide",
       "category": "Support",
-      "tags": ["support", "platzhalter"],
+      "subcategory": "How-To",
+      "tags": [
+        "Support.sheet"
+      ],
       "type": "guide",
-      "created": "2026-08-06T00:00:00Z",
-      "modified": "2026-08-06T00:00:00Z",
+      "created": "2026-08-06T06:50:19.091Z",
+      "modified": "2026-08-06T07:10:44.647Z",
       "favorite": false,
       "readonly": true,
       "source": "support.sheet",
-      "content": "# Platzhalter\n\nDieser Guide wird ersetzt sobald echte Support-Guides verfuegbar sind."
+      "links": [],
+      "content": "Hier wird erklärt wie Guides zu verwenden ist.\n\nguide.sheet ist deine private Wissensdatenbank für IT-Doku, Anleitungen und Notizen. Alles bleibt lokal, entweder in einem Ordner auf deiner Festplatte oder, wenn kein Ordner verbunden ist, im Speicher deines Browsers. Es gibt keinen Server und keinen Account.\n\n\n# 1. Einen neuen Guide anlegen\n\nKlicke in der Navigation auf **„Guide anlegen\"**. Du siehst oben ein Formular für die Eckdaten und darunter den Editor für den eigentlichen Inhalt.\n\n\n\n## Titel, Kategorie, Unterkategorie und Tags\n\n\n|  |  |\n|----------|----------|\n| Titel     | Pflichtfeld, ohne Titel kann nicht gespeichert werden.     |\n| Kategorie     | ordnet den Guide einem Themenbereich zu (z.B. Exchange, Windows Client).     |\n| Unterkategorie | optionales Freitextfeld für eine feinere Einordnung.     |\n| Tags     | beliebig viele Schlagworte, per Enter/Komma bestätigen oder einen der vorgeschlagenen Status-Tags (z.B. „unfertig\", „geprüft\") anklicken.     |\n\n\n## Private Notiz\n\nÜber „🔒 Private Notiz\" kannst du dir interne Vermerke machen (z.B. Kundendetails), die nie exportiert oder geteilt werden, auch nicht in ZIP-Exports oder Merge-Paketen. Sie erscheint nur dir in der Guide-Ansicht.\n\n\n## Links hinterlegen\n\nUnter „🔗 Links\" kannst du beliebig viele URLs hinterlegen (z.B. Hersteller-Doku, Microsoft-Learn-Artikel). Über „+ Weiteren Link hinzufügen\" fügst du weitere Zeilen hinzu. Die Links tauchen später im fertigen Guide auf – dort lässt sich jeder Link kopieren, und du kannst versuchen, eine Offline-Kopie der Seite herunterzuladen (klappt nur, wenn die Zielseite das technisch erlaubt).\n\n\n## Dateien anhängen\n\nUnter „📎 Dateien\" kannst du beliebige Dateien anhängen (PDF, Word, Bilder, Setup-Dateien …) – über „+ Datei hinzufügen\". Ist kein Ordner verbunden, warnt dich ein Hinweis, dass große Dateien im Browser-Speicher (IndexedDB) zu Problemen führen können – in dem Fall lieber vorher unter „Lokale DB\" einen Ordner verbinden.\n\n\n## Inhalt schreiben\n\nDer Inhalt wird in Markdown geschrieben, einer einfachen Auszeichnungssprache für Überschriften, Listen, Links usw. Über den drei Buttons „Split\", „Nur Editor\" und „Nur Vorschau\" wechselst du die Ansicht: im Split siehst du links den Text, rechts direkt die formatierte Vorschau.\n\nDie Werkzeugleiste darüber hilft beim Formatieren, ohne die Markdown-Syntax auswendig zu können:\n\n\n\n|   |   |\n|----------|----------|\n| H1 / H2 / H3      | Überschriften     |\n| B / I     | Fett / Kursiv     |\n| `Code` / ```     | Inline-Code bzw. ganzer Code-Block     |\n| 🔗     | Link einfügen     |\n| 🖼️     | Bild einfügen (öffnet die Dateiauswahl)     |\n| ▦      | Beispiel-Tabelle einfügen     |\n| ☑️     | Checkliste (leeres „[ ]\" = offen, „[x]\" = erledigt – im fertigen Guide anklickbar)     |\n| ⬅ ↔ ➡     | markierten Text links-, mittig- oder rechtsbündig ausrichten     |\n\n\n## Bilder einfügen und verwalten\n\nEin Bild fügst du per Klick auf den 🖼️-Button, per Ziehen-und-Ablegen in das Textfeld oder direkt mit Strg+V (z.B. ein kopierter Screenshot) ein. Im bereits gespeicherten Guide gibt es zusätzlich die Kachel „🖼️ Bilder anzeigen\" (im Editor unter der Werkzeugleiste, in der Guide-Ansicht über „Ähnliche Guides\").\nDort siehst du alle gespeicherten Bilder mit Vorschaubild und kannst sie umbenennen oder ihre Markdown-Referenz erneut einfügen bzw. kopieren, falls du sie an anderer Stelle im Text nochmal brauchst.\n\n\n\n## Automatisches Speichern & Entwürfe\n\nWährend du schreibst, wird dein Stand alle paar Sekunden automatisch als Entwurf zwischengespeichert (Status unten links). Verlässt du die Seite ohne zu speichern und kommst später zurück, bietet dir „Guide anlegen\" eine Liste aller offenen Entwürfe zum Wiederherstellen an. Mehrere Entwürfe können dabei parallel bestehen, ohne sich gegenseitig zu überschreiben.\n\n\n## Aus Word oder Markdown importieren\n\nÜber „📥 Importieren\" oben rechts kannst du bestehenden Text übernehmen: als Markdown- oder Text-Datei (1:1) oder als Word-Dokument (.docx), dabei werden Formatierung und enthaltene Bilder automatisch in Markdown umgewandelt. Bitte danach kurz prüfen, ob alles sauber übernommen wurde.\n\nZum Schluss auf „✅ Speichern\" klicken – fertig ist der Guide.\n\n\n\n# 2. Den Guide ansehen und bearbeiten\n\nEin gespeicherter Guide zeigt oben Titel, Kategorie, Tags sowie Erstellt-/Geändert-Datum mit einer kleinen Ampel (grün = aktuell, gelb = älter, rot = lange nicht mehr geprüft). Über den Stern favorisierst du den Guide.\n\n\n\n|   |   |\n|----------|----------|\n| 📤 Exportieren     | als Markdown (.md), PDF (über den Druckdialog) oder Word (.docx). Die private Notiz wird dabei nie mit exportiert.     |\n| ✏️ Bearbeiten     | öffnet den Guide wieder im Editor.     |\n| 🗑️ Löschen     | verschiebt den Guide in den Papierkorb (endgültiges Löschen erst über „Lokale DB\").     |\n\n\n# 3. Die Übersicht nutzen\n\nUnter „Guides\" siehst du alle vorhandenen Einträge als Kacheln oder als Liste (Umschalter oben rechts). Über der Kachel-Ansicht kannst du nach Kategorie, Tag filtern, nur Favoriten anzeigen und die Sortierung ändern. In der Seitenleiste findest du alle Kategorien mit Anzahl sowie eine Tag-Wolke, ein Klick filtert direkt danach.\n\nFährst du mit der Maus über eine Kachel, erscheint links ein Auswahlkästchen – damit lassen sich mehrere Guides markieren und gemeinsam löschen.\n\n\n# 4. Lokale DB | Einstellungen\n\nHier verwaltest du die Datenbank als Ganzes:\n\n|   |   |\n|----------|----------|\n| 📊 Datenbankstatus     | zeigt, ob ein echter Ordner verbunden ist oder der Browser-Speicher genutzt wird, plus Anzahl Guides/Kategorien/Assets. Über einen Ordner statt Browser-Speicher hast du echte Dateien auf der Festplatte, die z.B. mit OneDrive gesichert werden können.     |\n| 📤 Export     | als lesbares ZIP-Archiv (Markdown + Bilder, gut zum Durchstöbern) oder als Merge-Paket (zum späteren Re-Import in guide.sheet, z.B. auf einem anderen Rechner).     |\n| 📥 Import/Merge     | ZIP-Datei hineinziehen, Vorschau prüfen und übernehmen. Konflikte mit bereits vorhandenen Guides werden erkannt und lassen sich einzeln auflösen.     |\n| 📎 Dateiverwaltung     | zeigt alle in Guides hinterlegten Dateien (siehe „Dateien anhängen\") über alle Guides hinweg, gruppiert nach Guide, mit erneutem Download.     |\n| 📁 Kategorien verwalten     | Farbe/Name ändern, Reihenfolge per Pfeil anpassen, leere Kategorien löschen.    |\n| 🗑️ Papierkorb     |  gelöschte Guides wiederherstellen oder endgültig entfernen.     |\n| 📈 Statistik     | Verteilung nach Kategorie sowie Alters-Ampel über alle Guides.     |\n\n\n\n\n# Kurz zusammengefasst\n\n\n\n \n\n- [X] Alles bleibt lokal. Am besten früh einen Ordner verbinden, damit nichts im begrenzten Browser-Speicher landet.\n- [X] Titel, Kategorie und Tags sorgen dafür, dass du Guides später wiederfindest.\n- [X] Private Notiz ist wirklich privat und wird nie exportiert.\n- [X] Regelmäßig über „Lokale DB\" ein Export-Backup ziehen.\n\n\n\n\n\n"
+    },
+    {
+      "id": "support-ipconfig-all",
+      "originalId": "guide-1786000063294",
+      "title": "IP Konfiguration detailliert anzeigen",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "netzwerk",
+        "ipconfig",
+        "troubleshooting",
+        "windows",
+        "dhcp",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T07:07:43.294Z",
+      "modified": "2026-08-06T10:53:14.598Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/windows-server/administration/windows-commands/ipconfig",
+          "text": "Microsoft Docs ipconfig"
+        }
+      ],
+      "content": "# ipconfig /all\n\n# Was macht der Befehl\n\nDer Befehl zeigt alle Netzwerkschnittstellen eines Systems inklusive detaillierter Konfigurationsdaten. Dazu gehören IP Adresse, Subnetzmaske, Gateway, DNS Server sowie DHCP und MAC Adresse. Die Daten kommen direkt aus dem TCP IP Stack des Systems.\n\n\n## Wann verwenden\n\n- Netzwerkprobleme analysieren bei Clients oder Servern\n- Prüfen ob DHCP korrekt funktioniert\n- DNS Server oder Gateway kontrollieren\n- MAC Adresse für Inventarisierung ermitteln\n- VPN oder mehrere Adapter vergleichen\n\n## Parameter die man kennen muss\n\n\n`/all` Zeigt vollständige Details zu allen Netzwerkadaptern\n\n`/release` Gibt aktuelle DHCP Adresse frei\n\n`/renew`\nFordert neue DHCP Adresse an\n\n`/flushdns`\nLeert lokalen DNS Cache\n\n\n## Häufige Fehler\n\n\n- Mehrere Adapter führen zu Verwirrung\nOft ist der falsche Adapter relevant zum Beispiel WLAN statt LAN\n- APIPA Adresse 169.254.x.x\nBedeutet DHCP hat keine Adresse geliefert\n- Alte Werte werden angezeigt\nNach Änderungen Adapter neu verbinden oder `ipconfig /renew` nutzen\n- DNS Probleme werden übersehen\nFalsche DNS Server sind eine häufige Ursache\n\n\n## Praxisbeispiel\n\n\nEin Benutzer hat keinen Zugriff auf interne Dienste. Du prüfst die Netzwerkkonfiguration und stellst fest dass kein korrektes Gateway gesetzt ist.\n\n| Powershell | \n|----------|\n| # Zeigt alle Netzwerkdetails um Gateway und DNS zu prüfen\n`ipconfig /all`     | \n\n\nDu erkennst dass der Client eine falsche IP aus einem anderen Netz hat. Danach DHCP erneuern.\n\n| Powershell | \n|----------|\n| # Fordert neue IP Konfiguration vom DHCP Server an\n`ipconfig /renew`     |\n\n\n\n## Verwandte Befehle\n\n- Get-NetIPConfiguration\nPowerShell Alternative mit strukturierter Ausgabe\n- Test-NetConnection\nPrüft Erreichbarkeit von Hosts und Ports\n- `nslookup`\nTestet DNS Auflösung direkt\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+    },
+    {
+      "id": "support-route-print",
+      "originalId": "guide-1786000576679",
+      "title": "Routing Tabelle anzeigen",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "routing",
+        "troubleshooting",
+        "windows",
+        "tcpip",
+        "Support.sheet",
+        "netzwerk"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T07:16:16.679Z",
+      "modified": "2026-08-06T10:52:57.001Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [],
+      "content": "# route print\n\n# Was macht der Befehl\n\nDer Befehl zeigt die aktuelle Routing Tabelle des Systems. Darin steht, über welches Gateway und Interface Netzwerkverkehr zu bestimmten Zielen geschickt wird. Die Daten kommen direkt aus der IP Routing Engine von Windows.\n\n\n## Wann verwenden\n\n- Prüfen warum ein Ziel nicht erreichbar ist  \n- Falsches Gateway oder Route identifizieren  \n- VPN Routing analysieren  \n- Mehrere Netzwerkkarten vergleichen  \n- Statische Routen kontrollieren  \n\n\n## Parameter die man kennen muss\n\n`print` Zeigt die Routing Tabelle an  \n\n`-4` Nur IPv4 Routen anzeigen  \n\n`-6` Nur IPv6 Routen anzeigen  \n\n\n## Häufige Fehler\n\n- Falsche Default Route  \nTraffic geht über das falsche Gateway  \n\n- Mehrere aktive Interfaces  \nWindows wählt nicht immer die erwartete Route  \n\n- VPN überschreibt Routing  \nNach Verbindungsaufbau ändern sich Prioritäten  \n\n- Route fehlt komplett  \nZielnetz ist nicht bekannt  \n\n\n## Praxisbeispiel\n\nEin Benutzer erreicht ein internes Netz nicht. Du prüfst die Routing Tabelle und stellst fest dass kein Eintrag für das Zielnetz existiert.\n\n| Powershell |\n|----------|\n| # Zeigt komplette Routing Tabelle  \n`route print` |\n\nDu erkennst dass der Traffic über das falsche Gateway geht weil eine andere Route priorisiert wird.\n\n| Powershell |\n|----------|\n| # Nur IPv4 Routen anzeigen für bessere Übersicht  \n`route print -4` |\n\n\n## Verwandte Befehle\n\n- Get-NetRoute  \nPowerShell Alternative mit Filtermöglichkeiten  \n\n- route add  \nFügt statische Routen hinzu  \n\n- route delete  \nEntfernt bestehende Routen  "
+    },
+    {
+      "id": "support-tracert",
+      "originalId": "guide-1786001063118",
+      "title": "Route zu Zielhost analysieren",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "Support.sheet",
+        "netzwerk",
+        "tracert",
+        "troubleshooting",
+        "routing",
+        "connectivity"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T07:24:23.118Z",
+      "modified": "2026-08-06T10:52:16.271Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/windows-server/administration/windows-commands/tracert",
+          "text": "Microsoft Docs route"
+        }
+      ],
+      "content": "# tracert HOSTNAME\n\n# Was macht der Befehl\n\nDer Befehl verfolgt den Weg von deinem System zu einem Zielhost über mehrere Router. Dabei wird jeder Hop entlang der Strecke angezeigt inklusive Antwortzeit. Technisch nutzt tracert ICMP Pakete mit steigender TTL.\n\n\n## Wann verwenden\n\n- Netzwerkpfad zu einem Ziel analysieren  \n- Engstellen oder hohe Latenz erkennen  \n- Prüfen wo Verbindungen abbrechen  \n- Unterschied zwischen internem und externem Routing sehen  \n- Probleme bei VPN oder Internetzugriff eingrenzen  \n\n\n## Parameter die man kennen muss\n\n`-d` Keine Namensauflösung der Hosts für schnellere Ausgabe  \n\n`-h <Anzahl>` Maximale Anzahl an Hops festlegen  \n\n`-w <ms>` Timeout pro Antwort in Millisekunden  \n\n\n## Häufige Fehler\n\n- Sternchen bei Hops  \nRouter antwortet nicht auf ICMP, nicht automatisch ein Fehler  \n\n- Früher Abbruch  \nFirewall oder Ziel blockiert ICMP  \n\n- Hohe Latenz falsch interpretiert  \nEinzelne langsame Hops sind nicht immer das Problem  \n\n- DNS Verzögerung  \nOhne `-d` dauert die Ausgabe deutlich länger  \n\n\n## Praxisbeispiel\n\nEin Benutzer meldet langsame Verbindung zu einem externen Dienst. Du prüfst den Netzwerkpfad und suchst nach auffälligen Hops.\n\n| Powershell |\n|----------|\n| # Zeigt alle Hops zum Zielhost  \n`tracert example.com` |\n\nDu stellst fest dass die Namensauflösung die Ausgabe verlangsamt und wiederholst den Test ohne DNS.\n\n| Powershell |\n|----------|\n| # Schnellere Ausgabe ohne DNS Auflösung  \n`tracert -d example.com` |\n\n\n## Verwandte Befehle\n\n- pathping  \nKombiniert tracert mit Paketverlust Analyse  \n\n- ping  \nSchneller Test der Erreichbarkeit  \n\n- Test-NetConnection  \nPowerShell Tool für Port und Latenztests  "
+    },
+    {
+      "id": "support-net-user",
+      "originalId": "guide-1786001284596",
+      "title": "Benutzerkonto Details anzeigen",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "user",
+        "konto",
+        "windows",
+        "troubleshooting",
+        "administration",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T07:28:04.596Z",
+      "modified": "2026-08-06T07:29:20.491Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/windows-server/administration/windows-commands/net-user",
+          "text": "https://learn.microsoft.com/windows-server/administration/windows-commands/net-user"
+        }
+      ],
+      "content": "# net user BENUTZERNAME\n\n# Was macht der Befehl\n\nDer Befehl zeigt detaillierte Informationen zu einem lokalen Benutzerkonto. Dazu gehören Gruppenmitgliedschaften, Passwortstatus und Kontoeinstellungen. Die Daten werden aus der lokalen SAM Datenbank gelesen.\n\n\n## Wann verwenden\n\n- Benutzerkonto prüfen bei Login Problemen  \n- Passwortstatus kontrollieren  \n- Gruppenmitgliedschaften einsehen  \n- Account Sperrstatus prüfen  \n- Lokale Benutzer schnell analysieren  \n\n\n## Parameter die man kennen muss\n\n`BENUTZERNAME` Name des lokalen Benutzerkontos  \n\n`/domain` Führt den Befehl gegen die Domäne aus statt lokal  \n\n`/active:{yes|no}` Aktiviert oder deaktiviert das Konto  \n\n\n## Häufige Fehler\n\n- Benutzer existiert nicht  \nFalscher Name oder falscher Kontext lokal statt Domäne  \n\n- Zugriff verweigert  \nBefehl ohne ausreichende Rechte ausgeführt  \n\n- Verwechslung lokal und Domain  \nOhne `/domain` wird nur lokal geprüft  \n\n- Leere oder falsche Ausgabe  \nBenutzer ist auf anderem System vorhanden  \n\n\n## Praxisbeispiel\n\nEin Benutzer kann sich nicht anmelden. Du prüfst ob das Konto deaktiviert oder das Passwort abgelaufen ist.\n\n| Powershell |\n|----------|\n| # Zeigt alle Details zum Benutzerkonto  \n`net user max.mustermann` |\n\nDu stellst fest dass das Konto deaktiviert ist und aktivierst es wieder.\n\n| Powershell |\n|----------|\n| # Aktiviert das Benutzerkonto  \n`net user max.mustermann /active:yes` |\n\n\n## Verwandte Befehle\n\n- net localgroup  \nZeigt oder ändert lokale Gruppenmitgliedschaften  \n\n- whoami  \nZeigt den aktuell angemeldeten Benutzer  \n\n- Get-LocalUser  \nPowerShell Alternative für lokale Benutzer  "
+    },
+    {
+      "id": "support-winget",
+      "originalId": "guide-1786001645741",
+      "title": "Software mit winget verwalten",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "winget",
+        "paketmanager",
+        "software",
+        "windows",
+        "deployment",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T07:34:05.741Z",
+      "modified": "2026-08-06T07:34:05.741Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/windows/package-manager/winget/",
+          "text": "https://learn.microsoft.com/windows/package-manager/winget/"
+        }
+      ],
+      "content": "# winget\n\n# Was macht der Befehl\n\nwinget ist der Windows Paketmanager für Installation, Update und Verwaltung von Software über die Kommandozeile. Er nutzt zentrale Repositories und startet die jeweiligen Installer automatisch im Hintergrund. :contentReference[oaicite:0]{index=0}\n\n\n## Wann verwenden\n\n- Software schnell auf neuen Clients installieren  \n- Standard Software automatisiert ausrollen  \n- Updates zentral durchführen  \n- Manuelle Installationen vermeiden  \n- Troubleshooting bei fehlerhaften Installationen  \n\n\n## Parameter die man kennen muss\n\n`search <name>` Sucht nach Software im Repository  \n\n`install <name>` Installiert ein Paket  \n\n`install --id <paket> -e` Exakte Paket ID verwenden  \n\n`upgrade` Zeigt verfügbare Updates  \n\n`upgrade --all` Aktualisiert alle installierten Pakete  \n\n`list` Zeigt installierte Software  \n\n`uninstall <name>` Deinstalliert Software  \n\n`show <name>` Zeigt Paketdetails  \n\n\n## Häufige Fehler\n\n- Paket nicht eindeutig  \nOhne `--id` wird falsches Paket gewählt  \n\n- Admin Rechte fehlen  \nEinige Installer brechen ohne Elevation ab  \n\n- Source Agreements blockieren  \nBei Scripts fehlen `--accept-package-agreements`  \n\n- winget nicht verfügbar  \nApp Installer fehlt oder PATH nicht gesetzt :contentReference[oaicite:1]{index=1}  \n\n- Unterschied Store vs Desktop Apps  \nNicht alle Programme werden gleich behandelt  \n\n\n## Praxisbeispiel\n\nDu richtest einen neuen Client ein und installierst Standard Software ohne GUI.\n\n| Powershell |\n|----------|\n| # Suche nach Google Chrome  \n`winget search chrome` |\n\n| Powershell |\n|----------|\n| # Installiert Chrome mit exakter ID und ohne Rückfragen  \n`winget install --id Google.Chrome -e --accept-package-agreements --accept-source-agreements` |\n\nDu willst danach alle Programme auf aktuellen Stand bringen.\n\n| Powershell |\n|----------|\n| # Zeigt Updates  \n`winget upgrade` |\n\n| Powershell |\n|----------|\n| # Installiert alle Updates automatisch  \n`winget upgrade --all --silent` |\n\n\n## Verwandte Befehle\n\n- choco  \nAlternativer Paketmanager oft in älteren Setups  \n\n- Get-Package  \nPowerShell Paketverwaltung  \n\n- dism  \nWindows Features und Komponenten verwalten  "
+    },
+    {
+      "id": "support-powertoys",
+      "originalId": "guide-1786001832385",
+      "title": "PowerToys produktiv nutzen",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "powertoys",
+        "windows",
+        "productivity",
+        "tools",
+        "shortcuts",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T07:37:12.385Z",
+      "modified": "2026-08-06T07:37:34.002Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/windows/powertoys/",
+          "text": "https://learn.microsoft.com/windows/powertoys/"
+        }
+      ],
+      "content": "# PowerToys\n\n# Was macht der Befehl\n\nPowerToys ist eine Sammlung von Systemtools für Windows Power User. Die Tools erweitern Standardfunktionen wie Fensterverwaltung, Suche und Clipboard. Läuft im Hintergrund und integriert sich direkt ins System.\n\n\n## Wann verwenden\n\n- Effizienter mit Fenstern und Layouts arbeiten  \n- Schneller Programme und Dateien starten  \n- Texte aus Bildern kopieren  \n- Farben aus UI Elementen auslesen  \n- Wiederkehrende Aufgaben beschleunigen  \n\n\n## Wichtige Module die man kennen muss\n\n`FancyZones` Fenster in feste Layouts einrasten  \n\n`PowerToys Run` Schneller Launcher für Apps und Befehle  \n\n`Always On Top` Fenster im Vordergrund halten  \n\n`Color Picker` Farbe vom Bildschirm auslesen  \n\n`Text Extractor` Text aus Screenshots kopieren  \n\n`Peek` Vorschau von Dateien ohne Öffnen  \n\n\n## Häufige Fehler\n\n- Shortcuts funktionieren nicht  \nKollision mit bestehenden Tastenkombinationen  \n\n- Tool reagiert nicht  \nPowerToys läuft nicht im Hintergrund  \n\n- Keine Admin Rechte  \nEinige Funktionen brauchen erhöhte Rechte  \n\n- Einstellungen greifen nicht  \nNach Änderung Modul einmal neu starten  \n\n\n## Praxisbeispiel\n\nDu arbeitest mit mehreren Tools gleichzeitig und willst Fenster sauber anordnen.\n\n| Powershell |\n|----------|\n| # Shift gedrückt halten und Fenster ziehen  \n`FancyZones verwenden` |\n\nDu brauchst schnell einen Servernamen oder willst ein Tool starten ohne Menü.\n\n| Powershell |\n|----------|\n| # Öffnet PowerToys Run  \n`Alt + Space` |\n\nDu musst Text aus einem Screenshot übernehmen ohne OCR Tool.\n\n| Powershell |\n|----------|\n| # Startet Text Extractor  \n`Win + Shift + T` |\n\n\n## Verwandte Befehle\n\n- winget  \nInstallation und Update von PowerToys  \n\n- ms-settings  \nÖffnet Windows Einstellungen direkt  \n\n- taskmgr  \nPrüfen ob PowerToys im Hintergrund läuft  \n\n"
+    },
+    {
+      "id": "support-schnellbefehle",
+      "originalId": "guide-1786002018978",
+      "title": "Windows Schnellbefehle direkt öffnen",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "windows",
+        "shortcut",
+        "cmd",
+        "administration",
+        "troubleshooting",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T07:40:18.978Z",
+      "modified": "2026-08-06T07:40:18.978Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [],
+      "content": "# Schnellbefehle (Run Commands)\n\n# Was macht der Befehl\n\nDiese Befehle öffnen direkt Systemtools und Einstellungen über `Win + R`, CMD oder PowerShell. Meist sind es .cpl Dateien, Systembefehle oder Shell Pfade. Spart Zeit gegenüber GUI Navigation.\n\n\n## Wann verwenden\n\n- Schneller Zugriff auf Systemeinstellungen  \n- Troubleshooting ohne GUI klicken  \n- Remote Support über Telefon oder Chat  \n- Admin Tasks auf Servern  \n- Wenn Settings App unübersichtlich ist  \n\n\n## Wichtige Befehle\n\n`appwiz.cpl` Programme installieren oder entfernen  \n\n`ncpa.cpl` Netzwerkadapter verwalten  \n\n`sysdm.cpl` Systemeigenschaften öffnen  \n\n`timedate.cpl` Datum und Uhrzeit einstellen  \n\n`powercfg.cpl` Energieoptionen öffnen  \n\n`desk.cpl` Anzeigeeinstellungen  \n\n`mmsys.cpl` Soundeinstellungen  \n\n`optionalfeatures` Windows Features aktivieren  \n\n`taskmgr` Task Manager öffnen  \n\n`regedit` Registry Editor starten  \n\n`control` Klassische Systemsteuerung  \n\n\n## Häufige Fehler\n\n- Befehl wird nicht gefunden  \nTippfehler oder falscher Kontext  \n\n- Keine Admin Rechte  \nEinige Tools starten eingeschränkt  \n\n- Tool öffnet falsche Ansicht  \nUnterschied zwischen alter Systemsteuerung und Settings  \n\n- Funktion fehlt  \nJe nach Windows Version unterschiedlich  \n\n\n## Praxisbeispiel\n\nEin Benutzer hat Netzwerkprobleme und du willst schnell den Adapter prüfen.\n\n| Powershell |\n|----------|\n| # Öffnet Netzwerkverbindungen direkt  \n`ncpa.cpl` |\n\nDu musst schnell ein Programm deinstallieren ohne durch Settings zu klicken.\n\n| Powershell |\n|----------|\n| # Öffnet Programme und Features  \n`appwiz.cpl` |\n\nDu willst prüfen ob ein Dienst oder Prozess hängt.\n\n| Powershell |\n|----------|\n| # Öffnet Task Manager  \n`taskmgr` |\n\n\n## Verwandte Befehle\n\n- ms-settings  \nDirekte Deep Links in Windows Settings  \n\n- control /name  \nÖffnet spezifische Systemsteuerungsbereiche  \n\n- explorer shell:  \nÖffnet spezielle Windows Pfade  "
+    },
+    {
+      "id": "support-mmc-konsolen",
+      "originalId": "guide-1786002130346",
+      "title": "MMC Konsolen direkt öffnen",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "mmc",
+        "windows",
+        "administration",
+        "tools",
+        "troubleshooting",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T07:42:10.346Z",
+      "modified": "2026-08-06T07:42:10.346Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [],
+      "content": "# MMC Konsolen\n\n# Was macht der Befehl\n\nMMC Konsolen sind administrative Snap Ins für die zentrale Verwaltung von Windows Komponenten. Jede .msc Datei startet ein spezifisches Verwaltungstool wie Dienste, Ereignisanzeige oder Benutzerverwaltung. Wird direkt über CMD, PowerShell oder Win + R gestartet.\n\n\n## Wann verwenden\n\n- Systemadministration auf Clients und Servern  \n- Schneller Zugriff auf tiefere Systemeinstellungen  \n- Troubleshooting bei Fehlern und Logs  \n- Benutzer, Dienste oder Hardware verwalten  \n- Remote Support ohne GUI Navigation  \n\n\n## Wichtige Konsolen\n\n`compmgmt.msc` Computerverwaltung zentrale Übersicht  \n\n`diskmgmt.msc` Datenträger und Partitionen verwalten  \n\n`services.msc` Windows Dienste steuern  \n\n`eventvwr.msc` Ereignislogs analysieren  \n\n`devmgmt.msc` Geräte und Treiber prüfen  \n\n`gpedit.msc` Lokale Gruppenrichtlinien  \n\n`secpol.msc` Sicherheitsrichtlinien  \n\n`lusrmgr.msc` Lokale Benutzer und Gruppen  \n\n`taskschd.msc` Aufgabenplanung  \n\n`certmgr.msc` Benutzerzertifikate  \n\n`certlm.msc` Computerzertifikate  \n\n\n## Häufige Fehler\n\n- Konsole startet nicht  \nEdition unterstützt Feature nicht zum Beispiel gpedit  \n\n- Zugriff verweigert  \nAdmin Rechte erforderlich  \n\n- Änderungen greifen nicht  \nRichtlinien müssen neu geladen werden  \n\n- Falsche Konsole verwendet  \nUser statt Computer Kontext verwechselt  \n\n\n## Praxisbeispiel\n\nEin Benutzer meldet Login Probleme und du prüfst lokale Gruppen und Rechte.\n\n| Powershell |\n|----------|\n| # Öffnet lokale Benutzer und Gruppen  \n`lusrmgr.msc` |\n\nDu willst herausfinden warum ein Dienst nicht startet.\n\n| Powershell |\n|----------|\n| # Öffnet Dienstverwaltung  \n`services.msc` |\n\nDu analysierst einen Fehler auf einem Server.\n\n| Powershell |\n|----------|\n| # Öffnet Ereignisanzeige  \n`eventvwr.msc` |\n\n\n## Verwandte Befehle\n\n- control  \nKlassische Systemsteuerung  \n\n- ms-settings  \nModerne Windows Einstellungen  \n\n- taskmgr  \nSchneller Zugriff auf Prozesse und Performance  "
+    },
+    {
+      "id": "support-gpo",
+      "originalId": "guide-1786002269388",
+      "title": "GPO und Richtlinien prüfen und verwalten",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "gpo",
+        "richtlinien",
+        "active-directory",
+        "windows",
+        "troubleshooting",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T07:44:29.388Z",
+      "modified": "2026-08-06T10:51:27.168Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/windows-server/administration/windows-commands/gpresult",
+          "text": "Microsoft gpresult"
+        },
+        {
+          "url": "https://learn.microsoft.com/windows-server/identity/ad-ds/manage/group-policy/group-policy-overview",
+          "text": "Group Policy Overview"
+        },
+        {
+          "url": "https://learn.microsoft.com/troubleshoot/windows-server/group-policy/troubleshoot-group-policy-processing",
+          "text": "Troubleshooting Group Policy"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/grouppolicy/",
+          "text": "Group Policy Cmdlets"
+        }
+      ],
+      "content": "# GPO & Richtlinien\n\n# Was macht der Befehl\n\nDiese Befehle zeigen angewendete Gruppenrichtlinien und erlauben die Verwaltung lokaler Richtlinien. GPOs steuern Benutzer und Computer Einstellungen zentral über Active Directory oder lokal über den Richtlinieneditor.\n\n\n## Wann verwenden\n\n- Prüfen welche Richtlinien wirklich greifen  \n- Troubleshooting bei Login oder Berechtigungsproblemen  \n- GPO Konflikte erkennen  \n- Audit und Dokumentation von Richtlinien  \n- Lokale Richtlinien anpassen  \n\n\n## Wichtige Befehle\n\n`gpresult /r` Zeigt angewendete GPOs für User und Computer  \n\n`gpresult /h report.html` Erstellt detaillierten HTML Report  \n\n`gpresult /s HOSTNAME /u DOMAIN\\USER /r` Remote GPO Status  \n\n`gpedit.msc` Lokalen Gruppenrichtlinien Editor öffnen  \n\n`secpol.msc` Lokale Sicherheitsrichtlinien  \n\n\n## Häufige Fehler\n\n- GPO wird nicht angewendet  \nReplikation oder OU Zuordnung falsch  \n\n- Zugriff verweigert bei gpresult  \nAdmin Rechte oder Domänenrechte fehlen  \n\n- Leerer Report  \nFalscher Kontext User oder Computer  \n\n- gpedit nicht verfügbar  \nWindows Home unterstützt das nicht  \n\n- Änderungen greifen nicht  \n`gpupdate /force` notwendig  \n\n\n## Praxisbeispiel\n\nEin Benutzer meldet fehlende Netzlaufwerke und Policies.\n\n| Powershell |\n|----------|\n| # Zeigt angewendete Richtlinien  \n`gpresult /r` |\n\nDu brauchst Details für Analyse oder Ticket Doku.\n\n| Powershell |\n|----------|\n| # Erstellt HTML Report auf Desktop  \n`gpresult /h %USERPROFILE%\\Desktop\\gpo.html` |\n\nDu prüfst einen Remote Client ohne direkten Zugriff.\n\n| Powershell |\n|----------|\n| # Remote GPO Abfrage  \n`gpresult /s client01 /u domain\\admin /r` |\n\n\n## Verwandte Befehle\n\n- gpupdate  \nErzwingt Aktualisierung von Richtlinien  \n\n- rsop.msc  \nGrafische Ansicht der angewendeten Richtlinien  \n\n- Get-GPResultantSetOfPolicy  \nPowerShell Alternative für GPO Auswertung  \n\n"
+    },
+    {
+      "id": "support-sfc-dism",
+      "originalId": "guide-1786003204976",
+      "title": "Windows System und Datenträger prüfen und reparieren",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "repair",
+        "dism",
+        "sfc",
+        "disk",
+        "troubleshooting",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T08:00:04.976Z",
+      "modified": "2026-08-06T10:50:50.471Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/windows-server/administration/windows-commands/sfc",
+          "text": "https://learn.microsoft.com/windows-server/administration/windows-commands/sfc"
+        },
+        {
+          "url": "https://learn.microsoft.com/windows-hardware/manufacture/desktop/dism-reference",
+          "text": "https://learn.microsoft.com/windows-hardware/manufacture/desktop/dism-reference"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/storage/get-physicaldisk",
+          "text": "https://learn.microsoft.com/powershell/module/storage/get-physicaldisk"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/cimcmdlets/get-ciminstance",
+          "text": "https://learn.microsoft.com/powershell/module/cimcmdlets/get-ciminstance"
+        }
+      ],
+      "content": "# Systemprüfung & Reparatur\n\n# Was macht der Befehl\n\nDiese Befehle prüfen und reparieren Windows Systemdateien sowie das zugrunde liegende Windows Image. Zusätzlich geben sie Einblick in Datenträger, Speicher und Hardwarestatus. Wichtig für Troubleshooting bei instabilen Systemen.\n\n\n## Wann verwenden\n\n- Windows verhält sich instabil oder langsam  \n- Updates schlagen fehl  \n- Systemdateien sind beschädigt  \n- Bluescreens oder Abstürze  \n- Speicherplatz oder Datenträger prüfen  \n- Vorbereitung für weitere Reparaturen  \n\n\n## Wichtige Befehle\n\n`sfc /scannow` Prüft und repariert Systemdateien  \n\n`DISM /Online /Cleanup-Image /CheckHealth` Schneller Image Status  \n\n`DISM /Online /Cleanup-Image /ScanHealth` Tiefenscan ohne Reparatur  \n\n`DISM /Online /Cleanup-Image /RestoreHealth` Repariert Windows Image  \n\n`Get-PSDrive -PSProvider FileSystem` Laufwerke anzeigen  \n\n`Get-PhysicalDisk` Physische Datenträger Infos  \n\n`reagentc /enable` Recovery Environment aktivieren  \n\n`rstrui.exe` Systemwiederherstellung starten  \n\n`Get-CimInstance Win32_LogicalDisk` Detaillierte Laufwerksdaten  \n\n\n## Häufige Fehler\n\n- SFC findet Fehler aber kann nicht reparieren  \nDann zuerst DISM RestoreHealth ausführen  \n\n- DISM bleibt hängen  \nOft Netzwerkproblem oder Windows Update defekt  \n\n- Kein Internet bei DISM  \nRestoreHealth kann fehlschlagen  \n\n- Zugriff verweigert  \nCMD oder PowerShell nicht als Admin gestartet  \n\n- Werte wirken falsch  \nVirtuelle Disks oder Netzlaufwerke verfälschen Übersicht  \n\n\n## Praxisbeispiel\n\nEin System zeigt Fehler nach Updates und Programme starten nicht mehr.\n\n| Powershell |\n|----------|\n| # Prüft und repariert Systemdateien  \n`sfc /scannow` |\n\nWenn Fehler nicht behoben werden, prüfst du das Windows Image.\n\n| Powershell |\n|----------|\n| # Prüft ob Schäden bekannt sind  \n`DISM /Online /Cleanup-Image /CheckHealth` |\n\nDanach vollständige Reparatur durchführen.\n\n| Powershell |\n|----------|\n| # Repariert das Windows Image  \n`DISM /Online /Cleanup-Image /RestoreHealth` |\n\nZum Schluss Speicher und Laufwerke prüfen.\n\n| Powershell |\n|----------|\n| # Zeigt Laufwerke mit Speicher  \n`Get-PSDrive -PSProvider FileSystem` |\n\n\n## Verwandte Befehle\n\n- chkdsk  \nPrüft Dateisystem und Sektoren  \n\n- diskpart  \nErweiterte Datenträgerverwaltung  \n\n- winver  \nWindows Version prüfen  \n\n"
+    },
+    {
+      "id": "support-systeminfo",
+      "originalId": "guide-1786003365777",
+      "title": "Systeminformationen auslesen und exportieren",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "Support.sheet",
+        "systeminfo",
+        "dxdiag",
+        "windows",
+        "troubleshooting",
+        "inventory"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T08:02:45.777Z",
+      "modified": "2026-08-06T10:49:30.692Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/windows-server/administration/windows-commands/systeminfo",
+          "text": "https://learn.microsoft.com/windows-server/administration/windows-commands/systeminfo"
+        },
+        {
+          "url": "https://learn.microsoft.com/windows/win32/direct3dtools/dxdiag",
+          "text": "https://learn.microsoft.com/windows/win32/direct3dtools/dxdiag"
+        },
+        {
+          "url": "https://learn.microsoft.com/azure/active-directory/devices/troubleshoot-device-dsregcmd",
+          "text": "https://learn.microsoft.com/azure/active-directory/devices/troubleshoot-device-dsregcmd"
+        },
+        {
+          "url": "https://learn.microsoft.com/windows/win32/sysinfo/msinfo32",
+          "text": "https://learn.microsoft.com/windows/win32/sysinfo/msinfo32"
+        }
+      ],
+      "content": "# Systeminformationen\n\n# Was macht der Befehl\n\nDiese Befehle sammeln Systeminformationen zu Hardware, Windows Version, Lizenzstatus und Umgebung. Viele davon exportieren die Daten direkt in Dateien für Analyse oder Weitergabe. Ideal für Support ohne direkten Zugriff.\n\n\n## Wann verwenden\n\n- Systemdaten an Kollegen oder Hersteller senden  \n- Hardware und Windows Version prüfen  \n- Lizenzstatus kontrollieren  \n- Performance Probleme analysieren  \n- Remote Systeme schnell erfassen  \n\n\n## Wichtige Befehle\n\n`systeminfo` Zeigt komplette Systemübersicht  \n\n`systeminfo > %USERPROFILE%\\Desktop\\systeminfo.txt` Export als Datei  \n\n`dxdiag /t %USERPROFILE%\\Desktop\\dxdiag.txt` DirectX Report erstellen  \n\n`msinfo32` GUI Systeminformationen  \n\n`dsregcmd /status` Azure AD und Domain Status  \n\n`winver` Windows Version anzeigen  \n\n`set` Umgebungsvariablen anzeigen  \n\n`slmgr /dlv` Aktivierungsstatus  \n\n`resmon` Ressourcenmonitor  \n\n`wmic computersystem get name` Computername  \n\n\n## Häufige Fehler\n\n- Datei wird nicht erstellt  \nPfad falsch oder keine Schreibrechte  \n\n- Leere oder unvollständige Infos  \nBefehl nicht als Admin ausgeführt  \n\n- dxdiag dauert lange  \nTreiber oder Hardware reagieren langsam  \n\n- slmgr zeigt Fehler  \nLizenzdienst läuft nicht korrekt  \n\n- dsregcmd unverständlich  \nNur relevant in Domain oder Azure AD Umgebung  \n\n\n## Praxisbeispiel\n\nEin Benutzer meldet Probleme und du brauchst alle relevanten Infos ohne Remote Zugriff.\n\n| Powershell |\n|----------|\n| # Exportiert Systeminformationen auf Desktop  \n`systeminfo > %USERPROFILE%\\Desktop\\systeminfo.txt` |\n\n| Powershell |\n|----------|\n| # Erstellt DirectX Diagnose Report  \n`dxdiag /t %USERPROFILE%\\Desktop\\dxdiag.txt` |\n\nDu willst beides in einem Schritt erzeugen.\n\n| Powershell |\n|----------|\n| # Kombinierter Export  \n`systeminfo > %USERPROFILE%\\Desktop\\systeminfo.txt && dxdiag /t %USERPROFILE%\\Desktop\\dxdiag.txt` |\n\nDu prüfst zusätzlich ob das Gerät korrekt in der Domain ist.\n\n| Powershell |\n|----------|\n| # Zeigt Join Status  \n`dsregcmd /status` |\n\n\n## Verwandte Befehle\n\n- Get-CimInstance  \nDetaillierte Systeminfos per PowerShell  \n\n- hostname  \nSchneller Computername  \n\n- taskmgr  \nSchnelle Performance Übersicht  "
+    },
+    {
+      "id": "support-powershell-admin",
+      "originalId": "guide-1786003501184",
+      "title": "PowerShell - Admin & Troubleshooting Befehle",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "powershell",
+        "windows",
+        "admin",
+        "troubleshooting",
+        "remote",
+        "services",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T08:05:01.184Z",
+      "modified": "2026-08-06T10:49:04.044Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/powershell",
+          "text": "https://learn.microsoft.com/powershell"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/microsoft.powershell.security/set-executionpolicy",
+          "text": "https://learn.microsoft.com/powershell/module/microsoft.powershell.security/set-executionpolicy"
+        },
+        {
+          "url": "https://learn.microsoft.com/windows/win32/winrm/portal",
+          "text": "https://learn.microsoft.com/windows/win32/winrm/portal"
+        }
+      ],
+      "content": "# PowerShell Admin & Diagnose\n\n# Was macht das\n\nDiese Befehle helfen dir bei der Systemverwaltung, Analyse und Remote-Steuerung von Windows-Systemen. Fokus liegt auf schnellen Admin-Tasks, Diagnose und Automatisierung.\n\n\n## Wann verwenden\n\n- PowerShell als Admin starten  \n- Prozesse analysieren (CPU, RAM)  \n- Dienste verwalten  \n- Updates und Software prüfen  \n- Speicherplatz analysieren  \n- Remote-Befehle ausführen  \n- Zertifikate überwachen  \n\n\n## Wichtige Befehle\n\n`Start-Process powershell -Verb runAs`  \nStartet PowerShell als Administrator  \n\n`Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`  \nErlaubt lokale Skripte  \n\n`Get-ExecutionPolicy -List`  \nZeigt alle Richtlinien  \n\n`Get-Process | Sort CPU -Descending | Select -First 20`  \nTop CPU Prozesse  \n\n`Restart-Service -Name \"Dienstname\"`  \nDienst neu starten  \n\n`Get-Service | Where {$_.Status -eq \"Running\"}`  \nLaufende Dienste  \n\n`Get-HotFix | Sort InstalledOn -Descending | Select -First 20`  \nInstallierte Updates  \n\n`Get-ItemProperty HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*`  \nInstallierte Programme  \n\n`Get-PSDrive -PSProvider FileSystem`  \nLaufwerke anzeigen  \n\n`Get-PhysicalDisk`  \nFestplattenstatus  \n\n`Get-ChildItem \"C:\\Ordner\" -Recurse | Measure Length -Sum`  \nOrdnergröße berechnen  \n\n\n## Remote & Sessions\n\n`Invoke-Command -ComputerName HOSTNAME -ScriptBlock { Get-Process }`  \nFührt Befehl remote aus  \n\n`Enter-PSSession -ComputerName HOSTNAME`  \nInteraktive Remote-Session  \n\n\n## Zertifikate prüfen\n\n`Get-ChildItem Cert:\\LocalMachine\\My`  \nLokale Zertifikate  \n\nZertifikate mit Ablaufdatum berechnen:\n\n`Get-ChildItem Cert:\\LocalMachine\\My | Select Subject, NotAfter`\n\nBald ablaufende Zertifikate:\n\n`Where {$_.NotAfter -lt (Get-Date).AddDays(30)}`  \n\n\n## Häufige Fehler\n\n- Zugriff verweigert  \nPowerShell nicht als Admin gestartet  \n\n- Skript wird blockiert  \nExecutionPolicy zu restriktiv  \n\n- Remote funktioniert nicht  \nWinRM nicht aktiviert (`Enable-PSRemoting`)  \n\n- Dienst startet nicht  \nAbhängigkeiten prüfen  \n\n- Zertifikate fehlen  \nFalscher Store (LocalMachine vs CurrentUser)  \n\n\n## Praxisbeispiel\n\nDu willst einen Server analysieren, der langsam ist.\n\n| PowerShell |\n|-----------|\n| # Top CPU Prozesse anzeigen  \n`Get-Process | Sort CPU -Descending | Select -First 10` |\n\n| PowerShell |\n|-----------|\n| # Dienste prüfen  \n`Get-Service | Where {$_.Status -ne \"Running\"}` |\n\n| PowerShell |\n|-----------|\n| # Updates checken  \n`Get-HotFix | Sort InstalledOn -Descending | Select -First 5` |\n\nDu willst das Ganze remote machen.\n\n| PowerShell |\n|-----------|\n| `Invoke-Command -ComputerName SERVER01 -ScriptBlock { Get-Process }` |\n\n\n## Verwandte Befehle\n\n- Get-CimInstance  \nTiefere Systeminfos  \n\n- taskmgr  \nGUI Alternative  \n\n- services.msc  \nDienste grafisch verwalten  \n\n- winrm quickconfig  \nRemote vorbereiten  "
+    },
+    {
+      "id": "support-prozesse-dienste",
+      "originalId": "guide-1786004249735",
+      "title": "Prozesse und Dienste verwalten",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "prozesse",
+        "dienste",
+        "windows",
+        "troubleshooting",
+        "services",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T08:17:29.735Z",
+      "modified": "2026-08-06T10:48:40.999Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/windows-server/administration/windows-commands/tasklist",
+          "text": "tasklist"
+        },
+        {
+          "url": "https://learn.microsoft.com/windows-server/administration/windows-commands/taskkill",
+          "text": "taskkill"
+        },
+        {
+          "url": "https://learn.microsoft.com/windows-server/administration/windows-commands/sc",
+          "text": "sc"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/scheduledtasks/",
+          "text": "ScheduledTasks PowerShell"
+        }
+      ],
+      "content": "# Prozesse & Dienste\n\n# Was macht der Befehl\n\nDiese Befehle dienen zur Verwaltung von Prozessen und Windows Diensten. Sie helfen beim Analysieren, Starten, Stoppen und Beenden von Anwendungen sowie bei der Diagnose von Systemproblemen.\n\n\n## Wann verwenden\n\n- Prozesse mit hoher Auslastung identifizieren  \n- Hängende Programme beenden  \n- Windows Dienste starten oder stoppen  \n- Dienstkonfiguration prüfen  \n- Neustarts für Wartungsfenster planen  \n- Prozesse einer Netzwerkverbindung zuordnen  \n\n\n## Wichtige Befehle\n\n`tasklist` Alle laufenden Prozesse anzeigen  \n\n`tasklist /FI \"PID eq 1234\"` Prozess anhand der PID suchen  \n\n`taskkill /PID 1234 /F` Prozess zwangsweise beenden  \n\n`sc query Dienstname` Status eines Dienstes anzeigen  \n\n`sc start Dienstname` Dienst starten  \n\n`sc stop Dienstname` Dienst stoppen  \n\n`sc config Dienstname start= auto` Starttyp ändern  \n\n`sc query type= all state= inactive` Gestoppte Dienste anzeigen  \n\n\n## Häufige Fehler\n\n- Prozess beendet sich nicht  \nSystemprozess oder fehlende Berechtigungen  \n\n- Dienst startet nicht  \nAbhängige Dienste oder fehlerhafte Konfiguration prüfen  \n\n- `sc config` liefert Fehler  \nLeerzeichen nach `start=` fehlt  \n\n- Falsche PID verwendet  \nPID vorher mit `tasklist` oder Task Manager prüfen  \n\n- Zugriff verweigert  \nCMD oder PowerShell als Administrator starten  \n\n\n## Praxisbeispiel\n\nEin Programm reagiert nicht mehr und muss beendet werden.\n\n| CMD |\n|----------|\n| # Alle Prozesse anzeigen  \n`tasklist` |\n\n| CMD |\n|----------|\n| # Prozess anhand der PID beenden  \n`taskkill /PID 1234 /F` |\n\nEin Windows Dienst ist gestoppt und soll wieder gestartet werden.\n\n| CMD |\n|----------|\n| # Status des Dienstes prüfen  \n`sc query Spooler` |\n\n| CMD |\n|----------|\n| # Dienst starten  \n`sc start Spooler` |\n\nFür ein Wartungsfenster soll ein Server automatisch neu gestartet werden.\n\n| PowerShell |\n|----------|\n| # Einmaligen Neustart über Aufgabenplanung erstellen  \n`$action = New-ScheduledTaskAction -Execute \"shutdown.exe\" -Argument \"/r /f /t 0\"`  \n`$trigger = New-ScheduledTaskTrigger -Once -At \"22:00\"`  \n`Register-ScheduledTask -TaskName \"Server Neustart Wartung\" -Action $action -Trigger $trigger -RunLevel Highest -User \"SYSTEM\"` |\n\n\n## Verwandte Befehle\n\n- Get-Process  \nPowerShell Alternative zu tasklist  \n\n- Get-Service  \nPowerShell Verwaltung von Diensten  \n\n- Restart-Service  \nDienst sicher neu starten  \n\n- netstat -ano  \nNetzwerkverbindungen einer PID zuordnen  \n\n"
+    },
+    {
+      "id": "support-benutzer-gruppen",
+      "originalId": "guide-1786004350196",
+      "title": "Benutzer und Gruppen verwalten",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "user",
+        "gruppen",
+        "windows",
+        "administration",
+        "troubleshooting",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T08:19:10.196Z",
+      "modified": "2026-08-06T10:48:12.157Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/windows-server/administration/windows-commands/net-user",
+          "text": "net user"
+        },
+        {
+          "url": "https://learn.microsoft.com/windows-server/administration/windows-commands/net-localgroup",
+          "text": "net localgroup"
+        },
+        {
+          "url": "https://learn.microsoft.com/windows-server/administration/windows-commands/whoami",
+          "text": "whoami"
+        },
+        {
+          "url": "https://learn.microsoft.com/windows-server/administration/windows-commands/query-user",
+          "text": "query user"
+        }
+      ],
+      "content": "# Benutzer & Gruppen\n\n# Was macht der Befehl\n\nDiese Befehle zeigen Informationen zu lokalen Benutzern, Gruppen und angemeldeten Sitzungen. Außerdem lassen sich Benutzer zu Gruppen hinzufügen oder entfernen und aktive Sitzungen verwalten.\n\n\n## Wann verwenden\n\n- Benutzerkonto prüfen  \n- Gruppenmitgliedschaften kontrollieren  \n- Lokale Administratoren verwalten  \n- Aktive Benutzer-Sitzungen anzeigen  \n- Benutzer abmelden  \n- Berechtigungsprobleme analysieren  \n\n\n## Wichtige Befehle\n\n`net user BENUTZERNAME` Details zu einem lokalen Benutzer anzeigen  \n\n`net user BENUTZERNAME /domain` Details eines Domänenbenutzers anzeigen  \n\n`net localgroup` Alle lokalen Gruppen anzeigen  \n\n`net localgroup Administratoren` Mitglieder der Administratorengruppe anzeigen  \n\n`net localgroup Administratoren BENUTZERNAME /add` Benutzer zur Administratorengruppe hinzufügen  \n\n`net localgroup Administratoren BENUTZERNAME /delete` Benutzer aus der Administratorengruppe entfernen  \n\n`whoami /all` Aktuellen Benutzer inklusive Gruppen und Berechtigungen anzeigen  \n\n`query user` Aktive Benutzer-Sitzungen anzeigen  \n\n`logoff SESSION-ID` Benutzer-Sitzung abmelden  \n\n`Get-CimInstance Win32_ComputerSystem | Select Username` Aktuell angemeldeten Benutzer per PowerShell anzeigen  \n\n\n## Häufige Fehler\n\n- Benutzer nicht gefunden  \nLokaler Benutzer und Domänenbenutzer verwechselt  \n\n- Zugriff verweigert  \nCMD oder PowerShell nicht als Administrator gestartet  \n\n- Änderungen wirken nicht sofort  \nBenutzer muss sich neu anmelden  \n\n- Falsche Session beendet  \nVor `logoff` immer die Session-ID mit `query user` prüfen  \n\n- Benutzer versehentlich aus Administratoren entfernt  \nZweiten Administrator behalten bevor Änderungen vorgenommen werden  \n\n\n## Praxisbeispiel\n\nEin Benutzer hat keine Administratorrechte mehr.\n\n| CMD |\n|----------|\n| # Prüft die Mitglieder der Administratorengruppe  \n`net localgroup Administratoren` |\n\n| CMD |\n|----------|\n| # Fügt den Benutzer wieder hinzu  \n`net localgroup Administratoren Max.Mustermann /add` |\n\nEin Terminalserver soll bereinigt werden.\n\n| CMD |\n|----------|\n| # Zeigt alle aktiven Sitzungen  \n`query user` |\n\n| CMD |\n|----------|\n| # Meldet eine bestimmte Sitzung ab  \n`logoff 3` |\n\nDu möchtest die Berechtigungen des aktuell angemeldeten Benutzers prüfen.\n\n| CMD |\n|----------|\n| # Zeigt Benutzer, Gruppen und Rechte  \n`whoami /all` |\n\n\n## Verwandte Befehle\n\n- net accounts  \nLokale Kennwortrichtlinien anzeigen  \n\n- lusrmgr.msc  \nLokale Benutzer und Gruppen grafisch verwalten  \n\n- compmgmt.msc  \nComputerverwaltung mit Benutzerverwaltung  \n\n- Get-LocalUser  \nPowerShell Alternative für lokale Benutzer  \n"
+    },
+    {
+      "id": "support-eventlog",
+      "originalId": "guide-1786004471838",
+      "title": "Windows Ereignisprotokolle analysieren",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "eventlog",
+        "ereignisanzeige",
+        "troubleshooting",
+        "powershell",
+        "windows",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T08:21:11.838Z",
+      "modified": "2026-08-06T10:55:43.410Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/powershell/module/microsoft.powershell.diagnostics/get-winevent",
+          "text": "https://learn.microsoft.com/powershell/module/microsoft.powershell.diagnostics/get-winevent"
+        },
+        {
+          "url": "https://learn.microsoft.com/windows/win32/wes/windows-event-log",
+          "text": "https://learn.microsoft.com/windows/win32/wes/windows-event-log"
+        },
+        {
+          "url": "https://learn.microsoft.com/windows/security/threat-protection/auditing/event-ids",
+          "text": "https://learn.microsoft.com/windows/security/threat-protection/auditing/event-ids"
+        }
+      ],
+      "content": "# Event Logs\n\n# Was macht der Befehl\n\nDiese Befehle lesen Windows Ereignisprotokolle aus und filtern gezielt Fehler, Warnungen oder bestimmte Ereignisse. Sie sind unverzichtbar für die Fehlersuche nach Abstürzen, Performance Problemen oder unerwarteten Neustarts.\n\n\n## Wann verwenden\n\n- Bluescreens analysieren\n- Programmabstürze untersuchen\n- Unerwartete Neustarts nachvollziehen\n- Performance Probleme analysieren\n- Fehlerprotokolle exportieren\n- Server auf kritische Ereignisse überwachen\n\n\n## Wichtige Befehle\n\n`Get-WinEvent -FilterHashtable @{LogName='System'; Level=1,2; StartTime=(Get-Date).AddHours(-24)}`  \nKritische Systemfehler der letzten 24 Stunden\n\n`Get-WinEvent -FilterHashtable @{LogName='Application'; Level=1,2; StartTime=(Get-Date).AddHours(-24)}`  \nAnwendungsfehler der letzten 24 Stunden\n\n`Get-WinEvent -FilterHashtable @{LogName='Application','System'; Id=1000,1001,1002,6008,41}`  \nTypische Absturz und Shutdown Ereignisse\n\n`Get-WinEvent -FilterHashtable @{LogName='System','Application'; Level=1,2,3; StartTime=(Get-Date).AddDays(-7)} | Export-Csv ...`  \nFehler und Warnungen als CSV exportieren\n\n`Get-WinEvent -FilterHashtable @{LogName='System'; Id=6005,6006,6008,1074,41}`  \nNeustarts und Shutdowns anzeigen\n\n`wevtutil sl System /ms:524288000`  \nGröße des System Event Logs erhöhen\n\n`Get-WinEvent -ListLog *`  \nAlle vorhandenen Event Logs auflisten\n\n`Get-WinEvent -FilterHashtable @{LogName='System'; Id=2004,2013,2019,2020}`  \nRAM und Speicherprobleme anzeigen\n\n\n## Wichtige Event IDs\n\n### Systemstart & Neustart\n\n| Event ID | Bedeutung |\n|----------|-----------|\n| 41 | Kernel Power. Unerwarteter Neustart oder Stromausfall |\n| 1074 | Geplanter Neustart oder Herunterfahren |\n| 1076 | Grund für unerwarteten Neustart protokolliert |\n| 6005 | Event Log Dienst gestartet |\n| 6006 | Event Log Dienst beendet |\n| 6008 | Unerwarteter Shutdown |\n| 6013 | Systemlaufzeit seit letztem Start |\n\n\n### Anwendungen\n\n| Event ID | Bedeutung |\n|----------|-----------|\n| 1000 | Anwendungsabsturz |\n| 1001 | Windows Error Reporting |\n| 1002 | Anwendung reagiert nicht |\n| 1005 | Anwendung hängt beim Start oder Beenden |\n| 1026 | .NET Runtime Ausnahme |\n\n\n### Windows Updates\n\n| Event ID | Bedeutung |\n|----------|-----------|\n| 19 | Update erfolgreich installiert |\n| 20 | Update Installation fehlgeschlagen |\n| 21 | Update erfolgreich installiert nach Neustart |\n| 25 | Update Rollback durchgeführt |\n| 31 | Neustart erforderlich |\n| 34 | Update Download fehlgeschlagen |\n| 35 | Update Installation gestartet |\n\n\n### Anmeldung & Sicherheit\n\n| Event ID | Bedeutung |\n|----------|-----------|\n| 4624 | Erfolgreiche Anmeldung |\n| 4625 | Fehlgeschlagene Anmeldung |\n| 4634 | Benutzer abgemeldet |\n| 4648 | Anmeldung mit anderen Anmeldedaten |\n| 4672 | Anmeldung mit Administratorrechten |\n| 4740 | Benutzerkonto gesperrt |\n| 4767 | Benutzerkonto entsperrt |\n\n\n### Dienste\n\n| Event ID | Bedeutung |\n|----------|-----------|\n| 7000 | Dienst konnte nicht gestartet werden |\n| 7001 | Abhängiger Dienst fehlt |\n| 7009 | Timeout beim Start eines Dienstes |\n| 7011 | Dienst antwortet nicht rechtzeitig |\n| 7022 | Dienst hängt beim Start |\n| 7023 | Dienst wurde mit Fehler beendet |\n| 7031 | Dienst wurde unerwartet beendet |\n| 7034 | Dienst wurde unerwartet beendet |\n| 7040 | Starttyp eines Dienstes geändert |\n| 7045 | Neuer Dienst installiert |\n\n\n### Datenträger & Dateisystem\n\n| Event ID | Bedeutung |\n|----------|-----------|\n| 7 | Defekter Block auf Datenträger |\n| 51 | Fehler beim Schreiben oder Lesen |\n| 55 | Dateisystem beschädigt |\n| 98 | NTFS Konsistenzprüfung |\n| 129 | Timeout des Speichercontrollers |\n| 153 | Wiederholter Datenträgerfehler |\n| 157 | Datenträger wurde unerwartet entfernt |\n\n\n### Netzwerk\n\n| Event ID | Bedeutung |\n|----------|-----------|\n| 4201 | Netzwerkadapter verbunden |\n| 4202 | Netzwerkadapter getrennt |\n| 1014 | DNS Namensauflösung fehlgeschlagen |\n\n\n### Speicher & Performance\n\n| Event ID | Bedeutung |\n|----------|-----------|\n| 2004 | Arbeitsspeicher knapp |\n| 2013 | Ressourcen erschöpft |\n| 2019 | Nonpaged Pool erschöpft |\n| 2020 | Paged Pool erschöpft |\n\n\n### Gruppenrichtlinien\n\n| Event ID | Bedeutung |\n|----------|-----------|\n| 1058 | Gruppenrichtlinie konnte nicht gelesen werden |\n| 1030 | Gruppenrichtlinie konnte nicht verarbeitet werden |\n| 1502 | Benutzerprofil konnte nicht geladen werden |\n| 1508 | Fehler beim Lesen des Benutzerprofils |\n| 1511 | Temporäres Benutzerprofil geladen |\n| 1515 | Lokales Benutzerprofil beschädigt |\n\n\n### Hyper V\n\n| Event ID | Bedeutung |\n|----------|-----------|\n| 12020 | VM konnte nicht gestartet werden |\n| 18560 | Fehler bei der Hyper V Replikation |\n| 18590 | Replikation erfolgreich abgeschlossen |\n\n\n### Drucker\n\n| Event ID | Bedeutung |\n|----------|-----------|\n| 307 | Druckauftrag erfolgreich abgeschlossen |\n| 372 | Druckauftrag fehlgeschlagen |\n| 808 | Druckspooler Fehler |\n\n\n### Zertifikate\n\n| Event ID | Bedeutung |\n|----------|-----------|\n| 64 | Zertifikat konnte nicht überprüft werden |\n| 70 | Zertifikat abgelaufen oder ungültig |\n\n\n### Active Directory\n\n| Event ID | Bedeutung |\n|----------|-----------|\n| 2886 | LDAP Signing nicht erzwungen |\n| 2887 | Unsichere LDAP Bindungen erkannt |\n| 2889 | Client nutzt unsichere LDAP Bindung |\n| 2089 | AD Backup überfällig |\n\n\n## Häufige Fehler\n\n- Falsches Log ausgewählt  \nViele Fehler stehen im Application statt System Log\n\n- Nachricht abgeschnitten  \nMit `Format-List` oder `Select Message` vollständig anzeigen\n\n- Keine Ergebnisse  \nZeitraum oder Event ID prüfen\n\n- Zugriff verweigert  \nPowerShell als Administrator starten\n\n- Zu viele Einträge  \nMit `StartTime` oder `MaxEvents` filtern\n\n\n## Praxisbeispiel\n\nEin Server wurde über Nacht unerwartet neu gestartet.\n\n| PowerShell |\n|----------|\n| # Zeigt die letzten Neustarts und Shutdowns |\n`Get-WinEvent -FilterHashtable @{LogName='System'; Id=6005,6006,6008,1074,41} | Sort-Object TimeCreated -Descending | Select -First 20` |\n\nEin Benutzer meldet regelmäßige Programmabstürze.\n\n| PowerShell |\n|----------|\n| # Zeigt typische Application Crashes |\n`Get-WinEvent -FilterHashtable @{LogName='Application'; Id=1000,1001,1002} | Sort-Object TimeCreated -Descending | Select -First 20` |\n\nFür eine Eskalation sollen alle Fehler exportiert werden.\n\n| PowerShell |\n|----------|\n| # Exportiert Fehler der letzten 7 Tage |\n`Get-WinEvent -FilterHashtable @{LogName='System','Application'; Level=1,2,3; StartTime=(Get-Date).AddDays(-7)} | Select TimeCreated,Id,LevelDisplayName,ProviderName,Message | Export-Csv 'C:\\Temp\\eventlog.csv' -NoTypeInformation -Encoding UTF8 -Delimiter ';'` |\n\n\n## Verwandte Befehle\n\n- `eventvwr.msc`  \nGrafische Ereignisanzeige\n\n- `Get-WinEvent`  \nPowerShell Zugriff auf alle Event Logs\n\n- `wevtutil`  \nEvent Logs verwalten und exportieren\n\n- `Get-EventLog`  \nLegacy Cmdlet für ältere Windows Versionen\n\n"
+    },
+    {
+      "id": "support-active-directory",
+      "originalId": "guide-1786004608312",
+      "title": "Active Directory Benutzer verwalten",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "active-directory",
+        "ad",
+        "powershell",
+        "benutzer",
+        "administration",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T08:23:28.312Z",
+      "modified": "2026-08-06T10:46:10.984Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/powershell/module/activedirectory/",
+          "text": "Active Directory PowerShell Module"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/activedirectory/get-aduser",
+          "text": "Get-ADUser"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/activedirectory/search-adaccount",
+          "text": "Search-ADAccount"
+        },
+        {
+          "url": "https://learn.microsoft.com/entra/identity/hybrid/connect/how-to-connect-sync-feature-scheduler",
+          "text": "Microsoft Entra Connect Sync"
+        }
+      ],
+      "content": "# Active Directory\n\n# Was macht der Befehl\n\nDiese PowerShell Befehle dienen zur Verwaltung von Active Directory Benutzern und Gruppen. Sie helfen bei der Benutzerverwaltung, Passwortänderungen, Kontosperren sowie der Analyse von Berechtigungen und Synchronisationen.\n\n\n## Wann verwenden\n\n- Benutzerkonto prüfen\n- Passwort zurücksetzen\n- Gesperrte Konten entsperren\n- Gruppenmitgliedschaften kontrollieren\n- Login Probleme analysieren\n- Microsoft Entra ID Synchronisierung starten\n\n\n## Wichtige Befehle\n\n`Get-ADUser -Identity \"benutzername\"`  \nBenutzerdetails anzeigen\n\n`Get-ADUser -Filter {DisplayName -like \"*Mustermann*\"}`  \nBenutzer suchen\n\n`Set-ADAccountPassword -Identity \"benutzername\" -Reset`  \nPasswort zurücksetzen\n\n`Unlock-ADAccount -Identity \"benutzername\"`  \nKonto entsperren\n\n`Enable-ADAccount -Identity \"benutzername\"`  \nBenutzer aktivieren\n\n`Disable-ADAccount -Identity \"benutzername\"`  \nBenutzer deaktivieren\n\n`Get-ADPrincipalGroupMembership -Identity \"benutzername\"`  \nGruppenmitgliedschaften anzeigen\n\n`Search-ADAccount -LockedOut`  \nAlle gesperrten Konten\n\n`Search-ADAccount -PasswordExpired`  \nKonten mit abgelaufenem Passwort\n\n`Start-ADSyncSyncCycle -PolicyType Delta`  \nMicrosoft Entra ID Synchronisierung starten\n\n`Get-CimInstance Win32_Service`  \nDienste mit Domänenkonten anzeigen\n\n\n## Häufige Fehler\n\n- Active Directory Modul fehlt  \nRSAT oder Active Directory PowerShell Modul nicht installiert\n\n- Zugriff verweigert  \nBenötigte Berechtigungen fehlen\n\n- Benutzer nicht gefunden  \nFalscher SamAccountName oder falsche Domäne\n\n- ADSync Cmdlet nicht vorhanden  \nNur auf dem Microsoft Entra Connect Server verfügbar\n\n- Passwort geändert aber Dienst startet nicht  \nDienstkonto verwendet noch das alte Kennwort\n\n\n## Praxisbeispiel\n\nEin Benutzer kann sich nicht mehr anmelden.\n\n| PowerShell |\n|----------|\n| # Benutzerstatus prüfen |\n`Get-ADUser -Identity \"max.mustermann\" -Properties LockedOut,LastLogonDate,PasswordExpired | Select Name,Enabled,LockedOut,PasswordExpired,LastLogonDate` |\n\nDas Konto ist gesperrt und wird entsperrt.\n\n| PowerShell |\n|----------|\n| # Konto entsperren |\n`Unlock-ADAccount -Identity \"max.mustermann\"` |\n\nNach einer Änderung soll die Synchronisierung nach Microsoft Entra ID sofort gestartet werden.\n\n| PowerShell |\n|----------|\n| # Delta Synchronisierung starten |\n`Start-ADSyncSyncCycle -PolicyType Delta` |\n\nDu möchtest prüfen welche Berechtigungen ein Benutzer besitzt.\n\n| PowerShell |\n|----------|\n| # Gruppenmitgliedschaften anzeigen |\n`Get-ADPrincipalGroupMembership -Identity \"max.mustermann\" | Sort-Object Name` |\n\n\n## Verwandte Befehle\n\n- `Get-ADGroupMember`  \nMitglieder einer Gruppe anzeigen\n\n- `Get-ADComputer`  \nComputerobjekte verwalten\n\n- `Get-ADOrganizationalUnit`  \nOrganisationseinheiten anzeigen\n\n- `gpresult /r`  \nAngewendete Gruppenrichtlinien prüfen"
+    },
+    {
+      "id": "support-drucker-spooler",
+      "originalId": "guide-1786004719813",
+      "title": "Drucker und Druckspooler verwalten",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "drucker",
+        "spooler",
+        "printing",
+        "powershell",
+        "troubleshooting",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T08:25:19.813Z",
+      "modified": "2026-08-06T10:45:39.753Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/powershell/module/printmanagement/",
+          "text": "PrintManagement PowerShell"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/printmanagement/get-printer",
+          "text": "Get-Printer"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/printmanagement/get-printjob",
+          "text": "Get-PrintJob"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/printmanagement/add-printer",
+          "text": "Add-Printer"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/printmanagement/add-printerport",
+          "text": "Add-PrinterPort"
+        }
+      ],
+      "content": "# Drucker & Spooler\n\n# Was macht der Befehl\n\nDiese Befehle helfen bei der Verwaltung von Druckern, Druckwarteschlangen und Druckertreibern. Sie eignen sich für die Fehlersuche bei Druckproblemen sowie für die Installation und Administration von Netzwerkdruckern.\n\n\n## Wann verwenden\n\n- Druckaufträge hängen fest\n- Drucker ist offline\n- Druckspooler reagiert nicht\n- Netzwerkdrucker installieren\n- Druckertreiber prüfen\n- Print Server administrieren\n\n\n## Wichtige Befehle\n\n`net stop spooler && del /Q /F \"%SystemRoot%\\System32\\spool\\PRINTERS\\*.*\" && net start spooler`  \nDruckspooler zurücksetzen\n\n`Get-Printer`  \nInstallierte Drucker anzeigen\n\n`Get-PrintJob -PrinterName \"DRUCKERNAME\"`  \nDruckwarteschlange anzeigen\n\n`Get-PrintJob -PrinterName \"DRUCKERNAME\" | Remove-PrintJob`  \nAlle Druckjobs löschen\n\n`Get-PrinterDriver`  \nInstallierte Druckertreiber anzeigen\n\n`Get-PrinterPort`  \nKonfigurierte Druckerports anzeigen\n\n`Add-Printer`  \nDrucker hinzufügen\n\n`Add-PrinterPort`  \nTCP IP Druckerport erstellen\n\n\n## Häufige Fehler\n\n- Druckauftrag bleibt hängen  \nDruckspooler oder Warteschlange blockiert\n\n- Drucker offline  \nIP Adresse oder Netzwerkverbindung prüfen\n\n- Treiber nicht gefunden  \nPassender Druckertreiber fehlt\n\n- Port falsch konfiguriert  \nDruckerport zeigt auf falsche IP\n\n- Zugriff verweigert  \nAdministratorrechte erforderlich\n\n\n## Praxisbeispiel\n\nEin Benutzer kann nicht mehr drucken weil ein Auftrag die Warteschlange blockiert.\n\n| CMD |\n|----------|\n| # Druckspooler komplett zurücksetzen |\n`net stop spooler && del /Q /F \"%SystemRoot%\\System32\\spool\\PRINTERS\\*.*\" && net start spooler` |\n\nDu möchtest prüfen welche Druckaufträge noch vorhanden sind.\n\n| PowerShell |\n|----------|\n| # Druckjobs anzeigen |\n`Get-PrintJob -PrinterName \"Büro Drucker\"` |\n\nEin Netzwerkdrucker soll auf einem Print Server überprüft werden.\n\n| PowerShell |\n|----------|\n| # Alle Drucker anzeigen |\n`Get-Printer -ComputerName \"PRINTSERVER\"` |\n\nDu möchtest einen freigegebenen Drucker auf einem Client installieren.\n\n| PowerShell |\n|----------|\n| # Netzwerkdrucker verbinden |\n`Add-Printer -ConnectionName \"\\\\PRINTSERVER\\Büro Drucker\" -ComputerName \"CLIENT01\"` |\n\n\n## Verwandte Befehle\n\n- `services.msc`  \nDruckspooler grafisch verwalten\n\n- `Restart-Service Spooler`  \nPowerShell Alternative zum Neustart\n\n- `Get-Service Spooler`  \nStatus des Druckspoolers prüfen\n\n- `eventvwr.msc`  \nDruckfehler im Event Log analysieren"
+    },
+    {
+      "id": "support-dhcp",
+      "originalId": "guide-1786004817508",
+      "title": "DHCP Server verwalten und analysieren",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "dhcp",
+        "windows-server",
+        "powershell",
+        "netzwerk",
+        "troubleshooting",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T08:26:57.508Z",
+      "modified": "2026-08-06T10:45:09.880Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/powershell/module/dhcpserver/",
+          "text": "https://learn.microsoft.com/powershell/module/dhcpserver/"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/dhcpserver/get-dhcpserverv4scope",
+          "text": "https://learn.microsoft.com/powershell/module/dhcpserver/get-dhcpserverv4scope"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/dhcpserver/get-dhcpserverv4lease",
+          "text": "https://learn.microsoft.com/powershell/module/dhcpserver/get-dhcpserverv4lease"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/dhcpserver/add-dhcpserverv4reservation",
+          "text": "https://learn.microsoft.com/powershell/module/dhcpserver/add-dhcpserverv4reservation"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/dhcpserver/get-dhcpserverv4scopestatistics",
+          "text": "https://learn.microsoft.com/powershell/module/dhcpserver/get-dhcpserverv4scopestatistics"
+        }
+      ],
+      "content": "# DHCP\n\n# Was macht der Befehl\n\nDiese PowerShell Befehle dienen zur Verwaltung und Analyse eines Windows DHCP Servers. Sie helfen beim Prüfen von Scopes, Leases, Reservierungen und der Auslastung des Adresspools sowie bei der Fehlersuche rund um die IP Vergabe.\n\n\n## Wann verwenden\n\n- Clients erhalten keine IP Adresse\n- DHCP Pool ist möglicherweise voll\n- Doppelte IP Adressen analysieren\n- DHCP Reservierungen anlegen\n- Leases prüfen oder löschen\n- DHCP Server Status kontrollieren\n\n\n## Wichtige Befehle\n\n`Get-DhcpServerv4Scope`  \nAlle DHCP Scopes anzeigen\n\n`Get-DhcpServerv4Lease -ScopeId \"192.168.1.0\"`  \nLeases eines Scopes anzeigen\n\n`Get-DhcpServerv4ScopeStatistics -ScopeId \"192.168.1.0\"`  \nAuslastung des DHCP Pools prüfen\n\n`Remove-DhcpServerv4Lease`  \nLease eines Clients löschen\n\n`Add-DhcpServerv4Reservation`  \nFeste IP Adresse reservieren\n\n`Get-Service DHCPServer`  \nStatus des DHCP Dienstes\n\n`Get-DhcpServerSetting`  \nAutorisierung und Servereinstellungen prüfen\n\n\n## Häufige Fehler\n\n- DHCP Pool erschöpft  \nKeine freien IP Adressen mehr verfügbar\n\n- DHCP Server nicht autorisiert  \nIn Active Directory werden keine Leases vergeben\n\n- Falsche MAC Adresse verwendet  \nReservierung oder Lease wird nicht gefunden\n\n- Scope deaktiviert  \nNeue Clients erhalten keine Adresse\n\n- DHCP Dienst gestoppt  \nKeine IP Vergabe möglich\n\n\n## Praxisbeispiel\n\nMehrere Benutzer erhalten keine IP Adresse.\n\n| PowerShell |\n|----------|\n| # Alle DHCP Scopes anzeigen |\n`Get-DhcpServerv4Scope | Select ScopeId, Name, StartRange, EndRange, State` |\n\nDu möchtest prüfen ob der Adresspool ausgelastet ist.\n\n| PowerShell |\n|----------|\n| # Auslastung des DHCP Pools anzeigen |\n`Get-DhcpServerv4ScopeStatistics -ScopeId \"192.168.1.0\"` |\n\nEin Gerät benötigt dauerhaft dieselbe IP Adresse.\n\n| PowerShell |\n|----------|\n| # DHCP Reservierung erstellen |\n`Add-DhcpServerv4Reservation -ScopeId \"192.168.1.0\" -IPAddress \"192.168.1.50\" -ClientId \"00-11-22-33-44-55\" -Name \"PC01\"` |\n\nDu möchtest prüfen ob der DHCP Dienst läuft.\n\n| PowerShell |\n|----------|\n| # Dienststatus anzeigen |\n`Get-Service DHCPServer` |\n\n\n## Verwandte Befehle\n\n- `ipconfig /all`  \nAktuelle DHCP Informationen auf dem Client anzeigen\n\n- `ipconfig /release`  \nDHCP Lease freigeben\n\n- `ipconfig /renew`  \nNeue DHCP Adresse anfordern\n\n- `Get-DhcpServerv4Reservation`  \nVorhandene Reservierungen anzeigen\n"
+    },
+    {
+      "id": "support-hyper-v",
+      "originalId": "guide-1786004964263",
+      "title": "Hyper V virtuelle Maschinen verwalten",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "hyper-v",
+        "virtualisierung",
+        "windows-server",
+        "powershell",
+        "troubleshooting",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T08:29:24.263Z",
+      "modified": "2026-08-06T10:44:31.720Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/powershell/module/hyper-v/",
+          "text": "https://learn.microsoft.com/powershell/module/hyper-v/"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/hyper-v/get-vm",
+          "text": "https://learn.microsoft.com/powershell/module/hyper-v/get-vm"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/hyper-v/checkpoint-vm",
+          "text": "https://learn.microsoft.com/powershell/module/hyper-v/checkpoint-vm"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/hyper-v/get-vmreplication",
+          "text": "https://learn.microsoft.com/powershell/module/hyper-v/get-vmreplication"
+        }
+      ],
+      "content": "# Hyper V\n\n# Was macht der Befehl\n\nDiese PowerShell Befehle dienen zur Verwaltung von Hyper V Hosts und virtuellen Maschinen. Sie ermöglichen das Starten und Stoppen von VMs, das Erstellen von Checkpoints sowie die Überwachung von Ressourcen und Replikation.\n\n\n## Wann verwenden\n\n- Status aller VMs prüfen\n- Virtuelle Maschinen starten oder herunterfahren\n- Checkpoints vor Updates erstellen\n- Ressourcen des Hosts überwachen\n- Replikation kontrollieren\n- Performance Probleme analysieren\n\n\n## Wichtige Befehle\n\n`Get-VM`  \nAlle virtuellen Maschinen anzeigen\n\n`Get-VM -Name \"VMNAME\"`  \nDetails einer VM anzeigen\n\n`Start-VM -Name \"VMNAME\"`  \nVirtuelle Maschine starten\n\n`Stop-VM -Name \"VMNAME\"`  \nVirtuelle Maschine sauber herunterfahren\n\n`Checkpoint-VM -Name \"VMNAME\"`  \nCheckpoint erstellen\n\n`Get-VMCheckpoint -VMName \"VMNAME\"`  \nVorhandene Checkpoints anzeigen\n\n`Get-VMHost`  \nInformationen zum Hyper V Host anzeigen\n\n`Get-VMReplication`  \nStatus der Hyper V Replikation prüfen\n\n\n## Häufige Fehler\n\n- VM startet nicht  \nNicht genügend Arbeitsspeicher oder gesperrte VHDX\n\n- Zu viele Checkpoints  \nLeistung sinkt und Speicherbedarf steigt\n\n- Gast fährt nicht herunter  \nHyper V Integrationsdienste fehlen oder funktionieren nicht\n\n- Replikation fehlerhaft  \nVerbindung zum Replica Server prüfen\n\n- VM befindet sich im Saved State  \nStatus prüfen und VM korrekt starten\n\n\n## Praxisbeispiel\n\nNach der Anmeldung auf einem Hyper V Host prüfst du zuerst alle virtuellen Maschinen.\n\n| PowerShell |\n|----------|\n| # Übersicht aller VMs |\n`Get-VM | Select Name, State, CPUUsage, MemoryAssigned, Uptime` |\n\nVor einem Windows Update wird ein Checkpoint erstellt.\n\n| PowerShell |\n|----------|\n| # Checkpoint erstellen |\n`Checkpoint-VM -Name \"DC01\" -SnapshotName \"Pre-Update-$(Get-Date -Format yyyy-MM-dd)\"` |\n\nNach dem Update kontrollierst du die vorhandenen Checkpoints.\n\n| PowerShell |\n|----------|\n| # Checkpoints anzeigen |\n`Get-VMCheckpoint -VMName \"DC01\"` |\n\nZum Schluss prüfst du den Zustand der Hyper V Replikation.\n\n| PowerShell |\n|----------|\n| # Replikationsstatus anzeigen |\n`Get-VMReplication | Select VMName, State, Health, LastReplicationTime` |\n\n\n## Verwandte Befehle\n\n- `Get-VHD`  \nInformationen zu virtuellen Festplatten\n\n- `Get-VMNetworkAdapter`  \nNetzwerkadapter einer VM anzeigen\n\n- `Restart-VM`  \nVirtuelle Maschine neu starten\n\n- `Get-ClusterGroup`  \nCluster Rollen bei Hyper V Failover Cluster prüfen"
+    },
+    {
+      "id": "support-windows-update",
+      "originalId": "guide-1786005068561",
+      "title": "Windows Update prüfen und reparieren",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "windows-update",
+        "updates",
+        "powershell",
+        "troubleshooting",
+        "wsus",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T08:31:08.561Z",
+      "modified": "2026-08-06T10:43:46.488Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/powershell/module/pswindowsupdate/",
+          "text": "https://learn.microsoft.com/powershell/module/pswindowsupdate/"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/microsoft.powershell.management/get-hotfix",
+          "text": "https://learn.microsoft.com/powershell/module/microsoft.powershell.management/get-hotfix"
+        },
+        {
+          "url": "https://learn.microsoft.com/windows/deployment/update/windows-update-resources",
+          "text": "https://learn.microsoft.com/windows/deployment/update/windows-update-resources"
+        },
+        {
+          "url": "https://learn.microsoft.com/windows/deployment/update/windows-update-client-support",
+          "text": "https://learn.microsoft.com/windows/deployment/update/windows-update-client-support"
+        }
+      ],
+      "content": "# Windows Update\n\n# Was macht der Befehl\n\nDiese Befehle helfen beim Prüfen, Analysieren und Reparieren von Windows Updates. Sie zeigen installierte Updates, setzen den Windows Update Client zurück und unterstützen bei der Fehlersuche in WSUS und Microsoft Update.\n\n\n## Wann verwenden\n\n- Windows Updates schlagen fehl\n- Updateverlauf prüfen\n- WSUS Probleme beheben\n- Update Cache zurücksetzen\n- Neustart nach Updates prüfen\n- Update Fehler analysieren\n\n\n## Wichtige Befehle\n\n`Get-WUInstallHistory -Last 10`  \nLetzte installierte Updates anzeigen\n\n`Get-HotFix`  \nInstallierte Windows Updates anzeigen\n\n`Get-CimInstance Win32_QuickFixEngineering`  \nInstallierte Updates per CIM auslesen\n\n`Stop-Service wuauserv, cryptSvc, bits, msiserver ...`  \nWindows Update Komponenten zurücksetzen\n\n`wuauclt /resetauthorization /detectnow`\n\n`wuauclt /reportnow`  \nWSUS Client neu registrieren\n\n`Get-WinEvent`  \nWindows Update Fehler im Event Log anzeigen\n\n`msdt.exe /id WindowsUpdateDiagnostic`  \nWindows Update Problembehandlung starten\n\n\n## Häufige Fehler\n\n- Update bleibt bei 0 Prozent stehen  \nUpdate Komponenten oder BITS Dienst prüfen\n\n- Fehler 0x80070002 oder 0x80248007  \nSoftwareDistribution und catroot2 zurücksetzen\n\n- Client erscheint nicht im WSUS  \nWSUS Client ID zurücksetzen und Synchronisierung starten\n\n- Update installiert aber nicht aktiv  \nAusstehenden Neustart prüfen\n\n- PSWindowsUpdate Modul fehlt  \nAlternativ `Get-HotFix` verwenden\n\n\n## Praxisbeispiel\n\nEin Client installiert seit Tagen keine Windows Updates.\n\n| PowerShell |\n|----------|\n| # Installierte Updates anzeigen |\n`Get-HotFix | Sort-Object InstalledOn -Descending` |\n\nDer Update Cache soll zurückgesetzt werden.\n\n| PowerShell |\n|----------|\n| # Windows Update Komponenten zurücksetzen |\n`Stop-Service wuauserv,cryptSvc,bits,msiserver -Force`  \n`Rename-Item 'C:\\Windows\\SoftwareDistribution' 'SoftwareDistribution.old'`  \n`Rename-Item 'C:\\Windows\\System32\\catroot2' 'catroot2.old'`  \n`Start-Service wuauserv,cryptSvc,bits,msiserver` |\n\nDanach prüfst du, ob ein Neustart aussteht.\n\n| PowerShell |\n|----------|\n| # Pending Reboot prüfen |\n`Test-Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Component Based Servicing\\RebootPending'` |\n\nDer Rechner erscheint nicht im WSUS.\n\n| PowerShell |\n|----------|\n| # WSUS Client neu registrieren |\n`wuauclt /resetauthorization /detectnow`  \n`wuauclt /reportnow` |\n\n\n## Verwandte Befehle\n\n- `Get-HotFix`  \nInstallierte Updates anzeigen\n\n- `Get-WinEvent`  \nUpdate Fehler analysieren\n\n- `sfc /scannow`  \nBeschädigte Systemdateien reparieren\n\n- `DISM /Online /Cleanup-Image /RestoreHealth`  \nWindows Image reparieren\n"
+    },
+    {
+      "id": "support-rds",
+      "originalId": "guide-1786005153106",
+      "title": "RDS und Terminalserver verwalten",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "rds",
+        "terminalserver",
+        "remotedesktop",
+        "windows-server",
+        "troubleshooting",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T08:32:33.107Z",
+      "modified": "2026-08-06T10:43:08.314Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/windows-server/administration/windows-commands/query-session",
+          "text": "query session"
+        },
+        {
+          "url": "https://learn.microsoft.com/windows-server/administration/windows-commands/query-user",
+          "text": "query user"
+        },
+        {
+          "url": "https://learn.microsoft.com/windows-server/administration/windows-commands/logoff",
+          "text": "logoff"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/remotedesktop/",
+          "text": "Remote Desktop Services PowerShell"
+        }
+      ],
+      "content": "# RDS / Terminalserver\n\n# Was macht der Befehl\n\nDiese Befehle dienen zur Verwaltung von Remotedesktop Sitzungen auf Windows Servern. Sie helfen beim Anzeigen, Trennen und Übernehmen von Sitzungen sowie bei der Analyse von Lizenzierung und Benutzerprofilen.\n\n\n## Wann verwenden\n\n- Angemeldete Benutzer prüfen\n- Hängende Sitzungen beenden\n- Benutzer bei Problemen unterstützen\n- RDS Lizenzierung kontrollieren\n- Prozesse einer Sitzung analysieren\n- Temporäre Profile beheben\n\n\n## Wichtige Befehle\n\n`query session /server:SERVER01`  \nAlle RDS Sitzungen anzeigen\n\n`query user /server:SERVER01`  \nAngemeldete Benutzer anzeigen\n\n`logoff SESSIONID /server:SERVER01`  \nBenutzer abmelden\n\n`mstsc /shadow:SESSIONID /control /noConsentPrompt /v:SERVER01`  \nRDS Sitzung übernehmen\n\n`query process /server:SERVER01 /id:SESSIONID`  \nProzesse einer Sitzung anzeigen\n\n`Get-WmiObject -Namespace root\\cimv2 -Class Win32_TerminalServiceSetting`  \nRDS Lizenzstatus anzeigen\n\n`Invoke-RDUserLogoff`  \nBenutzer per PowerShell abmelden\n\n\n## Häufige Fehler\n\n- Session kann nicht übernommen werden  \nGruppenrichtlinie oder Firewall verhindert Shadowing\n\n- Benutzer bleibt angemeldet  \nHängende Prozesse verhindern die Abmeldung\n\n- Zugriff verweigert  \nAdministratorrechte oder RDS Berechtigungen fehlen\n\n- Temporäres Profil geladen  \nBeschädigtes Benutzerprofil oder fehlerhafter Registry Eintrag\n\n- Lizenzierungsfehler  \nRDS Lizenzserver oder Lizenzmodus falsch konfiguriert\n\n\n## Praxisbeispiel\n\nEin Benutzer meldet eine eingefrorene RDP Sitzung.\n\n| CMD |\n|----------|\n| # Alle Sitzungen anzeigen |\n`query session /server:RDS01` |\n\nDu identifizierst die Session und meldest sie sauber ab.\n\n| CMD |\n|----------|\n| # Sitzung abmelden |\n`logoff 5 /server:RDS01` |\n\nFür eine Support Sitzung übernimmst du den Bildschirm des Benutzers.\n\n| CMD |\n|----------|\n| # Shadow Session starten |\n`mstsc /shadow:5 /control /noConsentPrompt /v:RDS01` |\n\nEin Benutzer erhält nur ein temporäres Profil.\n\n| PowerShell |\n|----------|\n| # Profilstatus prüfen |\n`Get-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList\\*' | Where-Object {$_.ProfileImagePath -like '*Max.Mustermann*'} | Select PSChildName, ProfileImagePath, State` |\n\n\n## Verwandte Befehle\n\n- `quser`  \nKurzform von `query user`\n\n- `qwinsta`  \nKurzform von `query session`\n\n- `tasklist /v`  \nProzesse inklusive Session IDs anzeigen\n\n- `logoff`  \nBenutzer oder Sitzungen beenden\n\n"
+    },
+    {
+      "id": "support-exchange-verbinden",
+      "originalId": "guide-1786005290974",
+      "title": "Exchange PowerShell verbinden",
+      "category": "Support",
+      "subcategory": "Commands - Exchange",
+      "tags": [
+        "Support.sheet",
+        "exchange",
+        "exchange-online",
+        "powershell",
+        "remote",
+        "administration"
+      ],
+      "type": "guide",
+      "created": "2026-08-06T08:34:50.974Z",
+      "modified": "2026-08-06T10:41:10.305Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/exchange/management-shell",
+          "text": "Exchange Management Shell"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/exchange/connect-to-exchange-online-powershell",
+          "text": "Exchange Online PowerShell"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/exchange/connect-exchangeonline",
+          "text": "Connect-ExchangeOnline"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/exchange/connect-to-scc-powershell",
+          "text": "Connect-IPPSSession"
+        }
+      ],
+      "content": "# Exchange verbinden\n\n# Was macht der Befehl\n\nDiese Befehle stellen eine Verbindung zu einem Exchange Server oder Exchange Online her. Nach erfolgreicher Anmeldung stehen alle Exchange PowerShell Cmdlets für Verwaltung und Troubleshooting zur Verfügung.\n\n\n## Wann verwenden\n\n- Exchange Server administrieren\n- Exchange Online verwalten\n- Postfächer bearbeiten\n- Compliance Suchen durchführen\n- Exchange Skripte ausführen\n- Remote Administration\n\n\n## Wichtige Befehle\n\n`Add-PSSnapin Microsoft.Exchange.Management.PowerShell.SnapIn`  \nExchange Management Snap In auf einem Exchange Server laden\n\n`New-PSSession`  \nRemote Verbindung zu Exchange Server herstellen\n\n`Import-PSSession`  \nExchange Cmdlets in die aktuelle PowerShell importieren\n\n`Remove-PSSession`  \nRemote Sitzung beenden\n\n`Connect-ExchangeOnline`  \nMit Exchange Online verbinden\n\n`Disconnect-ExchangeOnline`  \nExchange Online Sitzung beenden\n\n`Connect-IPPSSession`  \nMit Microsoft Purview und Compliance PowerShell verbinden\n\n`Install-Module ExchangeOnlineManagement`  \nExchange Online PowerShell Modul installieren\n\n\n## Häufige Fehler\n\n- Cmdlet nicht gefunden  \nExchange Modul oder Snap In wurde nicht geladen\n\n- WinRM Fehler  \nPowerShell Remoting oder Firewall prüfen\n\n- Kerberos Authentifizierung schlägt fehl  \nNur innerhalb der Domäne möglich\n\n- Zu viele geöffnete Sessions  \nNicht verwendete Sitzungen mit `Remove-PSSession` oder `Disconnect-ExchangeOnline` schließen\n\n- ExchangeOnlineManagement Modul fehlt  \nVorher mit `Install-Module` installieren\n\n\n## Praxisbeispiel\n\nDu möchtest einen lokalen Exchange Server administrieren.\n\n| PowerShell |\n|----------|\n| # Remote Verbindung zu Exchange herstellen |\n`$Session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri http://EXCHANGE-SERVER/PowerShell/ -Authentication Kerberos`  \n`Import-PSSession $Session -DisableNameChecking` |\n\nNach Abschluss der Arbeiten wird die Sitzung beendet.\n\n| PowerShell |\n|----------|\n| # Exchange Sitzung schließen |\n`Remove-PSSession $Session` |\n\nDu möchtest Exchange Online verwalten.\n\n| PowerShell |\n|----------|\n| # Verbindung zu Exchange Online |\n`Connect-ExchangeOnline -UserPrincipalName admin@domain.de` |\n\nFür eDiscovery oder Compliance Aufgaben verbindest du dich zusätzlich mit dem Compliance Service.\n\n| PowerShell |\n|----------|\n| # Compliance PowerShell verbinden |\n`Connect-IPPSSession -UserPrincipalName admin@domain.de` |\n\n\n## Verwandte Befehle\n\n- `Get-Mailbox`  \nPostfächer anzeigen\n\n- `Get-DistributionGroup`  \nVerteilergruppen verwalten\n\n- `Get-EXOMailbox`  \nExchange Online Postfächer abrufen\n\n- `Get-PSSession`  \nAktive PowerShell Sitzungen anzeigen\n\n"
     }
   ]
 }
