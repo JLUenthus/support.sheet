@@ -26,6 +26,10 @@
 
   let titleInput, categorySelect, subcategoryInput, tagInput, tagsPillsEl, textarea, preview, privateNoteInput, privateNoteDetails, linksRowsEl, attachmentsRowsEl, attachmentsHintEl;
 
+  // Cursor-Position vor Öffnen des Link-Dialogs merken
+  let _linkCursorStart = 0;
+  let _linkCursorEnd   = 0;
+
   // Vorschläge für häufige Status-Tags – per Klick an/abwählbar.
   const SUGGESTED_TAGS = ['unfertig', 'überarbeiten', 'wichtig', 'geprüft', 'veraltet'];
 
@@ -313,7 +317,7 @@
           case 'italic':    insertWrap(textarea, '*', '*', 'kursiv'); break;
           case 'code':      insertWrap(textarea, '`', '`', 'code'); break;
           case 'codeblock': insertWrap(textarea, '\n```\n', '\n```\n', 'code'); break;
-          case 'link':      insertWrap(textarea, '[', '](https://)', 'Linktext'); break;
+          case 'link':      openLinkDialog(); break;
           case 'image':     document.getElementById('ge-image-input').click(); break;
           case 'table':     insertRaw(textarea, '\n| Spalte 1 | Spalte 2 |\n|----------|----------|\n| Wert     | Wert     |\n'); break;
           case 'checklist': insertChecklist(textarea); break;
@@ -322,6 +326,70 @@
           case 'align-right':  insertWrap(textarea, '<div style="text-align:right">\n\n', '\n\n</div>', 'Text'); break;
         }
       });
+    });
+  }
+
+  // ── Link-Dialog ──────────────────────────────────────────
+  function openLinkDialog() {
+    _linkCursorStart = textarea.selectionStart;
+    _linkCursorEnd   = textarea.selectionEnd;
+    // Selektierten Text als Linktext vorausfüllen
+    const selected = textarea.value.slice(_linkCursorStart, _linkCursorEnd);
+    document.getElementById('link-dialog-text').value = selected || '';
+    document.getElementById('link-dialog-url').value  = '';
+
+    document.getElementById('link-dialog').hidden = false;
+    // Fokus auf erstes leeres Feld
+    const textInput = document.getElementById('link-dialog-text');
+    const urlInput  = document.getElementById('link-dialog-url');
+    if (!textInput.value) textInput.focus();
+    else urlInput.focus();
+  }
+
+  function closeLinkDialog() {
+    document.getElementById('link-dialog').hidden = true;
+    textarea.focus();
+  }
+
+  function insertLink() {
+    const text = document.getElementById('link-dialog-text').value.trim();
+    const url  = document.getElementById('link-dialog-url').value.trim();
+    if (!url) return;
+
+    const linkText = text || url;
+    const markdown = '[' + linkText + '](' + url + ')';
+
+    const before = textarea.value.slice(0, _linkCursorStart);
+    const after  = textarea.value.slice(_linkCursorEnd);
+    textarea.value = before + markdown + after;
+    // Cursor hinter den eingefügten Link setzen
+    const newPos = _linkCursorStart + markdown.length;
+    textarea.setSelectionRange(newPos, newPos);
+    textarea.dispatchEvent(new Event('input')); // Live-Vorschau aktualisieren
+    textarea.focus();
+
+    closeLinkDialog();
+  }
+
+  function initLinkDialog() {
+    document.getElementById('link-dialog-close')?.addEventListener('click', closeLinkDialog);
+    document.getElementById('link-dialog-cancel')?.addEventListener('click', closeLinkDialog);
+    document.getElementById('link-dialog-ok')?.addEventListener('click', insertLink);
+    document.querySelector('.link-dialog-backdrop')?.addEventListener('click', closeLinkDialog);
+
+    // Enter im URL-Feld = Einfügen
+    document.getElementById('link-dialog-url')?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') insertLink();
+      if (e.key === 'Escape') closeLinkDialog();
+    });
+
+    // Enter im Text-Feld = Sprung zu URL
+    document.getElementById('link-dialog-text')?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('link-dialog-url')?.focus();
+      }
+      if (e.key === 'Escape') closeLinkDialog();
     });
   }
 
@@ -952,6 +1020,7 @@
     initAttachmentsInput();
     initViewToggle();
     initToolbar();
+    initLinkDialog();
     initImageUpload();
     initImageBrowser();
     initLivePreview();

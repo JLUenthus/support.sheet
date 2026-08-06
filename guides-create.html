@@ -203,5 +203,37 @@
   <script src="js/guides-editor.js"></script>
   <script src="nav.js"></script>
 
+  <div id="link-dialog" class="link-dialog" hidden>
+    <div class="link-dialog-backdrop"></div>
+    <div class="link-dialog-panel">
+      <div class="link-dialog-header">
+        <span class="link-dialog-title">Link einfügen</span>
+        <button class="link-dialog-close" id="link-dialog-close">✕</button>
+      </div>
+      <div class="link-dialog-body">
+        <label class="link-dialog-label">
+          Linktext
+          <input type="text" id="link-dialog-text"
+                 placeholder="z.B. Microsoft Docs"
+                 class="link-dialog-input" autocomplete="off">
+        </label>
+        <label class="link-dialog-label">
+          URL
+          <input type="url" id="link-dialog-url"
+                 placeholder="https://..."
+                 class="link-dialog-input" autocomplete="off">
+        </label>
+      </div>
+      <div class="link-dialog-footer">
+        <button class="link-dialog-btn-cancel" id="link-dialog-cancel">
+          Abbrechen
+        </button>
+        <button class="link-dialog-btn-ok" id="link-dialog-ok">
+          Einfügen
+        </button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

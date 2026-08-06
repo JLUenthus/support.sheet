@@ -31,18 +31,6 @@
       <div class="logo-text" id="as-logo-label">support<span>.sheet</span></div>
     </a>
 
-    <!-- Suchfeld – mittig im Header -->
-    <div class="header-search" id="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input type="text" id="search-input"
-             placeholder="Befehle suchen…"
-             autocomplete="off"
-             spellcheck="false"
-             aria-label="Commands durchsuchen">
-      <button class="search-clear" id="search-clear" aria-label="Suche leeren" hidden>✕</button>
-      <span class="search-shortcut">Ctrl K</span>
-    </div>
-
     <!-- Zähler rechts -->
     <div class="header-right">
       <div class="pill pill-count" id="cmd-count">0 Befehle</div>
@@ -81,7 +69,20 @@
       <div id="recent-container"></div>
     </section>
 
-    <div id="filter-bar"></div>
+    <div id="search-filter-bar">
+      <div class="search-wrap-inline">
+        <span class="search-icon">🔍</span>
+        <input type="text"
+               id="search-input"
+               class="search-input-inline"
+               placeholder="Befehl suchen... (Ctrl+K)"
+               autocomplete="off"
+               spellcheck="false">
+        <button class="search-clear" id="search-clear"
+                aria-label="Suche leeren" hidden>✕</button>
+      </div>
+      <div id="filter-bar"></div>
+    </div>
     <div id="commands-container"></div>
 
   </main>
@@ -91,6 +92,8 @@
   <script src="js/fuse.min.js"></script>
   <script src="js/loader.js"></script>
   <script src="js/toast.js"></script>
+  <script src="js/marked.min.js"></script>
+  <script src="js/guide-overlay.js"></script>
   <script src="js/settings-store.js"></script>
   <script src="js/variables.js"></script>
   <script src="js/recent.js"></script>
@@ -113,6 +116,28 @@
   </script>
 
   <script src="nav.js"></script>
+
+  <!-- Guide Overlay -->
+  <div id="guide-overlay" class="guide-overlay" hidden aria-modal="true" role="dialog">
+    <div class="guide-overlay-backdrop"></div>
+    <div class="guide-overlay-panel">
+      <div class="guide-overlay-header">
+        <div class="guide-overlay-title" id="guide-overlay-title"></div>
+        <div class="guide-overlay-actions">
+          <a href="#" id="guide-overlay-open"
+             class="guide-overlay-open-btn"
+             target="_blank" rel="noopener">
+            ↗ In guide.sheet oeffnen
+          </a>
+          <button class="guide-overlay-close" id="guide-overlay-close"
+                  aria-label="Schliessen" title="Schliessen">✕</button>
+        </div>
+      </div>
+      <div class="guide-overlay-content" id="guide-overlay-content">
+        <!-- Markdown wird hier gerendert -->
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>

@@ -1,0 +1,19 @@
+{
+  "version": "1.0",
+  "description": "Support-Guides fuer support.sheet – readonly, nicht exportierbar",
+  "guides": [
+    {
+      "id": "support-platzhalter",
+      "title": "Platzhalter – wird ersetzt",
+      "category": "Support",
+      "tags": ["support", "platzhalter"],
+      "type": "guide",
+      "created": "2026-08-06T00:00:00Z",
+      "modified": "2026-08-06T00:00:00Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "content": "# Platzhalter\n\nDieser Guide wird ersetzt sobald echte Support-Guides verfuegbar sind."
+    }
+  ]
+}

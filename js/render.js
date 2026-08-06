@@ -152,6 +152,30 @@ function createCommandCard(template, cmd) {
       if (typeof renderFavorites === 'function') renderFavorites(_allCommands);
     });
   }
+
+  // Guide-Button – nur wenn guideRef gesetzt ist
+  if (cmd.guideRef) {
+    const guideBtn = document.createElement('button');
+    guideBtn.className = 'guide-ref-btn';
+    guideBtn.textContent = '📖 Guide';
+    guideBtn.title = 'Guide zu diesem Befehl oeffnen';
+    guideBtn.addEventListener('click', e => {
+      e.stopPropagation(); // verhindert dass die Kachel andere Events triggert
+      if (typeof GuideOverlay !== 'undefined') {
+        GuideOverlay.open(cmd.guideRef);
+      }
+    });
+
+    // Button in die Tag-Zeile einhaengen (rechts aussen)
+    if (tagContainer) {
+      tagContainer.style.display = 'flex';
+      tagContainer.style.alignItems = 'center';
+      tagContainer.style.flexWrap = 'wrap';
+      tagContainer.style.gap = '4px';
+      tagContainer.appendChild(guideBtn);
+    }
+  }
+
   return clone;
 }
 

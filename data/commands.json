@@ -2768,7 +2768,8 @@
         "windows",
         "diag",
         "quick"
-      ]
+      ],
+      "guideRef": "support-platzhalter"
     },
     {
       "id": "network-tnc-smtp",
@@ -2781,7 +2782,8 @@
         "windows",
         "diag",
         "exchange"
-      ]
+      ],
+      "guideRef": "support-platzhalter"
     },
     {
       "id": "network-tnc-rdp",
@@ -2794,7 +2796,8 @@
         "windows",
         "diag",
         "remote"
-      ]
+      ],
+      "guideRef": "support-platzhalter"
     },
     {
       "id": "network-tnc-diagnose",
