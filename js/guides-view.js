@@ -55,7 +55,10 @@
     let result = content;
     const links = Array.isArray(meta.links) ? meta.links.filter((l) => l.url) : [];
     if (links.length) {
-      result += '\n\n## Links\n' + links.map((l) => '- ' + l.url).join('\n') + '\n';
+      result += '\n\n## Links\n' + links.map((l) => {
+        const label = l.text && l.text.trim() ? l.text.trim() : null;
+        return '- ' + (label ? '[' + label + '](' + l.url + ')' : l.url);
+      }).join('\n') + '\n';
     }
     const attachments = Array.isArray(meta.attachments) ? meta.attachments : [];
     if (attachments.length) {
@@ -126,8 +129,10 @@
     let extraHtml = '';
     const links = Array.isArray(currentMeta.links) ? currentMeta.links.filter((l) => l.url) : [];
     if (links.length) {
-      extraHtml += '<h2>Links</h2><ul>' + links.map((l) =>
-        '<li><a href="' + escapeHtml(l.url) + '">' + escapeHtml(l.url) + '</a></li>').join('') + '</ul>';
+      extraHtml += '<h2>Links</h2><ul>' + links.map((l) => {
+        const label = l.text && l.text.trim() ? l.text.trim() : l.url;
+        return '<li><a href="' + escapeHtml(l.url) + '">' + escapeHtml(label) + '</a></li>';
+      }).join('') + '</ul>';
     }
     const attachments = Array.isArray(currentMeta.attachments) ? currentMeta.attachments : [];
     if (attachments.length) {
@@ -399,7 +404,19 @@
     const urlText = document.createElement('span');
     urlText.className = 'gv-link-url';
     urlText.textContent = link.url;
-    row.appendChild(urlText);
+
+    if (link.text && link.text.trim()) {
+      const textCol = document.createElement('div');
+      textCol.className = 'gv-link-text-col';
+      const labelEl = document.createElement('span');
+      labelEl.className = 'gv-link-label';
+      labelEl.textContent = link.text;
+      textCol.appendChild(labelEl);
+      textCol.appendChild(urlText);
+      row.appendChild(textCol);
+    } else {
+      row.appendChild(urlText);
+    }
 
     const actions = document.createElement('div');
     actions.className = 'gv-link-actions';

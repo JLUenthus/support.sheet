@@ -638,6 +638,22 @@
   font-size: .78rem;
   color: var(--accent);
 }
+.gv-link-text-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.gv-link-label {
+  font-size: .84rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.gv-link-text-col .gv-link-url {
+  font-size: .72rem;
+  color: var(--muted);
+}
 .gv-link-actions { display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
 .gv-link-copy-btn {
   font-size: .7rem;
@@ -1392,6 +1408,8 @@
   transition: border-color .15s;
 }
 .ge-link-input:focus { border-color: var(--accent); }
+.ge-link-text-input { flex: 0 0 160px; }
+.ge-link-url-input { flex: 1; }
 .ge-link-remove {
   flex-shrink: 0;
   width: 30px;
@@ -1698,6 +1716,8 @@
   .gm-export-row { flex-direction: column; gap: 16px; }
   .gm-trash-item { flex-direction: column; align-items: flex-start; }
   .gm-stat-bar-label { min-width: 110px; }
+  .ge-link-row { flex-wrap: wrap; }
+  .ge-link-text-input { flex: 1 1 100%; }
 }
 
 /* ── Link-Dialog (guides-create.html Editor) ─────────────── */

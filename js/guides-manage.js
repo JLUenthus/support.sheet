@@ -191,7 +191,8 @@
       const links = Array.isArray(meta.links) ? meta.links.filter((l) => l.url) : [];
       if (links.length) {
         const linkLines = links.map((l) => {
-          let line = '- ' + l.url;
+          const label = l.text && l.text.trim() ? l.text.trim() : null;
+          let line = '- ' + (label ? '[' + label + '](' + l.url + ')' : l.url);
           if (l.offlineAsset) line += ' ([Offline-Kopie](' + assetsFolder + l.offlineAsset + '))';
           return line;
         });
@@ -369,12 +370,13 @@
     content = linksSection.content;
     if (linksSection.block) {
       linksSection.block.split('\n').filter(Boolean).forEach((line, i) => {
-        const m = line.match(/^- (\S+)(?: \(\[Offline-Kopie\]\(assets\/(.+?)\)\))?$/);
+        const m = line.match(/^- (?:\[(.+?)\]\((\S+?)\)|(\S+))(?: \(\[Offline-Kopie\]\(assets\/(.+?)\)\))?$/);
         if (m) links.push({
           id: 'link-' + Date.now() + '-' + i,
-          url: m[1],
-          offlineAsset: m[2] || null,
-          offlineSavedAt: m[2] ? new Date().toISOString() : null,
+          text: m[1] || '',
+          url: m[2] || m[3],
+          offlineAsset: m[4] || null,
+          offlineSavedAt: m[4] ? new Date().toISOString() : null,
         });
       });
     }

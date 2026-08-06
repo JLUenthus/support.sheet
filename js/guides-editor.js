@@ -181,12 +181,19 @@
       const row = document.createElement('div');
       row.className = 'ge-link-row';
 
-      const input = document.createElement('input');
-      input.type = 'url';
-      input.className = 'ge-link-input';
-      input.placeholder = 'https://…';
-      input.value = link.url || '';
-      input.addEventListener('input', () => { link.url = input.value; scheduleAutosave(); });
+      const textInput = document.createElement('input');
+      textInput.type = 'text';
+      textInput.className = 'ge-link-input ge-link-text-input';
+      textInput.placeholder = 'Linktext (optional)';
+      textInput.value = link.text || '';
+      textInput.addEventListener('input', () => { link.text = textInput.value; scheduleAutosave(); });
+
+      const urlInput = document.createElement('input');
+      urlInput.type = 'url';
+      urlInput.className = 'ge-link-input ge-link-url-input';
+      urlInput.placeholder = 'https://…';
+      urlInput.value = link.url || '';
+      urlInput.addEventListener('input', () => { link.url = urlInput.value; scheduleAutosave(); });
 
       const remove = document.createElement('button');
       remove.type = 'button';
@@ -199,7 +206,8 @@
         scheduleAutosave();
       });
 
-      row.appendChild(input);
+      row.appendChild(textInput);
+      row.appendChild(urlInput);
       row.appendChild(remove);
       linksRowsEl.appendChild(row);
     });
@@ -208,7 +216,7 @@
   function addLinkRow(prefill) {
     links.push(Object.assign({
       id: 'link-' + Date.now() + '-' + (++linkIdCounter),
-      url: '', offlineAsset: null, offlineSavedAt: null,
+      text: '', url: '', offlineAsset: null, offlineSavedAt: null,
     }, prefill || {}));
     renderLinks();
   }
@@ -882,7 +890,7 @@
       subcategory: subcategoryInput.value.trim(),
       tags: [...tags],
       privateNote: privateNoteInput.value.trim(),
-      links: links.filter((l) => l.url && l.url.trim()).map((l) => ({ ...l, url: l.url.trim() })),
+      links: links.filter((l) => l.url && l.url.trim()).map((l) => ({ ...l, text: (l.text || '').trim(), url: l.url.trim() })),
       attachments: attachments.map((a) => ({ ...a })),
       favorite:  existingMeta ? existingMeta.favorite  : false,
       source:    existingMeta ? existingMeta.source    : 'manual',
