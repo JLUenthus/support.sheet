@@ -12,7 +12,8 @@
         "windows",
         "admin",
         "info"
-      ]
+      ],
+      "guideRef": "support-mmc-konsolen"
     },
     {
       "id": "msc-datentr-gerverwaltung",
@@ -23,7 +24,8 @@
         "msc",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-mmc-konsolen"
     },
     {
       "id": "msc-defragmentierung",
@@ -34,7 +36,8 @@
         "msc",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-mmc-konsolen"
     },
     {
       "id": "msc-dienste",
@@ -45,7 +48,8 @@
         "msc",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-mmc-konsolen"
     },
     {
       "id": "msc-ereignisanzeige",
@@ -56,7 +60,8 @@
         "msc",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-mmc-konsolen"
     },
     {
       "id": "msc-geraete-manager",
@@ -67,7 +72,8 @@
         "msc",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-mmc-konsolen"
     },
     {
       "id": "msc-gruppenrichtlinien-editor",
@@ -79,7 +85,8 @@
         "windows",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-mmc-konsolen"
     },
     {
       "id": "msc-komponentendienste",
@@ -90,7 +97,8 @@
         "msc",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-mmc-konsolen"
     },
     {
       "id": "msc-leistungsueberwachung",
@@ -101,7 +109,8 @@
         "msc",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-mmc-konsolen"
     },
     {
       "id": "msc-lokale-sicherheitsrichtlinie",
@@ -113,7 +122,8 @@
         "windows",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-mmc-konsolen"
     },
     {
       "id": "msc-lokale-benutzer-gruppen",
@@ -124,7 +134,8 @@
         "msc",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-mmc-konsolen"
     },
     {
       "id": "msc-zertifikate-benutzer",
@@ -135,7 +146,8 @@
         "msc",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-mmc-konsolen"
     },
     {
       "id": "msc-zertifikate-computer",
@@ -146,7 +158,8 @@
         "msc",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-mmc-konsolen"
     },
     {
       "id": "msc-aufgabenplanung",
@@ -157,7 +170,8 @@
         "msc",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-mmc-konsolen"
     },
     {
       "id": "msc-drucker-verwaltung",
@@ -168,7 +182,8 @@
         "msc",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-mmc-konsolen"
     },
     {
       "id": "system-systeminfo-desktop",
@@ -179,7 +194,8 @@
         "system",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-systeminfo"
     },
     {
       "id": "system-dxdiag-desktop",
@@ -190,7 +206,8 @@
         "system",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-systeminfo"
     },
     {
       "id": "system-systeminfo-dxdiag-kombiniert",
@@ -201,7 +218,8 @@
         "system",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-systeminfo"
     },
     {
       "id": "system-systeminfo-gui",
@@ -212,7 +230,8 @@
         "system",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-systeminfo"
     },
     {
       "id": "system-computername",
@@ -303,7 +322,8 @@
         "network",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-ipconfig-all"
     },
     {
       "id": "network-dns-cache-leeren",
@@ -325,7 +345,8 @@
         "network",
         "windows",
         "caution"
-      ]
+      ],
+      "guideRef": "support-ipconfig-all"
     },
     {
       "id": "network-offene-verbindungen",
@@ -347,7 +368,8 @@
         "network",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-route-print"
     },
     {
       "id": "network-wlan-profile-anzeigen",
@@ -414,7 +436,8 @@
         "network",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-tracert"
     },
     {
       "id": "network-dns-abfrage",
@@ -582,7 +605,8 @@
         "ps",
         "admin",
         "remote"
-      ]
+      ],
+      "guideRef": "support-powershell-admin"
     },
     {
       "id": "ps-pssession-open",
@@ -607,7 +631,8 @@
         "windows",
         "admin",
         "info"
-      ]
+      ],
+      "guideRef": "support-benutzer-gruppen"
     },
     {
       "id": "users-lokale-gruppen-anzeigen",
@@ -618,7 +643,8 @@
         "users",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-benutzer-gruppen"
     },
     {
       "id": "users-gruppe-anzeigen",
@@ -630,7 +656,8 @@
         "windows",
         "admin",
         "info"
-      ]
+      ],
+      "guideRef": "support-benutzer-gruppen"
     },
     {
       "id": "users-gruppe-hinzufuegen",
@@ -642,7 +669,8 @@
         "windows",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-benutzer-gruppen"
     },
     {
       "id": "users-benutzer-aus-gruppe-entfernen",
@@ -654,7 +682,8 @@
         "windows",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-benutzer-gruppen"
     },
     {
       "id": "users-aktueller-benutzer-rechte",
@@ -665,7 +694,8 @@
         "users",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-benutzer-gruppen"
     },
     {
       "id": "users-benutzer-sessions-anzeigen",
@@ -677,7 +707,8 @@
         "windows",
         "admin",
         "info"
-      ]
+      ],
+      "guideRef": "support-net-user"
     },
     {
       "id": "users-benutzer-abmelden",
@@ -689,7 +720,8 @@
         "windows",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-net-user"
     },
     {
       "id": "users-angemeldete-user-ps",
@@ -701,7 +733,8 @@
         "windows",
         "ps",
         "info"
-      ]
+      ],
+      "guideRef": "support-net-user"
     },
     {
       "id": "disk-sfc-scannow",
@@ -713,7 +746,8 @@
         "windows",
         "admin",
         "repair"
-      ]
+      ],
+      "guideRef": "support-sfc-dism"
     },
     {
       "id": "disk-dism-checkhealth",
@@ -725,7 +759,8 @@
         "windows",
         "admin",
         "info"
-      ]
+      ],
+      "guideRef": "support-sfc-dism"
     },
     {
       "id": "disk-dism-scanhealth",
@@ -737,7 +772,8 @@
         "windows",
         "admin",
         "repair"
-      ]
+      ],
+      "guideRef": "support-sfc-dism"
     },
     {
       "id": "disk-dism-restorehealth",
@@ -749,7 +785,8 @@
         "windows",
         "admin",
         "repair"
-      ]
+      ],
+      "guideRef": "support-sfc-dism"
     },
     {
       "id": "disk-laufwerke-auflisten-ps",
@@ -896,7 +933,8 @@
       "tags": [
         "remote",
         "windows"
-      ]
+      ],
+      "guideRef": "support-powershell-admin"
     },
     {
       "id": "remote-quick-assist-win-11",
@@ -907,7 +945,8 @@
         "remote",
         "windows",
         "quick"
-      ]
+      ],
+      "guideRef": "support-powershell-admin"
     },
     {
       "id": "remote-remoteunterstuetzung",
@@ -917,7 +956,8 @@
       "tags": [
         "remote",
         "windows"
-      ]
+      ],
+      "guideRef": "support-powershell-admin"
     },
     {
       "id": "remote-rdp-aktivieren-ps",
@@ -929,7 +969,8 @@
         "windows",
         "ps",
         "admin"
-      ]
+      ],
+      "guideRef": "support-powershell-admin"
     },
     {
       "id": "remote-winrm-aktivieren",
@@ -941,7 +982,8 @@
         "windows",
         "ps",
         "admin"
-      ]
+      ],
+      "guideRef": "support-powershell-admin"
     },
     {
       "id": "remote-systemeigenschaften-remote-tab",
@@ -952,7 +994,8 @@
         "remote",
         "windows",
         "quick"
-      ]
+      ],
+      "guideRef": "support-powershell-admin"
     },
     {
       "id": "remote-ping-mit-timestamp-ps",
@@ -965,7 +1008,8 @@
         "ps",
         "network",
         "info"
-      ]
+      ],
+      "guideRef": "support-powershell-admin"
     },
     {
       "id": "gpo-gpo-status-anzeigen",
@@ -977,7 +1021,8 @@
         "windows",
         "admin",
         "info"
-      ]
+      ],
+      "guideRef": "support-gpo"
     },
     {
       "id": "gpo-gpo-report-als-html",
@@ -989,7 +1034,8 @@
         "windows",
         "admin",
         "info"
-      ]
+      ],
+      "guideRef": "support-gpo"
     },
     {
       "id": "gpo-gpo-remote-report",
@@ -1001,7 +1047,8 @@
         "windows",
         "admin",
         "remote"
-      ]
+      ],
+      "guideRef": "support-gpo"
     },
     {
       "id": "gpo-richtlinien-editor-lokal",
@@ -1013,7 +1060,8 @@
         "windows",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-gpo"
     },
     {
       "id": "gpo-lokale-sicherheitsrichtlinie",
@@ -1024,7 +1072,8 @@
         "gpo",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-gpo"
     },
     {
       "id": "quick-autostart-alle-benutzer",
@@ -1035,7 +1084,8 @@
         "quick",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-schnellbefehle"
     },
     {
       "id": "quick-umgebungsvariablen-gui",
@@ -1046,7 +1096,8 @@
         "quick",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-schnellbefehle"
     },
     {
       "id": "quick-hosts-datei-bearbeiten",
@@ -1058,7 +1109,8 @@
         "windows",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-schnellbefehle"
     },
     {
       "id": "quick-programme-entfernen",
@@ -1068,7 +1120,8 @@
       "tags": [
         "quick",
         "windows"
-      ]
+      ],
+      "guideRef": "support-schnellbefehle"
     },
     {
       "id": "quick-energieoptionen",
@@ -1078,7 +1131,8 @@
       "tags": [
         "quick",
         "windows"
-      ]
+      ],
+      "guideRef": "support-schnellbefehle"
     },
     {
       "id": "quick-datum-uhrzeit",
@@ -1088,7 +1142,8 @@
       "tags": [
         "quick",
         "windows"
-      ]
+      ],
+      "guideRef": "support-schnellbefehle"
     },
     {
       "id": "quick-soundeinstellungen",
@@ -1098,7 +1153,8 @@
       "tags": [
         "quick",
         "windows"
-      ]
+      ],
+      "guideRef": "support-schnellbefehle"
     },
     {
       "id": "quick-registrierungseditor",
@@ -1110,7 +1166,8 @@
         "windows",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-schnellbefehle"
     },
     {
       "id": "quick-task-manager",
@@ -1120,7 +1177,8 @@
       "tags": [
         "quick",
         "windows"
-      ]
+      ],
+      "guideRef": "support-schnellbefehle"
     },
     {
       "id": "quick-bildschirmaufloesung",
@@ -1130,7 +1188,8 @@
       "tags": [
         "quick",
         "windows"
-      ]
+      ],
+      "guideRef": "support-schnellbefehle"
     },
     {
       "id": "quick-netzwerkverbindungen",
@@ -1141,7 +1200,8 @@
         "quick",
         "windows",
         "network"
-      ]
+      ],
+      "guideRef": "support-schnellbefehle"
     },
     {
       "id": "quick-systemsteuerung",
@@ -1151,7 +1211,8 @@
       "tags": [
         "quick",
         "windows"
-      ]
+      ],
+      "guideRef": "support-schnellbefehle"
     },
     {
       "id": "quick-windows-features",
@@ -1162,7 +1223,8 @@
         "quick",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-schnellbefehle"
     },
     {
       "id": "eventlog-system-fehler-24h",
@@ -1174,7 +1236,8 @@
         "powershell",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-eventlog"
     },
     {
       "id": "eventlog-application-fehler-24h",
@@ -1186,7 +1249,8 @@
         "powershell",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-eventlog"
     },
     {
       "id": "eventlog-absturz-events",
@@ -1199,7 +1263,8 @@
         "windows",
         "info",
         "diag"
-      ]
+      ],
+      "guideRef": "support-eventlog"
     },
     {
       "id": "eventlog-csv-export",
@@ -1212,7 +1277,8 @@
         "windows",
         "info",
         "quick"
-      ]
+      ],
+      "guideRef": "support-eventlog"
     },
     {
       "id": "eventlog-neustart-ereignisse",
@@ -1225,7 +1291,8 @@
         "windows",
         "info",
         "diag"
-      ]
+      ],
+      "guideRef": "support-eventlog"
     },
     {
       "id": "eventlog-log-groesse",
@@ -1236,7 +1303,8 @@
         "eventlog",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-eventlog"
     },
     {
       "id": "eventlog-alle-logs",
@@ -1248,7 +1316,8 @@
         "powershell",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-eventlog"
     },
     {
       "id": "eventlog-memory-fehler",
@@ -1261,7 +1330,8 @@
         "windows",
         "info",
         "diag"
-      ]
+      ],
+      "guideRef": "support-eventlog"
     },
     {
       "id": "ad-benutzer-anzeigen",
@@ -1274,7 +1344,8 @@
         "windows",
         "admin",
         "info"
-      ]
+      ],
+      "guideRef": "support-active-directory"
     },
     {
       "id": "ad-benutzer-suchen",
@@ -1287,7 +1358,8 @@
         "windows",
         "admin",
         "info"
-      ]
+      ],
+      "guideRef": "support-active-directory"
     },
     {
       "id": "ad-passwort-reset",
@@ -1300,7 +1372,8 @@
         "windows",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-active-directory"
     },
     {
       "id": "ad-konto-entsperren",
@@ -1312,7 +1385,8 @@
         "powershell",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-active-directory"
     },
     {
       "id": "ad-konto-aktivieren-deaktivieren",
@@ -1325,7 +1399,8 @@
         "windows",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-active-directory"
     },
     {
       "id": "ad-gruppen-eines-benutzers",
@@ -1338,7 +1413,8 @@
         "windows",
         "admin",
         "info"
-      ]
+      ],
+      "guideRef": "support-active-directory"
     },
     {
       "id": "ad-alle-gesperrten-konten",
@@ -1351,7 +1427,8 @@
         "windows",
         "admin",
         "info"
-      ]
+      ],
+      "guideRef": "support-active-directory"
     },
     {
       "id": "ad-abgelaufene-passwoerter",
@@ -1364,7 +1441,8 @@
         "windows",
         "admin",
         "info"
-      ]
+      ],
+      "guideRef": "support-active-directory"
     },
     {
       "id": "ad-sync-anstoessen",
@@ -1376,7 +1454,8 @@
         "powershell",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-active-directory"
     },
     {
       "id": "ad-dienste-domaenenkonten",
@@ -1390,7 +1469,8 @@
         "admin",
         "info",
         "diag"
-      ]
+      ],
+      "guideRef": "support-active-directory"
     },
     {
       "id": "printer-spooler-reset",
@@ -1402,7 +1482,8 @@
         "windows",
         "admin",
         "quick"
-      ]
+      ],
+      "guideRef": "support-drucker-spooler"
     },
     {
       "id": "printer-auflisten",
@@ -1414,7 +1495,8 @@
         "powershell",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-drucker-spooler"
     },
     {
       "id": "printer-warteschlange",
@@ -1427,7 +1509,8 @@
         "windows",
         "info",
         "diag"
-      ]
+      ],
+      "guideRef": "support-drucker-spooler"
     },
     {
       "id": "printer-jobs-loeschen",
@@ -1440,7 +1523,8 @@
         "windows",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-drucker-spooler"
     },
     {
       "id": "printer-per-ip",
@@ -1452,7 +1536,8 @@
         "powershell",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-drucker-spooler"
     },
     {
       "id": "printer-treiber-anzeigen",
@@ -1464,7 +1549,8 @@
         "powershell",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-drucker-spooler"
     },
     {
       "id": "printer-tcp-ip-ports",
@@ -1476,7 +1562,8 @@
         "powershell",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-drucker-spooler"
     },
     {
       "id": "dhcp-scope-anzeigen",
@@ -1489,7 +1576,8 @@
         "windows",
         "server",
         "info"
-      ]
+      ],
+      "guideRef": "support-dhcp"
     },
     {
       "id": "dhcp-lease-suchen",
@@ -1503,7 +1591,8 @@
         "server",
         "info",
         "diag"
-      ]
+      ],
+      "guideRef": "support-dhcp"
     },
     {
       "id": "dhcp-alle-leases",
@@ -1516,7 +1605,8 @@
         "windows",
         "server",
         "info"
-      ]
+      ],
+      "guideRef": "support-dhcp"
     },
     {
       "id": "dhcp-pool-auslastung",
@@ -1530,7 +1620,8 @@
         "server",
         "info",
         "diag"
-      ]
+      ],
+      "guideRef": "support-dhcp"
     },
     {
       "id": "dhcp-lease-loeschen",
@@ -1544,7 +1635,8 @@
         "server",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-dhcp"
     },
     {
       "id": "dhcp-reservation-erstellen",
@@ -1557,7 +1649,8 @@
         "windows",
         "server",
         "admin"
-      ]
+      ],
+      "guideRef": "support-dhcp"
     },
     {
       "id": "dhcp-dienst-status",
@@ -1571,7 +1664,8 @@
         "server",
         "info",
         "diag"
-      ]
+      ],
+      "guideRef": "support-dhcp"
     },
     {
       "id": "hyperv-vms-anzeigen",
@@ -1584,7 +1678,8 @@
         "windows",
         "server",
         "info"
-      ]
+      ],
+      "guideRef": "support-hyper-v"
     },
     {
       "id": "hyperv-vm-details",
@@ -1597,7 +1692,8 @@
         "windows",
         "server",
         "info"
-      ]
+      ],
+      "guideRef": "support-hyper-v"
     },
     {
       "id": "hyperv-vm-starten",
@@ -1610,7 +1706,8 @@
         "windows",
         "server",
         "admin"
-      ]
+      ],
+      "guideRef": "support-hyper-v"
     },
     {
       "id": "hyperv-vm-stoppen",
@@ -1624,7 +1721,8 @@
         "server",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-hyper-v"
     },
     {
       "id": "hyperv-checkpoint-erstellen",
@@ -1638,7 +1736,8 @@
         "server",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-hyper-v"
     },
     {
       "id": "hyperv-checkpoints-anzeigen",
@@ -1651,7 +1750,8 @@
         "windows",
         "server",
         "info"
-      ]
+      ],
+      "guideRef": "support-hyper-v"
     },
     {
       "id": "hyperv-ressourcen-host",
@@ -1664,7 +1764,8 @@
         "windows",
         "server",
         "info"
-      ]
+      ],
+      "guideRef": "support-hyper-v"
     },
     {
       "id": "hyperv-integration-services",
@@ -1678,7 +1779,8 @@
         "server",
         "info",
         "diag"
-      ]
+      ],
+      "guideRef": "support-hyper-v"
     },
     {
       "id": "hyperv-replikation-status",
@@ -1692,7 +1794,8 @@
         "server",
         "info",
         "diag"
-      ]
+      ],
+      "guideRef": "support-hyper-v"
     },
     {
       "id": "update-status-pruefen",
@@ -1705,7 +1808,8 @@
         "windows",
         "info",
         "diag"
-      ]
+      ],
+      "guideRef": "support-windows-update"
     },
     {
       "id": "update-hotfix-liste",
@@ -1717,7 +1821,8 @@
         "powershell",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-windows-update"
     },
     {
       "id": "update-dienste-reset",
@@ -1730,7 +1835,8 @@
         "windows",
         "repair",
         "caution"
-      ]
+      ],
+      "guideRef": "support-windows-update"
     },
     {
       "id": "update-wsus-client-reset",
@@ -1743,7 +1849,8 @@
         "windows",
         "repair",
         "caution"
-      ]
+      ],
+      "guideRef": "support-windows-update"
     },
     {
       "id": "update-fehlercode-lesen",
@@ -1756,7 +1863,8 @@
         "windows",
         "diag",
         "info"
-      ]
+      ],
+      "guideRef": "support-windows-update"
     },
     {
       "id": "update-pending-reboot",
@@ -1769,7 +1877,8 @@
         "windows",
         "info",
         "diag"
-      ]
+      ],
+      "guideRef": "support-windows-update"
     },
     {
       "id": "update-troubleshooter",
@@ -1781,7 +1890,8 @@
         "windows",
         "quick",
         "diag"
-      ]
+      ],
+      "guideRef": "support-windows-update"
     },
     {
       "id": "rds-sessions-anzeigen",
@@ -1793,7 +1903,8 @@
         "windows",
         "server",
         "info"
-      ]
+      ],
+      "guideRef": "support-rds"
     },
     {
       "id": "rds-session-trennen",
@@ -1806,7 +1917,8 @@
         "server",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-rds"
     },
     {
       "id": "rds-user-sessions",
@@ -1818,7 +1930,8 @@
         "windows",
         "server",
         "info"
-      ]
+      ],
+      "guideRef": "support-rds"
     },
     {
       "id": "rds-lizenz-status",
@@ -1832,7 +1945,8 @@
         "server",
         "info",
         "diag"
-      ]
+      ],
+      "guideRef": "support-rds"
     },
     {
       "id": "rds-shadow-session",
@@ -1845,7 +1959,8 @@
         "server",
         "remote",
         "admin"
-      ]
+      ],
+      "guideRef": "support-rds"
     },
     {
       "id": "rds-prozesse-session",
@@ -1858,7 +1973,8 @@
         "server",
         "diag",
         "info"
-      ]
+      ],
+      "guideRef": "support-rds"
     },
     {
       "id": "rds-graceful-logoff",
@@ -1872,7 +1988,8 @@
         "server",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-rds"
     },
     {
       "id": "rds-temp-profile-fix",
@@ -1886,7 +2003,8 @@
         "server",
         "repair",
         "diag"
-      ]
+      ],
+      "guideRef": "support-rds"
     },
     {
       "id": "cert-lokale-zertifikate",
@@ -1999,7 +2117,8 @@
         "windows",
         "info",
         "diag"
-      ]
+      ],
+      "guideRef": "support-prozesse-dienste"
     },
     {
       "id": "process-scheduled-reboot-erstellen",
@@ -2016,7 +2135,8 @@
         "maintenance",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-prozesse-dienste"
     },
     {
       "id": "process-scheduled-reboot-pruefen",
@@ -2032,7 +2152,8 @@
         "reboot",
         "maintenance",
         "info"
-      ]
+      ],
+      "guideRef": "support-prozesse-dienste"
     },
     {
       "id": "process-scheduled-reboot-loeschen",
@@ -2049,7 +2170,8 @@
         "maintenance",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-prozesse-dienste"
     },
     {
       "id": "winget-software-suchen",
@@ -2061,7 +2183,8 @@
         "windows",
         "info",
         "quick"
-      ]
+      ],
+      "guideRef": "support-winget"
     },
     {
       "id": "winget-paket-info",
@@ -2072,7 +2195,8 @@
         "winget",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-winget"
     },
     {
       "id": "winget-software-installieren",
@@ -2084,7 +2208,8 @@
         "windows",
         "admin",
         "quick"
-      ]
+      ],
+      "guideRef": "support-winget"
     },
     {
       "id": "winget-updates-anzeigen",
@@ -2096,7 +2221,8 @@
         "windows",
         "info",
         "quick"
-      ]
+      ],
+      "guideRef": "support-winget"
     },
     {
       "id": "winget-upgrade-einzelpaket",
@@ -2108,7 +2234,8 @@
         "windows",
         "admin",
         "quick"
-      ]
+      ],
+      "guideRef": "support-winget"
     },
     {
       "id": "winget-alle-aktualisieren",
@@ -2120,7 +2247,8 @@
         "windows",
         "admin",
         "quick"
-      ]
+      ],
+      "guideRef": "support-winget"
     },
     {
       "id": "winget-installierte-software",
@@ -2132,7 +2260,8 @@
         "windows",
         "info",
         "quick"
-      ]
+      ],
+      "guideRef": "support-winget"
     },
     {
       "id": "winget-software-deinstallieren",
@@ -2144,7 +2273,8 @@
         "windows",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-winget"
     },
     {
       "id": "winget-export",
@@ -2156,7 +2286,8 @@
         "windows",
         "admin",
         "quick"
-      ]
+      ],
+      "guideRef": "support-winget"
     },
     {
       "id": "winget-import",
@@ -2168,7 +2299,8 @@
         "windows",
         "admin",
         "quick"
-      ]
+      ],
+      "guideRef": "support-winget"
     },
     {
       "id": "winget-quellen-anzeigen",
@@ -2179,7 +2311,8 @@
         "winget",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-winget"
     },
     {
       "id": "winget-repair-source",
@@ -2191,7 +2324,8 @@
         "windows",
         "repair",
         "admin"
-      ]
+      ],
+      "guideRef": "support-winget"
     },
     {
       "id": "shortcuts-grafiktreiber-reset",
@@ -2204,7 +2338,8 @@
         "quick",
         "diag",
         "graphics"
-      ]
+      ],
+      "guideRef": "support-schnellbefehle"
     },
     {
       "id": "shortcuts-emoji-panel",
@@ -2216,7 +2351,8 @@
         "windows",
         "quick",
         "productivity"
-      ]
+      ],
+      "guideRef": "support-schnellbefehle"
     },
     {
       "id": "shortcuts-fenster-monitor-wechseln",
@@ -2228,7 +2364,8 @@
         "windows",
         "quick",
         "productivity"
-      ]
+      ],
+      "guideRef": "support-schnellbefehle"
     },
     {
       "id": "printer-alle-drucker-server",
@@ -2241,7 +2378,8 @@
         "windows",
         "server",
         "info"
-      ]
+      ],
+      "guideRef": "support-drucker-spooler"
     },
     {
       "id": "printer-treiber-liste",
@@ -2254,7 +2392,8 @@
         "windows",
         "server",
         "info"
-      ]
+      ],
+      "guideRef": "support-drucker-spooler"
     },
     {
       "id": "printer-port-anzeigen",
@@ -2268,7 +2407,8 @@
         "server",
         "info",
         "diag"
-      ]
+      ],
+      "guideRef": "support-drucker-spooler"
     },
     {
       "id": "printer-jobs-anzeigen",
@@ -2282,7 +2422,8 @@
         "server",
         "info",
         "diag"
-      ]
+      ],
+      "guideRef": "support-drucker-spooler"
     },
     {
       "id": "printer-job-loeschen",
@@ -2296,7 +2437,8 @@
         "server",
         "admin",
         "caution"
-      ]
+      ],
+      "guideRef": "support-drucker-spooler"
     },
     {
       "id": "printer-freigabe-pruefen",
@@ -2309,7 +2451,8 @@
         "windows",
         "server",
         "info"
-      ]
+      ],
+      "guideRef": "support-drucker-spooler"
     },
     {
       "id": "printer-remote-installieren",
@@ -2322,7 +2465,8 @@
         "windows",
         "admin",
         "remote"
-      ]
+      ],
+      "guideRef": "support-drucker-spooler"
     },
     {
       "id": "wmi-system-info",
@@ -2334,7 +2478,8 @@
         "powershell",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-systeminfo"
     },
     {
       "id": "wmi-bios-info",
@@ -2347,7 +2492,8 @@
         "windows",
         "info",
         "diag"
-      ]
+      ],
+      "guideRef": "support-systeminfo"
     },
     {
       "id": "wmi-prozessoren",
@@ -2434,7 +2580,8 @@
         "powershell",
         "windows",
         "diag"
-      ]
+      ],
+      "guideRef": "support-powershell-admin"
     },
     {
       "id": "remote-invoke-command",
@@ -2446,7 +2593,8 @@
         "powershell",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-powershell-admin"
     },
     {
       "id": "remote-session-persistent",
@@ -2458,7 +2606,8 @@
         "powershell",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-powershell-admin"
     },
     {
       "id": "remote-sessions-anzeigen",
@@ -2470,7 +2619,8 @@
         "powershell",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-powershell-admin"
     },
     {
       "id": "remote-winrm-trusted-hosts",
@@ -2482,7 +2632,8 @@
         "powershell",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-powershell-admin"
     },
     {
       "id": "pt-install",
@@ -2495,7 +2646,8 @@
         "windows",
         "quick",
         "admin"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-update",
@@ -2507,7 +2659,8 @@
         "winget",
         "windows",
         "update"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-settings",
@@ -2518,7 +2671,8 @@
         "powertoys",
         "windows",
         "quick"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-fancyzones-activate",
@@ -2529,7 +2683,8 @@
         "powertoys",
         "shortcuts",
         "windows"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-fancyzones-editor",
@@ -2540,7 +2695,8 @@
         "powertoys",
         "shortcuts",
         "windows"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-run-open",
@@ -2552,7 +2708,8 @@
         "shortcuts",
         "windows",
         "quick"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-run-calculator",
@@ -2564,7 +2721,8 @@
         "shortcuts",
         "windows",
         "quick"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-run-service",
@@ -2577,7 +2735,8 @@
         "windows",
         "quick",
         "system"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-alwaysontop",
@@ -2589,7 +2748,8 @@
         "shortcuts",
         "windows",
         "quick"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-colorpicker",
@@ -2601,7 +2761,8 @@
         "shortcuts",
         "windows",
         "quick"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-textextractor",
@@ -2613,7 +2774,8 @@
         "shortcuts",
         "windows",
         "quick"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-peek",
@@ -2625,7 +2787,8 @@
         "shortcuts",
         "windows",
         "quick"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-powerrename",
@@ -2637,7 +2800,8 @@
         "windows",
         "quick",
         "files"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-screenruler",
@@ -2649,7 +2813,8 @@
         "shortcuts",
         "windows",
         "quick"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-shortcutguide",
@@ -2661,7 +2826,8 @@
         "shortcuts",
         "windows",
         "quick"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-findmymouse",
@@ -2673,7 +2839,8 @@
         "shortcuts",
         "windows",
         "quick"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-keyboardmanager",
@@ -2684,7 +2851,8 @@
         "powertoys",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-keyboardmanager-toggle",
@@ -2696,7 +2864,8 @@
         "shortcuts",
         "windows",
         "quick"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-workspaces",
@@ -2707,7 +2876,8 @@
         "powertoys",
         "windows",
         "admin"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-advancedpaste",
@@ -2719,7 +2889,8 @@
         "shortcuts",
         "windows",
         "quick"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-mousewithoutborders",
@@ -2731,7 +2902,8 @@
         "windows",
         "network",
         "admin"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-zoomit-zoom",
@@ -2743,7 +2915,8 @@
         "shortcuts",
         "windows",
         "quick"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "pt-envvars",
@@ -2755,7 +2928,8 @@
         "windows",
         "system",
         "admin"
-      ]
+      ],
+      "guideRef": "support-powertoys"
     },
     {
       "id": "network-tnc-port",
@@ -2769,7 +2943,7 @@
         "diag",
         "quick"
       ],
-      "guideRef": "support-platzhalter"
+      "guideRef": "support-tracert"
     },
     {
       "id": "network-tnc-smtp",
@@ -2783,7 +2957,7 @@
         "diag",
         "exchange"
       ],
-      "guideRef": "support-platzhalter"
+      "guideRef": "support-tracert"
     },
     {
       "id": "network-tnc-rdp",
@@ -2797,7 +2971,7 @@
         "diag",
         "remote"
       ],
-      "guideRef": "support-platzhalter"
+      "guideRef": "support-tracert"
     },
     {
       "id": "network-tnc-diagnose",
@@ -2894,7 +3068,8 @@
         "powershell",
         "windows",
         "diag"
-      ]
+      ],
+      "guideRef": "support-tracert"
     },
     {
       "id": "network-adapter-statistik",

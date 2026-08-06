@@ -1166,6 +1166,104 @@
   .gg-grid--list .gg-tile-footer { margin-left: 0; }
 }
 
+/* ── Support-Container (readonly Support-Guides) ──────────── */
+.gs-card {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r);
+  padding: 18px;
+  transition: border-color .15s, background .15s, transform .1s;
+}
+.gs-card-title { font-size: .95rem; font-weight: 700; color: var(--text); line-height: 1.35; margin-bottom: 6px; }
+.gs-card-preview { font-size: .82rem; color: var(--muted); line-height: 1.5; }
+
+.gs-support-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.gs-support-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.gs-support-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.gs-support-icon { font-size: 1rem; }
+.gs-support-count {
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--dim);
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1px 7px;
+}
+.gs-support-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 4px 10px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  transition: all .15s;
+}
+.gs-support-toggle:hover {
+  color: var(--text);
+  border-color: var(--border2);
+}
+.gs-support-chevron {
+  font-size: .65rem;
+  transition: transform .2s;
+}
+.gs-support-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.gs-support-card {
+  position: relative;
+  cursor: pointer;
+  border-left-color: var(--dim);
+  opacity: .9;
+}
+.gs-support-card:hover { opacity: 1; }
+.gs-support-badge {
+  display: inline-block;
+  font-size: .65rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--border2);
+  background: var(--panel2);
+  color: var(--dim);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.gs-support-lock {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: .75rem;
+  opacity: .4;
+}
+
 /* ============================================================
    Guide-Editor (guides-create.html) – Phase 5+6
    ============================================================ */

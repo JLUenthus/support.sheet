@@ -164,10 +164,51 @@
         </div>
 
         <div class="gg-grid" id="gg-grid" hidden></div>
+
+        <section class="gs-support-section" id="gs-support-section">
+          <div class="gs-support-header">
+            <div class="gs-support-title">
+              <span class="gs-support-icon">🛠️</span>
+              <span>Support</span>
+              <span class="gs-support-count" id="gs-support-count"></span>
+            </div>
+            <button class="gs-support-toggle" id="gs-support-toggle"
+                    aria-expanded="true">
+              <span class="gs-support-toggle-label"
+                    id="gs-support-toggle-label">ausblenden</span>
+              <span class="gs-support-chevron">▾</span>
+            </button>
+          </div>
+          <div class="gs-support-grid" id="gs-support-grid">
+            <!-- Kacheln werden per JS eingefügt -->
+          </div>
+        </section>
       </section>
 
     </div>
   </main>
+
+  <!-- Guide Overlay -->
+  <div id="guide-overlay" class="guide-overlay" hidden aria-modal="true" role="dialog">
+    <div class="guide-overlay-backdrop"></div>
+    <div class="guide-overlay-panel">
+      <div class="guide-overlay-header">
+        <div class="guide-overlay-title" id="guide-overlay-title"></div>
+        <div class="guide-overlay-actions">
+          <a href="#" id="guide-overlay-open"
+             class="guide-overlay-open-btn"
+             target="_blank" rel="noopener">
+            ↗ In guide.sheet oeffnen
+          </a>
+          <button class="guide-overlay-close" id="guide-overlay-close"
+                  aria-label="Schliessen" title="Schliessen">✕</button>
+        </div>
+      </div>
+      <div class="guide-overlay-content" id="guide-overlay-content">
+        <!-- Markdown wird hier gerendert -->
+      </div>
+    </div>
+  </div>
 
   <!-- ── BULK-LÖSCH-BESTÄTIGUNG ────────────────────────────── -->
   <div class="gv-confirm-overlay" id="gg-bulk-delete-overlay" hidden>
@@ -192,6 +233,8 @@
   <script src="js/fuse.min.js"></script>
   <script src="js/guides-db.js"></script>
   <script src="js/guides.js"></script>
+  <script src="js/marked.min.js"></script>
+  <script src="js/guide-overlay.js"></script>
   <script src="js/guides-overview.js"></script>
   <script src="nav.js"></script>
 

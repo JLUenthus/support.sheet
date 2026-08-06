@@ -29,12 +29,17 @@ window.GuideOverlay = (function() {
     return _guides.find(g => g.id === id) || null;
   }
 
-  // Overlay oeffnen
-  async function open(guideId) {
-    await loadGuides();
-    const guide = findGuide(guideId);
-    if (!guide) return;
+  // HTML-Escaping fuer Links (Titel/URL koennen Sonderzeichen enthalten)
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
 
+  // Guide-Objekt ins Overlay rendern (Titel, Inhalt, Links)
+  function renderGuide(guide) {
     const overlay  = document.getElementById('guide-overlay');
     const titleEl  = document.getElementById('guide-overlay-title');
     const contentEl = document.getElementById('guide-overlay-content');
@@ -47,17 +52,49 @@ window.GuideOverlay = (function() {
     openBtn.title = 'Guide "' + guide.title + '" in guide.sheet öffnen';
 
     // Markdown rendern falls marked.js verfuegbar
+    let html;
     if (typeof marked !== 'undefined') {
-      contentEl.innerHTML = marked.parse(guide.content || '');
+      html = marked.parse(guide.content || '');
     } else {
       // Fallback: plain text mit <br> fuer Zeilenumbrueche
-      contentEl.innerHTML = '<pre style="white-space:pre-wrap;font-family:var(--font-ui)">'
-        + (guide.content || '').replace(/</g, '&lt;') + '</pre>';
+      html = '<pre style="white-space:pre-wrap;font-family:var(--font-ui)">'
+        + escapeHtml(guide.content || '') + '</pre>';
     }
+
+    // Links anhaengen, falls vorhanden
+    const links = Array.isArray(guide.links) ? guide.links.filter(l => l && l.url) : [];
+    if (links.length) {
+      html += '<div class="guide-overlay-links">'
+        + '<h3>🔗 Links</h3><ul>'
+        + links.map(l => {
+            const label = l.text && l.text.trim() ? l.text.trim() : l.url;
+            return '<li><a href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener">'
+              + escapeHtml(label) + '</a></li>';
+          }).join('')
+        + '</ul></div>';
+    }
+
+    contentEl.innerHTML = html;
 
     overlay.hidden = false;
     document.body.style.overflow = 'hidden';
     document.getElementById('guide-overlay-close')?.focus();
+  }
+
+  // Overlay oeffnen per Guide-ID (laedt/durchsucht support-guides.json)
+  async function open(guideId) {
+    await loadGuides();
+    const guide = findGuide(guideId);
+    if (!guide) return;
+    renderGuide(guide);
+  }
+
+  // Overlay oeffnen mit bereits vorhandenem Guide-Objekt
+  // (z.B. Support-Guide-Kacheln in guides.html, die den Guide
+  // schon geladen haben und nicht nochmal per ID suchen muessen)
+  function openFromData(guide) {
+    if (!guide) return;
+    renderGuide(guide);
   }
 
   // Overlay schliessen
@@ -82,7 +119,7 @@ window.GuideOverlay = (function() {
     });
   }
 
-  return { open, close, init, loadGuides };
+  return { open, openFromData, close, init, loadGuides };
 
 })();
 

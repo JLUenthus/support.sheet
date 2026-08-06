@@ -852,6 +852,35 @@ body.page-tools    .hero h1 { background: linear-gradient(135deg, #e0e4f0 0%, #9
   font-weight: 700;
 }
 
+/* Links-Sektion im Guide-Overlay */
+.guide-overlay-links {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.guide-overlay-links h3 {
+  margin: 0 0 8px;
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.guide-overlay-links ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.guide-overlay-links li { margin: 0; }
+.guide-overlay-links a {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: .85rem;
+  word-break: break-word;
+}
+.guide-overlay-links a:hover { text-decoration: underline; }
+
 /* Guide-Button auf Command-Kachel */
 .guide-ref-btn {
   display: inline-flex;

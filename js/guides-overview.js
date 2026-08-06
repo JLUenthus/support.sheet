@@ -216,13 +216,21 @@
   }
 
   // ── Sidebar-Tag-Wolke (echte Daten, klickbar zum Filtern) ─
+  // Support-Guides fliessen bereits nicht in allGuides ein (separater
+  // fetch in loadSupportGuides). Der Meta-Tag "Support.sheet" wird
+  // zusätzlich explizit ausgefiltert, falls er je auf einem
+  // persönlichen Guide gesetzt sein sollte.
+  const EXCLUDED_TAGS = ['Support.sheet', 'support.sheet'];
+
   function renderTagCloud() {
     const container = document.getElementById('gg-tag-cloud');
     if (!container) return;
     container.replaceChildren();
 
     const tagCounts = {};
-    allGuides.forEach(g => (g.meta.tags || []).forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; }));
+    allGuides.forEach(g => (g.meta.tags || [])
+      .filter(t => !EXCLUDED_TAGS.includes(t))
+      .forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; }));
     const tagNames = Object.keys(tagCounts).sort((a, b) => a.localeCompare(b, 'de'));
 
     if (!tagNames.length) {
@@ -309,7 +317,9 @@
     const sel = document.getElementById('gg-filter-tag');
     if (!sel) return;
     const tags = new Set();
-    allGuides.forEach(g => (g.meta.tags || []).forEach(t => tags.add(t)));
+    allGuides.forEach(g => (g.meta.tags || [])
+      .filter(t => !EXCLUDED_TAGS.includes(t))
+      .forEach(t => tags.add(t)));
     sel.replaceChildren();
     const optAll = document.createElement('option');
     optAll.value = '';
@@ -690,5 +700,101 @@
     initBulkActions();
     initHowtoHint();
     init();
+  });
+
+  // ── Support-Container (readonly Support-Guides aus data/support-guides.json) ──
+  // Eigener fetch, komplett getrennt von allGuides/GuidesDB – zählt daher
+  // weder in den Kategorie-Zählern noch in der Tag-Cloud oben mit.
+  const SUPPORT_HIDE_KEY = 'gs-hide-support';
+
+  async function loadSupportGuides() {
+    try {
+      const r = await fetch('./data/support-guides.json');
+      const d = await r.json();
+      return d.guides || [];
+    } catch(e) {
+      console.warn('Support-Guides nicht geladen:', e);
+      return [];
+    }
+  }
+
+  function renderSupportGuides(guides) {
+    const grid    = document.getElementById('gs-support-grid');
+    const countEl = document.getElementById('gs-support-count');
+    if (!grid) return;
+
+    if (countEl) countEl.textContent = guides.length;
+    grid.replaceChildren();
+
+    guides.forEach(guide => {
+      const card = document.createElement('div');
+      card.className = 'gs-card gs-support-card';
+      card.dataset.guideId = guide.id;
+
+      const badge = document.createElement('span');
+      badge.className = 'gs-support-badge';
+      badge.textContent = guide.subcategory || 'Support';
+
+      const title = document.createElement('div');
+      title.className = 'gs-card-title';
+      title.textContent = guide.title;
+
+      const preview = document.createElement('div');
+      preview.className = 'gs-card-preview';
+      const firstLine = (guide.content || '')
+        .split('\n')
+        .find(l => l.trim() && !l.startsWith('#')) || '';
+      preview.textContent = firstLine
+        .replace(/[*_`#\[\]]/g, '')
+        .substring(0, 120);
+
+      const lock = document.createElement('span');
+      lock.className = 'gs-support-lock';
+      lock.textContent = '🔒';
+      lock.title = 'Nur lesbar';
+
+      card.appendChild(badge);
+      card.appendChild(title);
+      card.appendChild(preview);
+      card.appendChild(lock);
+
+      card.addEventListener('click', () => {
+        if (typeof GuideOverlay !== 'undefined') {
+          GuideOverlay.openFromData(guide);
+        }
+      });
+
+      grid.appendChild(card);
+    });
+  }
+
+  function initSupportToggle() {
+    const toggle  = document.getElementById('gs-support-toggle');
+    const grid    = document.getElementById('gs-support-grid');
+    const label   = document.getElementById('gs-support-toggle-label');
+    const chevron = toggle?.querySelector('.gs-support-chevron');
+    if (!toggle || !grid) return;
+
+    const hidden = localStorage.getItem(SUPPORT_HIDE_KEY) === 'true';
+    if (hidden) {
+      grid.hidden = true;
+      label.textContent = 'einblenden';
+      if (chevron) chevron.style.transform = 'rotate(-90deg)';
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    toggle.addEventListener('click', () => {
+      const isHidden = grid.hidden;
+      grid.hidden = !isHidden;
+      label.textContent = isHidden ? 'ausblenden' : 'einblenden';
+      if (chevron) chevron.style.transform = isHidden ? '' : 'rotate(-90deg)';
+      toggle.setAttribute('aria-expanded', String(isHidden));
+      localStorage.setItem(SUPPORT_HIDE_KEY, String(!isHidden));
+    });
+  }
+
+  loadSupportGuides().then(guides => {
+    renderSupportGuides(guides);
+    initSupportToggle();
   });
 })();
