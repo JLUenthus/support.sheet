@@ -118,6 +118,7 @@ function createCommandCard(template, cmd) {
   const tagContainer = clone.querySelector('[data-field="tags"]');
   const copyBtn      = clone.querySelector('[data-action="copy"]');
   const starBtn      = clone.querySelector('[data-action="star"]');
+  const cardHeader   = clone.querySelector('.card-header');
   const card         = clone.querySelector('.command-card');
 
   if (card) card.dataset.cmdId = cmd.id;
@@ -153,12 +154,15 @@ function createCommandCard(template, cmd) {
     });
   }
 
-  // Guide-Button – nur wenn guideRef gesetzt ist
+  // Guide-Button – nur wenn guideRef gesetzt ist. Sitzt im card-header
+  // direkt vor dem Stern (statt in der Tag-Zeile), damit er bei jeder
+  // Kachel an derselben, gut sichtbaren Stelle liegt.
   if (cmd.guideRef) {
     const guideBtn = document.createElement('button');
-    guideBtn.className = 'guide-ref-btn';
-    guideBtn.textContent = '📖 Guide';
+    guideBtn.className = 'guide-ref-btn-header';
+    guideBtn.textContent = '📖';
     guideBtn.title = 'Guide zu diesem Befehl oeffnen';
+    guideBtn.setAttribute('aria-label', 'Guide zu diesem Befehl oeffnen');
     guideBtn.addEventListener('click', e => {
       e.stopPropagation(); // verhindert dass die Kachel andere Events triggert
       if (typeof GuideOverlay !== 'undefined') {
@@ -166,13 +170,10 @@ function createCommandCard(template, cmd) {
       }
     });
 
-    // Button in die Tag-Zeile einhaengen (rechts aussen)
-    if (tagContainer) {
-      tagContainer.style.display = 'flex';
-      tagContainer.style.alignItems = 'center';
-      tagContainer.style.flexWrap = 'wrap';
-      tagContainer.style.gap = '4px';
-      tagContainer.appendChild(guideBtn);
+    if (cardHeader && starBtn) {
+      cardHeader.insertBefore(guideBtn, starBtn);
+    } else if (cardHeader) {
+      cardHeader.appendChild(guideBtn);
     }
   }
 

@@ -49,7 +49,8 @@ window.GuideOverlay = (function() {
 
     titleEl.textContent = guide.title;
     openBtn.href = 'guides-view.html?id=' + guide.id;
-    openBtn.title = 'Guide "' + guide.title + '" in guide.sheet öffnen';
+    openBtn.removeAttribute('target'); // direkt navigieren statt neuer Tab
+    openBtn.title = 'Guide in guide.sheet öffnen';
 
     // Markdown rendern falls marked.js verfuegbar
     let html;

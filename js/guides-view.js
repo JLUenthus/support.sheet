@@ -9,6 +9,7 @@
   let currentMeta = null;
   let currentContent = '';
   let allCategories = [];
+  let isSupportGuide = false; // true = readonly Support-Guide aus data/support-guides.json (Bug 2)
 
   function notify(message, type) {
     if (typeof showToast === 'function') showToast(message, type);
@@ -428,7 +429,13 @@
     copyBtn.addEventListener('click', () => copyText(link.url, copyBtn));
     actions.appendChild(copyBtn);
 
-    if (link.offlineAsset) {
+    // Offline-Speichern/Aktualisieren schreibt per GuidesDB.saveAsset()+
+    // saveGuide() – bei einem Support-Guide (kein echter GuidesDB-Eintrag)
+    // wuerde das ungewollt einen neuen persoenlichen Guide unter der
+    // Support-ID anlegen. Fuer Support-Guides deshalb nur Kopieren anbieten.
+    if (isSupportGuide) {
+      // keine weiteren Aktionen
+    } else if (link.offlineAsset) {
       const savedLabel = fmtDate(link.offlineSavedAt);
       const viewBtn = document.createElement('button');
       viewBtn.type = 'button';
@@ -836,10 +843,34 @@
     btn.setAttribute('aria-pressed', String(active));
   }
 
+  // Support-Guides liegen readonly in data/support-guides.json (kein
+  // GuidesDB-Eintrag dahinter) – Bearbeiten/Löschen/Favorisieren sowie
+  // Dateien/Bilder-Anhänge würden beim Speichern GuidesDB.saveGuide()
+  // aufrufen und dabei unbeabsichtigt einen neuen persönlichen Guide
+  // unter der Support-ID anlegen. Diese Aktionen deshalb ausblenden.
+  function applySupportGuideUi() {
+    document.getElementById('gv-edit-btn').hidden = isSupportGuide;
+    document.getElementById('gv-delete-btn').hidden = isSupportGuide;
+    document.getElementById('gv-fav-btn').hidden = isSupportGuide;
+    document.getElementById('gv-attachments').hidden = isSupportGuide;
+    document.getElementById('gv-images').hidden = isSupportGuide;
+    const exportWrap = document.querySelector('.gv-export-wrap');
+    if (exportWrap) exportWrap.hidden = isSupportGuide;
+    const badge = document.getElementById('gv-support-badge');
+    if (badge) badge.hidden = !isSupportGuide;
+
+    // Man ist bereits in guide.sheet – der "In guide.sheet oeffnen"-Link
+    // (Teil des Guide-Overlays, falls dessen Markup je auf dieser Seite
+    // eingebunden werden sollte) ergibt hier so oder so keinen Sinn.
+    const overlayOpenBtn = document.getElementById('guide-overlay-open');
+    if (overlayOpenBtn) overlayOpenBtn.hidden = true;
+  }
+
   async function renderGuide() {
     document.getElementById('gv-loading').hidden = true;
     document.getElementById('gv-error').hidden = true;
     document.getElementById('gv-article').hidden = false;
+    applySupportGuideUi();
 
     document.title = 'support.sheet – ' + (currentMeta.title || 'Guide');
     document.getElementById('gv-title').textContent = currentMeta.title || '(Ohne Titel)';
@@ -892,10 +923,43 @@
     }
     enhanceCodeBlocks(contentEl);
     enhanceImages(contentEl);
-    enhanceChecklists(contentEl);
+    if (!isSupportGuide) enhanceChecklists(contentEl); // sonst per Checkbox editierbar, obwohl readonly
 
     renderLinks();
-    renderAttachments();
+    if (!isSupportGuide) renderAttachments();
+  }
+
+  // Fallback fuer Support-Guides: liegen nicht in GuidesDB (Ordner/IndexedDB),
+  // sondern readonly in data/support-guides.json. db.getGuide() findet sie
+  // nie, deshalb hier separat nachschlagen wenn die persoenliche Suche
+  // nichts liefert (leerer Guide-Bug, siehe guides-view "In guide.sheet
+  // oeffnen" von Support-Kacheln aus).
+  async function loadSupportGuide(id) {
+    try {
+      const r = await fetch('./data/support-guides.json');
+      const d = await r.json();
+      const guide = (d.guides || []).find(g => g.id === id);
+      if (!guide) return null;
+      return {
+        meta: {
+          id: guide.id,
+          title: guide.title,
+          category: guide.category,
+          subcategory: guide.subcategory,
+          tags: guide.tags || [],
+          created: guide.created,
+          modified: guide.modified,
+          favorite: false,
+          readonly: true,
+          source: guide.source || 'support.sheet',
+          links: guide.links || [],
+        },
+        content: guide.content || '',
+      };
+    } catch (e) {
+      console.warn('Support-Guides nicht geladen:', e);
+      return null;
+    }
   }
 
   async function loadGuide() {
@@ -907,19 +971,29 @@
 
     await db.restoreFolder();
 
-    if (db.isFilesystemMode() && !db.isConnected()) {
-      showError('Kein Ordner verbunden. Bitte in der Seitenleiste unter „Ordner-Status“ einen Ordner auswählen.');
-      return;
-    }
-
+    // Zuerst persoenliche Guides versuchen (getGuide() faengt Fehler
+    // intern ab und liefert bei nicht verbundenem Ordner/nicht
+    // gefundener ID immer { success: false }, wirft also nie).
     const res = await db.getGuide(currentId);
-    if (!res.success) {
-      showError(res.error || 'Guide konnte nicht geladen werden.');
-      return;
+    if (res.success) {
+      isSupportGuide = false;
+      currentMeta    = res.meta;
+      currentContent = res.content || '';
+    } else {
+      const supportGuide = await loadSupportGuide(currentId);
+      if (supportGuide) {
+        isSupportGuide = true;
+        currentMeta    = supportGuide.meta;
+        currentContent = supportGuide.content;
+      } else if (db.isFilesystemMode() && !db.isConnected()) {
+        showError('Kein Ordner verbunden. Bitte in der Seitenleiste unter „Ordner-Status“ einen Ordner auswählen.');
+        return;
+      } else {
+        showError(res.error || 'Guide konnte nicht geladen werden.');
+        return;
+      }
     }
 
-    currentMeta    = res.meta;
-    currentContent = res.content || '';
     await renderGuide();
 
     const catRes = await db.getCategories();

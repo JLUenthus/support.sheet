@@ -700,6 +700,10 @@
     initBulkActions();
     initHowtoHint();
     init();
+    loadSupportGuides().then(guides => {
+      renderSupportGuides(guides);
+      initSupportToggle();
+    });
   });
 
   // ── Support-Container (readonly Support-Guides aus data/support-guides.json) ──
@@ -792,9 +796,4 @@
       localStorage.setItem(SUPPORT_HIDE_KEY, String(!isHidden));
     });
   }
-
-  loadSupportGuides().then(guides => {
-    renderSupportGuides(guides);
-    initSupportToggle();
-  });
 })();
