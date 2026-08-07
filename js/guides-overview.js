@@ -152,10 +152,11 @@
       minMatchCharLength: 2,
       ignoreLocation: true, // Content kann lang sein – Treffer sollen unabhängig von der Position zählen
       keys: [
-        { name: 'meta.title',    weight: 0.5 },
-        { name: 'meta.tags',     weight: 0.25 },
-        { name: 'meta.category', weight: 0.15 },
-        { name: 'content',       weight: 0.1 },
+        { name: 'meta.title',       weight: 0.45 },
+        { name: 'meta.tags',        weight: 0.25 },
+        { name: 'meta.category',    weight: 0.12 },
+        { name: 'meta.subcategory', weight: 0.08 },
+        { name: 'content',          weight: 0.1 },
       ],
     });
   }
@@ -175,6 +176,20 @@
     container.appendChild(buildCatButton('Alle', null, allGuides.length, null));
     categories.forEach(cat => {
       container.appendChild(buildCatButton(cat.name, cat.color, counts[cat.name] || 0, cat.name));
+
+      // Unterkategorien eingerueckt darunter, mit eigenem Zaehler
+      // (Kategorie + Unterkategorie muessen beide passen).
+      if (cat.subcategories && cat.subcategories.length > 0) {
+        cat.subcategories.forEach(sub => {
+          const subCount = allGuides.filter(g =>
+            g.meta.category === cat.name &&
+            g.meta.subcategory === sub
+          ).length;
+          const subBtn = buildCatButton(sub, cat.color, subCount, cat.name + '/' + sub);
+          subBtn.classList.add('gs-cat-sub-item');
+          container.appendChild(subBtn);
+        });
+      }
     });
 
     updateCategoryActiveState();
@@ -352,7 +367,14 @@
       list = fuse ? fuse.search(state.query).map(r => r.item) : list;
     }
     if (state.category) {
-      list = list.filter(g => (g.meta.category || 'Allgemein') === state.category);
+      // Unterkategorie-Filter kommen als 'Kategorie/Unterkategorie' aus dem
+      // Kategoriebaum (buildCatButton) – beide Teile muessen dann passen.
+      const parts = state.category.split('/');
+      if (parts.length === 2) {
+        list = list.filter(g => g.meta.category === parts[0] && g.meta.subcategory === parts[1]);
+      } else {
+        list = list.filter(g => (g.meta.category || 'Allgemein') === state.category);
+      }
     }
     if (state.tag) {
       list = list.filter(g => Array.isArray(g.meta.tags) && g.meta.tags.includes(state.tag));
@@ -434,6 +456,12 @@
     catBadge.style.setProperty('--gg-cat-color', color);
     catBadge.textContent = meta.category || 'Allgemein';
     badges.appendChild(catBadge);
+    if (meta.subcategory) {
+      const subBadge = document.createElement('span');
+      subBadge.className = 'gg-subcat-badge';
+      subBadge.textContent = meta.subcategory;
+      badges.appendChild(subBadge);
+    }
     (meta.tags || []).slice(0, 4).forEach(t => {
       const tag = document.createElement('span');
       tag.className = 'gg-tag';

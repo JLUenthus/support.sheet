@@ -1046,6 +1046,22 @@
   padding-left: 5px;
 }
 
+/* Unterkategorien: eingerueckt unter der jeweiligen Hauptkategorie */
+.gs-cat-sub-item {
+  padding-left: 20px;
+  font-size: .75rem;
+  opacity: .85;
+}
+.gs-cat-sub-item .gs-cat-dot {
+  width: 6px;
+  height: 6px;
+}
+/* .gg-cat-filter.active haette sonst per padding-left:5px (hoehere
+   Spezifitaet durch 2 Klassen) die Einrueckung ueberschrieben. */
+.gs-cat-sub-item.active {
+  padding-left: 17px;
+}
+
 /* ── Skeleton-Loader ──────────────────────────────────────── */
 .gg-skeleton { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .gg-skeleton[hidden] { display: none; }
@@ -1149,6 +1165,12 @@
   background: color-mix(in srgb, var(--gg-cat-color, var(--accent)) 15%, transparent);
   color: var(--gg-cat-color, var(--accent));
   border: 1px solid color-mix(in srgb, var(--gg-cat-color, var(--accent)) 35%, transparent);
+}
+.gg-subcat-badge {
+  font-size: .62rem;
+  color: var(--dim);
+  font-style: italic;
+  align-self: center;
 }
 .gg-tag {
   font-size: .66rem;
