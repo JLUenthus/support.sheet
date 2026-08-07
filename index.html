@@ -36,8 +36,7 @@
 
     <div class="landing-group">
       <div class="landing-group-label">Nachschlagen</div>
-      <div class="landing-grid">
-
+      <div class="landing-grid landing-grid--featured">
         <a href="windows.html" class="landing-card landing-card--wide" style="border-left-color:#7c8cf8">
           <div class="landing-card-head">
             <span class="landing-card-icon">💻</span>
@@ -139,7 +138,16 @@
 
 
   <style>
-    .landing-header { padding: 24px 0 20px; }
+    /* .landing-header ist ein Geschwister-Element von <main>, kein
+       Nachfahre – braucht deshalb dieselbe Innenabstand+Zentrierung
+       wie main (main.css: padding 0 24px, max-width 1200px, margin
+       auto), sonst klebt der Titel links am Viewport-Rand waehrend
+       der Rest der Seite zentriert und eingerueckt ist. */
+    .landing-header {
+      padding: 24px 24px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
     .landing-title {
       font-size: 1.4rem;
       font-weight: 700;
@@ -172,6 +180,19 @@
 
     .landing-card--wide {
       grid-column: span 2;
+    }
+    /* auto-fill errechnet die Spaltenzahl aus der verfuegbaren Breite –
+       bei 2+1+1 Karten (eine davon "wide") kann das zufaellig zu 3
+       Spalten fuehren: Karte 1 (2 Spalten) + Karte 2 passen in Zeile 1,
+       Karte 3 bleibt allein und schmal in Zeile 2 haengen. Feste 2
+       Spalten verhindern das: Zeile 1 = commands.sheet allein (volle
+       Breite, wie gewuenscht "gross"), Zeile 2 = die beiden anderen
+       Karten gleich breit. */
+    .landing-grid--featured {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    @media (max-width: 640px) {
+      .landing-grid--featured { grid-template-columns: 1fr; }
     }
     .landing-grid--compact {
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

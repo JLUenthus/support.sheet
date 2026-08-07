@@ -453,6 +453,7 @@
   text-transform: uppercase;
   letter-spacing: .03em;
 }
+.gv-support-badge[hidden] { display: none; }
 
 .gv-ampel {
   display: inline-block;
