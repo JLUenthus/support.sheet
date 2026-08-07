@@ -1630,7 +1630,20 @@
 .ge-image-actions { display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
 
 /* ── Markdown-Toolbar ─────────────────────────────────────── */
-.ge-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-bottom: 8px; }
+.ge-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 0;
+  position: sticky;
+  top: 98px;       /* header 58px + tab-bar 40px */
+  z-index: 50;
+  background: var(--panel);
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--r) var(--r) 0 0;
+}
 .ge-toolbar button {
   min-width: 32px;
   height: 30px;
@@ -1648,8 +1661,62 @@
 .ge-toolbar button:hover { color: var(--text); border-color: var(--border2); }
 .ge-toolbar-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
 
+/* ── Emoji-Picker ─────────────────────────────────────────── */
+/* position: fixed statt absolute – der Picker wird per JS
+   (getBoundingClientRect() auf den Toolbar-Button) positioniert.
+   Er ist ein Geschwister-Element von .ge-toolbar, nicht dessen
+   Nachfahre, ein umgebender position:relative-Container wuerde
+   die absolute Positionierung deshalb nicht beeinflussen. */
+.ge-emoji-picker {
+  position: fixed;
+  z-index: 200;
+  background: var(--panel);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 10px;
+  width: 280px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+}
+.ge-emoji-picker[hidden] { display: none; }
+
+.ge-emoji-search-wrap { margin-bottom: 8px; }
+.ge-emoji-search {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 5px 8px;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: .8rem;
+  outline: none;
+}
+
+.ge-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.ge-emoji-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: background .1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ge-emoji-btn:hover { background: var(--panel2); }
+
 /* ── Split-Editor ─────────────────────────────────────────── */
-.ge-editor-wrap { display: flex; gap: 14px; min-height: 420px; margin-bottom: 16px; }
+.ge-editor-wrap { display: flex; gap: 14px; min-height: 420px; margin-bottom: 16px; position: relative; }
 .ge-editor-wrap .ge-textarea,
 .ge-editor-wrap .ge-preview { flex: 1; min-width: 0; }
 
@@ -1684,9 +1751,69 @@
 .ge-editor-wrap[data-mode="preview"] .ge-textarea { display: none; }
 .ge-editor-wrap[data-mode="preview"] .ge-preview  { flex: 1 1 100%; }
 
-/* ── Speichern-Zeile ──────────────────────────────────────── */
-.ge-save-row { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
-.ge-autosave-status { margin-right: auto; font-size: .74rem; color: var(--dim); }
+/* ── Sticky Bottom-Bar (ersetzt die alte Speichern-Zeile) ──── */
+.ge-bottom-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 50;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ge-back-top-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1rem;
+  font-family: var(--font-ui);
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.ge-back-top-btn:hover { color: var(--text); border-color: var(--border2); }
+
+.ge-autosave-status { font-size: .74rem; color: var(--dim); }
+
+.ge-bottom-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.ge-draft-btn {
+  padding: 7px 14px;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.ge-draft-btn:hover { color: var(--text); border-color: var(--border2); }
+
+.ge-save-close-btn {
+  padding: 7px 14px;
+  border-radius: var(--r);
+  border: 1px solid rgba(74,222,128,.3);
+  background: rgba(74,222,128,.08);
+  color: var(--green);
+  font-family: var(--font-ui);
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+}
+.ge-save-close-btn:hover { background: rgba(74,222,128,.15); }
+
 .ge-save-btn {
   padding: 9px 20px;
   border-radius: 8px;

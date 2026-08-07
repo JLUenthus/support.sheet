@@ -149,11 +149,15 @@
           <button type="button" data-action="h1" title="Überschrift 1">H1</button>
           <button type="button" data-action="h2" title="Überschrift 2">H2</button>
           <button type="button" data-action="h3" title="Überschrift 3">H3</button>
+          <button type="button" data-action="bullet" title="Stichpunkte">• Liste</button>
+          <button type="button" data-action="ordered" title="Nummerierte Liste">1. Liste</button>
           <span class="ge-toolbar-sep"></span>
           <button type="button" data-action="bold" title="Fett"><strong>B</strong></button>
           <button type="button" data-action="italic" title="Kursiv"><em>I</em></button>
           <button type="button" data-action="code" title="Inline-Code">`Code`</button>
           <button type="button" data-action="codeblock" title="Code-Block">```</button>
+          <button type="button" data-action="powershell" title="PowerShell-Block">PS</button>
+          <button type="button" data-action="cmd" title="CMD-Block">CMD</button>
           <span class="ge-toolbar-sep"></span>
           <button type="button" data-action="link" title="Link">🔗</button>
           <button type="button" data-action="image" title="Bild einfügen">🖼️</button>
@@ -163,6 +167,17 @@
           <button type="button" data-action="align-left" title="Linksbündig">⬅</button>
           <button type="button" data-action="align-center" title="Zentriert">↔</button>
           <button type="button" data-action="align-right" title="Rechtsbündig">➡</button>
+          <span class="ge-toolbar-sep"></span>
+          <button type="button" data-action="emoji" title="Emoji einfügen">😀</button>
+        </div>
+
+        <div id="ge-emoji-picker" class="ge-emoji-picker" hidden>
+          <div class="ge-emoji-search-wrap">
+            <input type="text" id="ge-emoji-search"
+                   placeholder="Emoji suchen..."
+                   class="ge-emoji-search" autocomplete="off">
+          </div>
+          <div class="ge-emoji-grid" id="ge-emoji-grid"></div>
         </div>
 
         <div class="ge-images-row">
@@ -176,10 +191,14 @@
         </div>
         <input type="file" id="ge-image-input" accept="image/*" hidden>
 
-        <div class="ge-save-row">
+        <div class="ge-bottom-bar" id="ge-bottom-bar">
+          <button type="button" class="ge-back-top-btn" id="ge-back-top" title="Nach oben">↑</button>
           <span class="ge-autosave-status" id="ge-autosave-status"></span>
-          <button type="button" class="gs-folder-btn" id="ge-save-draft">💾 Entwurf speichern</button>
-          <button type="button" class="ge-save-btn" id="ge-save">✅ Speichern</button>
+          <div class="ge-bottom-actions">
+            <button type="button" class="ge-draft-btn" id="ge-save-draft">💾 Zwischenspeichern</button>
+            <button type="button" class="ge-save-close-btn" id="ge-save-close">✓ Speichern &amp; Schließen</button>
+            <button type="button" class="ge-save-btn" id="ge-save">✅ Speichern</button>
+          </div>
         </div>
 
       </section>
@@ -231,6 +250,40 @@
         <button class="link-dialog-btn-ok" id="link-dialog-ok">
           Einfügen
         </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="table-dialog" class="link-dialog" hidden>
+    <div class="link-dialog-backdrop"></div>
+    <div class="link-dialog-panel">
+      <div class="link-dialog-header">
+        <span class="link-dialog-title">Tabelle einfügen</span>
+        <button class="link-dialog-close" id="table-dialog-close">✕</button>
+      </div>
+      <div class="link-dialog-body">
+        <label class="link-dialog-label">
+          Spalten
+          <input type="number" id="table-cols" value="2"
+                 min="1" max="8" class="link-dialog-input">
+        </label>
+        <label class="link-dialog-label">
+          Zeilen
+          <input type="number" id="table-rows" value="3"
+                 min="1" max="20" class="link-dialog-input">
+        </label>
+        <label class="link-dialog-label">
+          Spaltenname Vorlage
+          <input type="text" id="table-header" value="Spalte"
+                 class="link-dialog-input"
+                 placeholder="Spalte (wird nummeriert)">
+        </label>
+      </div>
+      <div class="link-dialog-footer">
+        <button class="link-dialog-btn-cancel"
+                id="table-dialog-cancel">Abbrechen</button>
+        <button class="link-dialog-btn-ok"
+                id="table-dialog-ok">Einfügen</button>
       </div>
     </div>
   </div>

@@ -965,31 +965,45 @@
   async function loadGuide() {
     const db = window.GuidesDB;
     currentId = resolveGuideId();
+    // Niemals einen Wert aus einem frueheren Ladeversuch uebernehmen – wird
+    // unten ausschliesslich gesetzt, wenn der Guide wirklich aus
+    // support-guides.json stammt (siehe WICHTIG-Hinweis der Aufgabe).
+    isSupportGuide = false;
 
     if (!db) { showError('Datenmodul (guides-db.js) konnte nicht geladen werden.'); return; }
     if (!currentId) { showError('Keine Guide-ID angegeben (weder #hash noch ?id=).'); return; }
 
     await db.restoreFolder();
 
-    // Zuerst persoenliche Guides versuchen (getGuide() faengt Fehler
-    // intern ab und liefert bei nicht verbundenem Ordner/nicht
-    // gefundener ID immer { success: false }, wirft also nie).
+    // Schritt 1+2: zuerst persoenliche Guides versuchen. getGuide() liest
+    // im Dateisystem-Modus aus dem verbundenen Ordner, im IndexedDB-Modus
+    // (Firefox, "Browser-Speicher aktiv") direkt per idbGet() aus der
+    // Browser-DB – braucht dort KEINEN verbundenen Ordner, isConnected()
+    // liefert im IDB-Modus ohnehin immer true (siehe guides-db.js). Faengt
+    // Fehler intern ab, wirft also nie.
     const res = await db.getGuide(currentId);
     if (res.success) {
       isSupportGuide = false;
       currentMeta    = res.meta;
       currentContent = res.content || '';
     } else {
+      // Schritt 4: erst wenn die persoenliche Suche (FS ODER IDB, je nach
+      // Modus) nichts geliefert hat, den readonly Support-Guide-Fallback
+      // aus data/support-guides.json versuchen.
       const supportGuide = await loadSupportGuide(currentId);
       if (supportGuide) {
+        // Schritt 5: isSupportGuide wird ausschliesslich in diesem Zweig
+        // gesetzt – nie als Ausweichwert bei einem sonstigen Fehler.
         isSupportGuide = true;
         currentMeta    = supportGuide.meta;
         currentContent = supportGuide.content;
       } else if (db.isFilesystemMode() && !db.isConnected()) {
+        // "Kein Ordner verbunden" kann nur im Dateisystem-Modus die
+        // Ursache sein – im IndexedDB-Modus ist isConnected() immer true.
         showError('Kein Ordner verbunden. Bitte in der Seitenleiste unter „Ordner-Status“ einen Ordner auswählen.');
         return;
       } else {
-        showError(res.error || 'Guide konnte nicht geladen werden.');
+        showError(res.error || 'Guide "' + currentId + '" wurde nicht gefunden.');
         return;
       }
     }

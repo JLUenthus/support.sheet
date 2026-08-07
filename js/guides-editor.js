@@ -229,7 +229,7 @@
   // Anders als Bilder werden Anhänge nicht im Entwurf (localStorage)
   // zwischengespeichert – Setup-Dateien etc. können beliebig groß sein und
   // würden das Draft-Quota sofort sprengen. Die Datei selbst wird erst beim
-  // finalen Speichern (handleSave) über GuidesDB.saveAsset abgelegt.
+  // finalen Speichern (saveGuide) über GuidesDB.saveAsset abgelegt.
   function formatFileSize(bytes) {
     if (bytes == null) return '';
     const units = ['B', 'KB', 'MB', 'GB'];
@@ -321,17 +321,22 @@
           case 'h1':        insertWrap(textarea, '# ', '', 'Überschrift'); break;
           case 'h2':        insertWrap(textarea, '## ', '', 'Überschrift'); break;
           case 'h3':        insertWrap(textarea, '### ', '', 'Überschrift'); break;
+          case 'bullet':    insertRaw(textarea, '\n- '); break;
+          case 'ordered':   insertRaw(textarea, '\n1. '); break;
           case 'bold':      insertWrap(textarea, '**', '**', 'fett'); break;
           case 'italic':    insertWrap(textarea, '*', '*', 'kursiv'); break;
           case 'code':      insertWrap(textarea, '`', '`', 'code'); break;
           case 'codeblock': insertWrap(textarea, '\n```\n', '\n```\n', 'code'); break;
+          case 'powershell': insertWrap(textarea, '\n```powershell\n', '\n```\n', ''); break;
+          case 'cmd':        insertWrap(textarea, '\n```cmd\n', '\n```\n', ''); break;
           case 'link':      openLinkDialog(); break;
           case 'image':     document.getElementById('ge-image-input').click(); break;
-          case 'table':     insertRaw(textarea, '\n| Spalte 1 | Spalte 2 |\n|----------|----------|\n| Wert     | Wert     |\n'); break;
+          case 'table':     openTableDialog(); break;
           case 'checklist': insertChecklist(textarea); break;
           case 'align-left':   insertWrap(textarea, '<div style="text-align:left">\n\n', '\n\n</div>', 'Text'); break;
           case 'align-center': insertWrap(textarea, '<div style="text-align:center">\n\n', '\n\n</div>', 'Text'); break;
           case 'align-right':  insertWrap(textarea, '<div style="text-align:right">\n\n', '\n\n</div>', 'Text'); break;
+          case 'emoji':        toggleEmojiPicker(btn); break;
         }
       });
     });
@@ -398,6 +403,125 @@
         document.getElementById('link-dialog-url')?.focus();
       }
       if (e.key === 'Escape') closeLinkDialog();
+    });
+  }
+
+  // ── Tabellen-Dialog ──────────────────────────────────────
+  function openTableDialog() {
+    document.getElementById('table-dialog').hidden = false;
+    document.getElementById('table-cols').focus();
+  }
+
+  function closeTableDialog() {
+    document.getElementById('table-dialog').hidden = true;
+    textarea.focus();
+  }
+
+  function insertTable() {
+    const cols   = parseInt(document.getElementById('table-cols').value) || 2;
+    const rows   = parseInt(document.getElementById('table-rows').value) || 3;
+    const header = document.getElementById('table-header').value || 'Spalte';
+
+    const headers = Array.from({ length: cols }, (_, i) => ` ${header} ${i + 1} `).join('|');
+    const divider = Array.from({ length: cols }, () => '----------').join('|');
+    const row     = Array.from({ length: cols }, () => ' Wert ').join('|');
+    const rowsStr = Array.from({ length: rows }, () => `|${row}|`).join('\n');
+
+    const table = `\n|${headers}|\n|${divider}|\n${rowsStr}\n`;
+    insertRaw(textarea, table);
+    closeTableDialog();
+  }
+
+  function initTableDialog() {
+    document.getElementById('table-dialog-close')?.addEventListener('click', closeTableDialog);
+    document.getElementById('table-dialog-cancel')?.addEventListener('click', closeTableDialog);
+    document.getElementById('table-dialog-ok')?.addEventListener('click', insertTable);
+    document.querySelector('#table-dialog .link-dialog-backdrop')?.addEventListener('click', closeTableDialog);
+  }
+
+  // ── Emoji-Picker ─────────────────────────────────────────
+  const EMOJIS = [
+    // Status
+    '✅','❌','⚠️','ℹ️','🔴','🟡','🟢','🔵',
+    // IT / Tech
+    '💻','🖥️','🖨️','⌨️','🖱️','📱','📡','🔌','💾','💿','🖧',
+    '🔧','🔩','⚙️','🛠️','🔑','🔐','🔒','🔓','🛡️',
+    // Netzwerk / Cloud
+    '🌐','📶','☁️','🔗','🌍',
+    // Dokumente / Dateien
+    '📄','📋','📁','📂','🗂️','📝','📊','📈','📉',
+    // Aktionen
+    '▶️','⏹️','⏸️','🔄','♻️','📥','📤','⬆️','⬇️',
+    '➕','➖','✏️','🗑️','📌','📍','🔍','🔎',
+    // Personen / Teams
+    '👤','👥','👨‍💻','👩‍💻','🤝','👋',
+    // Misc
+    '⭐','💡','🚀','🎯','🏷️','💬','📢','🔔',
+    '✨','🎉','🚨','⚡','🔥','❄️','🌟',
+  ];
+
+  // Zeigt aktuell immer alle Emojis unabhaengig von der Sucheingabe – eine
+  // echte Suche nach Namen (z.B. "warnung" -> ⚠️) braeuchte ein eigenes
+  // Emoji->Stichwort-Mapping, das hier bewusst noch nicht angelegt wurde.
+  function renderEmojiGrid(list) {
+    const grid = document.getElementById('ge-emoji-grid');
+    grid.replaceChildren();
+    list.forEach(emoji => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'ge-emoji-btn';
+      btn.textContent = emoji;
+      btn.title = emoji;
+      btn.addEventListener('click', () => {
+        insertRaw(textarea, emoji);
+        document.getElementById('ge-emoji-picker').hidden = true;
+      });
+      grid.appendChild(btn);
+    });
+  }
+
+  // Positioniert den Picker unterhalb des Toolbar-Buttons. Der Picker ist
+  // im DOM ein Geschwister-Element von .ge-toolbar (kein Nachfahre) und
+  // nutzt deshalb position:fixed mit per getBoundingClientRect() berechneten
+  // Viewport-Koordinaten statt sich auf einen position:relative-Vorfahren
+  // zu verlassen – das waere hier nicht wirksam.
+  function positionEmojiPicker(anchorBtn) {
+    const picker = document.getElementById('ge-emoji-picker');
+    const rect = anchorBtn.getBoundingClientRect();
+    const pickerWidth = 280;
+    let left = rect.left;
+    if (left + pickerWidth > window.innerWidth - 8) left = window.innerWidth - pickerWidth - 8;
+    picker.style.top  = (rect.bottom + 4) + 'px';
+    picker.style.left = Math.max(8, left) + 'px';
+  }
+
+  function toggleEmojiPicker(anchorBtn) {
+    const picker = document.getElementById('ge-emoji-picker');
+    const willShow = picker.hidden;
+    picker.hidden = !willShow;
+    if (willShow) {
+      positionEmojiPicker(anchorBtn);
+      document.getElementById('ge-emoji-search')?.focus();
+    }
+  }
+
+  function initEmojiPicker() {
+    const picker = document.getElementById('ge-emoji-picker');
+    const search = document.getElementById('ge-emoji-search');
+    if (!picker || !search) return;
+
+    renderEmojiGrid(EMOJIS);
+
+    search.addEventListener('input', () => {
+      // Einfache Filterung (Emojis haben keinen Text-Index, daher
+      // vorerst immer alle zeigen – siehe Kommentar bei renderEmojiGrid).
+      renderEmojiGrid(EMOJIS);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!picker.hidden && !picker.contains(e.target) && !e.target.closest('[data-action="emoji"]')) {
+        picker.hidden = true;
+      }
     });
   }
 
@@ -878,9 +1002,12 @@
   }
 
   // ── Speichern ────────────────────────────────────────────
-  async function handleSave() {
+  // Reine Speicherlogik ohne Navigation – gibt true/false zurueck, damit
+  // die beiden Bottom-Bar-Buttons ("Speichern" vs. "Speichern & Schließen")
+  // je nach Erfolg selbst entscheiden koennen, wohin es geht.
+  async function saveGuide() {
     const title = titleInput.value.trim();
-    if (!title) { notify('Bitte einen Titel eingeben.', 'error'); titleInput.focus(); return; }
+    if (!title) { notify('Bitte einen Titel eingeben.', 'error'); titleInput.focus(); return false; }
 
     const isEditMode = !!currentGuideId;
     const id = currentGuideId || window.GuidesDB.generateId();
@@ -910,7 +1037,7 @@
     const res = await window.GuidesDB.saveGuide(id, meta, textarea.value);
     if (!res.success) {
       notify(res.error || 'Guide konnte nicht gespeichert werden.', 'error');
-      return;
+      return false;
     }
 
     // Nur beim Bearbeiten kann es überhaupt schon alte, jetzt nicht mehr
@@ -927,8 +1054,21 @@
     pendingAssets.clear();
     assetPreviewUrls.clear();
     pendingAttachmentFiles.clear();
+    currentGuideId = id; // fuer einen etwaigen zweiten Save in derselben Session
     notify('Guide gespeichert.', 'success');
-    window.location.href = 'guides-view.html?id=' + encodeURIComponent(id);
+    return true;
+  }
+
+  // "Speichern" – wie bisher direkt zur Guide-Ansicht.
+  async function handleSaveAndView() {
+    const ok = await saveGuide();
+    if (ok) window.location.href = 'guides-view.html?id=' + encodeURIComponent(currentGuideId);
+  }
+
+  // "Speichern & Schließen" – zurueck zur Guide-Uebersicht statt zur Ansicht.
+  async function handleSaveAndClose() {
+    const ok = await saveGuide();
+    if (ok) window.location.href = 'guides.html';
   }
 
   // ── Import: Menü ─────────────────────────────────────────
@@ -1029,6 +1169,8 @@
     initViewToggle();
     initToolbar();
     initLinkDialog();
+    initTableDialog();
+    initEmojiPicker();
     initImageUpload();
     initImageBrowser();
     initLivePreview();
@@ -1036,7 +1178,11 @@
     initAutosave();
 
     document.getElementById('ge-save-draft').addEventListener('click', () => saveDraft(false));
-    document.getElementById('ge-save').addEventListener('click', handleSave);
+    document.getElementById('ge-save').addEventListener('click', handleSaveAndView);
+    document.getElementById('ge-save-close')?.addEventListener('click', handleSaveAndClose);
+    document.getElementById('ge-back-top')?.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
 
     await window.GuidesDB.restoreFolder();
     await loadCategories();
