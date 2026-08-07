@@ -1250,6 +1250,7 @@
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 12px;
 }
+.gs-support-grid[hidden] { display: none; }
 .gs-support-card {
   position: relative;
   cursor: pointer;

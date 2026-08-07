@@ -762,10 +762,11 @@
       card.appendChild(preview);
       card.appendChild(lock);
 
+      // Direkt zur vollen Guide-Ansicht navigieren statt Overlay zu oeffnen –
+      // man ist hier bereits in guide.sheet, das Overlay ist nur fuer die
+      // Command-Seiten (windows.html etc.) gedacht.
       card.addEventListener('click', () => {
-        if (typeof GuideOverlay !== 'undefined') {
-          GuideOverlay.openFromData(guide);
-        }
+        window.location.href = 'guides-view.html?id=' + encodeURIComponent(guide.id);
       });
 
       grid.appendChild(card);
