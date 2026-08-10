@@ -527,14 +527,22 @@
   }
 
   // ── SCROLL TO TOP ─────────────────────────────────────────
+  // guide.sheet-Seiten scrollen nicht im window, sondern innerhalb von
+  // .gs-main (eigener overflow-y:auto Container wegen des festen
+  // .gs-layout-Rasters, siehe guides.css) – ohne diese Unterscheidung
+  // bleibt der Button dort permanent unsichtbar, weil window.scrollY
+  // sich nie aendert.
+  const scrollContainer = document.querySelector('.gs-main') || window;
+  const getScrollTop = () => scrollContainer === window ? window.scrollY : scrollContainer.scrollTop;
+
   const scrollBtn = document.createElement('button');
   scrollBtn.className = 'as-scroll-top';
   scrollBtn.setAttribute('aria-label', 'Nach oben');
   scrollBtn.innerHTML = '↑';
-  scrollBtn.addEventListener('click', () => window.scrollTo({ top:0, behavior:'smooth' }));
+  scrollBtn.addEventListener('click', () => scrollContainer.scrollTo({ top:0, behavior:'smooth' }));
   document.body.appendChild(scrollBtn);
-  window.addEventListener('scroll', () => {
-    scrollBtn.classList.toggle('visible', window.scrollY > 300);
+  scrollContainer.addEventListener('scroll', () => {
+    scrollBtn.classList.toggle('visible', getScrollTop() > 300);
   }, { passive:true });
 
 })();

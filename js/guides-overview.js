@@ -178,18 +178,26 @@
       container.appendChild(buildCatButton(cat.name, cat.color, counts[cat.name] || 0, cat.name));
 
       // Unterkategorien eingerueckt darunter, mit eigenem Zaehler
-      // (Kategorie + Unterkategorie muessen beide passen).
-      if (cat.subcategories && cat.subcategories.length > 0) {
-        cat.subcategories.forEach(sub => {
-          const subCount = allGuides.filter(g =>
-            g.meta.category === cat.name &&
-            g.meta.subcategory === sub
-          ).length;
-          const subBtn = buildCatButton(sub, cat.color, subCount, cat.name + '/' + sub);
-          subBtn.classList.add('gs-cat-sub-item');
-          container.appendChild(subBtn);
-        });
-      }
+      // (Kategorie + Unterkategorie muessen beide passen). Kommen direkt
+      // aus dem freien "Unterkategorie"-Feld der vorhandenen Guides –
+      // cat.subcategories (categories.json) hat keine Pflege-UI und
+      // bleibt daher immer leer, war also nie eine brauchbare Quelle.
+      const subNames = new Set();
+      allGuides.forEach(g => {
+        if (g.meta.category === cat.name && g.meta.subcategory && g.meta.subcategory.trim()) {
+          subNames.add(g.meta.subcategory.trim());
+        }
+      });
+
+      [...subNames].sort((a, b) => a.localeCompare(b, 'de')).forEach(sub => {
+        const subCount = allGuides.filter(g =>
+          g.meta.category === cat.name &&
+          g.meta.subcategory === sub
+        ).length;
+        const subBtn = buildCatButton(sub, cat.color, subCount, cat.name + '/' + sub);
+        subBtn.classList.add('gs-cat-sub-item');
+        container.appendChild(subBtn);
+      });
     });
 
     updateCategoryActiveState();

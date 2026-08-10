@@ -128,6 +128,19 @@
     document.getElementById('gm-cleanup-assets').addEventListener('click', cleanupAllOrphanedAssets);
   }
 
+  // Der "Neu hier?"-Hinweis auf guides.html merkt sich sein Ausblenden in
+  // localStorage (siehe HOWTO_HINT_KEY in guides-overview.js) – hier nur
+  // den Schluessel wieder entfernen, das eigentliche Wiedereinblenden
+  // passiert beim naechsten Aufruf von guides.html.
+  const HOWTO_HINT_KEY = 'gs-howto-hint-dismissed';
+
+  function initHowtoHintReset() {
+    document.getElementById('gm-show-howto-hint')?.addEventListener('click', () => {
+      localStorage.removeItem(HOWTO_HINT_KEY);
+      notify('Wird beim nächsten Besuch von „Guides" wieder angezeigt.', 'success');
+    });
+  }
+
   async function cleanupAllOrphanedAssets() {
     const db = window.GuidesDB;
     const listRes = await db.listGuides();
@@ -915,6 +928,7 @@
     nameInput.value = localStorage.getItem(EXPORT_NAME_KEY) || '';
 
     initStatusActions();
+    initHowtoHintReset();
     initImportZone();
     initAddCategory();
     initEmptyTrash();

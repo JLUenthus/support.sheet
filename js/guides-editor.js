@@ -327,8 +327,8 @@
           case 'italic':    insertWrap(textarea, '*', '*', 'kursiv'); break;
           case 'code':      insertWrap(textarea, '`', '`', 'code'); break;
           case 'codeblock': insertWrap(textarea, '\n```\n', '\n```\n', 'code'); break;
-          case 'powershell': insertWrap(textarea, '\n```powershell\n', '\n```\n', ''); break;
-          case 'cmd':        insertWrap(textarea, '\n```cmd\n', '\n```\n', ''); break;
+          case 'powershell': insertRaw(textarea, '\n| PowerShell |\n|---|\n| # Kommentar |\n| `Befehl` |\n'); break;
+          case 'cmd':        insertRaw(textarea, '\n| CMD |\n|---|\n| # Kommentar |\n| `Befehl` |\n'); break;
           case 'link':      openLinkDialog(); break;
           case 'image':     document.getElementById('ge-image-input').click(); break;
           case 'table':     openTableDialog(); break;
