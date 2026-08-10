@@ -705,26 +705,19 @@
   // ── Hinweis auf die How-To-Anleitung (dismiss-/wiedereinblendbar) ──
   const HOWTO_HINT_KEY = 'gs-howto-hint-dismissed';
 
+  // Wiedereinblenden laeuft ausschliesslich ueber den Button in
+  // guides-manage.html (initHowtoHintReset in guides-manage.js) – X
+  // blendet hier also endgueltig aus, ohne irgendeinen Rest (z.B. einen
+  // kleinen Reopen-Tab) stehen zu lassen.
   function initHowtoHint() {
-    const hint      = document.getElementById('gg-howto-hint');
-    const reopenBtn = document.getElementById('gg-howto-hint-reopen');
-    if (!hint || !reopenBtn) return;
+    const hint = document.getElementById('gg-howto-hint');
+    if (!hint) return;
 
-    const dismissed = localStorage.getItem(HOWTO_HINT_KEY) === '1';
-    hint.hidden = dismissed;
-    reopenBtn.hidden = !dismissed;
+    hint.hidden = localStorage.getItem(HOWTO_HINT_KEY) === '1';
 
-    const dismissBtn = document.getElementById('gg-howto-hint-dismiss');
-    dismissBtn.addEventListener('click', () => {
+    document.getElementById('gg-howto-hint-dismiss').addEventListener('click', () => {
       localStorage.setItem(HOWTO_HINT_KEY, '1');
       hint.hidden = true;
-      reopenBtn.hidden = false;
-    });
-
-    reopenBtn.addEventListener('click', () => {
-      localStorage.removeItem(HOWTO_HINT_KEY);
-      hint.hidden = false;
-      reopenBtn.hidden = true;
     });
   }
 

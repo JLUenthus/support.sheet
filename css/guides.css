@@ -257,24 +257,6 @@
 }
 .gg-howto-hint-dismiss:hover { color: var(--red); }
 
-.gg-howto-hint-reopen {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  margin: 0 0 16px;
-  border-radius: 6px;
-  border: 1px solid var(--border2);
-  background: var(--panel2);
-  color: var(--dim);
-  cursor: pointer;
-  font-size: .9rem;
-  transition: all .15s;
-}
-.gg-howto-hint-reopen[hidden] { display: none; }
-.gg-howto-hint-reopen:hover { color: var(--accent); border-color: var(--accent); }
-
 /* ── Hauptinhalt ──────────────────────────────────────────── */
 .gs-main {
   flex: 1;
