@@ -10,7 +10,7 @@ let currentToast = null;
  * Ersetzt einen laufenden Toast sofort – kein Stapeln bei Mehrfachklick.
  * fade-in + scale-in, automatisch nach 2s entfernt.
  * @param {string} message
- * @param {'success'|'error'} type
+ * @param {'success'|'error'|'warning'} type
  */
 function showToast(message, type = 'success') {
   if (currentToast) currentToast.remove();

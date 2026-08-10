@@ -169,9 +169,9 @@
       if (!menu.hidden && !wrap.contains(e.target)) menu.hidden = true;
     });
 
-    document.getElementById('gv-export-md').addEventListener('click', () => { menu.hidden = true; exportMarkdown(); });
-    document.getElementById('gv-export-pdf').addEventListener('click', () => { menu.hidden = true; exportPdf(); });
-    document.getElementById('gv-export-docx').addEventListener('click', () => { menu.hidden = true; exportDocx(); });
+    document.getElementById('gv-export-md')?.addEventListener('click', () => { menu.hidden = true; exportMarkdown(); });
+    document.getElementById('gv-export-pdf')?.addEventListener('click', () => { menu.hidden = true; exportPdf(); });
+    document.getElementById('gv-export-docx')?.addEventListener('click', () => { menu.hidden = true; exportDocx(); });
   }
 
   function resolveGuideId() {
@@ -652,11 +652,11 @@
     document.addEventListener('guides-db-connected', updateAttachmentsHint);
     document.addEventListener('guides-db-disconnected', updateAttachmentsHint);
 
-    document.getElementById('gv-attachment-add-btn').addEventListener('click', () => {
+    document.getElementById('gv-attachment-add-btn')?.addEventListener('click', () => {
       updateAttachmentsHint();
-      document.getElementById('gv-attachment-input').click();
+      document.getElementById('gv-attachment-input')?.click();
     });
-    document.getElementById('gv-attachment-input').addEventListener('change', async (e) => {
+    document.getElementById('gv-attachment-input')?.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       e.target.value = '';
       if (file) await addAttachmentFile(file);
@@ -1043,16 +1043,16 @@
   document.addEventListener('DOMContentLoaded', () => {
     loadGuide();
 
-    document.getElementById('gv-fav-btn').addEventListener('click', toggleFavorite);
-    document.getElementById('gv-edit-btn').addEventListener('click', () => {
+    document.getElementById('gv-fav-btn')?.addEventListener('click', toggleFavorite);
+    document.getElementById('gv-edit-btn')?.addEventListener('click', () => {
       if (currentId) window.location.href = 'guides-create.html?id=' + encodeURIComponent(currentId);
     });
-    document.getElementById('gv-delete-btn').addEventListener('click', openConfirm);
+    document.getElementById('gv-delete-btn')?.addEventListener('click', openConfirm);
     initExportMenu();
     initAttachments();
     initImageBrowser();
-    document.getElementById('gv-confirm-cancel').addEventListener('click', closeConfirm);
-    document.getElementById('gv-confirm-ok').addEventListener('click', confirmDelete);
+    document.getElementById('gv-confirm-cancel')?.addEventListener('click', closeConfirm);
+    document.getElementById('gv-confirm-ok')?.addEventListener('click', confirmDelete);
 
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;

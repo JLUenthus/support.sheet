@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260807-2600';
+const CACHE_VERSION = '20260810-0300';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -28,6 +28,7 @@ const ASSETS = [
   './private.html',
   './js/har.js',
   './js/entra.js',
+  './js/tags.js',
   './css/har.css',
   './css/entra.css',
   './data/har-rules.json',
@@ -91,6 +92,8 @@ const ASSETS = [
   './powershell/Get-EventLogCollector-Server.ps1',
   './powershell/Exchange-PreflightCheck.ps1',
   './powershell/Set-BraveDebloat.ps1',
+  './powershell/M365-Setup-AppRegistration.ps1',
+  './powershell/M365-Inventory.ps1',
 ];
 
 // ── INSTALL: Cache alle eigenen Assets ───────────────────

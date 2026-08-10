@@ -239,7 +239,14 @@ function renderFilterBar(commands) {
     bar.appendChild(btn);
   });
 
-  // Click handler
+  // Click handler – nur einmal binden, bar.replaceChildren() oben leert nur
+  // die Kind-Buttons, bar selbst bleibt dasselbe Element. Ohne diesen Guard
+  // haengt sich bei jedem erneuten renderFilterBar()-Aufruf (z.B. Exchange/
+  // Fortinet Produkt-Tabs, die renderFilterBar() bei jedem Klick neu
+  // aufrufen) ein weiterer Click-Listener an – nach N Produkt-Wechseln
+  // wuerde applyFilter()/renderCommandGroups() N-fach pro Klick laufen.
+  if (bar.dataset.filterBound) return;
+  bar.dataset.filterBound = '1';
   bar.addEventListener('click', e => {
     const btn = e.target.closest('.filter-btn');
     if (!btn) return;

@@ -10,21 +10,46 @@
 //
 // Ordnerstruktur im gewählten Ordner (siehe docs/guide-sheet-konzept.md):
 //   categories.json
+//   guides-index.json          ← Zusammenfassung aller meta.json (Performance)
 //   guide-{timestamp}/
-//     meta.json
+//     meta.json                  (trashedAt gesetzt = Soft-Delete, Ordner bleibt)
 //     content.md
 //     assets/
-//   .trash-guide-{timestamp}/   ← Soft-Delete
+//   .trash-guide-{timestamp}/   ← Altbestand vor dem Index: Soft-Delete per Rename
+//                                  (restoreGuide() erkennt und migriert das automatisch)
 // ============================================================
 (function() {
   const DB_NAME       = 'guidesheet-db';
-  const DB_VERSION    = 1;
+  const DB_VERSION    = 3; // v3: storage-meta Store dazugekommen (FIX 6)
   const HANDLE_STORE  = 'fs-handles';
   const HANDLE_KEY    = 'root-handle';
   const GUIDES_STORE  = 'guides';
   const ASSETS_STORE  = 'assets';
   const CAT_STORE     = 'categories';
   const CAT_KEY       = 'tree';
+  const INDEX_STORE   = 'guides-index';
+  const INDEX_KEY     = 'index';
+  const META_STORE    = 'storage-meta';
+  const META_KEY      = 'meta';
+  const STORAGE_META_VERSION = 1;
+  const APP_VERSION   = '1.0';
+
+  // ── In-Memory-Cache fuer listGuides() ─────────────────────
+  let _guidesCache      = null;
+  let _guidesCacheStamp = 0;
+  const CACHE_TTL_MS    = 60_000; // 1 Minute
+
+  // Serialisiert Index-Lese-Aendere-Schreibe-Zyklen. Mehrere gleichzeitige
+  // saveGuide()/deleteGuide()-Aufrufe (z.B. aus deleteGuides()) wuerden
+  // sonst denselben alten Indexstand lesen und sich beim Zurueckschreiben
+  // gegenseitig ueberschreiben (Lost-Update) – die eigentlichen Datei-/
+  // IDB-Schreibvorgaenge je Guide bleiben davon unberuehrt parallel.
+  let _indexQueue = Promise.resolve();
+  function _queueIndexUpdate(fn) {
+    const run = _indexQueue.then(fn, fn);
+    _indexQueue = run.then(() => {}, () => {});
+    return run;
+  }
 
   const DEFAULT_CATEGORIES = [
     { name: 'Exchange',         color: '#e8b339' },
@@ -52,6 +77,8 @@
         if (!db.objectStoreNames.contains(GUIDES_STORE)) db.createObjectStore(GUIDES_STORE, { keyPath: 'id' });
         if (!db.objectStoreNames.contains(ASSETS_STORE)) db.createObjectStore(ASSETS_STORE, { keyPath: 'key' });
         if (!db.objectStoreNames.contains(CAT_STORE))    db.createObjectStore(CAT_STORE);
+        if (!db.objectStoreNames.contains(INDEX_STORE))  db.createObjectStore(INDEX_STORE);
+        if (!db.objectStoreNames.contains(META_STORE))   db.createObjectStore(META_STORE);
       };
       req.onsuccess = () => resolve(req.result);
       req.onerror   = () => reject(req.error);
@@ -117,6 +144,49 @@
     _dispatch('guides-db-disconnected', {});
   }
 
+  // ── Storage-Version-Marker (FIX 6) ────────────────────────
+  // Haelt fest, welcher Storage-Backend (fs/idb) und welche Marker-Version
+  // zuletzt mit diesem Ordner/dieser Browser-DB verbunden war. Rein
+  // informativ (best-effort) – ein Fehler hier darf openFolder()/
+  // restoreFolder() nie zum Scheitern bringen, deshalb kein throw.
+  async function _writeStorageMeta() {
+    try {
+      const meta = {
+        storage: isFilesystemMode() ? 'fs' : 'idb',
+        version: STORAGE_META_VERSION,
+        lastConnected: new Date().toISOString(),
+        appVersion: APP_VERSION,
+      };
+      if (isFilesystemMode()) {
+        const root = _requireRoot();
+        await _writeTextFile(root, '_meta.json', JSON.stringify(meta, null, 2));
+      } else {
+        await idbPut(META_STORE, meta, META_KEY);
+      }
+    } catch { /* best-effort, siehe Kommentar oben */ }
+  }
+
+  async function _checkStorageMeta() {
+    try {
+      let meta;
+      if (isFilesystemMode()) {
+        const root = _requireRoot();
+        const text = await _readTextFile(root, '_meta.json');
+        meta = _safeParse(text);
+      } else {
+        meta = (await idbGet(META_STORE, META_KEY)) || null;
+      }
+      if (!meta) return { ok: true, fresh: true };
+      if (meta.version !== STORAGE_META_VERSION) {
+        console.warn('[guides-db] Unbekannte Storage-Version:', meta?.version);
+        return { ok: false, meta };
+      }
+      return { ok: true, meta };
+    } catch {
+      return { ok: true, fresh: true };
+    }
+  }
+
   // ── Ordner-Freigabe (File System Access API) ──────────────
   async function openFolder() {
     if (!isFilesystemMode()) return { success: false, error: 'File System Access API ist in diesem Browser nicht verfügbar.' };
@@ -125,6 +195,7 @@
       await idbPut(HANDLE_STORE, handle, HANDLE_KEY);
       _rootHandle = handle;
       _permissionState = 'granted';
+      await _writeStorageMeta();
       _dispatchConnected();
       return { success: true, path: handle.name };
     } catch (err) {
@@ -135,6 +206,8 @@
 
   async function restoreFolder() {
     if (!isFilesystemMode()) {
+      await _checkStorageMeta();
+      await _writeStorageMeta();
       _dispatchConnected();
       return { success: true, connected: true, mode: 'idb' };
     }
@@ -144,7 +217,11 @@
       _rootHandle = handle;
       const perm = await handle.queryPermission({ mode: 'readwrite' });
       _permissionState = perm;
-      if (perm === 'granted') _dispatchConnected();
+      if (perm === 'granted') {
+        await _checkStorageMeta();
+        await _writeStorageMeta();
+        _dispatchConnected();
+      }
       return { success: true, connected: true, permission: perm };
     } catch (err) {
       return { success: false, error: 'Ordner-Handle konnte nicht wiederhergestellt werden: ' + (err?.message || err) };
@@ -189,6 +266,11 @@
 
   function generateId() { return 'guide-' + Date.now(); }
 
+  // Erzwingt beim naechsten listGuides()-Aufruf ein frisches Lesen statt
+  // des zwischengespeicherten Stands – z.B. wenn eine andere Seite/ein
+  // anderer Tab in der Zwischenzeit Guides geaendert haben koennte.
+  function invalidateCache() { _guidesCache = null; }
+
   // ── FS-Helper (nur intern) ─────────────────────────────────
   function _requireRoot() {
     if (!_rootHandle || _permissionState !== 'granted') throw new Error('Kein Ordner verbunden.');
@@ -232,25 +314,157 @@
     await parentHandle.removeEntry(oldName, { recursive: true });
   }
 
+  // Wandelt kaputtes/leeres JSON in einen definierten Fallback statt eine
+  // Exception hochzureichen, die sonst an unerwarteter Stelle (mitten in
+  // einem Promise.all/_parallelLimit-Task) den ganzen Vorgang abbrechen
+  // wuerde – ein einzelnes beschaedigtes meta.json soll nur diesen einen
+  // Guide betreffen, nicht z.B. den kompletten Index-Rebuild.
+  function _safeParse(text, fallback = null) {
+    try {
+      return JSON.parse(text);
+    } catch (err) {
+      console.warn('[guides-db] JSON.parse fehlgeschlagen:', err);
+      return fallback;
+    }
+  }
+
+  // ── guides-index.json – zentraler Index statt N Einzel-meta.json-Reads ──
+  // Fuehrt bis zu `limit` Tasks gleichzeitig aus statt alles auf einmal
+  // parallel zu feuern (Browser/OS-Limits fuer offene Datei-Handles).
+  async function _parallelLimit(tasks, limit = 10) {
+    const results = [];
+    let i = 0;
+    async function worker() {
+      while (i < tasks.length) {
+        const idx = i++;
+        results[idx] = await tasks[idx]();
+      }
+    }
+    const workers = Array.from({ length: Math.min(limit, tasks.length) }, worker);
+    await Promise.all(workers);
+    return results;
+  }
+
+  async function _readIndex() {
+    if (isFilesystemMode()) {
+      try {
+        const root = _requireRoot();
+        const text = await _readTextFile(root, 'guides-index.json');
+        return _safeParse(text);
+      } catch {
+        return null; // Index existiert noch nicht (oder kein Ordner verbunden)
+      }
+    }
+    try {
+      return (await idbGet(INDEX_STORE, INDEX_KEY)) || null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function _writeIndex(indexData) {
+    const data = {
+      version: 1,
+      updated: new Date().toISOString(),
+      guides: indexData,
+    };
+    if (isFilesystemMode()) {
+      const root = _requireRoot();
+      await _writeTextFile(root, 'guides-index.json', JSON.stringify(data, null, 2));
+    } else {
+      await idbPut(INDEX_STORE, data, INDEX_KEY);
+    }
+  }
+
+  // Nur die Felder, die die Uebersicht/Filter/Suche wirklich braucht –
+  // nicht content, privateNote, links, attachments etc.
+  function _metaToIndexEntry(meta) {
+    return {
+      id: meta.id,
+      title: meta.title || '',
+      category: meta.category || '',
+      subcategory: meta.subcategory || '',
+      tags: meta.tags || [],
+      type: meta.type || 'guide',
+      created: meta.created,
+      modified: meta.modified,
+      favorite: !!meta.favorite,
+      source: meta.source || 'manual',
+      importTag: meta.importTag || null,
+      trashed: !!meta.trashedAt,
+      trashedAt: meta.trashedAt || null,
+    };
+  }
+
+  // Einmalig aus dem vorhandenen Bestand aufbauen – im Dateisystem-Modus
+  // aus den guide-*-Ordnern (parallelisiert, siehe _parallelLimit), im
+  // IndexedDB-Modus aus dem bereits vorhandenen GUIDES_STORE (z.B. direkt
+  // nach diesem Update, wenn dort noch Guides ohne Index liegen – sonst
+  // wuerden die fuer den Nutzer kommentarlos aus der Liste verschwinden).
+  async function _rebuildIndex() {
+    if (isFilesystemMode()) {
+      const root = _requireRoot();
+      const dirHandles = [];
+      for await (const [name, handle] of root.entries()) {
+        if (handle.kind !== 'directory') continue;
+        // Normale Guides UND Alt-Papierkorb-Ordner (.trash-guide-*) aus der
+        // Zeit vor diesem Index einsammeln – sonst wuerden bereits vorher
+        // geloeschte Guides beim Rebuild uebersehen und waeren im (jetzt
+        // Index-basierten) Papierkorb unsichtbar.
+        if (name.startsWith('guide-')) dirHandles.push({ handle, name, trashedFolder: false });
+        else if (name.startsWith('.trash-guide-')) dirHandles.push({ handle, name, trashedFolder: true });
+      }
+      const tasks = dirHandles.map(({ handle, name, trashedFolder }) => async () => {
+        try {
+          const meta = _safeParse(await _readTextFile(handle, 'meta.json'));
+          if (!meta) {
+            console.warn('[guides-db] Überspringe Guide mit defektem meta.json:', name);
+            return null;
+          }
+          const entry = _metaToIndexEntry(meta);
+          if (trashedFolder && !entry.trashed) {
+            entry.trashed   = true;
+            entry.trashedAt = entry.trashedAt || new Date().toISOString();
+          }
+          return entry;
+        } catch {
+          return null; // Ordner ohne lesbares meta.json überspringen
+        }
+      });
+      const results = await _parallelLimit(tasks, 10);
+      const entries = results.filter(Boolean);
+      await _writeIndex(entries);
+      return entries;
+    }
+
+    const all = await idbGetAll(GUIDES_STORE);
+    const entries = all.map((rec) => _metaToIndexEntry(rec.meta));
+    await _writeIndex(entries);
+    return entries;
+  }
+
+  async function _ensureIndex() {
+    const index = await _readIndex();
+    if (index) return index;
+    const entries = await _rebuildIndex();
+    return { guides: entries };
+  }
+
   // ── Guide CRUD ───────────────────────────────────────────
   async function listGuides() {
     try {
-      if (isFilesystemMode()) {
-        const root = _requireRoot();
-        const guides = [];
-        for await (const [name, handle] of root.entries()) {
-          if (handle.kind !== 'directory' || !name.startsWith('guide-')) continue;
-          try {
-            const meta = JSON.parse(await _readTextFile(handle, 'meta.json'));
-            guides.push({ id: name, meta });
-          } catch {
-            // Ordner ohne lesbares meta.json überspringen
-          }
-        }
-        return { success: true, guides };
+      const now = Date.now();
+      if (_guidesCache && (now - _guidesCacheStamp) < CACHE_TTL_MS) {
+        return { success: true, guides: _guidesCache };
       }
-      const all = await idbGetAll(GUIDES_STORE);
-      const guides = all.filter(g => !g.trashed).map(g => ({ id: g.id, meta: g.meta }));
+
+      const index = await _ensureIndex();
+      const guides = (index.guides || [])
+        .filter((g) => !g.trashed)
+        .map((g) => ({ id: g.id, meta: g }));
+
+      _guidesCache      = guides;
+      _guidesCacheStamp = now;
       return { success: true, guides };
     } catch (err) {
       return { success: false, error: 'Guides konnten nicht gelesen werden: ' + (err?.message || err) };
@@ -262,7 +476,8 @@
       if (isFilesystemMode()) {
         const root = _requireRoot();
         const dir = await root.getDirectoryHandle(id);
-        const meta = JSON.parse(await _readTextFile(dir, 'meta.json'));
+        const meta = _safeParse(await _readTextFile(dir, 'meta.json'));
+        if (!meta) return { success: false, error: 'Guide "' + id + '": meta.json ist beschädigt.' };
         const content = await _readTextFile(dir, 'content.md');
         return { success: true, id, meta, content };
       }
@@ -293,47 +508,105 @@
         const existing = await idbGet(GUIDES_STORE, id);
         await idbPut(GUIDES_STORE, { id, meta: fullMeta, content: content || '', trashed: existing?.trashed || false });
       }
+
+      await _queueIndexUpdate(async () => {
+        const idx = await _readIndex();
+        const guides = (idx?.guides || []).filter((g) => g.id !== id);
+        guides.push(_metaToIndexEntry(fullMeta));
+        await _writeIndex(guides);
+      });
+      _guidesCache = null;
+
       return { success: true, id, meta: fullMeta };
     } catch (err) {
       return { success: false, error: 'Guide "' + id + '" konnte nicht gespeichert werden: ' + (err?.message || err) };
     }
   }
 
+  // Soft-Delete markiert nur meta.json/den IDB-Datensatz mit trashedAt –
+  // der Ordner bleibt unter seinem normalen Namen liegen (kein Kopieren+
+  // Loeschen mehr wie beim alten .trash-*-Rename, das bei vielen Assets
+  // sehr langsam war). Physisch entfernt wird erst bei permanentDelete().
   async function deleteGuide(id) {
     try {
       const now = new Date().toISOString();
+      let updatedMeta = null;
+
       if (isFilesystemMode()) {
         const root = _requireRoot();
-        const dir = await root.getDirectoryHandle(id);
         try {
+          const dir  = await root.getDirectoryHandle(id);
           const meta = JSON.parse(await _readTextFile(dir, 'meta.json'));
           meta.trashedAt = now;
           await _writeTextFile(dir, 'meta.json', JSON.stringify(meta, null, 2));
-        } catch { /* meta.json nicht lesbar – trotzdem in den Papierkorb verschieben */ }
-        await _renameDirectory(root, id, '.trash-' + id);
+          updatedMeta = meta;
+        } catch { /* meta.json nicht lesbar – Index unten trotzdem markieren falls Eintrag existiert */ }
       } else {
         const rec = await idbGet(GUIDES_STORE, id);
         if (!rec) return { success: false, error: 'Guide "' + id + '" wurde nicht gefunden.' };
-        rec.trashed = true;
+        rec.trashed        = true;
         rec.meta.trashedAt = now;
         await idbPut(GUIDES_STORE, rec);
+        updatedMeta = rec.meta;
       }
+
+      await _queueIndexUpdate(async () => {
+        const idx = await _readIndex();
+        if (!idx) return;
+        const guides = (idx.guides || []).filter((g) => g.id !== id);
+        if (updatedMeta) {
+          guides.push(_metaToIndexEntry(updatedMeta));
+        } else {
+          // meta.json war nicht lesbar – vorhandenen Indexeintrag notfalls
+          // direkt als trashed markieren statt den Guide aus dem Index
+          // fallen zu lassen.
+          const existing = (idx.guides || []).find((g) => g.id === id);
+          if (existing) guides.push({ ...existing, trashed: true, trashedAt: now });
+        }
+        await _writeIndex(guides);
+      });
+      _guidesCache = null;
+
       return { success: true };
     } catch (err) {
       return { success: false, error: 'Guide "' + id + '" konnte nicht gelöscht werden: ' + (err?.message || err) };
     }
   }
 
+  // Loescht mehrere Guides parallel (kein Rename/Copy mehr pro Guide, siehe
+  // deleteGuide() – die Index-Updates sind ueber _queueIndexUpdate() serialisiert,
+  // laufen also trotz Promise.all sicher nacheinander).
+  async function deleteGuides(ids) {
+    const results = await Promise.all(ids.map((id) => deleteGuide(id)));
+    _guidesCache = null;
+    const failed    = results.filter((r) => !r.success);
+    const succeeded = ids.length - failed.length;
+    return failed.length > 0
+      ? { success: false, error: failed.map((f) => f.error).join(', '), succeeded, failed: failed.length }
+      : { success: true, count: ids.length, succeeded, failed: 0 };
+  }
+
   async function restoreGuide(id) {
     try {
+      let updatedMeta = null;
+
       if (isFilesystemMode()) {
         const root = _requireRoot();
-        await _renameDirectory(root, '.trash-' + id, id);
+        // Altbestand: Guide wurde vor diesem Update geloescht und liegt
+        // deshalb noch unter dem alten .trash-<id>-Namen – einmalig
+        // zurückbenennen, danach greift das neue Schema (Ordner bleibt,
+        // nur trashedAt in meta.json).
         try {
-          const dir = await root.getDirectoryHandle(id);
+          await root.getDirectoryHandle('.trash-' + id);
+          await _renameDirectory(root, '.trash-' + id, id);
+        } catch { /* liegt schon unter dem normalen Namen – neues Schema */ }
+
+        try {
+          const dir  = await root.getDirectoryHandle(id);
           const meta = JSON.parse(await _readTextFile(dir, 'meta.json'));
           delete meta.trashedAt;
           await _writeTextFile(dir, 'meta.json', JSON.stringify(meta, null, 2));
+          updatedMeta = meta;
         } catch { /* meta.json nicht lesbar – Wiederherstellung trotzdem ok */ }
       } else {
         const rec = await idbGet(GUIDES_STORE, id);
@@ -341,7 +614,18 @@
         rec.trashed = false;
         delete rec.meta.trashedAt;
         await idbPut(GUIDES_STORE, rec);
+        updatedMeta = rec.meta;
       }
+
+      await _queueIndexUpdate(async () => {
+        const idx = await _readIndex();
+        if (!idx) return;
+        const guides = (idx.guides || []).filter((g) => g.id !== id);
+        if (updatedMeta) guides.push(_metaToIndexEntry(updatedMeta));
+        await _writeIndex(guides);
+      });
+      _guidesCache = null;
+
       return { success: true };
     } catch (err) {
       return { success: false, error: 'Guide "' + id + '" konnte nicht wiederhergestellt werden: ' + (err?.message || err) };
@@ -350,22 +634,10 @@
 
   async function listTrash() {
     try {
-      if (isFilesystemMode()) {
-        const root = _requireRoot();
-        const guides = [];
-        for await (const [name, handle] of root.entries()) {
-          if (handle.kind !== 'directory' || !name.startsWith('.trash-')) continue;
-          try {
-            const meta = JSON.parse(await _readTextFile(handle, 'meta.json'));
-            guides.push({ id: name.replace(/^\.trash-/, ''), meta });
-          } catch {
-            // Ordner ohne lesbares meta.json überspringen
-          }
-        }
-        return { success: true, guides };
-      }
-      const all = await idbGetAll(GUIDES_STORE);
-      const guides = all.filter(g => g.trashed).map(g => ({ id: g.id, meta: g.meta }));
+      const index = await _ensureIndex();
+      const guides = (index.guides || [])
+        .filter((g) => g.trashed)
+        .map((g) => ({ id: g.id, meta: g }));
       return { success: true, guides };
     } catch (err) {
       return { success: false, error: 'Papierkorb konnte nicht gelesen werden: ' + (err?.message || err) };
@@ -387,6 +659,18 @@
         const assets = await idbGetAll(ASSETS_STORE);
         for (const a of assets.filter(a => a.guideId === id)) await idbDelete(ASSETS_STORE, a.key);
       }
+
+      // Index-Eintrag endgueltig entfernen – sonst taucht der Guide im
+      // (Index-basierten) Papierkorb weiter als Geist auf, obwohl sein
+      // Ordner/Datensatz laengst weg ist.
+      await _queueIndexUpdate(async () => {
+        const idx = await _readIndex();
+        if (!idx) return;
+        const guides = (idx.guides || []).filter((g) => g.id !== id);
+        await _writeIndex(guides);
+      });
+      _guidesCache = null;
+
       return { success: true };
     } catch (err) {
       return { success: false, error: 'Guide "' + id + '" konnte nicht endgültig gelöscht werden: ' + (err?.message || err) };
@@ -431,7 +715,16 @@
   }
 
   // ── Assets ───────────────────────────────────────────────
+  const MAX_ASSET_SIZE_MB = 10;
+  const MAX_ASSET_SIZE    = MAX_ASSET_SIZE_MB * 1024 * 1024;
+
   async function saveAsset(guideId, filename, fileObject) {
+    if (fileObject && fileObject.size > MAX_ASSET_SIZE) {
+      return {
+        success: false,
+        error: 'Datei zu groß: ' + (fileObject.size / 1024 / 1024).toFixed(1) + ' MB. Maximum: ' + MAX_ASSET_SIZE_MB + ' MB.',
+      };
+    }
     try {
       if (isFilesystemMode()) {
         const root = _requireRoot();
@@ -543,7 +836,8 @@
     isConnected, getFolderPath, getPermissionState,
     isFilesystemMode, isIndexedDBMode,
     // Guides
-    listGuides, getGuide, saveGuide, deleteGuide, restoreGuide, permanentDelete, listTrash, generateId,
+    listGuides, getGuide, saveGuide, deleteGuide, deleteGuides, restoreGuide, permanentDelete, listTrash, generateId,
+    invalidateCache,
     // Kategorien
     getCategories, saveCategories,
     // Assets

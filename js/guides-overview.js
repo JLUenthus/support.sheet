@@ -536,18 +536,18 @@
   // ── Toolbar-Events ───────────────────────────────────────
   function initToolbar() {
     let searchTimer;
-    document.getElementById('gg-search').addEventListener('input', (e) => {
+    document.getElementById('gg-search')?.addEventListener('input', (e) => {
       clearTimeout(searchTimer);
       searchTimer = setTimeout(() => { state.query = e.target.value.trim(); renderGrid(); }, 150);
     });
 
-    document.getElementById('gg-filter-category').addEventListener('change', (e) => {
+    document.getElementById('gg-filter-category')?.addEventListener('change', (e) => {
       state.category = e.target.value || null;
       updateCategoryActiveState();
       renderGrid();
     });
 
-    document.getElementById('gg-filter-tag').addEventListener('change', (e) => {
+    document.getElementById('gg-filter-tag')?.addEventListener('change', (e) => {
       state.tag = e.target.value;
       updateTagActiveState();
       renderGrid();
@@ -561,7 +561,7 @@
       renderGrid();
     });
 
-    document.getElementById('gg-sort').addEventListener('change', (e) => {
+    document.getElementById('gg-sort')?.addEventListener('change', (e) => {
       state.sort = e.target.value;
       renderGrid();
     });
@@ -579,7 +579,7 @@
     gridBtn.addEventListener('click', () => setView('grid'));
     listBtn.addEventListener('click', () => setView('list'));
 
-    document.getElementById('gg-empty-connect').addEventListener('click', async () => {
+    document.getElementById('gg-empty-connect')?.addEventListener('click', async () => {
       const res = await window.GuidesDB.openFolder();
       if (!res.success && res.error) notify(res.error, 'error');
     });
@@ -663,11 +663,10 @@
   async function bulkDeleteConfirmed() {
     document.getElementById('gg-bulk-delete-overlay').hidden = true;
     const ids = [...selectedIds];
-    let errors = 0;
-    for (const id of ids) {
-      const res = await window.GuidesDB.deleteGuide(id);
-      if (!res.success) errors++;
-    }
+    // deleteGuides() loescht parallel (kein Rename/Copy mehr pro Guide) –
+    // schneller als die vorherige sequentielle Einzel-Schleife.
+    const res = await window.GuidesDB.deleteGuides(ids);
+    const errors = res.failed || 0;
     notify(
       (ids.length - errors) + ' Guide(s) in den Papierkorb verschoben' + (errors ? ' (' + errors + ' Fehler)' : '') + '.',
       errors ? 'error' : 'success'
@@ -677,29 +676,33 @@
   }
 
   function initBulkActions() {
-    document.getElementById('gg-bulk-tag').addEventListener('click', bulkAddTag);
+    document.getElementById('gg-bulk-tag')?.addEventListener('click', bulkAddTag);
 
-    document.getElementById('gg-bulk-category').addEventListener('click', () => {
+    document.getElementById('gg-bulk-category')?.addEventListener('click', () => {
       populateBulkCategorySelect();
-      document.getElementById('gg-bulk-category-menu').hidden = false;
+      const menu = document.getElementById('gg-bulk-category-menu');
+      if (menu) menu.hidden = false;
     });
-    document.getElementById('gg-bulk-category-apply').addEventListener('click', bulkChangeCategory);
+    document.getElementById('gg-bulk-category-apply')?.addEventListener('click', bulkChangeCategory);
     document.addEventListener('click', (e) => {
       const menu = document.getElementById('gg-bulk-category-menu');
-      if (!menu.hidden && !e.target.closest('.gg-bulk-category-wrap')) menu.hidden = true;
+      if (menu && !menu.hidden && !e.target.closest('.gg-bulk-category-wrap')) menu.hidden = true;
     });
 
-    document.getElementById('gg-bulk-delete').addEventListener('click', () => {
-      document.getElementById('gg-bulk-delete-text').textContent =
+    document.getElementById('gg-bulk-delete')?.addEventListener('click', () => {
+      const textEl = document.getElementById('gg-bulk-delete-text');
+      if (textEl) textEl.textContent =
         selectedIds.size + ' Guide(s) werden in den Papierkorb verschoben. Sie können in „Einstellungen“ wiederhergestellt werden.';
-      document.getElementById('gg-bulk-delete-overlay').hidden = false;
+      const overlay = document.getElementById('gg-bulk-delete-overlay');
+      if (overlay) overlay.hidden = false;
     });
-    document.getElementById('gg-bulk-delete-cancel').addEventListener('click', () => {
-      document.getElementById('gg-bulk-delete-overlay').hidden = true;
+    document.getElementById('gg-bulk-delete-cancel')?.addEventListener('click', () => {
+      const overlay = document.getElementById('gg-bulk-delete-overlay');
+      if (overlay) overlay.hidden = true;
     });
-    document.getElementById('gg-bulk-delete-confirm').addEventListener('click', bulkDeleteConfirmed);
+    document.getElementById('gg-bulk-delete-confirm')?.addEventListener('click', bulkDeleteConfirmed);
 
-    document.getElementById('gg-bulk-clear').addEventListener('click', clearSelection);
+    document.getElementById('gg-bulk-clear')?.addEventListener('click', clearSelection);
   }
 
   // ── Hinweis auf die How-To-Anleitung (dismiss-/wiedereinblendbar) ──
@@ -715,7 +718,7 @@
 
     hint.hidden = localStorage.getItem(HOWTO_HINT_KEY) === '1';
 
-    document.getElementById('gg-howto-hint-dismiss').addEventListener('click', () => {
+    document.getElementById('gg-howto-hint-dismiss')?.addEventListener('click', () => {
       localStorage.setItem(HOWTO_HINT_KEY, '1');
       hint.hidden = true;
     });
@@ -723,6 +726,16 @@
 
   document.addEventListener('guides-db-connected', loadAndRender);
   document.addEventListener('guides-db-disconnected', loadAndRender);
+
+  // Nach Tab-Wechsel (z.B. Guide in einem anderen Tab bearbeitet und
+  // zurückgewechselt) den GuidesDB-Cache verwerfen und neu laden, statt
+  // bis zu 60s auf einen veralteten Stand zu warten.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      window.GuidesDB.invalidateCache();
+      loadAndRender();
+    }
+  });
 
   document.addEventListener('DOMContentLoaded', () => {
     initToolbar();

@@ -51,20 +51,29 @@ if ('serviceWorker' in navigator) {
 
     function setProgress(v) { document.getElementById('progress-fill').style.width = v + '%'; }
 
+    // Verhindert dass zwei sich ueberlappende Timer-Ketten (zweite Datei
+    // ausgewaehlt bevor die erste fertig verarbeitet ist) sich gegenseitig
+    // die geteilten UI-Elemente (zone/#progress-fill/.upload-text) ueberschreiben.
+    let _harProcessTimer1 = null;
+    let _harProcessTimer2 = null;
+
     function processFile(file) {
+      if (_harProcessTimer1) clearTimeout(_harProcessTimer1);
+      if (_harProcessTimer2) clearTimeout(_harProcessTimer2);
+
       zone.style.opacity = '0.5';
       document.getElementById('progress-wrap').style.display = '';
       setProgress(10);
       const reader = new FileReader();
       reader.onload = e => {
         setProgress(40);
-        setTimeout(() => {
+        _harProcessTimer1 = setTimeout(() => {
           try {
             const har = JSON.parse(e.target.result);
             setProgress(80);
             analyze(har, file.name);
             setProgress(100);
-            setTimeout(() => {
+            _harProcessTimer2 = setTimeout(() => {
               document.getElementById('progress-wrap').style.display = 'none';
               zone.classList.add('done');
               zone.querySelector('.upload-text').textContent = '✅ ' + file.name;

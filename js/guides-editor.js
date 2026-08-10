@@ -26,6 +26,18 @@
 
   let titleInput, categorySelect, subcategoryInput, tagInput, tagsPillsEl, textarea, preview, privateNoteInput, privateNoteDetails, linksRowsEl, attachmentsRowsEl, attachmentsHintEl;
 
+  // Gibt alle noch offenen Live-Vorschau-Blob-URLs frei und leert die Map.
+  // Nach einem erfolgreichen Speichern (saveGuide()) ist das ein regulärer
+  // Aufräumschritt; über den beforeunload-Listener unten greift dieselbe
+  // Funktion auch, wenn der Editor ohne zu speichern verlassen wird (Klick
+  // auf einen anderen Link, Tab schließen, Zurück-Navigation) – sonst
+  // blieben die Blob-URLs der eingefügten Bilder für die Dauer der
+  // Session ungenutzt im Speicher.
+  function revokeAssetPreviewUrls() {
+    assetPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+    assetPreviewUrls.clear();
+  }
+
   // Cursor-Position vor Öffnen des Link-Dialogs merken
   let _linkCursorStart = 0;
   let _linkCursorEnd   = 0;
@@ -167,7 +179,7 @@
     // Wer einfach woanders hinklickt, soll den getippten Tag nicht verlieren.
     tagInput.addEventListener('blur', commitFromInput);
 
-    document.getElementById('ge-tag-add-btn').addEventListener('click', commitFromInput);
+    document.getElementById('ge-tag-add-btn')?.addEventListener('click', commitFromInput);
   }
 
   // ── Links ────────────────────────────────────────────────
@@ -222,7 +234,7 @@
   }
 
   function initLinksInput() {
-    document.getElementById('ge-link-add-btn').addEventListener('click', () => { addLinkRow(); scheduleAutosave(); });
+    document.getElementById('ge-link-add-btn')?.addEventListener('click', () => { addLinkRow(); scheduleAutosave(); });
   }
 
   // ── Dateien (Anhänge) ────────────────────────────────────
@@ -277,6 +289,13 @@
   }
 
   function addAttachmentFile(file) {
+    if (file.size > MAX_ASSET_SIZE) {
+      notify('Datei zu groß: ' + (file.size / 1024 / 1024).toFixed(1) + ' MB. Maximum: ' + MAX_ASSET_SIZE_MB + ' MB.', 'error');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      notify('Große Datei: ' + (file.size / 1024 / 1024).toFixed(1) + ' MB – das kann die Performance beeinflussen.', 'warning');
+    }
     const id = 'att-' + Date.now() + '-' + (++attachmentIdCounter);
     const assetFile = 'attachment-' + id + '-' + sanitizeAttachmentName(file.name);
     attachments.push({ id, name: file.name, size: file.size, type: file.type || '', assetFile });
@@ -289,11 +308,11 @@
     document.addEventListener('guides-db-connected', updateAttachmentsHint);
     document.addEventListener('guides-db-disconnected', updateAttachmentsHint);
 
-    document.getElementById('ge-attachment-add-btn').addEventListener('click', () => {
+    document.getElementById('ge-attachment-add-btn')?.addEventListener('click', () => {
       updateAttachmentsHint();
-      document.getElementById('ge-attachment-input').click();
+      document.getElementById('ge-attachment-input')?.click();
     });
-    document.getElementById('ge-attachment-input').addEventListener('change', (e) => {
+    document.getElementById('ge-attachment-input')?.addEventListener('change', (e) => {
       const file = e.target.files[0];
       e.target.value = '';
       if (file) { addAttachmentFile(file); scheduleAutosave(); }
@@ -548,10 +567,20 @@
     return candidate;
   }
 
+  const MAX_ASSET_SIZE_MB = 10;
+  const MAX_ASSET_SIZE    = MAX_ASSET_SIZE_MB * 1024 * 1024;
+
   function handleImageFile(file) {
     if (!file.type || !file.type.startsWith('image/')) {
       notify('Nur Bilddateien werden unterstützt.', 'error');
       return;
+    }
+    if (file.size > MAX_ASSET_SIZE) {
+      notify('Datei zu groß: ' + (file.size / 1024 / 1024).toFixed(1) + ' MB. Maximum: ' + MAX_ASSET_SIZE_MB + ' MB.', 'error');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      notify('Große Datei: ' + (file.size / 1024 / 1024).toFixed(1) + ' MB – das kann die Performance beeinflussen.', 'warning');
     }
     const filename = uniqueAssetName(file.name);
     pendingAssets.set(filename, file);
@@ -1052,7 +1081,7 @@
 
     if (currentDraftId) { removeDraftById(currentDraftId); currentDraftId = null; }
     pendingAssets.clear();
-    assetPreviewUrls.clear();
+    revokeAssetPreviewUrls();
     pendingAttachmentFiles.clear();
     currentGuideId = id; // fuer einen etwaigen zweiten Save in derselben Session
     notify('Guide gespeichert.', 'success');
@@ -1177,8 +1206,14 @@
     initImportMenu();
     initAutosave();
 
-    document.getElementById('ge-save-draft').addEventListener('click', () => saveDraft(false));
-    document.getElementById('ge-save').addEventListener('click', handleSaveAndView);
+    // Editor ohne Speichern verlassen (anderer Link, Tab schließen, Zurück-
+    // Navigation) – es gibt keinen eigenen "Abbrechen"-Button, das deckt
+    // also alle Wege ab. Nach einem erfolgreichen saveGuide() ist die Map
+    // bereits leer (revokeAssetPreviewUrls() dort), dann ist das hier ein No-op.
+    window.addEventListener('beforeunload', revokeAssetPreviewUrls);
+
+    document.getElementById('ge-save-draft')?.addEventListener('click', () => saveDraft(false));
+    document.getElementById('ge-save')?.addEventListener('click', handleSaveAndView);
     document.getElementById('ge-save-close')?.addEventListener('click', handleSaveAndClose);
     document.getElementById('ge-back-top')?.addEventListener('click', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
