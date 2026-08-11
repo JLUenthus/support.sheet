@@ -150,6 +150,39 @@
         </div>
       </section>
 
+      <!-- Timeline -->
+      <section class="el-section" id="timeline-section" hidden>
+        <div class="el-section-header">
+          <h2 class="section-title">
+            📅 Timeline
+            <span id="timeline-count" class="section-count">0</span>
+          </h2>
+          <div class="timeline-controls">
+            <button class="tl-ctrl-btn tl-ctrl-btn--active"
+                    id="tl-filter-all">Alle</button>
+            <button class="tl-ctrl-btn" id="tl-filter-error">
+              Fehler
+            </button>
+            <button class="tl-ctrl-btn" id="tl-filter-warning">
+              Warnungen
+            </button>
+            <button class="tl-ctrl-btn" id="tl-filter-cluster">
+              Cluster
+            </button>
+          </div>
+        </div>
+        <div class="timeline-wrap" id="timeline-wrap"></div>
+      </section>
+
+      <!-- Clustering -->
+      <section class="el-section" id="cluster-section" hidden>
+        <h2 class="section-title">
+          🔗 Event-Cluster
+          <span id="cluster-count" class="section-count">0</span>
+        </h2>
+        <div id="cluster-container"></div>
+      </section>
+
       <!-- Root Cause Correlations -->
       <section class="el-section" id="correlation-section" hidden>
         <h2 class="section-title">🎯 Wahrscheinliche Hauptursachen <span id="correlation-count" class="section-count">0</span></h2>
@@ -475,6 +508,228 @@
     .lv-w { background:rgba(251,191,36,.15);  color:var(--amber); }
     .lv-i { background:rgba(124,140,248,.1);  color:var(--accent); }
     .no-findings { text-align:center; padding:48px; color:var(--muted); font-size:.88rem; }
+
+    /* ── Timeline ──────────────────────────────────────── */
+    .el-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .timeline-controls {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .tl-ctrl-btn {
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--font-ui);
+      font-size: .75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .tl-ctrl-btn:hover { color: var(--text); border-color: var(--border2); }
+    .tl-ctrl-btn--active {
+      border-color: var(--accent);
+      background: rgba(124,140,248,.1);
+      color: var(--accent);
+    }
+    .timeline-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      max-height: 520px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .tl-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .tl-line-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      width: 28px;
+    }
+    .tl-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .8rem;
+      flex-shrink: 0;
+    }
+    .tl-dot--cluster {
+      background: rgba(124,140,248,.15);
+      border-color: rgba(124,140,248,.4);
+    }
+    .tl-line {
+      width: 2px;
+      flex: 1;
+      min-height: 12px;
+      background: var(--border);
+      margin: 2px 0;
+    }
+    .tl-content {
+      flex: 1;
+      padding-bottom: 14px;
+      min-width: 0;
+    }
+    .tl-row-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 3px;
+    }
+    .tl-time  { font-family: var(--font-mono); font-size: .72rem; color: var(--dim); }
+    .tl-id    { font-family: var(--font-mono); font-size: .72rem; color: var(--accent); }
+    .tl-level { font-size: .68rem; color: var(--dim); }
+    .tl-msg   { font-size: .78rem; color: var(--muted); line-height: 1.4; }
+    .tl-source{ font-size: .68rem; color: var(--dim); margin-top: 2px; }
+    .tl-empty { padding: 24px; text-align: center; color: var(--dim); font-size: .82rem; }
+
+    .tl-row--error    .tl-dot { border-color: rgba(248,113,113,.5);
+                                 background: rgba(248,113,113,.1); }
+    .tl-row--critical .tl-dot { border-color: rgba(248,113,113,.7);
+                                 background: rgba(248,113,113,.2); }
+    .tl-row--warning  .tl-dot { border-color: rgba(251,191,36,.5);
+                                 background: rgba(251,191,36,.1); }
+
+    .tl-cluster-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--accent);
+      background: rgba(124,140,248,.1);
+      border: 1px solid rgba(124,140,248,.3);
+      border-radius: 6px;
+      padding: 3px 10px;
+      margin-bottom: 4px;
+    }
+    .tl-cluster-time { font-size: .72rem; color: var(--dim); }
+    .tl-user {
+      font-size: .7rem;
+      font-weight: 400;
+      color: var(--muted);
+      background: var(--panel2);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+
+    /* Root Cause Chain */
+    .tl-chain {
+      background: rgba(124,140,248,.06);
+      border: 1px solid rgba(124,140,248,.2);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--r);
+      padding: 10px 14px;
+      margin-bottom: 16px;
+    }
+    .tl-chain-label {
+      font-size: .7rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 6px;
+    }
+    .tl-chain-steps {
+      font-size: .82rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .tl-chain-arrow { color: var(--dim); font-size: .7rem; }
+
+    /* ── Cluster ────────────────────────────────────────── */
+    .cluster-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+    .cluster-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .cluster-title {
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .cluster-user {
+      font-size: .75rem;
+      font-weight: 400;
+      color: var(--muted);
+      background: var(--panel2);
+      border-radius: 4px;
+      padding: 1px 7px;
+    }
+    .cluster-time {
+      font-size: .72rem;
+      color: var(--dim);
+      font-family: var(--font-mono);
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .cluster-duration { color: var(--dim); margin-left: 4px; }
+    .cluster-source { font-size: .72rem; color: var(--dim); margin-bottom: 8px; }
+    .cluster-events summary {
+      font-size: .75rem;
+      color: var(--accent);
+      cursor: pointer;
+      padding: 4px 0;
+    }
+    .cluster-event-list {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .cluster-event-row {
+      display: flex;
+      gap: 10px;
+      font-size: .72rem;
+      padding: 3px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .cluster-event-time {
+      font-family: var(--font-mono);
+      color: var(--dim);
+      flex-shrink: 0;
+    }
+    .cluster-event-msg { color: var(--muted); flex: 1; min-width: 0; }
+    .cluster-more { font-size: .7rem; color: var(--dim); padding-top: 4px; }
   </style>
 
   <script>
@@ -535,6 +790,9 @@
       if (meta.Disks && !Array.isArray(meta.Disks)) meta.Disks = [meta.Disks];
 
       renderSysGrid(meta, sum, events);
+      const clusters = clusterEvents(events);
+      renderClusters(clusters);
+      renderTimeline(events, clusters);
       const improvements  = renderImprovements(meta, sum, events);
       const findings      = analyzeEvents(events);
       const corrResults   = correlateEvents(events, findings);
@@ -964,6 +1222,400 @@
       });
       const ord = { critical:0, error:1, warning:2, info:3 };
       return findings.sort((a,b) => (ord[a.rule.severity]||3) - (ord[b.rule.severity]||3));
+    }
+
+    // ── Event Clustering ─────────────────────────────────────
+    function extractUser(message) {
+      if (!message) return null;
+      const patterns = [
+        /Account Name[:\s]+(\S+)/i,
+        /Benutzername[:\s]+(\S+)/i,
+        /User[:\s]+(\S+)/i,
+        /Subject[:\s]+(\S+)/i,
+      ];
+      for (const p of patterns) {
+        const m = message.match(p);
+        if (m && m[1] && m[1] !== '-') return m[1];
+      }
+      return null;
+    }
+
+    function clusterEvents(events) {
+      const clusters = [];
+      const used     = new Set();
+
+      // Nach EventID + User gruppieren
+      const groups = {};
+      events.forEach((e, idx) => {
+        if (used.has(idx)) return;
+        const id   = String(e.Id);
+        const user = extractUser(e.Message) || '__none__';
+        const key  = id + '|' + user;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push({ e, idx });
+      });
+
+      Object.entries(groups).forEach(([key, items]) => {
+        if (items.length < 3) return;
+
+        // Zeitfenster prüfen: alle Events innerhalb von 5 Minuten?
+        const times = items
+          .map(i => new Date(i.e.TimeCreated).getTime())
+          .filter(t => !isNaN(t))
+          .sort((a,b) => a-b);
+
+        if (times.length < 3) return;
+
+        // Sliding Window: Fenster von 5 Minuten suchen
+        const WINDOW_MS = 5 * 60 * 1000;
+        let bestCluster = [];
+        for (let start = 0; start < times.length; start++) {
+          const window = times.filter(
+            t => t >= times[start] && t <= times[start] + WINDOW_MS
+          );
+          if (window.length > bestCluster.length) {
+            bestCluster = window;
+          }
+        }
+
+        if (bestCluster.length < 3) return;
+
+        const [id, user] = key.split('|');
+        const clusterItems = items.filter(i => {
+          const t = new Date(i.e.TimeCreated).getTime();
+          return bestCluster.includes(t);
+        });
+
+        clusterItems.forEach(i => used.add(i.idx));
+
+        clusters.push({
+          id:       id,
+          user:     user === '__none__' ? null : user,
+          count:    clusterItems.length,
+          events:   clusterItems.map(i => i.e),
+          firstTime: new Date(Math.min(...bestCluster)),
+          lastTime:  new Date(Math.max(...bestCluster)),
+          source:   clusterItems[0]?.e?.ProviderName || '',
+          level:    clusterItems[0]?.e?.Level || ''
+        });
+      });
+
+      return clusters.sort((a,b) => b.count - a.count);
+    }
+
+    // ── Root Cause Chains ────────────────────────────────────
+    const ROOT_CAUSE_CHAINS = [
+      {
+        name: 'DNS-Fehler führt zu Login-Fehler',
+        chain: [
+          { id: 1014, label: 'DNS Timeout',        icon: '🌐' },
+          { id: 5719, label: 'DC nicht erreichbar', icon: '🖧' },
+          { id: 4625, label: 'Login fehlgeschlagen', icon: '❌' },
+        ]
+      },
+      {
+        name: 'Login-Flood führt zu Kontosperrung',
+        chain: [
+          { id: 4625, label: 'Login fehlgeschlagen', icon: '❌' },
+          { id: 4740, label: 'Konto gesperrt',       icon: '🔒' },
+        ]
+      },
+      {
+        name: 'WLAN-Drop führt zu AAD-Fehler',
+        chain: [
+          { id: 10001, label: 'WLAN Disconnect',     icon: '📶' },
+          { id: 1097,  label: 'Device-Kontext weg',  icon: '🔴' },
+          { id: 1098,  label: 'Token Refresh Fehler',icon: '🔴' },
+        ]
+      },
+      {
+        name: 'AAD Token-Fehler führen zu App-Absturz',
+        chain: [
+          { id: 1098, label: 'Token Refresh Fehler', icon: '🔴' },
+          { id: 1000, label: 'App-Absturz',          icon: '💥' },
+        ]
+      },
+    ];
+
+    function detectChains(events) {
+      const eventIdSet = new Set(events.map(e => Number(e.Id)));
+      return ROOT_CAUSE_CHAINS.filter(chain =>
+        chain.chain.every(step => eventIdSet.has(step.id))
+      );
+    }
+
+    // ── Timeline ──────────────────────────────────────────────
+    const TIMELINE_ICONS = {
+      // Level-basiert
+      'Fehler':    '❌',
+      'Error':     '❌',
+      'Warnung':   '⚠️',
+      'Warning':   '⚠️',
+      'Kritisch':  '🔴',
+      'Critical':  '🔴',
+      'Info':      'ℹ️',
+      // Event-ID-spezifisch (überschreibt Level)
+      4624: '✅',  // Erfolgreiche Anmeldung
+      4625: '❌',  // Fehlgeschlagene Anmeldung
+      4648: '🔑',  // Explizite Anmeldung
+      4740: '🔒',  // Konto gesperrt
+      4767: '🔓',  // Konto entsperrt
+      4720: '👤',  // Benutzer erstellt
+      4726: '🗑️',  // Benutzer gelöscht
+      1098: '🔴',  // AAD Token Fehler
+      1097: '🟠',  // AAD Device Fehler
+      6005: '▶️',  // Eventlog gestartet (System-Start)
+      6006: '⏹️',  // Eventlog gestoppt (Shutdown)
+      7036: '⚙️',  // Dienst gestartet/gestoppt
+    };
+
+    function getTimelineIcon(event) {
+      const idIcon = TIMELINE_ICONS[Number(event.Id)];
+      if (idIcon) return idIcon;
+      return TIMELINE_ICONS[event.Level] || '•';
+    }
+
+    function buildTimeline(events, clusters) {
+      // Cluster-Event-IDs als Set für schnellen Lookup
+      const clusterEventSets = new Map();
+      clusters.forEach(c => {
+        c.events.forEach(e => {
+          const key = e.TimeCreated + '|' + e.Id;
+          clusterEventSets.set(key, c);
+        });
+      });
+
+      // Timeline-Items aufbauen
+      const items = [];
+      const clusterRendered = new Set();
+
+      [...events]
+        .sort((a,b) =>
+          new Date(a.TimeCreated) - new Date(b.TimeCreated)
+        )
+        .forEach(e => {
+          const key     = e.TimeCreated + '|' + e.Id;
+          const cluster = clusterEventSets.get(key);
+
+          if (cluster) {
+            const cKey = cluster.id + '|' + cluster.firstTime;
+            if (clusterRendered.has(cKey)) return; // bereits gerendert
+            clusterRendered.add(cKey);
+            items.push({ type: 'cluster', cluster, time: cluster.firstTime });
+          } else {
+            items.push({ type: 'event', event: e,
+              time: new Date(e.TimeCreated) });
+          }
+        });
+
+      return items;
+    }
+
+    function fmtTime(date) {
+      if (!date) return '';
+      const d = date instanceof Date ? date : new Date(date);
+      return d.toLocaleTimeString('de-DE', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
+    }
+
+    function renderTimeline(events, clusters) {
+      const section   = document.getElementById('timeline-section');
+      const wrap      = document.getElementById('timeline-wrap');
+      const countEl   = document.getElementById('timeline-count');
+      if (!section || !wrap) return;
+
+      const items  = buildTimeline(events, clusters);
+      const chains = detectChains(events);
+      countEl.textContent = items.length;
+      section.hidden = items.length === 0;
+
+      let activeFilter = 'all';
+
+      function renderChainBanners() {
+        chains.forEach(chain => {
+          const banner = document.createElement('div');
+          banner.className = 'tl-chain';
+          const label = document.createElement('div');
+          label.className = 'tl-chain-label';
+          label.textContent = 'Erkannte Ursachenkette: ' + chain.name;
+          const steps = document.createElement('div');
+          steps.className = 'tl-chain-steps';
+          chain.chain.forEach((step, idx) => {
+            const stepEl = document.createElement('span');
+            stepEl.textContent = step.icon + ' ' + step.label;
+            steps.appendChild(stepEl);
+            if (idx < chain.chain.length - 1) {
+              const arrow = document.createElement('span');
+              arrow.className = 'tl-chain-arrow';
+              arrow.textContent = '→';
+              steps.appendChild(arrow);
+            }
+          });
+          banner.appendChild(label);
+          banner.appendChild(steps);
+          wrap.appendChild(banner);
+        });
+      }
+
+      function renderItems(filter) {
+        wrap.replaceChildren();
+        renderChainBanners();
+        const filtered = items.filter(item => {
+          if (filter === 'all') return true;
+          if (filter === 'cluster') return item.type === 'cluster';
+          if (filter === 'error')
+            return item.type === 'event' &&
+              ['Fehler','Error','Kritisch','Critical']
+                .includes(item.event.Level);
+          if (filter === 'warning')
+            return item.type === 'event' &&
+              ['Warnung','Warning'].includes(item.event.Level);
+          return true;
+        });
+
+        if (filtered.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'tl-empty';
+          empty.textContent = 'Keine Events für diesen Filter.';
+          wrap.appendChild(empty);
+          return;
+        }
+
+        filtered.forEach((item, idx) => {
+          const row = document.createElement('div');
+
+          if (item.type === 'cluster') {
+            row.className = 'tl-row tl-row--cluster';
+            row.innerHTML = `
+              <div class="tl-line-wrap">
+                <div class="tl-dot tl-dot--cluster"></div>
+                ${idx < filtered.length-1 ? '<div class="tl-line"></div>' : ''}
+              </div>
+              <div class="tl-content">
+                <div class="tl-cluster-badge">
+                  🔗 ${item.cluster.count}× EventID ${item.cluster.id}
+                  ${item.cluster.user
+                    ? `<span class="tl-user">${item.cluster.user}</span>`
+                    : ''}
+                </div>
+                <div class="tl-cluster-time">
+                  ${fmtTime(item.cluster.firstTime)} –
+                  ${fmtTime(item.cluster.lastTime)}
+                </div>
+                <div class="tl-source">${item.cluster.source}</div>
+              </div>
+            `;
+          } else {
+            const e    = item.event;
+            const icon = getTimelineIcon(e);
+            const lvl  = (e.Level||'').toLowerCase();
+            row.className = `tl-row tl-row--${
+              lvl.includes('fehler') || lvl.includes('error') ? 'error' :
+              lvl.includes('warn')   ? 'warning' :
+              lvl.includes('krit')   || lvl.includes('crit') ? 'critical' :
+              'info'
+            }`;
+            row.innerHTML = `
+              <div class="tl-line-wrap">
+                <div class="tl-dot">${icon}</div>
+                ${idx < filtered.length-1 ? '<div class="tl-line"></div>' : ''}
+              </div>
+              <div class="tl-content">
+                <div class="tl-row-header">
+                  <span class="tl-time">${fmtTime(item.time)}</span>
+                  <span class="tl-id">ID ${e.Id}</span>
+                  <span class="tl-level">${e.Level||''}</span>
+                </div>
+                <div class="tl-msg">${
+                  (e.Message||'').substring(0,120).replace(/</g,'&lt;')
+                }${e.Message?.length > 120 ? '…' : ''}</div>
+                <div class="tl-source">${e.ProviderName||''}</div>
+              </div>
+            `;
+          }
+          wrap.appendChild(row);
+        });
+      }
+
+      renderItems('all');
+
+      // Filter-Buttons: alte Buttons vorher klonen/ersetzen statt neue
+      // Listener draufzusetzen – renderTimeline() läuft bei jeder neuen
+      // Datei erneut, die Buttons selbst bleiben aber (kein replaceChildren
+      // auf .timeline-controls) dieselben DOM-Knoten. Ohne Klonen würde
+      // sich sonst pro Upload ein weiterer Click-Listener anhäufen (gleicher
+      // Bug wie zuvor in render.js/renderFilterBar() gefunden und gefixt).
+      ['all','error','warning','cluster'].forEach(f => {
+        const old = document.getElementById('tl-filter-' + f);
+        if (!old) return;
+        const btn = old.cloneNode(true);
+        old.parentNode.replaceChild(btn, old);
+        btn.classList.toggle('tl-ctrl-btn--active', f === 'all');
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tl-ctrl-btn')
+            .forEach(b => b.classList.remove('tl-ctrl-btn--active'));
+          btn.classList.add('tl-ctrl-btn--active');
+          activeFilter = f;
+          renderItems(f);
+        });
+      });
+    }
+
+    // ── Render Clusters ───────────────────────────────────────
+    function renderClusters(clusters) {
+      const section   = document.getElementById('cluster-section');
+      const container = document.getElementById('cluster-container');
+      const countEl   = document.getElementById('cluster-count');
+      if (!section || !container) return;
+
+      countEl.textContent = clusters.length;
+      section.hidden = clusters.length === 0;
+      container.replaceChildren();
+
+      clusters.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'cluster-card';
+
+        card.innerHTML = `
+          <div class="cluster-header">
+            <div class="cluster-title">
+              ❌ <strong>${c.count}×</strong> EventID ${c.id}
+              ${c.user
+                ? `<span class="cluster-user">👤 ${c.user}</span>`
+                : ''}
+            </div>
+            <div class="cluster-time">
+              ${fmtTime(c.firstTime)} – ${fmtTime(c.lastTime)}
+              <span class="cluster-duration">(${
+                Math.round((c.lastTime - c.firstTime) / 60000)
+              } Min.)</span>
+            </div>
+          </div>
+          <div class="cluster-source">${c.source}</div>
+          <details class="cluster-events">
+            <summary>${c.count} Events anzeigen</summary>
+            <div class="cluster-event-list">
+              ${c.events.slice(0, 20).map(e => `
+                <div class="cluster-event-row">
+                  <span class="cluster-event-time">
+                    ${fmtTime(new Date(e.TimeCreated))}
+                  </span>
+                  <span class="cluster-event-msg">
+                    ${(e.Message||'').substring(0,80).replace(/</g,'&lt;')}
+                  </span>
+                </div>
+              `).join('')}
+              ${c.events.length > 20
+                ? `<div class="cluster-more">
+                   + ${c.events.length-20} weitere Events
+                   </div>`
+                : ''}
+            </div>
+          </details>
+        `;
+        container.appendChild(card);
+      });
     }
 
     // ── Build Recommendation List ───────────────────────────
