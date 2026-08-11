@@ -22,6 +22,7 @@
         { id:'guides-manage',   href:'guides-manage.html',label:'Lokale DB | Einstellungen', icon:'🗄️', color:'#4ade80', desc:'Backup, Restore, Merge, Papierkorb' },
       ]
     },
+    { id:'wizard',   href:'wizard.html', label:'Wizard', icon:'🔍', color:'#a78bfa', desc:'Geführte Fehlerdiagnose' },
     {
       id:'analyzer', label:'Analyzer', icon:'📋', color:'#e8b339', group:true,
       children: [
@@ -197,6 +198,7 @@
                  : currentPage.id === 'guides-create'   ? '.guides'
                  : currentPage.id === 'guides-manage'   ? '.guides'
                  : currentPage.id === 'mitmachen'       ? '.mitmachen'
+                 : currentPage.id === 'wizard'           ? '.wizard'
                  : '.tools';
     logoLabelEl.textContent = 'support';
     const span = document.createElement('span');

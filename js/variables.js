@@ -4,7 +4,7 @@
 // ============================================================
 
 // Zentrale Regex – einmal definiert, überall verwendet
-const VARIABLE_REGEX = /\{([^}]+)\}/g;
+const VARIABLE_REGEX = /\{([a-z][a-z0-9_]*)\}/g;
 
 // Erlaubte Zeichen für Variablenwerte
 // Verhindert Command-Injection wie: max && del c:\

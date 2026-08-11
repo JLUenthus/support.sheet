@@ -1,0 +1,195 @@
+/* ============================================================
+   wizard.css – Troubleshooting Wizard
+   Gleiche CSS-Variablen/Dark-Theme-Look wie main.css.
+   ============================================================ */
+
+/* ── Layout ──────────────────────────────────────────────── */
+.wz-page   { max-width: 1100px; margin: 0 auto; padding: 24px; }
+.wz-layout { display: flex; gap: 20px; align-items: flex-start; }
+.wz-sidebar{ width: 220px; flex-shrink: 0; position: sticky; top: 110px; }
+.wz-main   { flex: 1; min-width: 0; }
+
+/* Rahmen um den Step-Bereich (Start-Screen oder aktiver Step) –
+   passend zu den Panel-Karten im Rest der App (.command-card etc.) */
+.wz-step-container {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 24px;
+}
+
+/* ── Start-Screen ────────────────────────────────────────── */
+.wz-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.wz-list-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--wz-color, var(--accent));
+  border-radius: var(--r);
+  padding: 20px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.wz-list-card:hover { border-color: var(--border2); background: var(--panel2); }
+.wz-list-icon  { font-size: 2rem; margin-bottom: 10px; }
+.wz-list-title { font-size: .9rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.wz-list-desc  { font-size: .78rem; color: var(--muted); }
+.wz-list-empty { color: var(--dim); font-size: .85rem; }
+
+/* ── Fortschritt ─────────────────────────────────────────── */
+.wz-progress-label { font-size: .72rem; color: var(--dim); margin-bottom: 6px; }
+.wz-progress-track { height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 20px; }
+.wz-progress-fill  { height: 100%; background: var(--accent); border-radius: 2px; transition: width .3s; }
+
+/* ── Step-Titel/-Beschreibung ────────────────────────────── */
+.wz-step-title       { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.wz-step-description { font-size: .82rem; color: var(--muted); margin-bottom: 16px; line-height: 1.6; }
+.wz-step-hint         { font-size: .75rem; color: var(--dim); margin-bottom: 12px; }
+
+/* ── Optionen (question/result) ──────────────────────────── */
+.wz-question-options { display: flex; flex-direction: column; }
+/* Wrapper um Text-Input + Bestätigen-Button (kein reines Label,
+   siehe js/wizard-renderer.js renderQuestion() – daher zusätzlich flex) */
+.wz-question-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: .88rem;
+  color: var(--text);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+.wz-option-btn {
+  display: flex; align-items: center; width: 100%;
+  padding: 10px 14px; margin-bottom: 8px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--r);
+  color: var(--muted); font-family: var(--font-ui); font-size: .82rem;
+  cursor: pointer; transition: all .15s; text-align: left;
+}
+.wz-option-btn:hover { border-color: var(--accent); color: var(--text); background: var(--panel2); }
+.wz-option-btn--active { border-color: var(--accent); background: rgba(124,140,248,.1); color: var(--accent); }
+
+/* Weiter-Button (solution/command/information) */
+.wz-option-btn--primary {
+  background: rgba(124,140,248,.1);
+  border-color: rgba(124,140,248,.3);
+  color: var(--accent);
+  font-weight: 700;
+}
+.wz-option-btn--primary:hover { background: rgba(124,140,248,.2); }
+
+/* ── Text-Input (Frage vom Typ "text") ───────────────────── */
+/* Klassennamen entsprechen dem tatsächlichen Output von
+   renderQuestion() in js/wizard-renderer.js: wz-question-input(--error)
+   und wz-question-error – nicht wz-input/wz-input-error. */
+.wz-question-input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border2);
+  border-radius: var(--r); padding: 9px 12px; color: var(--text);
+  font-family: var(--font-ui); font-size: .85rem; outline: none;
+  transition: border-color .15s; box-sizing: border-box;
+}
+.wz-question-input:focus { border-color: var(--accent); }
+.wz-question-input--error { border-color: var(--red); }
+.wz-question-error { font-size: .72rem; color: var(--red); margin-top: 4px; }
+
+/* ── Information-Box ─────────────────────────────────────── */
+.wz-information-box {
+  background: rgba(124,140,248,.06); border: 1px solid rgba(124,140,248,.2);
+  border-left: 3px solid var(--accent); border-radius: var(--r);
+  padding: 14px 16px; margin-bottom: 16px;
+  font-size: .82rem; color: var(--muted); line-height: 1.6;
+}
+
+/* ── Solution-Box ─────────────────────────────────────────── */
+.wz-solution-box {
+  background: rgba(74,222,128,.05); border: 1px solid rgba(74,222,128,.2);
+  border-left: 3px solid var(--green); border-radius: var(--r);
+  padding: 14px 16px; margin-bottom: 16px;
+  font-size: .82rem; color: var(--muted);
+}
+
+/* ── End-Step ─────────────────────────────────────────────── */
+.wz-end-icon { font-size: 2.5rem; margin-bottom: 12px; }
+/* Emoji tragen ihre Farbe bereits selbst (✅/⚠️/🔄/ℹ️) – Varianten hier
+   nur als Erweiterungspunkt, aktuell ohne eigene Farbregel nötig. */
+.wz-end-icon--success    { }
+.wz-end-icon--unresolved { }
+.wz-end-icon--escalate   { }
+.wz-end-icon--info       { }
+.wz-end-body    { font-size: .85rem; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+.wz-end-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ── Analyzer-Upload ──────────────────────────────────────── */
+.wz-analyzer-upload {
+  border: 2px dashed var(--border2); border-radius: var(--r);
+  padding: 32px; text-align: center; cursor: pointer; transition: all .2s;
+  margin-bottom: 12px;
+}
+.wz-analyzer-upload:hover,
+.wz-analyzer-upload.drag { border-color: var(--accent); background: rgba(124,140,248,.04); }
+.wz-analyzer-upload--done { border-color: var(--green); border-style: solid; background: rgba(74,222,128,.04); }
+.wz-analyzer-upload-icon { font-size: 2rem; margin-bottom: 8px; }
+.wz-analyzer-upload-text { font-size: .82rem; color: var(--muted); }
+
+/* ── Nav-Bar (Zurück/Abbrechen) ───────────────────────────── */
+.wz-nav-bar {
+  display: flex; gap: 10px; margin-top: 20px; padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.wz-nav-back-btn {
+  padding: 7px 16px; border-radius: var(--r); border: 1px solid var(--border);
+  background: transparent; color: var(--muted); font-family: var(--font-ui);
+  font-size: .8rem; cursor: pointer; transition: all .15s;
+}
+.wz-nav-back-btn:hover:not(:disabled) { color: var(--text); border-color: var(--border2); }
+.wz-nav-back-btn:disabled { opacity: .4; cursor: not-allowed; }
+.wz-nav-abort-btn {
+  padding: 7px 16px; border-radius: var(--r); border: 1px solid var(--border);
+  background: transparent; color: var(--dim); font-family: var(--font-ui);
+  font-size: .8rem; cursor: pointer; transition: all .15s; margin-left: auto;
+}
+.wz-nav-abort-btn:hover { color: var(--red); border-color: rgba(248,113,113,.3); }
+
+/* ── Sidebar ──────────────────────────────────────────────── */
+.wz-sidebar-title   { font-size: .78rem; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+.wz-sidebar-section { margin-bottom: 16px; }
+.wz-sidebar-label {
+  font-size: .65rem; font-weight: 700; color: var(--dim);
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px;
+}
+.wz-sidebar-context-row { font-size: .75rem; color: var(--muted); margin-bottom: 4px; }
+
+/* Findings-Liste (session.findings) – noch nicht vom Engine befüllt,
+   hier bereits mitgestylt für spätere Steps. */
+.wz-finding-item {
+  font-size: .75rem; padding: 4px 8px; border-radius: 6px;
+  margin-bottom: 4px; background: var(--panel2); color: var(--muted);
+}
+.wz-finding-item--ok  { color: var(--green); }
+.wz-finding-item--bad { color: var(--red); }
+
+.wz-sidebar-abort-btn {
+  width: 100%; padding: 7px; border-radius: var(--r); border: 1px solid var(--border);
+  background: transparent; color: var(--dim); font-family: var(--font-ui);
+  font-size: .75rem; cursor: pointer; transition: all .15s; margin-top: 12px;
+}
+.wz-sidebar-abort-btn:hover { color: var(--red); border-color: rgba(248,113,113,.3); }
+
+/* ── Fehler ───────────────────────────────────────────────── */
+.wz-error-box {
+  background: rgba(248,113,113,.07); border: 1px solid rgba(248,113,113,.3);
+  border-left: 3px solid var(--red); border-radius: var(--r);
+  padding: 14px 16px; font-size: .82rem; color: var(--muted);
+}
+
+/* ── Links ────────────────────────────────────────────────── */
+.wz-links { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.wz-link  { font-size: .78rem; color: var(--accent); text-decoration: none; }
+.wz-link:hover { text-decoration: underline; }
+
+/* ── Command-Wrap ─────────────────────────────────────────── */
+.wz-command-card-wrap { margin: 12px 0; }
+
+@media (max-width: 768px) {
+  .wz-layout  { flex-direction: column; }
+  .wz-sidebar { width: 100%; position: static; }
+}

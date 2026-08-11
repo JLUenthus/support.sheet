@@ -71,6 +71,53 @@
     return new URLSearchParams(location.search).get('id');
   }
 
+  // ── Prefill aus URL-Parameter (z.B. "Als Guide speichern" im
+  // Troubleshooting Wizard) ─────────────────────────────────
+  // Nur an der Aufrufstelle unten fuer NEUE Guides genutzt (nie wenn
+  // resolveEditId() eine ID liefert) – sonst koennte ein zufaelliger
+  // ?prefill=-Parameter eine bestehende Guide ueberschreiben.
+  function applyPrefillFromUrl() {
+    const prefillParam = new URLSearchParams(location.search).get('prefill');
+    if (!prefillParam) return;
+
+    let prefill;
+    try {
+      // Gegenstueck zu wizard-renderer.js toBase64():
+      // btoa(unescape(encodeURIComponent(str))) -> decodeURIComponent(escape(atob(str)))
+      prefill = JSON.parse(decodeURIComponent(escape(atob(prefillParam))));
+    } catch (err) {
+      console.warn('[guides-editor] Prefill-Parameter ungültig:', err);
+      return; // Seite oeffnet einfach leer, kein Fehler nach aussen
+    }
+    if (!prefill || typeof prefill !== 'object') return;
+
+    if (prefill.title && titleInput) {
+      titleInput.value = String(prefill.title);
+    }
+
+    // Kategorie: nur gesetzt falls eine Option mit exakt diesem Wert
+    // existiert (categorySelect.value ist sonst ein stiller No-op).
+    if (prefill.category && categorySelect) {
+      categorySelect.value = prefill.category;
+    }
+    if (prefill.subcategory && subcategoryInput) {
+      subcategoryInput.value = String(prefill.subcategory);
+    }
+
+    // Tags ueber die bestehende Tag-Logik setzen (commitTag() + tags[]),
+    // nicht ueber das Eingabefeld simulieren – das wuerde den letzten Tag
+    // ohne abschließendes Komma unkommitiert im Input stehen lassen.
+    if (Array.isArray(prefill.tags)) {
+      prefill.tags.forEach(t => { if (t) commitTag(String(t)); });
+      renderTagPills();
+    }
+
+    if (prefill.content && textarea) {
+      textarea.value = String(prefill.content);
+      updatePreview();
+    }
+  }
+
   // ── Cursor-Helfer für die Toolbar ───────────────────────
   function insertWrap(ta, before, after, placeholder) {
     const start = ta.selectionStart, end = ta.selectionEnd;
@@ -1226,6 +1273,7 @@
     if (editId) {
       await loadForEdit(editId);
     } else {
+      applyPrefillFromUrl();
       checkForDrafts();
     }
   });

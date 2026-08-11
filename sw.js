@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260810-0600';
+const CACHE_VERSION = '20260811-0200';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -94,6 +94,12 @@ const ASSETS = [
   './powershell/Set-BraveDebloat.ps1',
   './powershell/M365-Setup-AppRegistration.ps1',
   './powershell/M365-Inventory.ps1',
+  './wizard.html',
+  './css/wizard.css',
+  './js/wizard-engine.js',
+  './js/wizard-renderer.js',
+  './data/wizards/_index.json',
+  './data/wizards/windows-login.json',
 ];
 
 // ── INSTALL: Cache alle eigenen Assets ───────────────────

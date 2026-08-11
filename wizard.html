@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>support.sheet – Troubleshooting Wizard</title>
+
+  <link rel="stylesheet" href="fonts/fonts.css">
+
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/wizard.css">
+</head>
+<body>
+
+  <!-- ── HEADER ──────────────────────────────────────────── -->
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-icon" id="as-logo-icon">🔍</div>
+      <div class="logo-text" id="as-logo-label">support<span>.sheet</span></div>
+    </a>
+    <div class="header-right">
+      <div class="pill pill-count" style="border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.08);color:#a78bfa;">🔍 Wizard</div>
+    </div>
+  </header>
+
+
+  <!-- ── TEMPLATE ────────────────────────────────────────── -->
+  <!-- Identisch zu windows.html – createCommandCard() aus render.js
+       erwartet exakt diese Felder/Klassen. -->
+  <template id="command-template">
+    <div class="command-card">
+      <div class="card-header">
+        <h3 data-field="name"></h3>
+        <button class="star-btn" data-action="star"
+                aria-label="Zu Favoriten hinzufügen"
+                aria-pressed="false">★</button>
+      </div>
+      <p data-field="desc"></p>
+      <code data-field="cmd"></code>
+      <div class="card-footer">
+        <div data-field="tags"></div>
+        <button class="copy-btn" data-action="copy">📋 Kopieren</button>
+      </div>
+    </div>
+  </template>
+
+  <!-- ── MAIN ────────────────────────────────────────────── -->
+  <main class="wz-page">
+    <div class="wz-layout">
+      <!-- Sidebar ist nur sichtbar während ein Wizard aktiv ist (siehe
+           Inline-Script) – im Start-Screen gibt es noch keine
+           Kontext-Variablen/Findings/Abbrechen-Aktion anzuzeigen. -->
+      <aside class="wz-sidebar" id="wz-sidebar" hidden></aside>
+      <div class="wz-main">
+        <div class="wz-progress-bar" id="wz-progress-bar" hidden></div>
+        <div id="wz-container" class="wz-step-container">
+          <!-- Start-Screen oder aktiver Wizard -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+
+  <!-- ── SCRIPTS ─────────────────────────────────────────── -->
+  <script src="js/fuse.min.js"></script>
+  <script src="js/loader.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/marked.min.js"></script>
+  <script src="js/guide-overlay.js"></script>
+  <script src="js/settings-store.js"></script>
+  <script src="js/variables.js"></script>
+  <script src="js/recent.js"></script>
+  <script src="js/favorites.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/wizard-engine.js"></script>
+  <script src="js/wizard-renderer.js"></script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+
+    (async function() {
+      // 1. Commands laden (für createCommandCard und resolveStepCommand).
+      //    loadCommands() (js/loader.js) nimmt keinen Parameter und gibt
+      //    das Array direkt zurück (kein {commands:[...]}-Wrapper – das
+      //    ist nur die Rohstruktur der JSON-Datei selbst, nicht der
+      //    Rückgabewert der Funktion).
+      const commands = await loadCommands();
+      const commandsIndex = new Map(commands.map(c => [c.id, c]));
+
+      // 2. Wizards laden und validieren
+      const result = await WizardEngine.loadWizards();
+      if (!result.success) {
+        document.getElementById('wz-container').innerHTML =
+          '<div class="wz-error-box">Wizards konnten nicht geladen werden: '
+          + result.error + '</div>';
+        return;
+      }
+
+      const wizards = result.wizards;
+
+      // 3. Container- und Sidebar-Referenzen
+      const container   = document.getElementById('wz-container');
+      const sidebarEl    = document.getElementById('wz-sidebar');
+      const progressEl   = document.getElementById('wz-progress-bar');
+
+      // 4. WizardRenderer initialisieren – echte Sidebar-Referenz statt
+      //    null, sonst würden Kontext/Findings/Abbrechen-Button (in
+      //    Teil 3 gebaut und getestet) nie angezeigt und css/wizard.css'
+      //    .wz-sidebar-* Klassen wären totes CSS.
+      WizardRenderer.init(container, sidebarEl, WizardEngine);
+
+      // 5. Aktuelle Session
+      let currentSession = null;
+      let currentWizard  = null;
+
+      function showSidebarAndProgress(visible) {
+        sidebarEl.hidden  = !visible;
+        progressEl.hidden = !visible;
+      }
+
+      // 6. Callbacks
+      const callbacks = {
+        onAnswer: (value) => {
+          if (!currentSession || !currentWizard) return null;
+          const res = WizardEngine.submitAnswer(currentSession, currentWizard, value);
+          if (!res.success) {
+            // INVALID_ANSWER wird vom Renderer bereits inline im Frage-Step
+            // angezeigt (siehe renderQuestion() in wizard-renderer.js) –
+            // hier zusätzlich zu toasten würde die "nicht Toast"-Vorgabe
+            // aus Teil 3 verletzen. Andere Fehler (z.B. ein kaputter
+            // next-Verweis) haben keine eigene Inline-Anzeige -> Toast.
+            if (res.error !== 'INVALID_ANSWER') {
+              showToast(res.message || res.error, 'error');
+            }
+            return res; // renderQuestion() braucht den Rückgabewert für die Inline-Fehleranzeige
+          }
+          currentSession = res.session;
+          renderCurrentStep();
+          return res;
+        },
+        onBack: () => {
+          if (!currentSession || !currentWizard) return;
+          currentSession = WizardEngine.goBack(currentSession);
+          renderCurrentStep();
+        },
+        onAbort: () => {
+          currentSession = null;
+          currentWizard  = null;
+          showStartScreen();
+        },
+        onRestart: () => {
+          if (!currentWizard) return;
+          currentSession = WizardEngine.startSession(currentWizard);
+          renderCurrentStep();
+        },
+        onAnalyzerUpload: (events) => {
+          if (!currentSession || !currentWizard) return;
+          const step = WizardEngine.getCurrentStep(currentSession, currentWizard);
+          const evalResult = WizardEngine.evaluateAnalyzerStep(step, events);
+          const nextId = evalResult.firstMatchNext || step.skipNext;
+          if (nextId) {
+            callbacks.onAnswer(nextId);
+          }
+        },
+      };
+
+      function renderCurrentStep() {
+        if (!currentSession || !currentWizard) return;
+        WizardRenderer.renderProgress(currentSession, currentWizard);
+        WizardRenderer.renderSidebar(currentSession, currentWizard);
+        const step = WizardEngine.getCurrentStep(currentSession, currentWizard);
+        WizardRenderer.renderStep(step, currentSession, currentWizard, commandsIndex, callbacks);
+      }
+
+      function startWizard(wizard) {
+        currentWizard  = wizard;
+        currentSession = WizardEngine.startSession(wizard);
+        showSidebarAndProgress(true);
+        renderCurrentStep();
+      }
+
+      function showStartScreen() {
+        showSidebarAndProgress(false);
+        WizardRenderer.renderWizardList(wizards, startWizard);
+      }
+
+      // 7. URL-Parameter auswerten – ?wizard=<id> startet direkt ohne Start-Screen
+      const params    = new URLSearchParams(location.search);
+      const wizardId  = params.get('wizard');
+      const directWiz = wizardId ? WizardEngine.getWizardById(wizards, wizardId) : null;
+
+      if (directWiz) {
+        startWizard(directWiz);
+      } else {
+        showStartScreen();
+      }
+    })();
+  </script>
+
+  <script src="nav.js"></script>
+
+  <!-- Guide Overlay -->
+  <div id="guide-overlay" class="guide-overlay" hidden aria-modal="true" role="dialog">
+    <div class="guide-overlay-backdrop"></div>
+    <div class="guide-overlay-panel">
+      <div class="guide-overlay-header">
+        <div class="guide-overlay-title" id="guide-overlay-title"></div>
+        <div class="guide-overlay-actions">
+          <a href="#" id="guide-overlay-open"
+             class="guide-overlay-open-btn"
+             target="_blank" rel="noopener">
+            ↗ In guide.sheet oeffnen
+          </a>
+          <button class="guide-overlay-close" id="guide-overlay-close"
+                  aria-label="Schliessen" title="Schliessen">✕</button>
+        </div>
+      </div>
+      <div class="guide-overlay-content" id="guide-overlay-content">
+        <!-- Markdown wird hier gerendert -->
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

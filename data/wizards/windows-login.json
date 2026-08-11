@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 1,
+  "id": "windows-login",
+  "title": "Windows-Login-Probleme diagnostizieren",
+  "description": "Führt Schritt für Schritt durch Diagnose und Behebung von Anmelde- und Kontosperrungs-Problemen.",
+  "icon": "🔑",
+  "color": "#7c8cf8",
+  "category": "windows",
+  "tags": ["login", "auth", "active-directory"],
+  "startStep": "scope",
+  "contextSchema": {
+    "username": { "type": "string", "label": "Benutzername" }
+  },
+  "steps": [
+    {
+      "id": "scope",
+      "type": "question",
+      "title": "Wie viele Benutzer sind betroffen?",
+      "inputType": "select",
+      "options": [
+        { "value": "one",  "label": "Ein Benutzer",             "next": "ask-username" },
+        { "value": "many", "label": "Mehrere / Alle Benutzer",  "next": "domain-check" }
+      ]
+    },
+    {
+      "id": "ask-username",
+      "type": "question",
+      "title": "Für welchen Benutzer?",
+      "inputType": "text",
+      "contextKey": "username",
+      "placeholder": "z.B. jdoe",
+      "validate": "safeValue",
+      "next": "check-account"
+    },
+    {
+      "id": "check-account",
+      "type": "command",
+      "title": "Konto-Status prüfen",
+      "description": "Führe diesen Befehl aus und lies das Ergebnis unten ab.",
+      "commandId": "ad-benutzer-anzeigen",
+      "placeholders": { "benutzername": "username" },
+      "next": "read-result"
+    },
+    {
+      "id": "read-result",
+      "type": "result",
+      "title": "Was zeigt der Befehl?",
+      "referenceStepId": "check-account",
+      "options": [
+        { "value": "locked-out", "label": "LockedOut: True",             "next": "explain-lockout" },
+        { "value": "pw-expired", "label": "PasswordExpired: True",       "next": "solution-reset" },
+        { "value": "ok",         "label": "Alles normal / kein Treffer", "next": "analyze-eventlog" }
+      ]
+    },
+    {
+      "id": "explain-lockout",
+      "type": "information",
+      "title": "Hintergrund: Kontosperrung",
+      "body": "Windows sperrt ein Konto nach mehreren fehlgeschlagenen Anmeldeversuchen (Kontosperrungsschwelle). Häufigste Ursache: ein altes gespeichertes Passwort in Outlook, VPN oder einem geplanten Task, das immer wieder automatisch versucht wird.",
+      "links": [{ "text": "Guide: Active Directory", "guideRef": "support-active-directory" }],
+      "next": "solution-unlock"
+    },
+    {
+      "id": "solution-unlock",
+      "type": "solution",
+      "title": "Lösung: Konto entsperren",
+      "body": "Konto entsperren und anschließend nach der eigentlichen Ursache (altes Passwort) suchen.",
+      "recommendations": [
+        { "commandId": "ad-konto-entsperren", "placeholders": { "benutzername": "username" } }
+      ],
+      "next": "end-success"
+    },
+    {
+      "id": "solution-reset",
+      "type": "solution",
+      "title": "Lösung: Passwort zurücksetzen",
+      "body": "Passwort zurücksetzen – Benutzer muss es beim nächsten Login ändern.",
+      "recommendations": [
+        { "commandId": "ad-passwort-reset", "placeholders": { "benutzername": "username" } }
+      ],
+      "next": "end-success"
+    },
+    {
+      "id": "analyze-eventlog",
+      "type": "analyzer",
+      "title": "Event Log hochladen (optional)",
+      "description": "Falls verfügbar: Client-EventLog-Export hochladen – wir suchen automatisch nach login-relevanten Ereignissen.",
+      "accept": ".json",
+      "detect": [
+        { "eventIds": [4740], "next": "explain-lockout", "label": "Kontosperrung (4740) gefunden" },
+        { "eventIds": [4625], "next": "solution-reset",  "label": "Fehlgeschlagene Logins (4625) gefunden" },
+        { "eventIds": [1098], "next": "end-escalate",    "label": "AAD Token-Fehler (1098) gefunden – vermutlich kein lokales/AD-Problem" }
+      ],
+      "skipNext": "end-unresolved"
+    },
+    {
+      "id": "domain-check",
+      "type": "command",
+      "title": "DNS-Auflösung prüfen",
+      "description": "Bei mehreren/allen betroffenen Benutzern liegt es selten am einzelnen Konto – zuerst DNS/Netzwerk zum Domänencontroller prüfen.",
+      "commandId": "network-dns-resolve-detail",
+      "next": "domain-result"
+    },
+    {
+      "id": "domain-result",
+      "type": "result",
+      "title": "Was zeigt die DNS-Auflösung?",
+      "referenceStepId": "domain-check",
+      "options": [
+        { "value": "resolves", "label": "DNS löst auf",     "next": "end-escalate" },
+        { "value": "fails",    "label": "DNS schlägt fehl", "next": "end-escalate" }
+      ]
+    },
+    {
+      "id": "end-success",
+      "type": "end",
+      "outcome": "success",
+      "title": "Problem sollte gelöst sein",
+      "body": "Lass den Benutzer sich erneut anmelden und bestätige das Ergebnis."
+    },
+    {
+      "id": "end-unresolved",
+      "type": "end",
+      "outcome": "unresolved",
+      "title": "Keine automatische Lösung gefunden",
+      "body": "Bitte Auth Flow im HAR Analyzer oder Entra Sign-In Logs im Entra Analyzer prüfen."
+    },
+    {
+      "id": "end-escalate",
+      "type": "end",
+      "outcome": "escalate",
+      "title": "Vermutlich Netzwerk-/Domänen-Problem",
+      "body": "Das betrifft nicht nur ein einzelnes Konto, sondern deutet auf ein Netzwerk-, DNS- oder Domänencontroller-Problem hin (bzw. bei AAD-Token-Fehlern ein Cloud-Auth-Problem statt lokales AD).",
+      "links": [{ "text": "Zum Entra Analyzer", "href": "entra.html" }]
+    }
+  ]
+}
