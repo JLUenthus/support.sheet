@@ -83,6 +83,25 @@
         <button class="search-clear" id="search-clear"
                 aria-label="Suche leeren" hidden>✕</button>
       </div>
+      <div class="safe-mode-bar" id="safe-mode-bar">
+        <label class="safe-mode-toggle" id="safe-mode-label">
+          <div class="safe-mode-switch" id="safe-mode-switch">
+            <input type="checkbox" id="safe-mode-checkbox"
+                   aria-label="Safe Mode">
+            <div class="safe-mode-track">
+              <div class="safe-mode-thumb"></div>
+            </div>
+          </div>
+          <span class="safe-mode-text">Safe Mode</span>
+          <span class="safe-mode-desc" id="safe-mode-desc">
+            aus
+          </span>
+        </label>
+        <span class="safe-mode-hint" id="safe-mode-hint"
+              hidden>
+          🛡️ HIGH-Risk Commands ausgeblendet
+        </span>
+      </div>
       <div id="filter-bar"></div>
     </div>
     <div id="commands-container"></div>

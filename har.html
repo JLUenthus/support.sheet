@@ -134,6 +134,28 @@
         <div class="sys-grid" id="stats-grid"></div>
       </section>
 
+      <!-- Auth Flow -->
+      <section class="el-section" id="auth-flow-section" hidden>
+        <h2 class="section-title">🔐 Auth Flow</h2>
+
+        <!-- Auto-Erkennungen -->
+        <div id="auth-conditions" class="auth-conditions"></div>
+
+        <!-- Flow-Diagramm -->
+        <div class="af-diagram-wrap">
+          <div class="af-label">Erkannter Flow:</div>
+          <div class="af-flow-scroll">
+            <div id="auth-flow-diagram" class="af-diagram"></div>
+          </div>
+        </div>
+
+        <!-- Redirect-Chain -->
+        <div id="auth-redirect-chain" hidden>
+          <div class="af-section-label">🔄 Redirect-Kette</div>
+          <div id="auth-chain-wrap" class="af-chain"></div>
+        </div>
+      </section>
+
       <!-- Findings -->
       <section class="el-section">
         <h2 class="section-title">🎯 Diagnose-Befunde <span id="findings-count" class="section-count">0</span></h2>

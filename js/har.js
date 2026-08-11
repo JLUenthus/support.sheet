@@ -112,6 +112,91 @@ if ('serviceWorker' in navigator) {
       return isTelemetry(url) || isLongPoll(url, dur, status);
     }
 
+    function classifyAuthRequest(entry) {
+      const url    = entry.request?.url || '';
+      const status = entry.response?.status || 0;
+      const method = entry.request?.method || '';
+      const lower  = url.toLowerCase();
+
+      // Step erkennen
+      let step  = 'auth-request';
+      let actor = 'browser';
+      let isMfa = false, isToken = false, isRedirect = false;
+
+      // URL-Muster → Step
+      if (lower.includes('/authorize') || lower.includes('/oauth2/v2.0/authorize')) {
+        step = 'authorize'; actor = 'browser';
+      } else if (lower.includes('/token') || lower.includes('/oauth2/v2.0/token')) {
+        step = 'token'; actor = 'app'; isToken = true;
+      } else if (lower.includes('/devicecode')) {
+        step = 'device-code'; actor = 'app';
+      } else if (lower.includes('/kmsi') || lower.includes('kmsi=')) {
+        step = 'kmsi'; actor = 'browser'; // Keep Me Signed In
+      } else if (lower.includes('/sso') || lower.includes('sso_nonce')) {
+        step = 'sso'; actor = 'browser';
+      } else if (lower.includes('/mfa') || lower.includes('mfatype') ||
+                 lower.includes('/strongauthentication')) {
+        step = 'mfa'; actor = 'user'; isMfa = true;
+      } else if (lower.includes('/consent') || lower.includes('/permissions')) {
+        step = 'consent'; actor = 'user';
+      } else if (lower.includes('/logout') || lower.includes('/signout')) {
+        step = 'logout'; actor = 'browser';
+      } else if (lower.includes('graph.microsoft.com') && lower.includes('/me')) {
+        step = 'graph-me'; actor = 'app';
+      // login/signin zuletzt geprueft: AAD-Hosts heissen "login.microsoftonline.com" –
+      // "https://login...." enthaelt selbst schon die Teilzeichenkette "/login" direkt
+      // nach dem Protokoll. Vor den spezifischeren mfa/consent/logout-Checks geprueft,
+      // haette dieser Catch-all fast jeden AAD-Request faelschlich als "login" klassifiziert.
+      } else if (lower.includes('/login') || lower.includes('/signin')) {
+        step = 'login'; actor = 'browser';
+      }
+
+      // 3xx = Redirect
+      if (status >= 300 && status < 400) { isRedirect = true; }
+
+      // Error aus Response-Body lesen
+      let errorCode = null, errorDesc = null;
+      try {
+        const body = entry.response?.content?.text || '';
+        if (body && body.includes('"error"')) {
+          const parsed = JSON.parse(body);
+          errorCode = parsed.error || null;
+          errorDesc = parsed.error_description?.split('\r')[0] || null;
+        }
+      } catch {}
+
+      // Error aus URL-Parametern
+      if (!errorCode) {
+        try {
+          const qs = new URL(url).searchParams;
+          errorCode = qs.get('error') || null;
+          errorDesc = qs.get('error_description') || null;
+        } catch {}
+      }
+
+      // Redirect Location
+      const redirectTo = entry.response?.headers?.find(
+        h => h.name.toLowerCase() === 'location'
+      )?.value || null;
+
+      return {
+        url,
+        status,
+        time: entry.startedDateTime || '',
+        dur:  Math.round(entry.time || 0),
+        method,
+        step,
+        actor,
+        errorCode,
+        errorDesc,
+        redirectTo,
+        responseSize: entry.response?.content?.size || 0,
+        isMfa,
+        isToken,
+        isRedirect,
+      };
+    }
+
     function analyze(har, filename) {
       const entries = har.log?.entries || [];
       let errors = [], authReqs = [], cookies = new Map();
@@ -138,7 +223,7 @@ if ('serviceWorker' in navigator) {
           errors.push({ url, status, time, dur });
           if (status === 401 && !first401Time) first401Time = time;
         }
-        if (isAuth(url)) authReqs.push({ url, status, time, dur });
+        if (isAuth(url)) authReqs.push(classifyAuthRequest(en));
       });
 
       // Stats – exclude noise from meaningful metrics
@@ -188,8 +273,256 @@ if ('serviceWorker' in navigator) {
       document.getElementById('all-count').textContent = allHarRows.length + ' Requests';
       renderAllTable(allHarRows);
 
+      renderAuthFlow(authReqs);
+
       document.getElementById('results-section').style.display = '';
       setTimeout(() => document.getElementById('results-section').scrollIntoView({ behavior:'smooth', block:'start' }), 150);
+    }
+
+    // ── Auth Flow: Auto-Erkennung ────────────────────────────
+    function detectAuthConditions(authReqs) {
+      const conditions = [];
+
+      // MFA erforderlich
+      if (authReqs.some(r => r.isMfa)) {
+        conditions.push({
+          type: 'mfa-required',
+          icon: '📱',
+          label: 'MFA erkannt',
+          desc: 'Multi-Factor Authentication wurde im Auth-Flow durchgeführt.',
+          severity: 'info'
+        });
+      }
+
+      // Token abgelaufen (401 + erneute Auth)
+      const has401    = authReqs.some(r => r.status === 401);
+      const authAfter = authReqs.some(r => r.step === 'authorize' || r.step === 'token');
+      if (has401 && authAfter) {
+        conditions.push({
+          type: 'token-expired',
+          icon: '⏰',
+          label: 'Token abgelaufen',
+          desc: '401-Fehler gefolgt von erneutem Auth-Flow. Token war vermutlich abgelaufen.',
+          severity: 'warning'
+        });
+      }
+
+      // Conditional Access
+      const caError = authReqs.find(r =>
+        r.errorCode === 'interaction_required' ||
+        r.errorCode === 'access_denied' ||
+        (r.errorDesc || '').includes('AADSTS53003') ||
+        (r.errorDesc || '').includes('AADSTS50158') ||
+        (r.url || '').includes('claims=')
+      );
+      if (caError) {
+        conditions.push({
+          type: 'conditional-access',
+          icon: '🛡️',
+          label: 'Conditional Access',
+          desc: 'Conditional Access Policy wurde ausgelöst. ' +
+                (caError.errorDesc
+                  ? caError.errorDesc.substring(0,100)
+                  : 'Zugriff verweigert oder MFA erzwungen.'),
+          severity: 'error'
+        });
+      }
+
+      // Bekannte Fehler-Codes
+      const knownErrors = {
+        'invalid_client':          { label: 'Ungültige App-Registrierung',   severity: 'error' },
+        'invalid_grant':           { label: 'Token ungültig oder abgelaufen', severity: 'error' },
+        'unauthorized_client':     { label: 'App nicht autorisiert',          severity: 'error' },
+        'consent_required':        { label: 'Zustimmung erforderlich',        severity: 'warning' },
+        'interaction_required':    { label: 'Benutzerinteraktion nötig',      severity: 'warning' },
+        'temporarily_unavailable': { label: 'AAD temporär nicht verfügbar',   severity: 'warning' },
+        'server_error':            { label: 'AAD Server-Fehler',              severity: 'error' },
+        'AADSTS70011':             { label: 'Scope ungültig',                 severity: 'error' },
+        'AADSTS65001':             { label: 'App-Zustimmung fehlt',           severity: 'warning' },
+        'AADSTS50126':             { label: 'Ungültige Anmeldedaten',         severity: 'error' },
+        'AADSTS50053':             { label: 'Konto gesperrt',                 severity: 'error' },
+        'AADSTS50057':             { label: 'Konto deaktiviert',              severity: 'error' },
+        'AADSTS700082':            { label: 'Refresh Token abgelaufen',       severity: 'warning' },
+      };
+
+      authReqs.forEach(r => {
+        if (!r.errorCode) return;
+        const known = knownErrors[r.errorCode];
+        if (known && !conditions.find(c => c.type === r.errorCode)) {
+          conditions.push({
+            type:     r.errorCode,
+            icon:     known.severity === 'error' ? '❌' : '⚠️',
+            label:    known.label,
+            desc:     `Fehlercode: ${r.errorCode}` +
+                      (r.errorDesc ? ` – ${r.errorDesc.substring(0,120)}` : ''),
+            severity: known.severity
+          });
+        }
+      });
+
+      // Redirect-Kette
+      const redirectChain = authReqs.filter(r => r.isRedirect);
+      if (redirectChain.length >= 3) {
+        conditions.push({
+          type: 'redirect-chain',
+          icon: '🔄',
+          label: `${redirectChain.length}× Redirects`,
+          desc: 'Ungewöhnlich viele Auth-Redirects. Kann auf Redirect-Loop oder ' +
+                'Konfigurationsprobleme hinweisen.',
+          severity: redirectChain.length >= 5 ? 'error' : 'warning'
+        });
+      }
+
+      return conditions;
+    }
+
+    // ── Auth Flow: Render ─────────────────────────────────────
+    const AUTH_STEPS = {
+      'login':       { label: 'Login',        icon: '👤', color: '#7c8cf8' },
+      'authorize':   { label: 'Authorize',    icon: '🔐', color: '#7c8cf8' },
+      'mfa':         { label: 'MFA',          icon: '📱', color: '#e8b339' },
+      'token':       { label: 'Token',        icon: '🎟️', color: '#4ade80' },
+      'sso':         { label: 'SSO',          icon: '⚡', color: '#60a5fa' },
+      'kmsi':        { label: 'KMSI',         icon: '💾', color: '#94a3b8' },
+      'consent':     { label: 'Consent',      icon: '✅', color: '#4ade80' },
+      'logout':      { label: 'Logout',       icon: '🚪', color: '#f87171' },
+      'device-code': { label: 'Device Code',  icon: '📟', color: '#a78bfa' },
+      'graph-me':    { label: 'Graph /me',    icon: '👥', color: '#4ade80' },
+      'auth-request':{ label: 'Auth',         icon: '🔑', color: '#94a3b8' },
+    };
+
+    function renderAuthFlow(authReqs) {
+      const section = document.getElementById('auth-flow-section');
+      if (!section) return;
+
+      if (authReqs.length === 0) {
+        section.hidden = true;
+        return;
+      }
+      section.hidden = false;
+
+      const conditions = detectAuthConditions(authReqs);
+
+      // 1. Conditions-Banner rendern
+      const condContainer = document.getElementById('auth-conditions');
+      condContainer.replaceChildren();
+      conditions.forEach(c => {
+        const badge = document.createElement('div');
+        badge.className = `auth-condition auth-condition--${c.severity}`;
+        badge.innerHTML = `
+          <span class="auth-cond-icon">${c.icon}</span>
+          <div class="auth-cond-body">
+            <div class="auth-cond-label">${c.label}</div>
+            <div class="auth-cond-desc">${c.desc}</div>
+          </div>
+        `;
+        condContainer.appendChild(badge);
+      });
+
+      // 2. Flow-Diagramm bauen
+      const flowWrap = document.getElementById('auth-flow-diagram');
+      flowWrap.replaceChildren();
+
+      // Deduplizierte Step-Sequenz (gleicher Step-Typ hintereinander zusammenfassen)
+      const flowSteps = [];
+      authReqs.forEach(r => {
+        const last = flowSteps[flowSteps.length - 1];
+        if (last && last.step === r.step) {
+          last.count++;
+          last.hasError = last.hasError || !!r.errorCode;
+        } else {
+          flowSteps.push({
+            step:     r.step,
+            count:    1,
+            status:   r.status,
+            hasError: !!r.errorCode,
+            errorCode: r.errorCode,
+            isMfa:    r.isMfa,
+            isToken:  r.isToken,
+            requests: [r]
+          });
+        }
+      });
+
+      // Abschluss-Step hinzufügen
+      const lastStep = flowSteps[flowSteps.length - 1];
+      if (lastStep && !lastStep.hasError) {
+        flowSteps.push({
+          step: '__success__', count: 1,
+          status: 200, hasError: false
+        });
+      }
+
+      flowSteps.forEach((item, idx) => {
+        // Step-Node
+        const node = document.createElement('div');
+        node.className = 'af-node' +
+          (item.hasError  ? ' af-node--error'   : '') +
+          (item.isToken   ? ' af-node--success' : '') +
+          (item.isMfa     ? ' af-node--mfa'     : '');
+
+        if (item.step === '__success__') {
+          node.innerHTML = `
+            <div class="af-node-icon">✅</div>
+            <div class="af-node-label">Success</div>
+          `;
+        } else {
+          const cfg = AUTH_STEPS[item.step] || AUTH_STEPS['auth-request'];
+          node.innerHTML = `
+            <div class="af-node-icon">${cfg.icon}</div>
+            <div class="af-node-label">${cfg.label}</div>
+            ${item.count > 1
+              ? `<div class="af-node-count">${item.count}×</div>`
+              : ''}
+            ${item.hasError
+              ? `<div class="af-node-error">${item.errorCode || 'Fehler'}</div>`
+              : ''}
+            ${item.status
+              ? `<div class="af-node-status af-status-${
+                  item.status >= 400 ? 'err' :
+                  item.status >= 300 ? 'redir' : 'ok'
+                }">${item.status}</div>`
+              : ''}
+          `;
+        }
+        flowWrap.appendChild(node);
+
+        // Pfeil zwischen Steps
+        if (idx < flowSteps.length - 1) {
+          const arrow = document.createElement('div');
+          arrow.className = 'af-arrow';
+          arrow.textContent = '→';
+          flowWrap.appendChild(arrow);
+        }
+      });
+
+      // 3. Redirect-Chain rendern wenn vorhanden
+      const redirectChain = authReqs.filter(r => r.isRedirect);
+      const chainSection  = document.getElementById('auth-redirect-chain');
+      if (redirectChain.length >= 2) {
+        chainSection.hidden = false;
+        const chainWrap = document.getElementById('auth-chain-wrap');
+        chainWrap.replaceChildren();
+        redirectChain.forEach((r, idx) => {
+          const row = document.createElement('div');
+          row.className = 'af-chain-row';
+          row.innerHTML = `
+            <span class="af-chain-idx">${idx + 1}</span>
+            <span class="af-chain-url" title="${r.url}">
+              ${fmtUrl(r.url)}
+            </span>
+            <span class="af-chain-status af-status-${
+              r.status >= 400 ? 'err' : 'redir'
+            }">${r.status}</span>
+            ${r.redirectTo
+              ? `<span class="af-chain-to">→ ${fmtUrl(r.redirectTo)}</span>`
+              : ''}
+          `;
+          chainWrap.appendChild(row);
+        });
+      } else {
+        chainSection.hidden = true;
+      }
     }
 
     function runHarRules(rows, errors, authReqs, first401Time, cookies, telemetryPct) {

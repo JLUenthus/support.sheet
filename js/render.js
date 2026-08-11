@@ -58,6 +58,39 @@ function getPrimaryTag(cmd) {
   return cmd.tags.find(t => CATEGORY_MAP[t]) || cmd.tags[0] || null;
 }
 
+// ── Risk-Level ──────────────────────────────────────────────
+// Keine manuelle Pflege noetig – wird zur Laufzeit aus dem
+// "caution"-Tag und ein paar Cmd-Heuristiken abgeleitet.
+function getRisk(cmd) {
+  const tags = cmd.tags || [];
+
+  // Explizites risk-Feld hat Vorrang (Zukunft)
+  if (cmd.risk) return cmd.risk;
+
+  // caution-Tag = high
+  if (tags.includes('caution')) return 'high';
+
+  // Weitere Heuristiken
+  const cmdLower = (cmd.cmd || '').toLowerCase();
+  if (
+    cmdLower.includes('remove-') ||
+    cmdLower.includes('delete') ||
+    cmdLower.includes('format') ||
+    cmdLower.includes('-force') ||
+    cmdLower.includes('drop ')
+  ) return 'high';
+
+  if (
+    cmdLower.includes('set-') ||
+    cmdLower.includes('disable') ||
+    cmdLower.includes('stop-') ||
+    cmdLower.includes('restart-') ||
+    cmdLower.includes('reset')
+  ) return 'medium';
+
+  return 'low';
+}
+
 
 // ── Copy Button ───────────────────────────────────────────
 
@@ -174,6 +207,50 @@ function createCommandCard(template, cmd) {
       cardHeader.insertBefore(guideBtn, starBtn);
     } else if (cardHeader) {
       cardHeader.appendChild(guideBtn);
+    }
+  }
+
+  // Risk-Badge + Warnung ─────────────────────────────────
+  const risk = getRisk(cmd);
+
+  // Nur HIGH und MEDIUM anzeigen, LOW ist Standard → kein Badge
+  if (risk === 'high' || risk === 'medium') {
+    const badge = document.createElement('div');
+    badge.className = `risk-badge risk-badge--${risk}`;
+    badge.title = risk === 'high'
+      ? 'Achtung: Dieser Befehl kann destructive sein. Vor Ausführung prüfen.'
+      : 'Hinweis: Dieser Befehl verändert Systemeinstellungen.';
+
+    const dot = document.createElement('span');
+    dot.className = 'risk-dot';
+
+    const label = document.createElement('span');
+    label.textContent = risk === 'high' ? 'HIGH' : 'MED';
+
+    badge.appendChild(dot);
+    badge.appendChild(label);
+
+    // In card-header vor dem star-btn einfügen (landet damit automatisch
+    // hinter einem evtl. vorhandenen guide-btn, der oben bereits davor sitzt)
+    if (cardHeader && starBtn) {
+      cardHeader.insertBefore(badge, starBtn);
+    } else if (cardHeader) {
+      cardHeader.appendChild(badge);
+    }
+  }
+
+  // HIGH: Warnung auf der Kachel anzeigen
+  if (risk === 'high') {
+    const warn = document.createElement('div');
+    warn.className = 'risk-warning';
+    warn.innerHTML =
+      '⚠️ Vor Ausführung prüfen – dieser Befehl kann ' +
+      'nicht ohne weiteres rückgängig gemacht werden.';
+
+    // Nach der Code-Zeile einfügen
+    const codeEl = clone.querySelector('[data-field="cmd"]');
+    if (codeEl) {
+      codeEl.insertAdjacentElement('afterend', warn);
     }
   }
 
@@ -412,7 +489,52 @@ function renderCommandGroupsRecent(commands, pageColors) {
 }
 
 
+// ── Safe Mode ──────────────────────────────────────────────
+// Blendet HIGH-Risk Commands aus. Standard: aus. Persistiert in localStorage,
+// damit die Einstellung seitenübergreifend (windows/exchange/forti) gilt.
+const SAFE_MODE_KEY = 'ss-safe-mode';
+
+function isSafeModeOn() {
+  return localStorage.getItem(SAFE_MODE_KEY) === 'true';
+}
+
+function shouldShowCommand(cmd) {
+  if (!isSafeModeOn()) return true;
+  return getRisk(cmd) !== 'high';
+}
+
+function initSafeMode() {
+  const checkbox = document.getElementById('safe-mode-checkbox');
+  const hint     = document.getElementById('safe-mode-hint');
+  const desc     = document.getElementById('safe-mode-desc');
+  if (!checkbox) return;
+
+  // Gespeicherten Zustand laden
+  const saved = isSafeModeOn();
+  checkbox.checked = saved;
+  if (hint) hint.hidden = !saved;
+  if (desc) desc.textContent = saved ? 'an' : 'aus';
+
+  checkbox.addEventListener('change', () => {
+    const on = checkbox.checked;
+    localStorage.setItem(SAFE_MODE_KEY, String(on));
+    if (hint) hint.hidden = !on;
+    if (desc) desc.textContent = on ? 'an' : 'aus';
+    // Re-render mit genau der Liste, die zuletzt an renderCommandGroups()
+    // ging – egal ob die per Kategorie-Filter (applyFilter), Suche
+    // (runSearch) oder Produkt-Tab (exchange.html/forti.html, eigene
+    // Inline-Skripte) zustande kam. applyFilter()/runSearch() direkt
+    // aufzurufen wuerde auf exchange.html/forti.html die aktuelle
+    // Produkt-Tab-Auswahl verwerfen, da die _currentProduct-Variable dort
+    // lokal im jeweiligen Inline-Skript liegt, nicht in render.js.
+    renderCommandGroups(_lastRenderedCommands);
+  });
+}
+
+
 // ── Grouped Render ────────────────────────────────────────
+
+let _lastRenderedCommands = [];
 
 function renderCommandGroups(commands, containerId = 'commands-container') {
   const container = document.getElementById(containerId);
@@ -420,11 +542,14 @@ function renderCommandGroups(commands, containerId = 'commands-container') {
   const template = document.getElementById('command-template');
   if (!template) return;
 
+  _lastRenderedCommands = commands;
+  const visible = commands.filter(shouldShowCommand);
+
   const fragment = document.createDocumentFragment();
 
   // Group by primary tag
   const groups = {};
-  commands.forEach(cmd => {
+  visible.forEach(cmd => {
     const tag = getPrimaryTag(cmd) || 'other';
     if (!groups[tag]) groups[tag] = [];
     groups[tag].push(cmd);
@@ -473,7 +598,7 @@ function renderCommandGroups(commands, containerId = 'commands-container') {
   });
 
   container.replaceChildren(fragment);
-  if (typeof updateCommandCount === 'function') updateCommandCount(commands.length);
+  if (typeof updateCommandCount === 'function') updateCommandCount(visible.length);
   if (typeof renderFavorites    === 'function') renderFavorites(_allCommands);
 }
 
@@ -506,8 +631,8 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(commands => {
       _allCommands = commands;
       renderFilterBar(commands);
+      initSafeMode();
       renderCommandGroups(commands);
-      if (typeof updateCommandCount === 'function') updateCommandCount(commands.length);
       if (typeof initSearch   === 'function') initSearch(commands);
       if (typeof initSearchUI === 'function') initSearchUI();
     })

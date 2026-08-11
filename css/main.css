@@ -834,6 +834,112 @@ body.page-tools    .hero h1 { background: linear-gradient(135deg, #e0e4f0 0%, #9
   color: var(--accent);
 }
 
+/* ── Risk Badge ─────────────────────────────────────── */
+.risk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .6rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 5px;
+  letter-spacing: .04em;
+  flex-shrink: 0;
+  cursor: default;
+}
+.risk-badge--high {
+  background: rgba(248,113,113,.12);
+  border: 1px solid rgba(248,113,113,.3);
+  color: var(--red);
+}
+.risk-badge--medium {
+  background: rgba(251,191,36,.1);
+  border: 1px solid rgba(251,191,36,.25);
+  color: var(--amber);
+}
+.risk-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* ── Risk Warning auf Kachel ────────────────────────── */
+.risk-warning {
+  font-size: .72rem;
+  color: var(--amber);
+  background: rgba(251,191,36,.06);
+  border: 1px solid rgba(251,191,36,.2);
+  border-radius: 5px;
+  padding: 5px 9px;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* ── Safe Mode Toggle ───────────────────────────────── */
+.safe-mode-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0 2px;
+}
+.safe-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.safe-mode-switch { position: relative; }
+.safe-mode-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.safe-mode-track {
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--border2);
+  border: 1px solid var(--border);
+  transition: background .2s, border-color .2s;
+  position: relative;
+}
+.safe-mode-switch input:checked ~ .safe-mode-track {
+  background: rgba(74,222,128,.25);
+  border-color: rgba(74,222,128,.4);
+}
+.safe-mode-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--dim);
+  transition: transform .2s, background .2s;
+}
+.safe-mode-switch input:checked ~ .safe-mode-track .safe-mode-thumb {
+  transform: translateX(14px);
+  background: var(--green);
+}
+.safe-mode-text {
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.safe-mode-desc {
+  font-size: .7rem;
+  color: var(--dim);
+}
+.safe-mode-hint {
+  font-size: .72rem;
+  color: var(--green);
+  font-weight: 600;
+}
+
 .guide-overlay-content pre {
   background: var(--bg);
   border: 1px solid var(--border);
