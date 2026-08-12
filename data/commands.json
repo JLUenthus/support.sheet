@@ -83,8 +83,7 @@
       "tags": [
         "msc",
         "windows",
-        "admin",
-        "caution"
+        "admin"
       ],
       "guideRef": "support-mmc-konsolen"
     },
@@ -120,8 +119,7 @@
       "tags": [
         "msc",
         "windows",
-        "admin",
-        "caution"
+        "admin"
       ],
       "guideRef": "support-mmc-konsolen"
     },
@@ -390,8 +388,7 @@
       "tags": [
         "network",
         "windows",
-        "admin",
-        "caution"
+        "admin"
       ]
     },
     {
@@ -832,8 +829,7 @@
       "tags": [
         "disk",
         "windows",
-        "admin",
-        "caution"
+        "admin"
       ]
     },
     {
@@ -1058,8 +1054,7 @@
       "tags": [
         "gpo",
         "windows",
-        "admin",
-        "caution"
+        "admin"
       ],
       "guideRef": "support-gpo"
     },
@@ -1164,8 +1159,7 @@
       "tags": [
         "quick",
         "windows",
-        "admin",
-        "caution"
+        "admin"
       ],
       "guideRef": "support-schnellbefehle"
     },
@@ -1734,8 +1728,7 @@
         "powershell",
         "windows",
         "server",
-        "admin",
-        "caution"
+        "admin"
       ],
       "guideRef": "support-hyper-v"
     },
