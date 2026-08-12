@@ -63,8 +63,7 @@
       "fortigate",
       "basics",
       "cli",
-      "fg",
-      "caution"
+      "fg"
     ],
     "product": "fg"
   },
@@ -358,8 +357,7 @@
       "vpn",
       "cli",
       "fg",
-      "diag",
-      "caution"
+      "diag"
     ],
     "product": "fg"
   },
@@ -651,8 +649,7 @@
       "user",
       "cli",
       "fg",
-      "diag",
-      "caution"
+      "diag"
     ],
     "product": "fg"
   },
@@ -666,8 +663,7 @@
       "user",
       "cli",
       "fg",
-      "diag",
-      "caution"
+      "diag"
     ],
     "product": "fg"
   },
@@ -781,8 +777,7 @@
       "fortimanager",
       "policy",
       "cli",
-      "fmg",
-      "caution"
+      "fmg"
     ],
     "product": "fmg"
   },
@@ -1033,8 +1028,7 @@
       "fortianalyzer",
       "diag",
       "cli",
-      "faz",
-      "caution"
+      "faz"
     ],
     "product": "faz"
   },
@@ -1091,8 +1085,7 @@
       "fortianalyzer",
       "diag",
       "cli",
-      "faz",
-      "caution"
+      "faz"
     ],
     "product": "faz"
   }

@@ -1730,7 +1730,8 @@
         "server",
         "admin"
       ],
-      "guideRef": "support-hyper-v"
+      "guideRef": "support-hyper-v",
+      "risk": "medium"
     },
     {
       "id": "hyperv-checkpoints-anzeigen",
@@ -2081,6 +2082,7 @@
       "cmd": "certreq -new 'C:\\Temp\\request.inf' 'C:\\Temp\\request.csr'",
       "desc": "Certificate Signing Request für eine CA erstellen. Benötigt request.inf mit Subject, SAN und Schlüssellänge. Der CSR wird bei der CA eingereicht.",
       "tags": [
+        "quick",
         "certificates",
         "windows",
         "admin"
