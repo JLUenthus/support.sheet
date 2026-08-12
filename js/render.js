@@ -26,6 +26,7 @@ const CATEGORY_MAP = {
   'update':           { label: 'Windows Update',     dot: '#fbbf24', icon: '🔄'  },
   'rds':              { label: 'RDS / Terminal',     dot: '#60a5fa', icon: '🖥️'  },
   'powertoys':        { label: 'PowerToys',          dot: '#fb923c', icon: '🔧'  },
+  'sysinternals':     { label: 'Sysinternals',        dot: '#60a5fa', icon: '🔬'  },
   // Exchange
   'exchange':         { label: 'Exchange',          dot: '#e8b339', icon: '📧'  },
   'on-premises':      { label: 'On-Premises',       dot: '#e8b339', icon: '🏢'  },

@@ -789,6 +789,143 @@
         }
       ],
       "content": "# Exchange verbinden\n\n# Was macht der Befehl\n\nDiese Befehle stellen eine Verbindung zu einem Exchange Server oder Exchange Online her. Nach erfolgreicher Anmeldung stehen alle Exchange PowerShell Cmdlets für Verwaltung und Troubleshooting zur Verfügung.\n\n\n## Wann verwenden\n\n- Exchange Server administrieren\n- Exchange Online verwalten\n- Postfächer bearbeiten\n- Compliance Suchen durchführen\n- Exchange Skripte ausführen\n- Remote Administration\n\n\n## Wichtige Befehle\n\n`Add-PSSnapin Microsoft.Exchange.Management.PowerShell.SnapIn`  \nExchange Management Snap In auf einem Exchange Server laden\n\n`New-PSSession`  \nRemote Verbindung zu Exchange Server herstellen\n\n`Import-PSSession`  \nExchange Cmdlets in die aktuelle PowerShell importieren\n\n`Remove-PSSession`  \nRemote Sitzung beenden\n\n`Connect-ExchangeOnline`  \nMit Exchange Online verbinden\n\n`Disconnect-ExchangeOnline`  \nExchange Online Sitzung beenden\n\n`Connect-IPPSSession`  \nMit Microsoft Purview und Compliance PowerShell verbinden\n\n`Install-Module ExchangeOnlineManagement`  \nExchange Online PowerShell Modul installieren\n\n\n## Häufige Fehler\n\n- Cmdlet nicht gefunden  \nExchange Modul oder Snap In wurde nicht geladen\n\n- WinRM Fehler  \nPowerShell Remoting oder Firewall prüfen\n\n- Kerberos Authentifizierung schlägt fehl  \nNur innerhalb der Domäne möglich\n\n- Zu viele geöffnete Sessions  \nNicht verwendete Sitzungen mit `Remove-PSSession` oder `Disconnect-ExchangeOnline` schließen\n\n- ExchangeOnlineManagement Modul fehlt  \nVorher mit `Install-Module` installieren\n\n\n## Praxisbeispiel\n\nDu möchtest einen lokalen Exchange Server administrieren.\n\n| PowerShell |\n|----------|\n| # Remote Verbindung zu Exchange herstellen |\n`$Session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri http://EXCHANGE-SERVER/PowerShell/ -Authentication Kerberos`  \n`Import-PSSession $Session -DisableNameChecking` |\n\nNach Abschluss der Arbeiten wird die Sitzung beendet.\n\n| PowerShell |\n|----------|\n| # Exchange Sitzung schließen |\n`Remove-PSSession $Session` |\n\nDu möchtest Exchange Online verwalten.\n\n| PowerShell |\n|----------|\n| # Verbindung zu Exchange Online |\n`Connect-ExchangeOnline -UserPrincipalName admin@domain.de` |\n\nFür eDiscovery oder Compliance Aufgaben verbindest du dich zusätzlich mit dem Compliance Service.\n\n| PowerShell |\n|----------|\n| # Compliance PowerShell verbinden |\n`Connect-IPPSSession -UserPrincipalName admin@domain.de` |\n\n\n## Verwandte Befehle\n\n- `Get-Mailbox`  \nPostfächer anzeigen\n\n- `Get-DistributionGroup`  \nVerteilergruppen verwalten\n\n- `Get-EXOMailbox`  \nExchange Online Postfächer abrufen\n\n- `Get-PSSession`  \nAktive PowerShell Sitzungen anzeigen\n\n"
+    },
+    {
+      "id": "support-sysinternals-procmon",
+      "originalId": "guide-1786534403395",
+      "title": "sysinternals - PROCESS MONITOR (ProcMon)",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "Support.sheet",
+        "sysinternals",
+        "procmon",
+        "troubleshooting",
+        "windows",
+        "prozesse"
+      ],
+      "type": "guide",
+      "created": "2026-08-12T11:33:23.396Z",
+      "modified": "2026-08-12T11:33:48.612Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [],
+      "content": "# Sysinternals Process Monitor\n\n# Was macht der Befehl\n\nProcess Monitor, kurz ProcMon, überwacht in Echtzeit Datei, Registry und Prozessaktivitäten unter Windows. Dadurch lässt sich nachvollziehen, welcher Prozess auf welche Datei oder Registry zugreift und wo Fehler wie `ACCESS DENIED` oder `NAME NOT FOUND` auftreten.\n\n\n## Wann verwenden\n\n- Programme starten nicht oder stürzen ab\n- Anwendungen finden Dateien oder Registry Einträge nicht\n- Berechtigungsprobleme analysieren\n- Installer Fehler untersuchen\n- Autostart oder DLL Probleme nachvollziehen\n- Unbekannte Datei oder Registry Zugriffe identifizieren\n\n\n## Wichtige Funktionen\n\n`Filter`  \nEreignisse gezielt nach Prozess, Pfad, Operation oder Ergebnis filtern\n\n`Process Name`  \nZeigt welcher Prozess den Zugriff verursacht\n\n`Operation`  \nZeigt die ausgeführte Aktion wie `CreateFile`, `RegOpenKey` oder `Process Create`\n\n`Path`  \nZeigt die betroffene Datei, Registry oder Ressource\n\n`Result`  \nZeigt das Ergebnis des Zugriffs wie `SUCCESS`, `ACCESS DENIED` oder `NAME NOT FOUND`\n\n`Ctrl + E`  \nAufzeichnung starten oder stoppen\n\n`Ctrl + X`  \nAktuelle Ereignisliste leeren\n\n\n## Häufige Fehler\n\n- Zu viele Events  \nOhne Filter entstehen schnell Millionen Einträge\n\n- `ACCESS DENIED` wird falsch bewertet  \nNicht jeder verweigerte Zugriff verursacht tatsächlich das Problem\n\n- Falscher Prozess untersucht  \nZuerst Prozessnamen oder PID eindeutig identifizieren\n\n- Trace läuft zu lange  \nAufzeichnung nur während des eigentlichen Problems aktivieren\n\n- ProcMon selbst erzeugt zusätzliche Aktivität  \nBei umfangreichen Traces Filter möglichst früh setzen\n\n\n## Praxisbeispiel\n\nEine Anwendung startet nicht. Du möchtest herausfinden ob sie auf eine Datei oder Registry Einstellung zugreift, die nicht vorhanden oder nicht erreichbar ist.\n\n| Process Monitor |\n|----------|\n| # ProcMon als Administrator starten und Aufnahme aktivieren |\n`Procmon.exe` |\n\nAnschließend filterst du auf den betroffenen Prozess.\n\n| Process Monitor |\n|----------|\n| # Filter auf den Prozess setzen |\n`Process Name is beispiel.exe` |\n\nDu suchst anschließend nach auffälligen Ergebnissen.\n\n| Process Monitor |\n|----------|\n| # Besonders interessant sind diese Ergebnisse |\n`ACCESS DENIED`  \n`NAME NOT FOUND`  \n`PATH NOT FOUND` |\n\nDamit lässt sich beispielsweise erkennen, dass eine Anwendung auf einen nicht vorhandenen Registry Schlüssel oder eine Datei mit fehlenden Berechtigungen zugreift.\n\n\n## Verwandte Befehle\n\n- `Process Explorer`  \nProzesse, Handles, DLLs und Benutzerkontext detailliert untersuchen\n\n- `Autoruns`  \nAutostart Einträge und automatisch gestartete Komponenten analysieren\n\n- `handle.exe`  \nOffene Datei und Registry Handles eines Prozesses anzeigen\n\n"
+    },
+    {
+      "id": "support-sysinternals-procexp",
+      "originalId": "guide-1786534538875",
+      "title": "sysinternals - PROCESS EXPLORER",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "sysinternals",
+        "process-explorer",
+        "prozesse",
+        "troubleshooting",
+        "windows",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-12T11:35:38.875Z",
+      "modified": "2026-08-12T11:35:38.875Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [],
+      "content": "# Sysinternals Process Explorer\n\n# Was macht der Befehl\n\nProcess Explorer ist ein erweitertes Werkzeug zur Analyse laufender Windows Prozesse. Es zeigt unter anderem Prozesshierarchie, CPU und Speicherverbrauch, Benutzerkontext, Handles, DLLs und die zugehörigen Dateien eines Prozesses.\n\n\n## Wann verwenden\n\n- Unbekannte Prozesse identifizieren\n- Hohe CPU oder RAM Auslastung analysieren\n- Herausfinden welcher Prozess eine Datei verwendet\n- Prozesse und deren Unterprozesse untersuchen\n- DLLs und Handles eines Prozesses prüfen\n- Verdächtige oder ungewöhnliche Prozesse analysieren\n\n\n## Wichtige Funktionen\n\n`Process Tree`  \nZeigt die Beziehung zwischen Eltern und Unterprozessen\n\n`CPU`  \nZeigt die aktuelle CPU Auslastung eines Prozesses\n\n`Private Bytes`  \nZeigt den privaten Speicherverbrauch eines Prozesses\n\n`Properties`  \nÖffnet detaillierte Informationen zum ausgewählten Prozess\n\n`Handles`  \nZeigt geöffnete Dateien, Registry Schlüssel und andere Handles\n\n`DLLs`  \nZeigt geladene DLLs eines Prozesses\n\n`Verify Signature`  \nPrüft die digitale Signatur einer Datei\n\n`Find Handle or DLL`  \nSucht nach einem Prozess, der eine bestimmte Datei oder DLL verwendet\n\n\n## Häufige Fehler\n\n- Prozessname allein reicht nicht  \nAuch Speicherort und digitale Signatur prüfen\n\n- Hohe CPU Auslastung falsch bewertet  \nKurzzeitige Spitzen sind meist unproblematisch\n\n- Systemprozess beendet  \nNicht unbekannte Systemprozesse ohne vorherige Analyse beenden\n\n- Keine Details sichtbar  \nProcess Explorer als Administrator starten\n\n- Datei kann nicht gelöscht werden  \nMit `Find Handle or DLL` prüfen welcher Prozess die Datei geöffnet hält\n\n\n## Praxisbeispiel\n\nEin Benutzer kann eine Datei nicht löschen weil Windows meldet, dass sie von einem anderen Programm verwendet wird.\n\n| Process Explorer |\n|----------|\n| # Process Explorer als Administrator starten |\n`procexp64.exe` |\n\nDu suchst nach dem Handle der betroffenen Datei.\n\n| Process Explorer |\n|----------|\n| # Suche nach geöffnetem Handle oder DLL |\n`Find Handle or DLL` |\n\nProcess Explorer zeigt den Prozess an, der die Datei geöffnet hält. Danach kannst du den Prozess kontrolliert beenden oder die zuständige Anwendung schließen.\n\n\n## Verwandte Befehle\n\n- `Process Monitor`  \nDatei, Registry und Prozesszugriffe in Echtzeit analysieren\n\n- `handle.exe`  \nOffene Handles eines Prozesses per Kommandozeile anzeigen\n\n- `tasklist`  \nProzesse schnell über CMD auflisten\n\n- `Get-Process`  \nProzesse per PowerShell analysieren\n"
+    },
+    {
+      "id": "support-sysinternals-autoruns",
+      "originalId": "guide-1786534624019",
+      "title": "sysinternals - AUTORUNS",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "sysinternals",
+        "autoruns",
+        "autostart",
+        "troubleshooting",
+        "windows",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-12T11:37:04.019Z",
+      "modified": "2026-08-12T11:37:04.019Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [],
+      "content": "# Sysinternals Autoruns\n\n# Was macht der Befehl\n\nAutoruns zeigt detailliert, welche Programme, Dienste, Treiber und andere Komponenten beim Start von Windows oder bei der Benutzeranmeldung automatisch ausgeführt werden. Es geht deutlich weiter als der Autostart im Task Manager und erfasst unter anderem Registry, geplante Tasks, Services und Explorer Erweiterungen.\n\n\n## Wann verwenden\n\n- Unbekannte Autostart Programme identifizieren\n- Langsamen Windows Start analysieren\n- Schadsoftware oder verdächtige Einträge untersuchen\n- Programme aus dem Autostart entfernen\n- Dienste und geplante Tasks auf unerwartete Einträge prüfen\n- Nach Software Deinstallationen verwaiste Autostarts finden\n\n\n## Wichtige Funktionen\n\n`Everything`  \nZeigt alle von Autoruns erkannten Autostart Einträge\n\n`Logon`  \nProgramme prüfen die bei der Benutzeranmeldung gestartet werden\n\n`Services`  \nAutomatisch gestartete Windows und Drittanbieter Dienste anzeigen\n\n`Scheduled Tasks`  \nGeplante Aufgaben mit automatischem Start prüfen\n\n`Drivers`  \nAutomatisch geladene Treiber anzeigen\n\n`Explorer`  \nExplorer Erweiterungen und Shell Komponenten prüfen\n\n`Hide Microsoft Entries`  \nMicrosoft Einträge ausblenden und Drittanbieter leichter erkennen\n\n`Verify Code Signatures`  \nDigitale Signaturen der Dateien prüfen\n\n`Jump to Entry`  \nDirekt zum zugehörigen Registry Eintrag oder Dateipfad springen\n\n\n## Häufige Fehler\n\n- Eintrag wird einfach deaktiviert  \nVorher prüfen ob die Software oder der Dienst benötigt wird\n\n- Microsoft Einträge werden gelöscht  \nMit `Hide Microsoft Entries` zunächst die relevanten Drittanbieter Einträge herausfiltern\n\n- Fehlende Signatur wird als Malware interpretiert  \nNicht signierte Software ist verdächtig, aber kein automatischer Beweis für Schadsoftware\n\n- Autostart deaktiviert aber Programm startet trotzdem  \nWeitere Autostart Orte wie Dienste oder geplante Tasks prüfen\n\n- Autoruns ohne erhöhte Rechte gestartet  \nFür eine vollständige Analyse als Administrator starten\n\n\n## Praxisbeispiel\n\nEin Client startet ungewöhnlich langsam und im Task Manager ist kein auffälliges Autostart Programm zu sehen.\n\n| Autoruns |\n|----------|\n| # Autoruns als Administrator starten |\n`Autoruns64.exe` |\n\nDu blendest Microsoft Einträge aus und konzentrierst dich auf Drittanbieter.\n\n| Autoruns |\n|----------|\n| # Microsoft Einträge ausblenden |\n`Options > Hide Microsoft Entries` |\n\nAnschließend prüfst du besonders `Logon`, `Services` und `Scheduled Tasks`. Ein unbekannter Eintrag wird über den Dateipfad und die digitale Signatur überprüft.\n\n| Autoruns |\n|----------|\n| # Signatur des Eintrags prüfen |\n`Options > Verify Code Signatures` |\n\nErst wenn klar ist, dass ein Eintrag nicht benötigt wird, wird er deaktiviert. Ein Eintrag sollte zunächst deaktiviert und nicht direkt gelöscht werden.\n\n\n## Verwandte Befehle\n\n- `Process Explorer`  \nProzesse und deren Abhängigkeiten detailliert analysieren\n\n- `Process Monitor`  \nDatei, Registry und Prozesszugriffe in Echtzeit verfolgen\n\n- `taskmgr`  \nAutostart Programme schnell über den Task Manager prüfen\n\n- `schtasks`  \nGeplante Aufgaben per CMD anzeigen und verwalten\n"
+    },
+    {
+      "id": "support-sysinternals-psexec",
+      "originalId": "guide-1786534718828",
+      "title": "sysinternals - PSEXEC",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "sysinternals",
+        "psexec",
+        "remote",
+        "windows",
+        "administration",
+        "Support.sheet"
+      ],
+      "type": "guide",
+      "created": "2026-08-12T11:38:38.828Z",
+      "modified": "2026-08-12T11:38:38.828Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [],
+      "content": "# Sysinternals PsExec\n\n# Was macht der Befehl\n\nPsExec führt Prozesse auf lokalen oder entfernten Windows Systemen aus, ohne dass eine vollständige Remote Desktop Sitzung erforderlich ist. Besonders praktisch für Support und Administration, wenn ein Befehl direkt auf einem Remote Rechner ausgeführt werden soll.\n\n\n## Wann verwenden\n\n- Remote Befehle auf Clients ausführen\n- Remote CMD Sitzung öffnen\n- Prozesse mit SYSTEM Rechten starten\n- Software oder Tools remote ausführen\n- Rechner ohne RDP Zugriff administrieren\n- Troubleshooting auf mehreren Geräten\n\n\n## Wichtige Parameter\n\n`\\\\HOSTNAME`  \nZielsystem angeben\n\n`-u DOMAIN\\BENUTZERNAME`  \nAlternative Anmeldedaten verwenden\n\n`-p PASSWORT`  \nPasswort für den angegebenen Benutzer\n\n`-s`  \nProzess als lokales SYSTEM Konto ausführen\n\n`-h`  \nProzess mit erhöhten Rechten starten\n\n`-i`  \nProzess in der interaktiven Sitzung des Benutzers starten\n\n`-c`  \nProgramm auf das Zielsystem kopieren und dort ausführen\n\n`-d`  \nNicht auf das Ende des gestarteten Prozesses warten\n\n\n## Häufige Fehler\n\n- Zugriff verweigert  \nBenutzer benötigt administrative Rechte auf dem Zielsystem\n\n- Verbindung schlägt fehl  \nFirewall, SMB oder administrative Freigaben wie `ADMIN$` prüfen\n\n- PsExec wird blockiert  \nEndpoint Security kann Remote Service Erstellung oder PsExec erkennen und blockieren\n\n- Falscher Benutzerkontext  \nOhne `-u` wird standardmäßig der aktuelle Benutzer verwendet\n\n- Passwort in der Kommandozeile  \n`-p` kann sensible Zugangsdaten in Prozess oder Verlauf sichtbar machen\n\n\n## Praxisbeispiel\n\nEin Client hat ein Problem und du möchtest zunächst remote prüfen, welcher Benutzer angemeldet ist.\n\n| CMD |\n|----------|\n| # Remote CMD auf dem Client öffnen |\n`PsExec.exe \\\\CLIENT01 cmd` |\n\nJetzt kannst du Befehle direkt im Kontext des Remote Systems ausführen.\n\n| CMD |\n|----------|\n| # Aktuellen Benutzer prüfen |\n`whoami` |\n\nFür eine Diagnose möchtest du einen Prozess mit SYSTEM Rechten starten.\n\n| CMD |\n|----------|\n| # CMD als SYSTEM starten |\n`PsExec.exe \\\\CLIENT01 -s cmd` |\n\nDu möchtest einen lokalen Diagnosebefehl auf einem Remote Client ausführen.\n\n| CMD |\n|----------|\n| # Systeminformationen remote anzeigen |\n`PsExec.exe \\\\CLIENT01 systeminfo` |\n\n\n## Verwandte Befehle\n\n- `Invoke-Command`  \nPowerShell Alternative für Remote Befehle über WinRM\n\n- `Enter-PSSession`  \nInteraktive PowerShell Sitzung auf einem Remote System\n\n- `mstsc`  \nRemote Desktop Verbindung herstellen\n\n- `sc.exe`  \nWindows Dienste remote verwalten\n\n"
+    },
+    {
+      "id": "support-sysinternals-disk2vhd",
+      "originalId": "guide-1786534809193",
+      "title": "sysinternals - DISK2VHD",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "sysinternals",
+        "disk2vhd",
+        "virtualisierung",
+        "hyper-v",
+        "migration"
+      ],
+      "type": "guide",
+      "created": "2026-08-12T11:40:09.193Z",
+      "modified": "2026-08-12T11:40:55.712Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [],
+      "content": "# Sysinternals Disk2vhd\n\n# Was macht der Befehl\n\nDisk2vhd erstellt aus physischen Datenträgern virtuelle Festplatten im VHD oder VHDX Format. Die Software nutzt Volume Shadow Copy Service, sodass ein laufendes Windows System ohne vorheriges Herunterfahren konvertiert werden kann.\n\n\n## Wann verwenden\n\n- Physische Windows Systeme nach Hyper V migrieren\n- P2V Migrationen durchführen\n- Bestehende Systeme für Tests virtualisieren\n- Physische Installation als virtuelle Maschine sichern\n- Legacy Systeme in eine virtuelle Umgebung übernehmen\n\n\n## Wichtige Optionen\n\n`Use Vhdx`  \nErstellt VHDX statt des älteren VHD Formats. Für moderne Hyper V Umgebungen bevorzugen.\n\n`Use Volume Shadow Copy`  \nErstellt die virtuelle Festplatte über VSS und ermöglicht die Konvertierung eines laufenden Systems.\n\n`Prepare for use in Virtual PC`  \nFür ältere Virtual PC Szenarien. Für aktuelle Hyper V Umgebungen normalerweise nicht verwenden.\n\n`Volumes to include`  \nLegt fest welche Volumes in die virtuelle Festplatte übernommen werden.\n\n`VHD File`  \nZielpfad für die erzeugte VHD oder VHDX Datei.\n\n\n## Häufige Fehler\n\n- VHDX ist größer als erwartet  \nDie Datei kann je nach gewähltem Format und Inhalt erheblichen Speicherplatz benötigen.\n\n- VM startet nach der Konvertierung nicht  \nBoot Konfiguration, Treiber oder Firmware Modus prüfen. UEFI und Generation der Hyper V VM müssen zusammenpassen.\n\n- VSS Fehler  \nVolume Shadow Copy Dienst und VSS Writer prüfen. Ausreichend Speicherplatz sicherstellen.\n\n- BitLocker aktiv  \nVerschlüsselte Volumes vor der Migration entsprechend vorbereiten und Recovery Key verfügbar halten.\n\n- Zieldatenträger zu klein  \nBei der Konvertierung muss genügend Speicherplatz für die erzeugte VHDX vorhanden sein.\n\n\n## Praxisbeispiel\n\nEin physischer Windows Server soll auf einen Hyper V Host migriert werden. Du erstellst zunächst eine VHDX des benötigten Systemvolumes.\n\n| Disk2vhd |\n|----------|\n| # Disk2vhd als Administrator starten |\n`disk2vhd64.exe` |\n\nIm Programm wählst du `Use Vhdx` und `Use Volume Shadow Copy`. Anschließend wählst du das Windows Volume und speicherst die VHDX auf einem externen Datenträger oder einer Netzwerkfreigabe.\n\n| Disk2vhd |\n|----------|\n| # Beispiel für den Zielpfad |\n`\\\\NAS01\\Migration\\SERVER01.vhdx` |\n\nDanach kopierst du die VHDX auf den Hyper V Host und erstellst dort eine VM mit passender Generation und Firmware Konfiguration. Die VHDX wird anschließend als virtuelle Festplatte eingebunden.\n\n## Verwandte Befehle\n\n- `Convert-VHD`  \nVHD und VHDX Dateien zwischen Formaten konvertieren.\n\n- `Mount-VHD`  \nVHD oder VHDX unter Windows einbinden.\n\n- `Get-VHD`  \nEigenschaften und Status einer virtuellen Festplatte anzeigen.\n\n- `New-VM`  \nNeue Hyper V VM erstellen."
+    },
+    {
+      "id": "support-sysinternals-sysmon",
+      "originalId": "guide-1786534920168",
+      "title": "sysinternals - SYSMON",
+      "category": "Support",
+      "subcategory": "Commands - Windows",
+      "tags": [
+        "Support.sheet",
+        "sysinternals",
+        "sysmon",
+        "monitoring",
+        "security",
+        "eventlog"
+      ],
+      "type": "guide",
+      "created": "2026-08-12T11:42:00.168Z",
+      "modified": "2026-08-12T11:42:00.168Z",
+      "favorite": false,
+      "readonly": true,
+      "source": "support.sheet",
+      "links": [],
+      "content": "# Sysinternals Sysmon\n\n# Was macht der Befehl\n\nSysmon installiert einen Windows Systemdienst und protokolliert detaillierte Systemaktivitäten im Event Log. Dazu gehören unter anderem Prozessstarts, Netzwerkverbindungen, Dateiänderungen und Änderungen an Registry Einträgen. Die eigentliche Überwachung wird über eine XML Konfiguration gesteuert.\n\n\n## Wann verwenden\n\n- Prozessstarts und deren Herkunft nachvollziehen\n- Verdächtige Prozesse analysieren\n- Netzwerkverbindungen von Prozessen untersuchen\n- Malware oder ungewöhnliche Aktivitäten erkennen\n- Forensische Informationen sammeln\n- Ereignisse langfristig im Event Log dokumentieren\n\n\n## Wichtige Befehle\n\n`sysmon64.exe -i`  \nSysmon mit Standardkonfiguration installieren\n\n`sysmon64.exe -i config.xml`  \nSysmon mit eigener XML Konfiguration installieren\n\n`sysmon64.exe -c config.xml`  \nBestehende Sysmon Konfiguration aktualisieren\n\n`sysmon64.exe -c`  \nAktuelle Konfiguration anzeigen\n\n`sysmon64.exe -u`  \nSysmon deinstallieren\n\n`Get-WinEvent -LogName \"Microsoft-Windows-Sysmon/Operational\"`  \nSysmon Events auslesen\n\n\n## Wichtige Event IDs\n\n| Event ID | Bedeutung |\n|----------|-----------|\n| 1 | Prozess erstellt |\n| 2 | Datei Creation Time geändert |\n| 3 | Netzwerkverbindung erkannt |\n| 5 | Prozess beendet |\n| 6 | Treiber geladen |\n| 7 | Image oder DLL geladen |\n| 8 | Remote Thread erstellt |\n| 10 | Prozesszugriff |\n| 11 | Datei erstellt oder überschrieben |\n| 12 | Registry Objekt erstellt oder gelöscht |\n| 13 | Registry Wert geändert |\n| 22 | DNS Anfrage |\n| 23 | Datei gelöscht |\n| 25 | Prozess manipuliert |\n\n\n## Häufige Fehler\n\n- Zu viele Events  \nZu aggressive Konfiguration erzeugt große Event Logs und erhöht den Analyseaufwand\n\n- Keine sinnvollen Events  \nKonfiguration prüfen und sicherstellen dass die gewünschten Event IDs aktiviert sind\n\n- Sysmon installiert aber nicht sichtbar  \nIm Event Viewer unter `Applications and Services Logs > Microsoft > Windows > Sysmon > Operational` suchen\n\n- Falsche Konfiguration  \nVor Änderungen XML Syntax und enthaltene Regeln prüfen\n\n- Performance Probleme  \nUnnötige Überwachungsregeln reduzieren und Ausschlüsse sinnvoll einsetzen\n\n\n## Praxisbeispiel\n\nEin unbekanntes Programm wurde auf einem Client gestartet. Du möchtest nachvollziehen wann es gestartet wurde und von welchem Prozess.\n\n| PowerShell |\n|----------|\n| # Sysmon Prozessstarts der letzten 24 Stunden anzeigen |\n`Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Sysmon/Operational'; Id=1; StartTime=(Get-Date).AddHours(-24)} | Select TimeCreated, Id, Message` |\n\nDu möchtest zusätzlich Netzwerkverbindungen untersuchen.\n\n| PowerShell |\n|----------|\n| # Sysmon Netzwerkverbindungen anzeigen |\n`Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Sysmon/Operational'; Id=3; StartTime=(Get-Date).AddHours(-24)} | Select TimeCreated, Message` |\n\nDamit lässt sich beispielsweise nachvollziehen welcher Prozess eine Netzwerkverbindung zu einem bestimmten Ziel aufgebaut hat.\n\n\n## Verwandte Befehle\n\n- `Get-WinEvent`  \nSysmon Events aus dem Event Log auslesen\n\n- `wevtutil`  \nWindows Event Logs verwalten\n\n- `Process Explorer`  \nProzesse und deren Eigenschaften detailliert analysieren\n\n- `Process Monitor`  \nDatei, Registry und Prozessaktivitäten in Echtzeit untersuchen\n"
     }
   ]
 }

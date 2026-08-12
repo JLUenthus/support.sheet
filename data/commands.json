@@ -3088,6 +3088,285 @@
         "diag",
         "quick"
       ]
+    },
+    {
+      "id": "sys-procmon-start",
+      "name": "Process Monitor starten",
+      "cmd": "Procmon.exe",
+      "desc": "Echtzeit-Überwachung von Datei-, Registry- und Prozessaktivität. Startet automatisch die Aufzeichnung. Wichtig: ProcMon muss im PATH oder im aktuellen Verzeichnis liegen. Download: live.sysinternals.com",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "diag",
+        "process",
+        "security"
+      ],
+      "guideRef": "support-sysinternals-procmon"
+    },
+    {
+      "id": "sys-procmon-filter-access-denied",
+      "name": "ProcMon – nur ACCESS DENIED anzeigen",
+      "cmd": "Procmon.exe /Filter \"Result is ACCESS DENIED\"",
+      "desc": "Startet ProcMon mit voreingestelltem Filter auf ACCESS DENIED Ergebnisse. Ideal um Berechtigungsprobleme bei Anwendungen schnell zu finden.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "diag",
+        "process",
+        "security"
+      ],
+      "guideRef": "support-sysinternals-procmon"
+    },
+    {
+      "id": "sys-procmon-logfile",
+      "name": "ProcMon – Logdatei aufzeichnen und beenden",
+      "cmd": "Procmon.exe /BackingFile C:\\Temp\\procmon-log.pml /Quiet /Minimized /TerminateOnReboot",
+      "desc": "ProcMon im Hintergrund starten, Aufzeichnung in PML-Datei speichern. Minimiert und ohne Benutzer-Bestätigung. Achtung: PML-Dateien können sensible Pfade und Benutzerdaten enthalten.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "diag",
+        "process",
+        "security"
+      ],
+      "guideRef": "support-sysinternals-procmon"
+    },
+    {
+      "id": "sys-procexp-start",
+      "name": "Process Explorer starten",
+      "cmd": "Procexp.exe",
+      "desc": "Erweiterter Task Manager mit Prozessbaum, Handle-Ansicht, DLL-Liste und VirusTotal-Integration. Zeigt welcher Prozess eine Datei sperrt. Ersatz für den Windows Task Manager.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "diag",
+        "process"
+      ],
+      "guideRef": "support-sysinternals-procexp"
+    },
+    {
+      "id": "sys-procexp-als-taskmanager",
+      "name": "Process Explorer als Standard-Task-Manager setzen",
+      "cmd": "Procexp.exe /t",
+      "desc": "Ersetzt den Windows Task Manager durch Process Explorer. Strg+Alt+Entf öffnet danach direkt ProcExp. Rückgängig: In ProcExp Optionen → Replace Task Manager deaktivieren.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "diag",
+        "process"
+      ],
+      "guideRef": "support-sysinternals-procexp"
+    },
+    {
+      "id": "sys-autoruns-start",
+      "name": "Autoruns starten",
+      "cmd": "Autoruns.exe",
+      "desc": "Zeigt alles was bei Windows-Start geladen wird: Registry, Startup-Ordner, Dienste, Treiber, geplante Tasks, Browser-Erweiterungen. Umfangreicher als der Task Manager Autostart-Tab.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "diag",
+        "security",
+        "admin"
+      ],
+      "guideRef": "support-sysinternals-autoruns"
+    },
+    {
+      "id": "sys-autoruns-ohne-microsoft",
+      "name": "Autoruns – nur Drittanbieter anzeigen",
+      "cmd": "Autoruns.exe -m",
+      "desc": "Startet Autoruns mit ausgeblendetem Microsoft-Einträgen. Nicht-Microsoft Autostart-Einträge sind sofort sichtbar. Gut um Malware oder unerwünschte Software zu finden.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "diag",
+        "security"
+      ],
+      "guideRef": "support-sysinternals-autoruns"
+    },
+    {
+      "id": "sys-tcpview-start",
+      "name": "TCPView starten",
+      "cmd": "Tcpview.exe",
+      "desc": "Zeigt alle aktiven TCP/UDP-Verbindungen mit zugehörigem Prozess in Echtzeit. Besser als netstat weil es sich automatisch aktualisiert und nach Prozess filterbar ist.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "network",
+        "diag",
+        "security"
+      ]
+    },
+    {
+      "id": "sys-psexec-remote-cmd",
+      "name": "PsExec – Remote CMD öffnen",
+      "cmd": "PsExec.exe \\\\{server} cmd",
+      "desc": "Öffnet eine interaktive CMD-Sitzung auf einem Remote-System. Läuft unter den Anmeldedaten des aktuellen Benutzers. Benötigt Admin-Rechte auf dem Zielsystem.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "remote",
+        "admin"
+      ],
+      "guideRef": "support-sysinternals-psexec",
+      "risk": "medium"
+    },
+    {
+      "id": "sys-psexec-als-system",
+      "name": "PsExec – Befehl als SYSTEM ausführen",
+      "cmd": "PsExec.exe -s cmd",
+      "desc": "Startet CMD unter dem SYSTEM-Konto auf dem lokalen System. Nützlich um Dienst-Probleme zu debuggen oder auf geschützte Bereiche zuzugreifen. Vorsicht: volle Systemberechtigungen.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "admin",
+        "caution"
+      ],
+      "guideRef": "support-sysinternals-psexec",
+      "risk": "high"
+    },
+    {
+      "id": "sys-psexec-remote-powershell",
+      "name": "PsExec – Remote PowerShell",
+      "cmd": "PsExec.exe \\\\{server} powershell -NoProfile -ExecutionPolicy Bypass",
+      "desc": "Öffnet eine interaktive PowerShell auf einem Remote-System. Alternative zu WinRM wenn dieses nicht konfiguriert ist.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "remote",
+        "admin"
+      ],
+      "guideRef": "support-sysinternals-psexec",
+      "risk": "medium"
+    },
+    {
+      "id": "sys-handle-datei-suchen",
+      "name": "Handle – welcher Prozess sperrt eine Datei",
+      "cmd": "handle.exe \"{pfad}\"",
+      "desc": "Findet welcher Prozess eine bestimmte Datei oder einen Ordner geöffnet hat. Löst 'Die Datei wird von einem anderen Prozess verwendet' Fehler. Benötigt Admin-Rechte.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "diag",
+        "process",
+        "files"
+      ]
+    },
+    {
+      "id": "sys-handle-alle-handles",
+      "name": "Handle – alle Handles eines Prozesses",
+      "cmd": "handle.exe -p {prozessname}",
+      "desc": "Zeigt alle offenen Datei-Handles eines bestimmten Prozesses. Nützlich um zu verstehen welche Dateien/Registry-Schlüssel ein Prozess aktuell offen hat.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "diag",
+        "process"
+      ]
+    },
+    {
+      "id": "sys-strings-binary",
+      "name": "Strings – Text aus Binärdatei extrahieren",
+      "cmd": "strings.exe \"{pfad}\" | findstr /i \"{suchbegriff}\"",
+      "desc": "Extrahiert lesbare Zeichenketten aus Binärdateien (EXE, DLL, etc.). Nützlich um URLs, Pfade oder Passwörter in verdächtigen Dateien zu finden.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "security",
+        "diag"
+      ]
+    },
+    {
+      "id": "sys-disk2vhd-erstellen",
+      "name": "Disk2vhd – Physische Disk zu VHD konvertieren",
+      "cmd": "disk2vhd.exe C: D: {zielpfad}\\backup.vhdx",
+      "desc": "Erstellt eine VHD/VHDX-Datei einer laufenden physischen Festplatte (Volume Shadow Copy). Gut für P2V-Migration oder Backup. System muss nicht angehalten werden.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "disk",
+        "admin"
+      ],
+      "guideRef": "support-sysinternals-disk2vhd"
+    },
+    {
+      "id": "sys-sysmon-installieren",
+      "name": "Sysmon installieren (Standard-Konfiguration)",
+      "cmd": "Sysmon64.exe -accepteula -i",
+      "desc": "Installiert Sysmon mit Standard-Konfiguration. Schreibt detaillierte System-Events in das Windows Event Log (Microsoft-Windows-Sysmon/Operational). EDR-Level Logging kostenlos.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "security",
+        "admin"
+      ],
+      "guideRef": "support-sysinternals-sysmon"
+    },
+    {
+      "id": "sys-sysmon-mit-config",
+      "name": "Sysmon mit Konfigurations-Datei installieren",
+      "cmd": "Sysmon64.exe -accepteula -i {konfig}.xml",
+      "desc": "Installiert Sysmon mit eigener XML-Konfiguration. Empfohlene Basis-Config: SwiftOnSecurity/sysmon-config auf GitHub. Konfiguration bestimmt welche Events geloggt werden.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "security",
+        "admin"
+      ],
+      "guideRef": "support-sysinternals-sysmon"
+    },
+    {
+      "id": "sys-sysmon-deinstallieren",
+      "name": "Sysmon deinstallieren",
+      "cmd": "Sysmon64.exe -u",
+      "desc": "Deinstalliert Sysmon und entfernt den Treiber. Event-Logging stoppt sofort.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "security",
+        "admin"
+      ],
+      "guideRef": "support-sysinternals-sysmon"
+    },
+    {
+      "id": "sys-psloglist-remote",
+      "name": "PsLogList – Event Log remote auslesen",
+      "cmd": "psloglist.exe \\\\{server} -x system | findstr /i \"{suchbegriff}\"",
+      "desc": "Liest Event Logs von einem Remote-System aus und gibt sie als Text aus. Filterbar per findstr. Nützlich wenn Event Viewer zu langsam ist oder per Script automatisiert werden soll.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "eventlog",
+        "remote",
+        "diag"
+      ],
+      "guideRef": "support-sysinternals-sysmon"
+    },
+    {
+      "id": "sys-live-procmon",
+      "name": "ProcMon direkt aus dem Web starten (kein Download)",
+      "cmd": "\\\\live.sysinternals.com\\tools\\Procmon.exe",
+      "desc": "Startet ProcMon direkt ohne Download über den Sysinternals Live UNC-Pfad. Benötigt Internetzugriff und WebDAV. Immer die aktuellste Version.",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "diag",
+        "quick"
+      ],
+      "guideRef": "support-sysinternals-procmon"
+    },
+    {
+      "id": "sys-live-procexp",
+      "name": "Process Explorer direkt aus dem Web starten",
+      "cmd": "\\\\live.sysinternals.com\\tools\\Procexp.exe",
+      "desc": "Startet Process Explorer direkt über Sysinternals Live ohne Download. Benötigt Internetzugriff und WebDAV (WebClient-Dienst muss laufen).",
+      "tags": [
+        "sysinternals",
+        "windows",
+        "diag",
+        "quick"
+      ],
+      "guideRef": "support-sysinternals-procexp"
     }
   ]
 }
