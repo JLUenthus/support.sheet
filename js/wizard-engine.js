@@ -140,6 +140,42 @@ window.WizardEngine = (function() {
       }
     });
 
+    // Hypothesen (optional, siehe wizardDef.hypotheses) referenzieren
+    // Finding-IDs (stepId:value bzw. stepId:eventIds – identisch zu der
+    // ID, die WizardEngine.submitAnswer() für Findings erzeugt, siehe
+    // Phase 4.5). Nur eine Warnung, kein Fehler – eine falsche Referenz
+    // lässt den Wizard weiterhin funktionieren, nur diese eine
+    // Hypothesen-Regel bleibt wirkungslos. Gleiche Einordnung wie die
+    // Erreichbarkeits-Prüfung oben.
+    if (Array.isArray(def.hypotheses)) {
+      const possibleFindingIds = new Set();
+      def.steps.forEach(step => {
+        if (!step) return;
+        if (step.type === 'result' && Array.isArray(step.options)) {
+          step.options.forEach(o => { if (o && o.value != null) possibleFindingIds.add(step.id + ':' + o.value); });
+        }
+        if (step.type === 'analyzer' && Array.isArray(step.detect)) {
+          step.detect.forEach(r => { if (r && Array.isArray(r.eventIds)) possibleFindingIds.add(step.id + ':' + r.eventIds.join(',')); });
+        }
+      });
+
+      def.hypotheses.forEach(h => {
+        if (!h || !h.id) { warnings.push({ stepId: null, message: 'Hypothese ohne id gefunden.' }); return; }
+        const rules = h.rules || {};
+        ['confirm', 'possible', 'ruleOut'].forEach(ruleType => {
+          if (!Array.isArray(rules[ruleType])) return;
+          rules[ruleType].forEach(findingId => {
+            if (!possibleFindingIds.has(findingId)) {
+              warnings.push({
+                stepId: null,
+                message: `Hypothese "${h.id}" (${ruleType}) referenziert unbekannte Finding-ID "${findingId}".`,
+              });
+            }
+          });
+        });
+      });
+    }
+
     return { valid: errors.length === 0, errors, warnings };
   }
 
@@ -217,22 +253,75 @@ window.WizardEngine = (function() {
     session.answers[step.id] = value;
     session.currentStepId = nextStepId;
 
-    // Finding fuer result-Steps sammeln – die Sidebar (wizard-renderer.js
-    // renderSidebar()) zeigt session.findings an, wenn vorhanden.
+    // Findings sammeln – die Sidebar (wizard-renderer.js renderSidebar())
+    // zeigt session.findings während der gesamten Session an. Ein Finding
+    // drückt aus "was wissen wir nach diesem Diagnoseschritt". Es entsteht
+    // an den beiden Step-Typen, an denen tatsächlich eine diagnostische
+    // Beobachtung gemacht wird: result (Techniker liest Befehlsausgabe ab)
+    // und analyzer (hochgeladenes Log matcht eine detect-Regel). question/
+    // command/information/solution liefern selbst keine neue Erkenntnis.
+    //
+    // result-Step-Optionen können optional "finding" (Klartext-Aussage,
+    // z.B. "Konto ist gesperrt") und "severity" ('ok'|'warning'|'error')
+    // angeben. Fehlen sie, fällt es auf das technische "label" (Button-Text)
+    // bzw. eine grobe Substring-Heuristik zurück – so bleiben ältere
+    // Wizard-Dateien ohne diese Felder weiterhin lauffähig.
+    // Deduplication: dieselbe Antwort nach Zurück-Navigation erneut
+    // gegeben (identische ID) darf nicht zu einem zweiten Finding führen.
+    // Die ID wird bewusst aus stabilen, bereits vorhandenen Daten gebaut
+    // (stepId + value / stepId + eventIds) statt aus dem sichtbaren
+    // Finding-Text – rein interner Schlüssel, ändert nichts an label/
+    // severity/Darstellung. Kein Update/Supersede bestehender Einträge,
+    // kein Entfernen alter Findings – das bleibt bewusst für einen
+    // späteren, separaten Schritt offen ("Finding ändert sich fachlich").
     if (step.type === 'result') {
       const selectedOption = Array.isArray(step.options) ? step.options.find(o => o.value === value) : null;
       if (selectedOption) {
         if (!session.findings) session.findings = [];
-        const v = String(value).toLowerCase();
-        const isError = ['locked', 'expired', 'fail', 'error', 'unreachable'].some(kw => v.includes(kw));
-        session.findings.push({
-          stepId:    step.id,
-          stepTitle: step.title || step.id,
-          result:    value,
-          label:     selectedOption.label,
-          severity:  isError ? 'error' : 'ok',
-          timestamp: new Date().toISOString(),
-        });
+        const findingId = step.id + ':' + value;
+        if (!session.findings.some(f => f.id === findingId)) {
+          let severity = selectedOption.severity;
+          if (!severity) {
+            const v = String(value).toLowerCase();
+            const isError = ['locked', 'expired', 'fail', 'error', 'unreachable'].some(kw => v.includes(kw));
+            severity = isError ? 'error' : 'ok';
+          }
+          session.findings.push({
+            id:        findingId,
+            stepId:    step.id,
+            stepTitle: step.title || step.id,
+            result:    value,
+            label:     selectedOption.finding || selectedOption.label,
+            severity,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      }
+    } else if (step.type === 'analyzer' && value !== 'skip' && value !== step.skipNext) {
+      // 'value' ist bereits der aufgelöste next-Step (siehe Kommentar oben
+      // an submitAnswer's analyzer-Zweig) – die gefeuerte detect-Regel wird
+      // darüber zurückgesucht. detect-Regeln können optional "severity"
+      // angeben, sonst 'warning' als neutraler Default (etwas wurde
+      // gefunden, aber ob es sich um einen Fehler oder nur einen Hinweis
+      // handelt, ist ohne explizite Angabe nicht bekannt). Die Finding-ID
+      // baut bewusst auf rule.eventIds statt rule.next auf – rule.next
+      // bleibt hier weiterhin (unverändert) der Zuordnungs-Mechanismus,
+      // der Rückwärts-Lookup selbst wird in diesem Schritt nicht angefasst.
+      const matchedRule = (step.detect || []).find(r => r.next === value);
+      if (matchedRule) {
+        if (!session.findings) session.findings = [];
+        const findingId = step.id + ':' + matchedRule.eventIds.join(',');
+        if (!session.findings.some(f => f.id === findingId)) {
+          session.findings.push({
+            id:        findingId,
+            stepId:    step.id,
+            stepTitle: step.title || step.id,
+            result:    value,
+            label:     matchedRule.finding || matchedRule.label,
+            severity:  matchedRule.severity || 'warning',
+            timestamp: new Date().toISOString(),
+          });
+        }
       }
     }
 
@@ -304,26 +393,96 @@ window.WizardEngine = (function() {
     return { matched, firstMatchNext };
   }
 
+  // ── Hypothesen ────────────────────────────────────────────
+  // Reine, generische Auswertung: kein eigener State, keine Veränderung
+  // von findings, keine Ableitung aus severity/Finding-Text/Keywords –
+  // ausschließlich explizite confirm/possible/ruleOut-Regeln aus der
+  // Wizard-Definition (wizardDef.hypotheses), referenziert über die
+  // bestehende Finding-ID (Phase 4.5). Hypothesen sind Interpretationen,
+  // keine Findings – sie werden nirgends in session gespeichert, sondern
+  // bei jedem Aufruf frisch aus dem aktuellen Finding-Set berechnet.
+  //
+  // "conflicting" ist kein eigener Autoren-Regeltyp, sondern entsteht
+  // ausschließlich, wenn confirm- UND ruleOut-Evidenz gleichzeitig
+  // vorliegen (z.B. wenn durch Back-Navigation sowohl "locked-out" als
+  // auch "pw-expired" gleichzeitig in session.findings stehen – das wird
+  // bewusst NICHT bereinigt, priorisiert oder aktualisiert, siehe
+  // Kommentar an submitAnswer()'s Dedup-Logik).
+  function evaluateHypotheses(findings, hypothesesDef) {
+    const findingIds = new Set((Array.isArray(findings) ? findings : []).map(f => f.id));
+
+    return (Array.isArray(hypothesesDef) ? hypothesesDef : []).map(h => {
+      const rules = h?.rules || {};
+      const hasConfirm  = Array.isArray(rules.confirm)  && rules.confirm.some(id => findingIds.has(id));
+      const hasRuleOut  = Array.isArray(rules.ruleOut)  && rules.ruleOut.some(id => findingIds.has(id));
+      const hasPossible = Array.isArray(rules.possible) && rules.possible.some(id => findingIds.has(id));
+
+      let status;
+      if (hasConfirm && hasRuleOut) status = 'conflicting';
+      else if (hasRuleOut)          status = 'ruled-out';
+      else if (hasConfirm)          status = 'confirmed';
+      else if (hasPossible)         status = 'possible';
+      else                          status = 'unknown';
+
+      return { id: h?.id, label: h?.label, status };
+    });
+  }
+
   // ── Zusammenfassung ───────────────────────────────────────
+  // Baut aus dem Session-State eine fachliche Diagnose-Zusammenfassung
+  // (Befund → Maßnahme → Verifikation → Ergebnis) statt einer reinen
+  // Step-Liste. Alles stammt 1:1 aus session.context/session.findings/
+  // session.history + der Wizard-Definition – nichts wird geraten.
+  //
+  // Verifikations-Steps sind result-Steps mit "role": "verification"
+  // in der Wizard-Definition (siehe verify-login-after-*) – dadurch
+  // lassen sich ihre Findings von den eigentlichen Diagnose-Befunden
+  // trennen, ohne session.findings selbst zu verändern.
   function getSummary(session, wizardDef) {
     const currentStep = getCurrentStep(session, wizardDef);
     const startedMs = new Date(session.startedAt).getTime();
     const duration = isNaN(startedMs) ? null : (Date.now() - startedMs);
+    const findings = Array.isArray(session.findings) ? session.findings : [];
+
+    const stepById = new Map((wizardDef?.steps || []).map(s => [s.id, s]));
+    const isVerification = f => stepById.get(f.stepId)?.role === 'verification';
+
+    const diagnosticFindings = findings.filter(f => !isVerification(f));
+    const verifications      = findings.filter(f =>  isVerification(f));
+
+    // Maßnahmen: alle besuchten solution-Steps, in Besuchsreihenfolge.
+    // Kein eigenes Finding nötig – ein solution-Step gilt als
+    // "durchgeführt", sobald er im Verlauf steht.
+    const actions = (session.history || [])
+      .map(id => stepById.get(id))
+      .filter(s => s && s.type === 'solution')
+      .map(s => ({ stepId: s.id, label: s.title || s.id }));
+
+    // Ursache: nur gesetzt, wenn ein tatsächlicher (nicht-"ok") Diagnose-
+    // Befund existiert – der erste chronologisch, niemals algorithmisch
+    // vermutet oder aus Verifikations-Antworten abgeleitet.
+    const causeFinding = diagnosticFindings.find(f => f.severity === 'error' || f.severity === 'warning');
 
     return {
       wizardTitle: wizardDef ? wizardDef.title : null,
-      startedAt: session.startedAt,
+      problem:     wizardDef ? wizardDef.title : null,
+      startedAt:   session.startedAt,
       duration,
       stepsVisited: session.history.length,
-      context: { ...session.context },
-      answers: { ...session.answers },
+      context:      { ...session.context },
+      answers:      { ...session.answers },
+      findings:      diagnosticFindings,
+      actions,
+      verifications,
       outcome: (currentStep && currentStep.type === 'end') ? (currentStep.outcome || null) : null,
+      cause:   causeFinding ? causeFinding.label : null,
+      hypotheses: evaluateHypotheses(findings, wizardDef?.hypotheses),
     };
   }
 
   return {
     loadWizards, getWizardById, validateWizardDefinition,
     startSession, getCurrentStep, submitAnswer, goBack, restart, isComplete,
-    resolveStepCommand, evaluateAnalyzerStep, getSummary,
+    resolveStepCommand, evaluateAnalyzerStep, evaluateHypotheses, getSummary,
   };
 })();

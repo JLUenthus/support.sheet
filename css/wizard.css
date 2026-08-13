@@ -35,10 +35,24 @@
 .wz-list-desc  { font-size: .78rem; color: var(--muted); }
 .wz-list-empty { color: var(--dim); font-size: .85rem; }
 
-/* ── Fortschritt ─────────────────────────────────────────── */
-.wz-progress-label { font-size: .72rem; color: var(--dim); margin-bottom: 6px; }
-.wz-progress-track { height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 20px; }
-.wz-progress-fill  { height: 100%; background: var(--accent); border-radius: 2px; transition: width .3s; }
+/* ── Fortschritt (Diagnose-Checkliste, siehe renderProgress()) ──
+   Bewusst keine %-Bar/"Schritt X von Y" – der Wizard ist ein
+   verzweigter Graph, eine Prozentzahl wäre pfadabhängig und
+   irreführend. Gleiche Farblogik wie .wz-finding-item in der
+   Sidebar (Konsistenz Befund-Icons). */
+.wz-diag-phase       { margin-bottom: 14px; }
+.wz-diag-phase-title {
+  font-size: .65rem; font-weight: 700; color: var(--dim);
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px;
+}
+.wz-diag-item {
+  font-size: .78rem; color: var(--muted); margin-bottom: 3px;
+  line-height: 1.4;
+}
+.wz-diag-item--ok      { color: var(--green); }
+.wz-diag-item--warn    { color: var(--amber); }
+.wz-diag-item--bad     { color: var(--red); }
+.wz-diag-item--pending { color: var(--accent); }
 
 /* ── Step-Titel/-Beschreibung ────────────────────────────── */
 .wz-step-title       { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
@@ -90,6 +104,33 @@
 .wz-question-input:focus { border-color: var(--accent); }
 .wz-question-input--error { border-color: var(--red); }
 .wz-question-error { font-size: .72rem; color: var(--red); margin-top: 4px; }
+
+/* ── Erklärungs-Box ("Warum prüfen wir das?"/"Was suchen wir?") ──
+   Natives <details>/<summary> – eingeklappt per Default, kein eigenes
+   Toggle-JS nötig. Nur bestehende Farb-/Radius-Variablen, keine neuen
+   Werte. */
+.wz-explainer {
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--panel2);
+}
+.wz-explainer summary {
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.wz-explainer[open] summary { border-bottom: 1px solid var(--border); }
+.wz-explainer-body    { padding: 10px 12px 12px; }
+.wz-explainer-section { margin-bottom: 10px; }
+.wz-explainer-section:last-child { margin-bottom: 0; }
+.wz-explainer-label {
+  font-size: .65rem; font-weight: 700; color: var(--dim);
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px;
+}
+.wz-explainer-text { font-size: .8rem; color: var(--muted); line-height: 1.5; }
 
 /* ── Information-Box ─────────────────────────────────────── */
 .wz-information-box {
@@ -158,14 +199,30 @@
 }
 .wz-sidebar-context-row { font-size: .75rem; color: var(--muted); margin-bottom: 4px; }
 
-/* Findings-Liste (session.findings) – noch nicht vom Engine befüllt,
-   hier bereits mitgestylt für spätere Steps. */
+/* Findings-Liste (session.findings) – Diagnoseprotokoll, bleibt über die
+   gesamte Session sichtbar. */
 .wz-finding-item {
   font-size: .75rem; padding: 4px 8px; border-radius: 6px;
   margin-bottom: 4px; background: var(--panel2); color: var(--muted);
 }
-.wz-finding-item--ok  { color: var(--green); }
-.wz-finding-item--bad { color: var(--red); }
+.wz-finding-item--ok   { color: var(--green); }
+.wz-finding-item--warn { color: var(--amber); }
+.wz-finding-item--bad  { color: var(--red); }
+
+/* Hypothesen ("Mögliche Ursachen") – Interpretationen, keine Findings,
+   daher eigene Klassen statt .wz-finding-item wiederzuverwenden. Nur
+   bestehende Farbvariablen (--red/--amber/--green/--muted), keine neuen
+   Werte. */
+.wz-hypo-item {
+  font-size: .75rem; padding: 4px 8px; border-radius: 6px;
+  margin-bottom: 4px; background: var(--panel2);
+}
+.wz-hypo-item-label  { color: var(--text); font-weight: 600; }
+.wz-hypo-item-status { color: var(--muted); font-size: .7rem; margin-top: 2px; }
+.wz-hypo-item--confirmed   .wz-hypo-item-status { color: var(--red); }
+.wz-hypo-item--possible    .wz-hypo-item-status { color: var(--amber); }
+.wz-hypo-item--ruled-out   .wz-hypo-item-status { color: var(--green); }
+.wz-hypo-item--conflicting .wz-hypo-item-status { color: var(--amber); }
 
 .wz-sidebar-abort-btn {
   width: 100%; padding: 7px; border-radius: var(--r); border: 1px solid var(--border);

@@ -37,6 +37,8 @@
       "type": "command",
       "title": "Konto-Status prüfen",
       "description": "Führe diesen Befehl aus und lies das Ergebnis unten ab.",
+      "why": "Ein gesperrtes Konto oder ein abgelaufenes Passwort verhindert die Anmeldung, auch wenn Benutzername und Passwort korrekt eingegeben werden.",
+      "whatToLookFor": "LockedOut: True oder PasswordExpired: True in der Ausgabe.",
       "commandId": "ad-benutzer-anzeigen",
       "placeholders": { "benutzername": "username" },
       "next": "read-result"
@@ -46,10 +48,12 @@
       "type": "result",
       "title": "Was zeigt der Befehl?",
       "referenceStepId": "check-account",
+      "why": "Die Werte LockedOut und PasswordExpired aus dem vorherigen Befehl bestimmen, welche Lösung als Nächstes vorgeschlagen wird.",
+      "whatToLookFor": "LockedOut: True oder PasswordExpired: True in der Befehlsausgabe.",
       "options": [
-        { "value": "locked-out", "label": "LockedOut: True",             "next": "explain-lockout" },
-        { "value": "pw-expired", "label": "PasswordExpired: True",       "next": "solution-reset" },
-        { "value": "ok",         "label": "Alles normal / kein Treffer", "next": "analyze-eventlog" }
+        { "value": "locked-out", "label": "LockedOut: True",             "next": "explain-lockout",  "finding": "Konto ist gesperrt",                "severity": "error" },
+        { "value": "pw-expired", "label": "PasswordExpired: True",       "next": "solution-reset",   "finding": "Passwort ist abgelaufen",           "severity": "warning" },
+        { "value": "ok",         "label": "Alles normal / kein Treffer", "next": "analyze-eventlog", "finding": "Konto zeigt keine Auffälligkeiten", "severity": "ok" }
       ]
     },
     {
@@ -65,31 +69,56 @@
       "type": "solution",
       "title": "Lösung: Konto entsperren",
       "body": "Konto entsperren und anschließend nach der eigentlichen Ursache (altes Passwort) suchen.",
+      "why": "Ein gesperrtes Konto lässt keine Anmeldung zu, bis es entsperrt wird.",
       "recommendations": [
         { "commandId": "ad-konto-entsperren", "placeholders": { "benutzername": "username" } }
       ],
-      "next": "end-success"
+      "next": "verify-login-after-unlock"
+    },
+    {
+      "id": "verify-login-after-unlock",
+      "type": "result",
+      "role": "verification",
+      "title": "Bitte den Benutzer jetzt erneut anmelden lassen: Funktioniert der Login?",
+      "options": [
+        { "value": "yes", "label": "Ja, Login funktioniert",              "next": "end-success",     "finding": "Anmeldung nach dem Entsperren erfolgreich",              "severity": "ok" },
+        { "value": "no",  "label": "Nein, Login weiterhin nicht möglich", "next": "analyze-eventlog", "finding": "Anmeldung nach dem Entsperren weiterhin nicht möglich", "severity": "warning" }
+      ]
     },
     {
       "id": "solution-reset",
       "type": "solution",
       "title": "Lösung: Passwort zurücksetzen",
       "body": "Passwort zurücksetzen – Benutzer muss es beim nächsten Login ändern.",
+      "why": "Ein abgelaufenes Passwort verhindert die Anmeldung, bis ein neues gesetzt wird.",
       "recommendations": [
         { "commandId": "ad-passwort-reset", "placeholders": { "benutzername": "username" } }
       ],
-      "next": "end-success"
+      "next": "verify-login-after-reset"
+    },
+    {
+      "id": "verify-login-after-reset",
+      "type": "result",
+      "role": "verification",
+      "title": "Bitte den Benutzer mit dem neuen Passwort erneut anmelden lassen: Funktioniert der Login?",
+      "options": [
+        { "value": "yes", "label": "Ja, Login funktioniert",              "next": "end-success",     "finding": "Anmeldung nach dem Passwort-Reset erfolgreich",              "severity": "ok" },
+        { "value": "no",  "label": "Nein, Login weiterhin nicht möglich", "next": "analyze-eventlog", "finding": "Anmeldung nach dem Passwort-Reset weiterhin nicht möglich", "severity": "warning" }
+      ]
     },
     {
       "id": "analyze-eventlog",
       "type": "analyzer",
       "title": "Event Log hochladen (optional)",
       "description": "Falls verfügbar: Client-EventLog-Export hochladen – wir suchen automatisch nach login-relevanten Ereignissen.",
+      "why": "Zeigt der Kontostatus keine Auffälligkeiten, kann das Event Log weitere Hinweise liefern – z.B. wiederholte Fehlanmeldungen oder ein Cloud-Auth-Problem.",
+      "whatToLookFor": "Event-IDs 4740 (Kontosperrung), 4625 (fehlgeschlagene Logins) oder 1098 (AAD Token-Fehler).",
+      "ifNegative": "Kein passendes Ereignis gefunden: weitere Diagnose außerhalb dieses Wizards nötig (z.B. HAR Analyzer, Entra Sign-In Logs).",
       "accept": ".json",
       "detect": [
-        { "eventIds": [4740], "next": "explain-lockout", "label": "Kontosperrung (4740) gefunden" },
-        { "eventIds": [4625], "next": "solution-reset",  "label": "Fehlgeschlagene Logins (4625) gefunden" },
-        { "eventIds": [1098], "next": "end-escalate",    "label": "AAD Token-Fehler (1098) gefunden – vermutlich kein lokales/AD-Problem" }
+        { "eventIds": [4740], "next": "explain-lockout", "label": "Kontosperrung (4740) gefunden",                                       "severity": "error" },
+        { "eventIds": [4625], "next": "solution-reset",  "label": "Fehlgeschlagene Logins (4625) gefunden",                                "severity": "warning" },
+        { "eventIds": [1098], "next": "end-escalate",    "label": "AAD Token-Fehler (1098) gefunden – vermutlich kein lokales/AD-Problem", "severity": "warning" }
       ],
       "skipNext": "end-unresolved"
     },
@@ -107,8 +136,8 @@
       "title": "Was zeigt die DNS-Auflösung?",
       "referenceStepId": "domain-check",
       "options": [
-        { "value": "resolves", "label": "DNS löst auf",     "next": "end-escalate" },
-        { "value": "fails",    "label": "DNS schlägt fehl", "next": "end-escalate" }
+        { "value": "resolves", "label": "DNS löst auf",     "next": "end-escalate", "finding": "Domain Controller ist per DNS erreichbar",         "severity": "ok" },
+        { "value": "fails",    "label": "DNS schlägt fehl", "next": "end-escalate", "finding": "DNS-Auflösung zum Domain Controller schlägt fehl", "severity": "error" }
       ]
     },
     {
@@ -132,6 +161,40 @@
       "title": "Vermutlich Netzwerk-/Domänen-Problem",
       "body": "Das betrifft nicht nur ein einzelnes Konto, sondern deutet auf ein Netzwerk-, DNS- oder Domänencontroller-Problem hin (bzw. bei AAD-Token-Fehlern ein Cloud-Auth-Problem statt lokales AD).",
       "links": [{ "text": "Zum Entra Analyzer", "href": "entra.html" }]
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "account-lockout",
+      "label": "Account Lockout",
+      "rules": {
+        "confirm": ["read-result:locked-out", "analyze-eventlog:4740"],
+        "ruleOut": ["read-result:ok", "read-result:pw-expired"]
+      }
+    },
+    {
+      "id": "password-expired",
+      "label": "Passwort abgelaufen",
+      "rules": {
+        "confirm": ["read-result:pw-expired"],
+        "ruleOut": ["read-result:locked-out", "read-result:ok"]
+      }
+    },
+    {
+      "id": "network-dc-problem",
+      "label": "Netzwerk-/Domain-Controller-Problem",
+      "rules": {
+        "confirm": ["domain-result:fails"],
+        "possible": ["analyze-eventlog:4625"],
+        "ruleOut": ["domain-result:resolves"]
+      }
+    },
+    {
+      "id": "cloud-auth-problem",
+      "label": "Cloud-Auth-Problem (AAD)",
+      "rules": {
+        "confirm": ["analyze-eventlog:1098"]
+      }
     }
   ]
 }

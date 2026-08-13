@@ -73,36 +73,114 @@ window.WizardRenderer = (function() {
     _containerEl.appendChild(grid);
   }
 
-  // ── Fortschritt ──────────────────────────────────────────
-  // Schätzung statt fester Gesamtzahl, da der Graph verzweigt
-  // (variable Pfadlänge je nach Antworten). Text zeigt bewusst
-  // nur "Schritt X", keine "X von Y"-Angabe.
+  // ── Fortschritt (Diagnose-Checkliste statt %-Balken) ─────
+  // Der Wizard ist ein verzweigter Graph – "Schritt X von Y" bzw. eine
+  // Prozentzahl wäre pfadabhängig und damit irreführend. Stattdessen:
+  // eine reine Ist-Zustands-Checkliste, komplett aus vorhandenen
+  // Session-Daten abgeleitet (session.history/currentStepId + die von
+  // WizardEngine.getSummary() bereits berechneten findings/actions/
+  // verifications) – keine eigene Fortschritts-Logik/State-Engine.
+  // Phasen ohne Inhalt werden weggelassen statt leer/grau dargestellt.
+  //
+  // Kategorien (Phase 6), bewusst unterschieden statt alles als "erledigt"
+  // zu zeigen:
+  //   A) Step besucht, kein geprüftes Ergebnis bekannt (command/analyzer/
+  //      information in session.history) – neutrale "▸"-Markierung, NICHT
+  //      grün. Der Session-State weiß nicht, ob ein command-Step wirklich
+  //      ausgeführt wurde, nur dass auf "Weiter" geklickt wurde – daher
+  //      "Prüfschritt besucht" statt "Prüfung erfolgreich".
+  //   B) Prüfung mit tatsächlichem Ergebnis = ein Finding aus
+  //      summary.findings (severity-farbig, wie bisher).
+  //   D) Maßnahme durchgeführt = summary.actions (wie Phase 3/4).
+  //   E) Verifikation = summary.verifications + laufende "●"-Zeile
+  //      (wie Phase 4).
+  // "NOCH OFFEN" (künftige, noch nicht besuchte Steps) wird bewusst NICHT
+  // angezeigt – bei einem verzweigten Graph ist nicht zuverlässig bekannt,
+  // welche Steps als Nächstes kommen, ohne die noch nicht gegebene Antwort
+  // zu erraten. Siehe Bericht/"offene Punkte".
+  const DIAG_MARK_ICON  = { ok: '✓', warning: '⚠', error: '✗', pending: '●', visited: '▸' };
+  const DIAG_MARK_CLASS = {
+    ok: 'wz-diag-item--ok', warning: 'wz-diag-item--warn',
+    error: 'wz-diag-item--bad', pending: 'wz-diag-item--pending',
+    // 'visited' bekommt bewusst eine LEERE Modifier-Klasse (expliziter
+    // Eintrag, kein Fallback) – fällt auf die neutrale Basisfarbe von
+    // .wz-diag-item (var(--muted)) zurück, statt wie ein Befund grün zu wirken.
+    visited: '',
+  };
+
   function renderProgress(session, wizardDef) {
     const el = document.getElementById('wz-progress-bar');
-    if (!el || !session || !wizardDef) return;
+    if (!el || !session || !wizardDef || !_engine) return;
 
-    const currentStep   = wizardDef.steps.find(s => s.id === session.currentStepId);
-    const totalEstimate = wizardDef.steps.filter(s => s.type !== 'end').length;
-    const current        = session.history.length + 1;
-    const pct = (currentStep && currentStep.type === 'end')
-      ? 100
-      : (totalEstimate > 0 ? Math.min(100, Math.round((current / totalEstimate) * 100)) : 0);
+    const stepById    = new Map(wizardDef.steps.map(s => [s.id, s]));
+    const currentStep = stepById.get(session.currentStepId);
+    const summary     = _engine.getSummary(session, wizardDef);
+
+    const phases = [];
+
+    // Problem: sobald der erste Step verlassen wurde (Kontext-/Scope-
+    // Fragen beantwortet) – unabhängig davon, welche Fragen das im
+    // Einzelnen waren.
+    if (session.history.length > 0) {
+      phases.push({ title: 'Problem', items: [{ mark: 'ok', label: 'Problem eingegrenzt' }] });
+    }
+
+    // Diagnose: besuchte command/analyzer/information-Steps als neutrale
+    // "besucht"-Zeile (Kategorie A, siehe Kommentar oben) + die
+    // tatsächlichen Befunde aus summary.findings (Kategorie B).
+    const diagSteps = session.history
+      .map(id => stepById.get(id))
+      .filter(s => s && (s.type === 'command' || s.type === 'analyzer' || s.type === 'information'));
+    const diagItems = [
+      ...diagSteps.map(s => ({
+        mark:  'visited',
+        label: (s.type === 'information' ? '' : 'Prüfschritt besucht: ') + (s.title || s.id),
+      })),
+      ...summary.findings.map(f => ({ mark: f.severity, label: f.label })),
+    ];
+    if (diagItems.length) phases.push({ title: 'Diagnose', items: diagItems });
+
+    // Maßnahme: identisch zu summary.actions (Phase 3) – keine neue Ableitung.
+    if (summary.actions.length) {
+      phases.push({ title: 'Maßnahme', items: summary.actions.map(a => ({ mark: 'ok', label: a.label })) });
+    }
+
+    // Verifikation: abgeschlossene Verifikations-Findings + ggf. eine
+    // "läuft gerade"-Zeile, wenn aktuell an einem Verification-Step
+    // (role:'verification') noch keine Antwort abgegeben wurde.
+    const verifItems = summary.verifications.map(v => ({ mark: v.severity, label: v.label }));
+    if (currentStep && currentStep.role === 'verification') {
+      verifItems.push({ mark: 'pending', label: currentStep.title || 'Verifikation läuft' });
+    }
+    if (verifItems.length) phases.push({ title: 'Verifikation', items: verifItems });
 
     el.replaceChildren();
+    el.hidden = phases.length === 0;
 
-    const label = document.createElement('div');
-    label.className = 'wz-progress-label';
-    label.textContent = `Schritt ${current}`;
+    phases.forEach(phase => {
+      const phaseEl = document.createElement('div');
+      phaseEl.className = 'wz-diag-phase';
 
-    const track = document.createElement('div');
-    track.className = 'wz-progress-track';
-    const fill = document.createElement('div');
-    fill.className = 'wz-progress-fill';
-    fill.style.width = pct + '%';
-    track.appendChild(fill);
+      const titleEl = document.createElement('div');
+      titleEl.className = 'wz-diag-phase-title';
+      titleEl.textContent = phase.title;
+      phaseEl.appendChild(titleEl);
 
-    el.appendChild(label);
-    el.appendChild(track);
+      phase.items.forEach(item => {
+        const itemEl = document.createElement('div');
+        // Explizite Prüfung auf "Schlüssel bekannt" statt "||"-Fallback:
+        // 'visited' hat bewusst eine LEERE Klasse (neutrale Basisfarbe) –
+        // ein "||"-Fallback würde das leere '' als falsy behandeln und
+        // fälschlich auf die grüne --ok-Klasse zurückfallen.
+        const markClass = Object.prototype.hasOwnProperty.call(DIAG_MARK_CLASS, item.mark)
+          ? DIAG_MARK_CLASS[item.mark] : 'wz-diag-item--ok';
+        itemEl.className = ('wz-diag-item ' + markClass).trim();
+        itemEl.textContent = (DIAG_MARK_ICON[item.mark] || '✓') + ' ' + item.label;
+        phaseEl.appendChild(itemEl);
+      });
+
+      el.appendChild(phaseEl);
+    });
   }
 
   // ── Sidebar ──────────────────────────────────────────────
@@ -134,9 +212,11 @@ window.WizardRenderer = (function() {
       _sidebarEl.appendChild(section);
     }
 
-    // Findings – von WizardEngine.submitAnswer() für result-Steps befüllt.
-    // Shape: {stepId, stepTitle, result, label, severity, timestamp} –
-    // severity ist 'error'|'ok', kein boolesches "ok"-Feld.
+    // Findings – von WizardEngine.submitAnswer() für result- und
+    // analyzer-Steps befüllt. Shape: {stepId, stepTitle, result, label,
+    // severity, timestamp} – severity ist 'ok'|'warning'|'error'. Bleiben
+    // über die gesamte Session sichtbar (session.findings wird nur
+    // ergänzt, nie zurückgesetzt – siehe WizardEngine.submitAnswer()).
     if (Array.isArray(session.findings) && session.findings.length) {
       const section = document.createElement('div');
       section.className = 'wz-sidebar-section';
@@ -144,14 +224,61 @@ window.WizardRenderer = (function() {
       label.className = 'wz-sidebar-label';
       label.textContent = 'Findings';
       section.appendChild(label);
+      const SEVERITY_ICON = { ok: '✓ ', warning: '⚠ ', error: '✗ ' };
+      const SEVERITY_CLASS = { ok: 'wz-finding-item--ok', warning: 'wz-finding-item--warn', error: 'wz-finding-item--bad' };
       session.findings.forEach(f => {
         const item = document.createElement('div');
-        const isError = f.severity === 'error';
-        item.className = 'wz-finding-item' + (isError ? ' wz-finding-item--bad' : ' wz-finding-item--ok');
-        item.textContent = (isError ? '✗ ' : '✓ ') + f.label + (f.result ? ' (' + f.result + ')' : '');
+        const severity = SEVERITY_ICON[f.severity] ? f.severity : 'ok';
+        item.className = 'wz-finding-item ' + SEVERITY_CLASS[severity];
+        item.textContent = SEVERITY_ICON[severity] + f.label;
         section.appendChild(item);
       });
       _sidebarEl.appendChild(section);
+    }
+
+    // Hypothesen ("Mögliche Ursachen") – Interpretationen, KEINE Findings.
+    // Eigene Sektion, bewusst getrennt von Findings und von der Diagnose-
+    // Fortschrittsanzeige (renderProgress(), Phase 6). Nur Status !==
+    // 'unknown' wird gezeigt; sind alle Hypothesen unknown (oder gibt es
+    // keine), entfällt die gesamte Sektion – die UI bleibt ruhig statt
+    // unbegründete Verdachtsmomente aufzulisten.
+    if (_engine && typeof _engine.getSummary === 'function') {
+      const summaryHypotheses = _engine.getSummary(session, wizardDef).hypotheses || [];
+      const visibleHypotheses = summaryHypotheses.filter(h => h.status !== 'unknown');
+      if (visibleHypotheses.length) {
+        const section = document.createElement('div');
+        section.className = 'wz-sidebar-section';
+        const label = document.createElement('div');
+        label.className = 'wz-sidebar-label';
+        label.textContent = 'Mögliche Ursachen';
+        section.appendChild(label);
+
+        const HYPO_ICON = { confirmed: '🔴', possible: '🟡', 'ruled-out': '✓', conflicting: '⚠' };
+        const HYPO_STATUS_TEXT = {
+          confirmed: 'bestätigt', possible: 'möglich',
+          'ruled-out': 'ausgeschlossen', conflicting: 'widersprüchliche Befunde',
+        };
+        const HYPO_CLASS = {
+          confirmed: 'wz-hypo-item--confirmed', possible: 'wz-hypo-item--possible',
+          'ruled-out': 'wz-hypo-item--ruled-out', conflicting: 'wz-hypo-item--conflicting',
+        };
+
+        visibleHypotheses.forEach(h => {
+          const item = document.createElement('div');
+          item.className = 'wz-hypo-item ' + (HYPO_CLASS[h.status] || '');
+          const labelLine = document.createElement('div');
+          labelLine.className = 'wz-hypo-item-label';
+          labelLine.textContent = (HYPO_ICON[h.status] || '') + ' ' + h.label;
+          const statusLine = document.createElement('div');
+          statusLine.className = 'wz-hypo-item-status';
+          statusLine.textContent = HYPO_STATUS_TEXT[h.status] || h.status;
+          item.appendChild(labelLine);
+          item.appendChild(statusLine);
+          section.appendChild(item);
+        });
+
+        _sidebarEl.appendChild(section);
+      }
     }
 
     if (_currentCallbacks && typeof _currentCallbacks.onAbort === 'function') {
@@ -206,6 +333,49 @@ window.WizardRenderer = (function() {
       wrap.appendChild(a);
     });
     return wrap;
+  }
+
+  // ── Erklärungs-Box ("Warum prüfen wir das?" / "Was suchen wir?") ──
+  // Rein erklärender Text aus der Wizard-Definition (step.why/
+  // whatToLookFor/ifPositive/ifNegative, alle optional) – erzeugt KEINE
+  // Findings und KEINE Diagnose-Logik, dient nur der Erklärung. Nativ
+  // eingeklappt via <details> (kein eigener Toggle-State nötig). Gibt
+  // null zurück, wenn kein Feld gesetzt ist, damit Steps ohne Erklärung
+  // exakt denselben DOM/Layout wie bisher bekommen (kein leerer Container).
+  function buildExplainerBox(step) {
+    const sections = [
+      { label: 'Warum prüfen wir das?',   text: step.why },
+      { label: 'Was suchen wir?',          text: step.whatToLookFor },
+      { label: 'Wenn gefunden:',           text: step.ifPositive },
+      { label: 'Wenn nicht gefunden:',     text: step.ifNegative },
+    ].filter(s => s.text);
+    if (!sections.length) return null;
+
+    const details = document.createElement('details');
+    details.className = 'wz-explainer';
+
+    const summary = document.createElement('summary');
+    summary.textContent = 'Warum & was prüfen?';
+    details.appendChild(summary);
+
+    const body = document.createElement('div');
+    body.className = 'wz-explainer-body';
+    sections.forEach(s => {
+      const sec = document.createElement('div');
+      sec.className = 'wz-explainer-section';
+      const label = document.createElement('div');
+      label.className = 'wz-explainer-label';
+      label.textContent = s.label;
+      const text = document.createElement('div');
+      text.className = 'wz-explainer-text';
+      text.textContent = s.text;
+      sec.appendChild(label);
+      sec.appendChild(text);
+      body.appendChild(sec);
+    });
+    details.appendChild(body);
+
+    return details;
   }
 
   function buildErrorBox(message, code) {
@@ -306,6 +476,9 @@ window.WizardRenderer = (function() {
     const frag = document.createDocumentFragment();
     frag.appendChild(buildStepTitle(step));
 
+    const explainer = buildExplainerBox(step);
+    if (explainer) frag.appendChild(explainer);
+
     if (step.description) {
       const info = document.createElement('p');
       info.className = 'wz-step-description';
@@ -343,6 +516,9 @@ window.WizardRenderer = (function() {
   function renderResult(step, session, callbacks) {
     const frag = document.createDocumentFragment();
     frag.appendChild(buildStepTitle(step));
+
+    const explainer = buildExplainerBox(step);
+    if (explainer) frag.appendChild(explainer);
 
     if (step.referenceStepId) {
       const hint = document.createElement('p');
@@ -401,6 +577,9 @@ window.WizardRenderer = (function() {
     const frag = document.createDocumentFragment();
     frag.appendChild(buildStepTitle(step));
 
+    const explainer = buildExplainerBox(step);
+    if (explainer) frag.appendChild(explainer);
+
     const solBox = document.createElement('div');
     solBox.className = 'wz-solution-box';
     solBox.textContent = step.body || '';
@@ -436,6 +615,9 @@ window.WizardRenderer = (function() {
   function renderAnalyzer(step, session, callbacks) {
     const frag = document.createDocumentFragment();
     frag.appendChild(buildStepTitle(step));
+
+    const explainer = buildExplainerBox(step);
+    if (explainer) frag.appendChild(explainer);
 
     if (step.description) {
       const info = document.createElement('p');
@@ -516,11 +698,59 @@ window.WizardRenderer = (function() {
     escalate:   { icon: '🔄', cls: 'wz-end-icon--escalate' },
   };
 
-  function buildTicketText(summary) {
-    return 'Problem: ' + (summary.wizardTitle || '') + '\n' +
-           'Benutzer: ' + (summary.context?.username || '–') + '\n' +
-           'Diagnose: Schritt ' + summary.stepsVisited + ' besucht\n' +
-           'Ergebnis: ' + (summary.outcome || '–');
+  // getSummary() (js/wizard-engine.js) liefert seit Phase 3 eine fachlich
+  // strukturierte Zusammenfassung (findings/actions/verifications/cause
+  // statt einer reinen Step-Liste). buildDiagnosisSections() übersetzt
+  // das in eine Section-Liste (Titel + Zeilen), die buildTicketText()
+  // (Plaintext, Ticketassistent) und buildGuidePrefill() (Markdown,
+  // guide.sheet) jeweils in ihrem eigenen Format ausgeben – dieselben
+  // Daten, keine doppelte Aufbereitungslogik.
+  const OUTCOME_TEXT = {
+    success:    'Problem gelöst',
+    unresolved: 'Nicht gelöst – weitere Diagnose nötig',
+    escalate:   'Eskaliert – vermutlich Netzwerk-/Domänen-Problem',
+  };
+  const SEVERITY_MARK = { ok: '✓', warning: '⚠', error: '✗' };
+
+  function buildDiagnosisSections(summary, wizardDef) {
+    const contextSchema = wizardDef?.contextSchema || {};
+    const contextLines = Object.entries(summary.context || {})
+      .map(([key, val]) => `${contextSchema[key]?.label || key}: ${val}`);
+
+    const sections = [{ title: 'Kontext', lines: contextLines }];
+
+    if (summary.findings?.length) {
+      sections.push({
+        title: 'Befunde',
+        lines: summary.findings.map(f => `${SEVERITY_MARK[f.severity] || '•'} ${f.label}`),
+      });
+    }
+    if (summary.actions?.length) {
+      sections.push({ title: 'Maßnahme', lines: summary.actions.map(a => `✓ ${a.label}`) });
+    }
+    if (summary.verifications?.length) {
+      sections.push({
+        title: 'Verifikation',
+        lines: summary.verifications.map(v => `${SEVERITY_MARK[v.severity] || '•'} ${v.label}`),
+      });
+    }
+
+    sections.push({ title: 'Ergebnis', lines: [OUTCOME_TEXT[summary.outcome] || summary.outcome || 'Noch offen'] });
+
+    if (summary.cause) {
+      sections.push({ title: 'Wahrscheinliche Ursache', lines: [summary.cause] });
+    }
+
+    return sections;
+  }
+
+  function buildTicketText(summary, wizardDef) {
+    const sections = buildDiagnosisSections(summary, wizardDef);
+    let text = 'DIAGNOSE\n\nProblem:\n' + (summary.problem || '') + '\n';
+    sections.forEach(s => {
+      text += '\n' + s.title.toUpperCase() + '\n' + (s.lines.length ? s.lines.join('\n') : '–') + '\n';
+    });
+    return text.trim();
   }
 
   // UTF-8-sicheres Base64 (btoa allein kann keine Umlaute etc.)
@@ -528,34 +758,29 @@ window.WizardRenderer = (function() {
     return btoa(unescape(encodeURIComponent(str)));
   }
 
-  function openTicketAssistant(summary) {
-    const text = buildTicketText(summary);
+  function openTicketAssistant(summary, wizardDef) {
+    const text = buildTicketText(summary, wizardDef);
     window.open('ticketassistent.html?note=' + encodeURIComponent(toBase64(text)), '_blank');
   }
 
-  // getSummary() liefert wizardTitle/context/answers/outcome – guides-editor.js
-  // erwartet dagegen title/category/tags/content (das tatsächliche Guide-
-  // Datenmodell). Hier übersetzen statt die Summary 1:1 durchzureichen.
-  // category bewusst weggelassen: die Wizard-category ("windows", aus dem
-  // Commands-Tag-System) hat keine verlässliche Entsprechung in den
-  // GuidesDB-Kategorienamen ("Windows Client" etc.) – ein Fehlmatch wäre
-  // stiller als gar keine Vorauswahl.
+  // getSummary() liefert problem/context/findings/actions/verifications/
+  // outcome/cause – guides-editor.js erwartet dagegen title/category/tags/
+  // content (das tatsächliche Guide-Datenmodell). Hier übersetzen statt
+  // die Summary 1:1 durchzureichen. category bewusst weggelassen: die
+  // Wizard-category ("windows", aus dem Commands-Tag-System) hat keine
+  // verlässliche Entsprechung in den GuidesDB-Kategorienamen ("Windows
+  // Client" etc.) – ein Fehlmatch wäre stiller als gar keine Vorauswahl.
   function buildGuidePrefill(summary, wizardDef) {
-    const contextLines = Object.entries(summary.context || {})
-      .map(([k, v]) => `- **${k}:** ${v}`).join('\n');
-    const answerLines = Object.entries(summary.answers || {})
-      .map(([k, v]) => `- ${k}: ${v}`).join('\n');
-
-    const content =
-      `# ${summary.wizardTitle || 'Wizard-Ergebnis'}\n\n` +
-      `**Ergebnis:** ${summary.outcome || '–'}\n\n` +
-      (contextLines ? `## Kontext\n${contextLines}\n\n` : '') +
-      (answerLines  ? `## Verlauf\n${answerLines}\n`      : '');
+    const sections = buildDiagnosisSections(summary, wizardDef);
+    let content = `# ${summary.problem || 'Wizard-Ergebnis'}\n\n`;
+    sections.forEach(s => {
+      content += `## ${s.title}\n` + (s.lines.length ? s.lines.map(l => `- ${l}`).join('\n') : '_keine Angabe_') + '\n\n';
+    });
 
     return {
-      title:   (summary.wizardTitle || 'Wizard-Ergebnis') + (summary.outcome ? ' – ' + summary.outcome : ''),
+      title:   (summary.problem || 'Wizard-Ergebnis') + (summary.outcome ? ' – ' + summary.outcome : ''),
       tags:    Array.isArray(wizardDef?.tags) ? wizardDef.tags : [],
-      content,
+      content: content.trim(),
     };
   }
 
@@ -602,7 +827,7 @@ window.WizardRenderer = (function() {
     ticketBtn.type = 'button';
     ticketBtn.className = 'wz-option-btn';
     ticketBtn.textContent = '📋 Ticket erstellen';
-    ticketBtn.addEventListener('click', () => openTicketAssistant(summary));
+    ticketBtn.addEventListener('click', () => openTicketAssistant(summary, wizardDef));
     actions.appendChild(ticketBtn);
 
     if (summary.context && Object.keys(summary.context).length) {
