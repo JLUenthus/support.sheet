@@ -38,6 +38,7 @@
       <div class="landing-group-label">Nachschlagen</div>
       <div class="landing-grid landing-grid--featured">
         <a href="windows.html" class="landing-card landing-card--wide" style="--fill-pct:75%;--fill-color:#7c8cf8;border-left-color:#7c8cf8">
+          <div class="lc-wave-wrap"><div class="lc-wave"></div><div class="lc-wave2"></div></div>
           <div class="landing-card-head">
             <span class="landing-card-icon">💻</span>
             <span class="landing-card-title">commands.sheet</span>
@@ -49,6 +50,7 @@
         </a>
 
         <a href="scripts.html" class="landing-card" style="--fill-pct:60%;--fill-color:#4ade80;border-left-color:#4ade80">
+          <div class="lc-wave-wrap"><div class="lc-wave"></div><div class="lc-wave2"></div></div>
           <div class="landing-card-head">
             <span class="landing-card-icon">💚</span>
             <span class="landing-card-title">PS Scripts</span>
@@ -60,6 +62,7 @@
         </a>
 
         <a href="guides.html" class="landing-card" style="--fill-pct:55%;--fill-color:#4ade80;border-left-color:#4ade80">
+          <div class="lc-wave-wrap"><div class="lc-wave"></div><div class="lc-wave2"></div></div>
           <div class="landing-card-head">
             <span class="landing-card-icon">📚</span>
             <span class="landing-card-title">guide.sheet</span>
@@ -78,6 +81,7 @@
       <div class="landing-grid">
 
         <a href="eventlog.html" class="landing-card" style="--fill-pct:65%;--fill-color:#e8b339;border-left-color:#e8b339">
+          <div class="lc-wave-wrap"><div class="lc-wave"></div><div class="lc-wave2"></div></div>
           <div class="landing-card-head">
             <span class="landing-card-icon">📋</span>
             <span class="landing-card-title">Log Analyzer</span>
@@ -89,6 +93,7 @@
         </a>
 
         <a href="entra.html" class="landing-card" style="--fill-pct:55%;--fill-color:#7c8cf8;border-left-color:#7c8cf8">
+          <div class="lc-wave-wrap"><div class="lc-wave"></div><div class="lc-wave2"></div></div>
           <div class="landing-card-head">
             <span class="landing-card-icon">🔐</span>
             <span class="landing-card-title">Entra Analyzer</span>
@@ -100,6 +105,7 @@
         </a>
 
         <a href="har.html" class="landing-card" style="--fill-pct:60%;--fill-color:#60a5fa;border-left-color:#60a5fa">
+          <div class="lc-wave-wrap"><div class="lc-wave"></div><div class="lc-wave2"></div></div>
           <div class="landing-card-head">
             <span class="landing-card-icon">🌐</span>
             <span class="landing-card-title">HAR Analyzer</span>
@@ -118,6 +124,7 @@
       <div class="landing-grid landing-grid--compact">
 
         <a href="ticketassistent.html" class="landing-card" style="--fill-pct:85%;--fill-color:#fb923c;border-left-color:#fb923c">
+          <div class="lc-wave-wrap"><div class="lc-wave"></div><div class="lc-wave2"></div></div>
           <div class="landing-card-head">
             <span class="landing-card-icon">🎫</span>
             <span class="landing-card-title">Ticketassistent</span>
@@ -129,6 +136,7 @@
         </a>
 
         <a href="private.html" class="landing-card" style="--fill-pct:20%;--fill-color:#f87171;border-left-color:#f87171">
+          <div class="lc-wave-wrap"><div class="lc-wave"></div><div class="lc-wave2"></div></div>
           <div class="landing-card-head">
             <span class="landing-card-icon">🔒</span>
             <span class="landing-card-title">Privater Bereich</span>
@@ -140,6 +148,7 @@
         </a>
 
         <a href="wizard.html" class="landing-card" style="--fill-pct:25%;--fill-color:#a78bfa;border-left-color:#a78bfa">
+          <div class="lc-wave-wrap"><div class="lc-wave"></div><div class="lc-wave2"></div></div>
           <div class="landing-card-head">
             <span class="landing-card-icon">🔍</span>
             <span class="landing-card-title">Wizard</span>
@@ -315,51 +324,70 @@
       position: relative;
       overflow: hidden;
     }
-    /* Füllung von unten – transparente Farbe wie Flüssigkeit */
+    /* Statische Füllung von unten */
     .landing-card::before {
       content: '';
       position: absolute;
       bottom: 0; left: 0; right: 0;
       height: var(--fill-pct, 0%);
       background: var(--fill-color, transparent);
-      opacity: .13;
-      transition: opacity .3s;
+      opacity: .11;
       z-index: 0;
       pointer-events: none;
-    }
-    /* Wellenoberfläche – sitzt genau am Füllstand */
-    .landing-card::after {
-      content: '';
-      position: absolute;
-      /* Welle sitzt GENAU an der Oberkante der Füllung */
-      bottom: var(--fill-pct, 0%);
-      left: 0;
-      right: 0;
-      height: 10px;
-      margin-bottom: -5px; /* halb rein, halb raus */
-      background: var(--fill-color, transparent);
-      opacity: .35;
-      border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-      z-index: 0;
-      pointer-events: none;
-      transform-origin: center center;
     }
     /* Karten-Inhalt immer über der Füllung */
     .landing-card > * { position: relative; z-index: 1; }
-    /* Hover: minimal stärker */
-    .landing-card:hover::before { opacity: .18; }
-    /* Schwapp via JS-Klasse – nur die Welle (::after) animiert */
-    .landing-card.is-sloshing::after {
-      animation: card-wave .8s cubic-bezier(.36,.07,.19,.97) forwards;
+
+    /* Wellen-Container – sitzt genau am Füllstand */
+    .lc-wave-wrap {
+      position: absolute;
+      left: 0; right: 0;
+      bottom: var(--fill-pct, 0%);
+      height: 20px;
+      margin-bottom: -10px;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
     }
-    @keyframes card-wave {
-      0%   { transform: scaleX(1)    translateY(0);   opacity:.35; }
-      15%  { transform: scaleX(1.06) translateY(-4px); opacity:.5; }
-      35%  { transform: scaleX(.94)  translateY(3px); opacity:.25; }
-      55%  { transform: scaleX(1.04) translateY(-2px); opacity:.42; }
-      72%  { transform: scaleX(.97)  translateY(1px); opacity:.32; }
-      88%  { transform: scaleX(1.02) translateY(-1px); opacity:.37; }
-      100% { transform: scaleX(1)    translateY(0);   opacity:.35; }
+    /* Welle 1 – kontinuierliche Rotation erzeugt Wellenform */
+    .lc-wave {
+      position: absolute;
+      bottom: 0;
+      left: -50%;
+      width: 200%;
+      height: 300%;
+      background: var(--fill-color, transparent);
+      opacity: .3;
+      border-radius: 38%;
+      animation: lc-spin 8s linear infinite;
+      transform-origin: 50% 60%;
+    }
+    /* Welle 2 – umgekehrt, langsamerer etwas transparenter */
+    .lc-wave2 {
+      position: absolute;
+      bottom: 0;
+      left: -50%;
+      width: 200%;
+      height: 300%;
+      background: var(--fill-color, transparent);
+      opacity: .18;
+      border-radius: 43%;
+      animation: lc-spin 12s linear reverse infinite;
+      transform-origin: 50% 58%;
+    }
+    @keyframes lc-spin {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    /* Hover: Wellen sichtbarer */
+    .landing-card:hover .lc-wave  { opacity: .45; }
+    .landing-card:hover .lc-wave2 { opacity: .28; }
+    /* Schwapp: Wellen kurz schneller drehen via JS */
+    .landing-card.is-sloshing .lc-wave  {
+      animation-duration: 1.5s !important;
+    }
+    .landing-card.is-sloshing .lc-wave2 {
+      animation-duration: 2.2s !important;
     }
 
     /* ── Horizontaler Fortschrittsbalken ──────────────── */
@@ -497,18 +525,15 @@
   <script src="nav.js"></script>
 
   <script>
-    // Schwapp-Effekt via JS class toggle (zuverlässig, kein CSS-Hover-Bug)
-    function addSlosh(el, cls) {
-      el.classList.remove(cls);
-      void el.offsetWidth; // reflow erzwingen damit Animation neu startet
-      el.classList.add(cls);
-      el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
-    }
-
-    // Kacheln: Hover → Füllung slosht
+    // Schwapp: Wellen kurz schneller drehen, dann zurück
     document.querySelectorAll('.landing-card').forEach(card => {
+      let sloshTimer = null;
       card.addEventListener('mouseenter', () => {
-        addSlosh(card, 'is-sloshing');
+        card.classList.add('is-sloshing');
+        clearTimeout(sloshTimer);
+        sloshTimer = setTimeout(() => {
+          card.classList.remove('is-sloshing');
+        }, 1800);
       });
     });
 
