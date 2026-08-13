@@ -358,27 +358,17 @@
       transform-origin: center bottom;
     }
     /* Slosh animation class added via JS */
-    .landing-card-progress-fill.is-sloshing {
-      animation: gs-fill-slosh .65s cubic-bezier(.36,.07,.19,.97);
-    }
+    /* Füllung selbst NICHT animieren – nur die Welle oben */
     .landing-card-progress-fill.is-sloshing::before {
-      animation: gs-wave-slosh .65s cubic-bezier(.36,.07,.19,.97);
-    }
-    @keyframes gs-fill-slosh {
-      0%   { transform: scaleX(1) skewY(0deg); }
-      20%  { transform: scaleX(1.012) skewY(-1.5deg); }
-      40%  { transform: scaleX(.988) skewY(1.2deg); }
-      60%  { transform: scaleX(1.008) skewY(-.8deg); }
-      80%  { transform: scaleX(.995) skewY(.4deg); }
-      100% { transform: scaleX(1) skewY(0deg); }
+      animation: gs-wave-slosh .7s cubic-bezier(.36,.07,.19,.97);
     }
     @keyframes gs-wave-slosh {
-      0%   { transform: scaleX(1) translateX(0); opacity:.35; }
-      20%  { transform: scaleX(1.04) translateX(-3%); opacity:.5; }
-      40%  { transform: scaleX(.96) translateX(2%); opacity:.3; }
-      60%  { transform: scaleX(1.02) translateX(-1%); opacity:.4; }
-      80%  { transform: scaleX(.99) translateX(.5%); opacity:.35; }
-      100% { transform: scaleX(1) translateX(0); opacity:.35; }
+      0%   { transform: translateX(0) scaleY(1);    opacity:.35; }
+      20%  { transform: translateX(-8%) scaleY(1.4); opacity:.55; }
+      45%  { transform: translateX(6%) scaleY(.7);  opacity:.3; }
+      65%  { transform: translateX(-4%) scaleY(1.2); opacity:.45; }
+      82%  { transform: translateX(2%) scaleY(.9);  opacity:.35; }
+      100% { transform: translateX(0) scaleY(1);    opacity:.35; }
     }
 
     /* ── Legende (echte Bierglas-Optik, vertikal von unten) ─── */
@@ -445,9 +435,7 @@
       animation: none;
     }
     /* Legend slosh via JS class */
-    .legend-glass-fill.is-sloshing {
-      animation: legend-slosh .7s cubic-bezier(.36,.07,.19,.97);
-    }
+    /* Only wave on top animates, fill stays put */
     .legend-glass-fill.is-sloshing::before {
       animation: legend-wave .7s cubic-bezier(.36,.07,.19,.97);
     }
@@ -458,13 +446,10 @@
       75%  { transform: translateY(-1px) scaleX(1.04); opacity:.5; }
       100% { transform: translateY(0) scaleX(1); opacity:.45; }
     }
+    /* Legend fill stays static – only ::before wave moves */
     @keyframes legend-slosh {
-      0%   { transform: skewX(0deg) scaleX(1); }
-      20%  { transform: skewX(3deg) scaleX(1.02); }
-      40%  { transform: skewX(-2.5deg) scaleX(.98); }
-      60%  { transform: skewX(1.5deg) scaleX(1.01); }
-      80%  { transform: skewX(-.8deg) scaleX(.995); }
-      100% { transform: skewX(0deg) scaleX(1); }
+      0%   { transform: none; }
+      100% { transform: none; }
     }
     .legend-glass-pct {
       font-size: .58rem;
