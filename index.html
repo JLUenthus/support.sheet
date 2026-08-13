@@ -328,57 +328,57 @@
     }
 
     /* ── Fertigungsstand-Balken ("Bierglas", horizontal) ────── */
+    /* ── Progress Bar ──────────────────────────────────── */
     .landing-card-progress {
-      height: 5px;
+      height: 6px;
       background: var(--border);
       border-radius: 0 0 var(--r) var(--r);
       margin: 12px -20px -20px;
-      overflow: hidden;
+      /* NO overflow:hidden – wave needs to escape */
       position: relative;
     }
     .landing-card-progress-fill {
       height: 100%;
       border-radius: 0 0 0 var(--r);
-      transition: width .3s;
-      opacity: .75;
+      opacity: .8;
       position: relative;
-      overflow: hidden;
+      transform-origin: left center;
     }
-    /* Wellen-Pseudoelement */
-    .landing-card-progress-fill::after {
+    /* Wave on top of fill – uses clip-path on parent */
+    .landing-card-progress-fill::before {
       content: '';
       position: absolute;
-      top: -6px;
-      left: -100%;
-      width: 300%;
-      height: 12px;
+      top: -5px;
+      left: 0;
+      right: 0;
+      height: 10px;
       background: inherit;
-      opacity: .4;
-      border-radius: 40%;
-      animation: none;
+      opacity: .35;
+      border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+      transform-origin: center bottom;
     }
-    /* Hover auf der Kachel triggert Welle */
-    .landing-card:hover .landing-card-progress-fill::after {
-      animation: gs-slosh .6s ease-in-out;
+    /* Slosh animation class added via JS */
+    .landing-card-progress-fill.is-sloshing {
+      animation: gs-fill-slosh .65s cubic-bezier(.36,.07,.19,.97);
     }
-    @keyframes gs-slosh {
-      0%   { transform: translateX(0) rotate(0deg); }
-      25%  { transform: translateX(8%) rotate(1deg); }
-      50%  { transform: translateX(-6%) rotate(-1deg); }
-      75%  { transform: translateX(4%) rotate(.5deg); }
-      100% { transform: translateX(0) rotate(0deg); }
+    .landing-card-progress-fill.is-sloshing::before {
+      animation: gs-wave-slosh .65s cubic-bezier(.36,.07,.19,.97);
     }
-    /* Füllung selbst leicht bewegen beim Hover */
-    .landing-card:hover .landing-card-progress-fill {
-      animation: gs-slosh-fill .6s ease-in-out;
-      transform-origin: bottom center;
+    @keyframes gs-fill-slosh {
+      0%   { transform: scaleX(1) skewY(0deg); }
+      20%  { transform: scaleX(1.012) skewY(-1.5deg); }
+      40%  { transform: scaleX(.988) skewY(1.2deg); }
+      60%  { transform: scaleX(1.008) skewY(-.8deg); }
+      80%  { transform: scaleX(.995) skewY(.4deg); }
+      100% { transform: scaleX(1) skewY(0deg); }
     }
-    @keyframes gs-slosh-fill {
-      0%   { transform: scaleY(1) translateY(0); }
-      20%  { transform: scaleY(1.15) translateY(-1px); }
-      50%  { transform: scaleY(.92) translateY(1px); }
-      80%  { transform: scaleY(1.08) translateY(-0.5px); }
-      100% { transform: scaleY(1) translateY(0); }
+    @keyframes gs-wave-slosh {
+      0%   { transform: scaleX(1) translateX(0); opacity:.35; }
+      20%  { transform: scaleX(1.04) translateX(-3%); opacity:.5; }
+      40%  { transform: scaleX(.96) translateX(2%); opacity:.3; }
+      60%  { transform: scaleX(1.02) translateX(-1%); opacity:.4; }
+      80%  { transform: scaleX(.99) translateX(.5%); opacity:.35; }
+      100% { transform: scaleX(1) translateX(0); opacity:.35; }
     }
 
     /* ── Legende (echte Bierglas-Optik, vertikal von unten) ─── */
@@ -415,7 +415,7 @@
       cursor: default;
       transition: border-color .15s;
     }
-    .legend-glass:hover { border-color: var(--border3, var(--accent)); }
+    .legend-glass:hover { border-color: var(--accent); }
     .legend-glass-fill {
       position: absolute;
       bottom: 0;
@@ -423,7 +423,7 @@
       right: 0;
       background: linear-gradient(
         to top,
-        rgba(124,140,248,.5),
+        rgba(124,140,248,.55),
         rgba(124,140,248,.3)
       );
       transition: all .3s;
@@ -444,24 +444,27 @@
       border-radius: 50%;
       animation: none;
     }
-    .legend-glass:hover .legend-glass-fill::before {
-      animation: legend-wave .7s ease-in-out;
+    /* Legend slosh via JS class */
+    .legend-glass-fill.is-sloshing {
+      animation: legend-slosh .7s cubic-bezier(.36,.07,.19,.97);
     }
-    .legend-glass:hover .legend-glass-fill {
-      animation: legend-slosh .7s ease-in-out;
+    .legend-glass-fill.is-sloshing::before {
+      animation: legend-wave .7s cubic-bezier(.36,.07,.19,.97);
     }
     @keyframes legend-wave {
-      0%   { transform: translateX(0) scaleX(1); }
-      30%  { transform: translateX(15%) scaleX(1.1); }
-      60%  { transform: translateX(-10%) scaleX(.95); }
-      100% { transform: translateX(0) scaleX(1); }
+      0%   { transform: translateY(0) scaleX(1); opacity:.45; }
+      25%  { transform: translateY(-3px) scaleX(1.08); opacity:.6; }
+      50%  { transform: translateY(2px) scaleX(.94); opacity:.35; }
+      75%  { transform: translateY(-1px) scaleX(1.04); opacity:.5; }
+      100% { transform: translateY(0) scaleX(1); opacity:.45; }
     }
     @keyframes legend-slosh {
-      0%   { transform: scaleX(1) skewX(0deg); }
-      25%  { transform: scaleX(1.03) skewX(2deg); }
-      50%  { transform: scaleX(.98) skewX(-2deg); }
-      75%  { transform: scaleX(1.02) skewX(1deg); }
-      100% { transform: scaleX(1) skewX(0deg); }
+      0%   { transform: skewX(0deg) scaleX(1); }
+      20%  { transform: skewX(3deg) scaleX(1.02); }
+      40%  { transform: skewX(-2.5deg) scaleX(.98); }
+      60%  { transform: skewX(1.5deg) scaleX(1.01); }
+      80%  { transform: skewX(-.8deg) scaleX(.995); }
+      100% { transform: skewX(0deg) scaleX(1); }
     }
     .legend-glass-pct {
       font-size: .58rem;
@@ -483,6 +486,32 @@
   </script>
 
   <script src="nav.js"></script>
+
+  <script>
+    // Schwapp-Effekt via JS class toggle (zuverlässig, kein CSS-Hover-Bug)
+    function addSlosh(el, cls) {
+      el.classList.remove(cls);
+      void el.offsetWidth; // reflow erzwingen damit Animation neu startet
+      el.classList.add(cls);
+      el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
+    }
+
+    // Kacheln: Hover → Füllung slosht
+    document.querySelectorAll('.landing-card').forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        const fill = card.querySelector('.landing-card-progress-fill');
+        if (fill) addSlosh(fill, 'is-sloshing');
+      });
+    });
+
+    // Legende: Hover → Glas slosht
+    document.querySelectorAll('.legend-glass').forEach(glass => {
+      glass.addEventListener('mouseenter', () => {
+        const fill = glass.querySelector('.legend-glass-fill');
+        if (fill) addSlosh(fill, 'is-sloshing');
+      });
+    });
+  </script>
 
 </body>
 </html>
