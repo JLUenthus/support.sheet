@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260813-0200';
+const CACHE_VERSION = '20260814-0620';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -24,11 +24,19 @@ const ASSETS = [
   './nav.js',
   './sw.js',
   './manifest.json',
+  './assets/install_pwa4.jpg',
+  './assets/install_pwa3.jpg',
+  './assets/install_pwa2.jpg',
+  './assets/install_pwa.jpg',
+  './assets/install_guide5.jpg',
+  './assets/install_guide4.jpg',
+  './assets/install_guide3.jpg',
+  './assets/install_guide2.jpg',
+  './assets/install_guide.jpg',
   './ticketassistent.html',
   './private.html',
   './js/har.js',
   './js/entra.js',
-  './js/tags.js',
   './css/har.css',
   './css/entra.css',
   './data/har-rules.json',
@@ -92,14 +100,6 @@ const ASSETS = [
   './powershell/Get-EventLogCollector-Server.ps1',
   './powershell/Exchange-PreflightCheck.ps1',
   './powershell/Set-BraveDebloat.ps1',
-  './powershell/M365-Setup-AppRegistration.ps1',
-  './powershell/M365-Inventory.ps1',
-  './wizard.html',
-  './css/wizard.css',
-  './js/wizard-engine.js',
-  './js/wizard-renderer.js',
-  './data/wizards/_index.json',
-  './data/wizards/windows-login.json',
 ];
 
 // ── INSTALL: Cache alle eigenen Assets ───────────────────
