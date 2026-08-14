@@ -164,11 +164,24 @@ window.WizardEngine = (function() {
         const rules = h.rules || {};
         ['confirm', 'possible', 'ruleOut'].forEach(ruleType => {
           if (!Array.isArray(rules[ruleType])) return;
-          rules[ruleType].forEach(findingId => {
+          rules[ruleType].forEach(ref => {
+            const findingId = idOf(ref);
             if (!possibleFindingIds.has(findingId)) {
               warnings.push({
                 stepId: null,
                 message: `Hypothese "${h.id}" (${ruleType}) referenziert unbekannte Finding-ID "${findingId}".`,
+              });
+            }
+            // scope ist optional (Phase 9C) – nur "current" wird ausgewertet.
+            // Ein anderer Wert wäre kein Fehler (der Wizard bleibt lauffähig,
+            // der Scope wird von evaluateHypotheses() dann einfach ignoriert),
+            // aber vermutlich ein Tippfehler des Autors -> Warnung, wie bei
+            // der Erreichbarkeits-Prüfung oben.
+            const scope = scopeOf(ref);
+            if (scope != null && scope !== 'current') {
+              warnings.push({
+                stepId: null,
+                message: `Hypothese "${h.id}" (${ruleType}) referenziert "${findingId}" mit unbekanntem scope "${scope}" (unterstützt wird nur "current").`,
               });
             }
           });
@@ -204,7 +217,14 @@ window.WizardEngine = (function() {
   //  - analyzer: das von evaluateAnalyzerStep() ermittelte firstMatchNext,
   //    oder step.skipNext falls der Upload übersprungen wurde
   //  - information/command/solution: wird ignoriert, es gibt nur step.next
-  function submitAnswer(session, wizardDef, value) {
+  //
+  // matchedRule (Phase 8B, optional): die von evaluateAnalyzerStep() im
+  // Aufrufer (wizard.html) tatsächlich ermittelte detect-Regel, direkt
+  // durchgereicht statt sie hier über "rule.next === value" rückwärts zu
+  // suchen (der alte Rückwärts-Lookup war mehrdeutig, sobald zwei Regeln
+  // denselben next-Wert haben). Bleibt für alle Nicht-Analyzer-Aufrufe
+  // (und ältere 3-Argument-Aufrufer) null/undefined – wirkungslos.
+  function submitAnswer(session, wizardDef, value, matchedRule = null) {
     const step = getCurrentStep(session, wizardDef);
     if (!step) {
       return { success: false, session, error: 'STEP_NOT_FOUND', message: 'Aktueller Step wurde nicht gefunden.' };
@@ -298,27 +318,32 @@ window.WizardEngine = (function() {
         }
       }
     } else if (step.type === 'analyzer' && value !== 'skip' && value !== step.skipNext) {
-      // 'value' ist bereits der aufgelöste next-Step (siehe Kommentar oben
-      // an submitAnswer's analyzer-Zweig) – die gefeuerte detect-Regel wird
-      // darüber zurückgesucht. detect-Regeln können optional "severity"
-      // angeben, sonst 'warning' als neutraler Default (etwas wurde
-      // gefunden, aber ob es sich um einen Fehler oder nur einen Hinweis
-      // handelt, ist ohne explizite Angabe nicht bekannt). Die Finding-ID
-      // baut bewusst auf rule.eventIds statt rule.next auf – rule.next
-      // bleibt hier weiterhin (unverändert) der Zuordnungs-Mechanismus,
-      // der Rückwärts-Lookup selbst wird in diesem Schritt nicht angefasst.
-      const matchedRule = (step.detect || []).find(r => r.next === value);
-      if (matchedRule) {
+      // Bevorzugt die von evaluateAnalyzerStep() im Aufrufer tatsächlich
+      // ermittelte und direkt durchgereichte Regel (Phase 8B). Nur wenn
+      // keine matchedRule übergeben wurde (ältere 3-Argument-Aufrufer),
+      // greift der bisherige Rückwärts-Lookup über "rule.next === value"
+      // als Legacy-Fallback – der ist mehrdeutig, sobald zwei Regeln
+      // denselben next-Wert haben, wird aber nur noch verwendet, wenn
+      // gar keine bessere Information vorliegt. Direkter Match hat
+      // Priorität, NICHT umgekehrt.
+      const rule = matchedRule || (step.detect || []).find(r => r.next === value);
+      // detect-Regeln können optional "severity" angeben, sonst 'warning'
+      // als neutraler Default (etwas wurde gefunden, aber ob es sich um
+      // einen Fehler oder nur einen Hinweis handelt, ist ohne explizite
+      // Angabe nicht bekannt). Die Finding-ID baut bewusst auf
+      // rule.eventIds auf, nicht auf rule.next oder einer neuen Rule-ID –
+      // unverändert seit Phase 4.5, keine neue Finding-ID eingeführt.
+      if (rule) {
         if (!session.findings) session.findings = [];
-        const findingId = step.id + ':' + matchedRule.eventIds.join(',');
+        const findingId = step.id + ':' + rule.eventIds.join(',');
         if (!session.findings.some(f => f.id === findingId)) {
           session.findings.push({
             id:        findingId,
             stepId:    step.id,
             stepTitle: step.title || step.id,
             result:    value,
-            label:     matchedRule.finding || matchedRule.label,
-            severity:  matchedRule.severity || 'warning',
+            label:     rule.finding || rule.label,
+            severity:  rule.severity || 'warning',
             timestamp: new Date().toISOString(),
           });
         }
@@ -408,21 +433,46 @@ window.WizardEngine = (function() {
   // auch "pw-expired" gleichzeitig in session.findings stehen – das wird
   // bewusst NICHT bereinigt, priorisiert oder aktualisiert, siehe
   // Kommentar an submitAnswer()'s Dedup-Logik).
+  //
+  // Referenzen in confirm/possible/ruleOut sind entweder ein reiner
+  // String (Finding-ID, unscoped = volle Aussagekraft, altes Verhalten)
+  // oder ein Objekt { id, scope } (Phase 9C). Der einzige unterstützte
+  // scope-Wert ist "current": eine so markierte ruleOut-Referenz sagt
+  // nur etwas über den AKTUELLEN Zustand aus und kann daher keinen
+  // confirm-Treffer widerlegen, der (unscoped oder historisch) eine
+  // Aussage über die Vergangenheit/Ursache trifft – sie verliert dann
+  // gegen jeden nicht ebenso "current"-gescopten confirm-Treffer.
+  function idOf(ref) {
+    return ref && typeof ref === 'object' ? ref.id : ref;
+  }
+
+  function scopeOf(ref) {
+    return ref && typeof ref === 'object' ? (ref.scope || null) : null;
+  }
+
   function evaluateHypotheses(findings, hypothesesDef) {
     const findingIds = new Set((Array.isArray(findings) ? findings : []).map(f => f.id));
 
     return (Array.isArray(hypothesesDef) ? hypothesesDef : []).map(h => {
       const rules = h?.rules || {};
-      const hasConfirm  = Array.isArray(rules.confirm)  && rules.confirm.some(id => findingIds.has(id));
-      const hasRuleOut  = Array.isArray(rules.ruleOut)  && rules.ruleOut.some(id => findingIds.has(id));
-      const hasPossible = Array.isArray(rules.possible) && rules.possible.some(id => findingIds.has(id));
+      const confirmMatches  = Array.isArray(rules.confirm)  ? rules.confirm.filter(ref  => findingIds.has(idOf(ref)))  : [];
+      const possibleMatches = Array.isArray(rules.possible) ? rules.possible.filter(ref => findingIds.has(idOf(ref))) : [];
+      const ruleOutMatches  = Array.isArray(rules.ruleOut)  ? rules.ruleOut.filter(ref  => findingIds.has(idOf(ref)))  : [];
+
+      const hasConfirm  = confirmMatches.length > 0;
+      const hasPossible = possibleMatches.length > 0;
+
+      const strongRuleOut  = ruleOutMatches.filter(ref => scopeOf(ref) !== 'current');
+      const weakRuleOut    = ruleOutMatches.filter(ref => scopeOf(ref) === 'current');
+      const currentConfirm = confirmMatches.filter(ref => scopeOf(ref) === 'current');
 
       let status;
-      if (hasConfirm && hasRuleOut) status = 'conflicting';
-      else if (hasRuleOut)          status = 'ruled-out';
-      else if (hasConfirm)          status = 'confirmed';
-      else if (hasPossible)         status = 'possible';
-      else                          status = 'unknown';
+      if (strongRuleOut.length && hasConfirm) status = 'conflicting';
+      else if (weakRuleOut.length && currentConfirm.length) status = 'conflicting';
+      else if (hasConfirm) status = 'confirmed';
+      else if (strongRuleOut.length || weakRuleOut.length) status = 'ruled-out';
+      else if (hasPossible) status = 'possible';
+      else status = 'unknown';
 
       return { id: h?.id, label: h?.label, status };
     });
