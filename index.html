@@ -198,63 +198,66 @@
 
           <!-- Edge -->
           <div class="setup-card">
-            <div class="setup-card-num">1</div>
-            <div class="setup-card-body">
-              <div class="setup-card-title">
-                <svg width="16" height="16" viewBox="0 0 24 24" style="vertical-align:-3px;margin-right:6px" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="#0078D4"/>
-                  <path d="M18.5 9.5c-.5-3-3-5-6-5-2.5 0-4.5 1.5-5.5 3.5C5.5 9 4 10.5 4 12.5c0 2.5 2 4.5 4.5 4.5H17c1.5 0 2.5-1 2.5-2.5 0-1-.5-2-1.5-2.5.5-.5.5-1 .5-2.5z" fill="#50E6FF"/>
-                  <path d="M12 8c-2 0-3.5 1.5-3.5 3.5S10 15 12 15c1 0 2-.5 2.5-1-1 .5-2.5.5-3.5-.5-1.5-1.5-1-4 1.5-4.5-.5-.5-1-1-2.5-1H12z" fill="white"/>
-                </svg>
-                Microsoft Edge verwenden
+            <button class="setup-card-trigger" onclick="toggleSetup('edge-steps', this)" aria-expanded="false">
+              <div class="setup-card-left">
+                <div class="setup-card-num">1</div>
+                <div class="setup-card-summary">
+                  <div class="setup-card-title">
+                    <svg width="15" height="15" viewBox="0 0 24 24" style="vertical-align:-2px;margin-right:5px" fill="none">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="#0078D4"/>
+                      <path d="M18.5 9.5c-.5-3-3-5-6-5-2.5 0-4.5 1.5-5.5 3.5C5.5 9 4 10.5 4 12.5c0 2.5 2 4.5 4.5 4.5H17c1.5 0 2.5-1 2.5-2.5 0-1-.5-2-1.5-2.5.5-.5.5-1 .5-2.5z" fill="#50E6FF"/>
+                      <path d="M12 8c-2 0-3.5 1.5-3.5 3.5S10 15 12 15c1 0 2-.5 2.5-1-1 .5-2.5.5-3.5-.5-1.5-1.5-1-4 1.5-4.5-.5-.5-1-1-2.5-1H12z" fill="white"/>
+                    </svg>
+                    Microsoft Edge verwenden
+                  </div>
+                  <div class="setup-card-desc">Vollen Dateisystemzugriff und PWA-Installation.</div>
+                </div>
               </div>
-              <div class="setup-card-desc">
+              <span class="setup-chevron">▾</span>
+            </button>
+            <div class="setup-card-body" id="edge-steps" hidden>
+              <p class="setup-body-text">
                 Edge ist auf Windows vorinstalliert und ermöglicht vollen
                 Dateisystemzugriff für guide.sheet sowie die PWA-Installation.
                 Andere Browser sind für diese Features zu restriktiv.
-              </div>
-              <div class="setup-card-hint">
-                ✓ Bereits auf jedem Windows-System vorhanden
-              </div>
+              </p>
+              <div class="setup-card-hint">✓ Bereits auf jedem Windows-System vorhanden</div>
             </div>
           </div>
 
           <!-- PWA -->
           <div class="setup-card">
-            <div class="setup-card-num">2</div>
-            <div class="setup-card-body">
-              <div class="setup-card-title">Als App installieren (PWA)</div>
-              <div class="setup-card-desc">
-                support.sheet als Progressive Web App installieren –
-                eigenes Fenster, Taskleisten-Icon, offline verfügbar.
+            <button class="setup-card-trigger" onclick="toggleSetup('pwa-steps', this)" aria-expanded="false">
+              <div class="setup-card-left">
+                <div class="setup-card-num">2</div>
+                <div class="setup-card-summary">
+                  <div class="setup-card-title">Als App installieren (PWA)</div>
+                  <div class="setup-card-desc">Eigenes Fenster, Taskleisten-Icon, offline verfügbar.</div>
+                </div>
               </div>
-              <a href="https://jluenthus.github.io/support.sheet/tools.html"
-                 class="setup-card-link">In tools.html installieren →</a>
-              <button class="setup-expand-btn"
-                      onclick="toggleSetup('pwa-steps', this)">
-                Anleitung anzeigen ▾
-              </button>
-            </div>
-            <div class="setup-steps" id="pwa-steps" hidden>
+              <span class="setup-chevron">▾</span>
+            </button>
+            <div class="setup-card-body" id="pwa-steps" hidden>
+              <p class="setup-body-text">
+                support.sheet als Progressive Web App installieren.
+                <a href="https://jluenthus.github.io/support.sheet/tools.html"
+                   class="setup-card-link">In tools.html installieren →</a>
+              </p>
               <div class="setup-steps-grid">
                 <div class="setup-step-item">
-                  <img src="assets/install_pwa.jpg"
-                       alt="PWA – Schritt 1" class="setup-step-img" loading="lazy">
+                  <img src="assets/install_pwa.jpg" alt="PWA – Schritt 1" class="setup-step-img" loading="lazy">
                   <p class="setup-step-caption">In tools.html auf "Als App installieren" klicken.</p>
                 </div>
                 <div class="setup-step-item">
-                  <img src="assets/install_pwa2.jpg"
-                       alt="PWA – Schritt 2" class="setup-step-img" loading="lazy">
+                  <img src="assets/install_pwa2.jpg" alt="PWA – Schritt 2" class="setup-step-img" loading="lazy">
                   <p class="setup-step-caption">Installationsdialog bestätigen.</p>
                 </div>
                 <div class="setup-step-item">
-                  <img src="assets/install_pwa3.jpg"
-                       alt="PWA – Schritt 3" class="setup-step-img" loading="lazy">
-                  <p class="setup-step-caption">App in Taskleiste und Startmenü verfügbar.</p>
+                  <img src="assets/install_pwa3.jpg" alt="PWA – Schritt 3" class="setup-step-img" loading="lazy">
+                  <p class="setup-step-caption">App-Optionen wählen und bestätigen.</p>
                 </div>
                 <div class="setup-step-item">
-                  <img src="assets/install_pwa4.jpg"
-                       alt="PWA – Schritt 4" class="setup-step-img" loading="lazy">
+                  <img src="assets/install_pwa4.jpg" alt="PWA – Schritt 4" class="setup-step-img" loading="lazy">
                   <p class="setup-step-caption">support.sheet läuft als eigenständige App.</p>
                 </div>
               </div>
@@ -263,45 +266,41 @@
 
           <!-- guide.sheet -->
           <div class="setup-card">
-            <div class="setup-card-num">3</div>
-            <div class="setup-card-body">
-              <div class="setup-card-title">guide.sheet einrichten</div>
-              <div class="setup-card-desc">
-                Lokalen Ordner verbinden für persönliche Guides.
-                Benötigt Edge für den Dateisystemzugriff.
+            <button class="setup-card-trigger" onclick="toggleSetup('guide-steps', this)" aria-expanded="false">
+              <div class="setup-card-left">
+                <div class="setup-card-num">3</div>
+                <div class="setup-card-summary">
+                  <div class="setup-card-title">guide.sheet einrichten</div>
+                  <div class="setup-card-desc">Lokalen Ordner verbinden für persönliche Guides.</div>
+                </div>
               </div>
-              <a href="https://jluenthus.github.io/support.sheet/guides.html"
-                 class="setup-card-link">guide.sheet öffnen →</a>
-              <button class="setup-expand-btn"
-                      onclick="toggleSetup('guide-steps', this)">
-                Anleitung anzeigen ▾
-              </button>
-            </div>
-            <div class="setup-steps" id="guide-steps" hidden>
+              <span class="setup-chevron">▾</span>
+            </button>
+            <div class="setup-card-body" id="guide-steps" hidden>
+              <p class="setup-body-text">
+                Lokalen Ordner verbinden für persönliche Guides. Benötigt Edge.
+                <a href="https://jluenthus.github.io/support.sheet/guides.html"
+                   class="setup-card-link">guide.sheet öffnen →</a>
+              </p>
               <div class="setup-steps-grid">
                 <div class="setup-step-item">
-                  <img src="assets/install_guide.jpg"
-                       alt="guide.sheet – Schritt 1" class="setup-step-img" loading="lazy">
+                  <img src="assets/install_guide.jpg" alt="guide.sheet – Schritt 1" class="setup-step-img" loading="lazy">
                   <p class="setup-step-caption">Auf "Ordner auswählen" klicken.</p>
                 </div>
                 <div class="setup-step-item">
-                  <img src="assets/install_guide2.jpg"
-                       alt="guide.sheet – Schritt 2" class="setup-step-img" loading="lazy">
+                  <img src="assets/install_guide2.jpg" alt="guide.sheet – Schritt 2" class="setup-step-img" loading="lazy">
                   <p class="setup-step-caption">Ordner auswählen, z.B. C:\Temp\Guide.sheet\data.</p>
                 </div>
                 <div class="setup-step-item">
-                  <img src="assets/install_guide3.jpg"
-                       alt="guide.sheet – Schritt 3" class="setup-step-img" loading="lazy">
+                  <img src="assets/install_guide3.jpg" alt="guide.sheet – Schritt 3" class="setup-step-img" loading="lazy">
                   <p class="setup-step-caption">Dateizugriff mit "Zulassen" bestätigen.</p>
                 </div>
                 <div class="setup-step-item">
-                  <img src="assets/install_guide4.jpg"
-                       alt="guide.sheet – Schritt 4" class="setup-step-img" loading="lazy">
+                  <img src="assets/install_guide4.jpg" alt="guide.sheet – Schritt 4" class="setup-step-img" loading="lazy">
                   <p class="setup-step-caption">"Änderungen speichern" bestätigen.</p>
                 </div>
                 <div class="setup-step-item">
-                  <img src="assets/install_guide5.jpg"
-                       alt="guide.sheet – Schritt 5" class="setup-step-img" loading="lazy">
+                  <img src="assets/install_guide5.jpg" alt="guide.sheet – Schritt 5" class="setup-step-img" loading="lazy">
                   <p class="setup-step-caption">Ordner verbunden – Guides werden geladen.</p>
                 </div>
               </div>
@@ -517,87 +516,109 @@
     .setup-subtitle {
       font-size: .78rem;
       color: var(--dim);
-      margin: 0 0 20px;
+      margin: 0 0 16px;
     }
-    .setup-cards { display: flex; flex-direction: column; gap: 12px; }
+    .setup-cards { display: flex; flex-direction: column; gap: 8px; }
+
+    /* Accordion Card */
     .setup-card {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: var(--r);
-      padding: 18px 20px;
+      overflow: hidden;
+      transition: border-color .15s;
+    }
+    .setup-card:hover { border-color: var(--border2); }
+
+    /* Trigger – die klickbare Kopfzeile */
+    .setup-card-trigger {
+      width: 100%;
       display: flex;
-      gap: 16px;
-      align-items: flex-start;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-ui);
+      text-align: left;
+      gap: 12px;
+    }
+    .setup-card-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      min-width: 0;
     }
     .setup-card-num {
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       background: rgba(124,140,248,.12);
       border: 1px solid rgba(124,140,248,.25);
       color: var(--accent);
-      font-size: .78rem;
+      font-size: .72rem;
       font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      margin-top: 2px;
     }
-    .setup-card-body { flex: 1; min-width: 0; }
+    .setup-card-summary { flex: 1; min-width: 0; }
     .setup-card-title {
-      font-size: .88rem;
+      font-size: .85rem;
       font-weight: 700;
       color: var(--text);
-      margin-bottom: 5px;
+      margin-bottom: 2px;
     }
     .setup-card-desc {
+      font-size: .74rem;
+      color: var(--dim);
+    }
+    .setup-chevron {
+      font-size: .65rem;
+      color: var(--dim);
+      flex-shrink: 0;
+      transition: transform .2s;
+    }
+    .setup-card-trigger[aria-expanded="true"] .setup-chevron {
+      transform: rotate(180deg);
+    }
+
+    /* Body – ausgeklappt */
+    .setup-card-body {
+      padding: 0 18px 16px 58px; /* 58px = num-width + gap */
+      border-top: 1px solid var(--border);
+    }
+    .setup-card-body[hidden] { display: none; }
+    .setup-body-text {
       font-size: .78rem;
       color: var(--muted);
       line-height: 1.5;
-      margin-bottom: 10px;
+      margin: 12px 0 14px;
     }
     .setup-card-hint {
       font-size: .72rem;
       color: var(--green);
       font-weight: 600;
+      margin-top: 10px;
     }
     .setup-card-link {
       font-size: .75rem;
       font-weight: 600;
       color: var(--accent);
       text-decoration: none;
-      display: inline-block;
-      margin-bottom: 8px;
+      margin-left: 6px;
     }
     .setup-card-link:hover { text-decoration: underline; }
-    .setup-expand-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: .75rem;
-      font-weight: 600;
-      color: var(--muted);
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 4px 10px;
-      cursor: pointer;
-      font-family: var(--font-ui);
-      transition: all .15s;
-      margin-top: 2px;
-    }
-    .setup-expand-btn:hover { color: var(--text); border-color: var(--border2); }
-    .setup-expand-btn.open { color: var(--accent); border-color: rgba(124,140,248,.3); }
-    .setup-steps {
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
-    }
+
+    /* Bilder-Grid */
     .setup-steps-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       gap: 12px;
+      margin-top: 4px;
     }
     .setup-step-item { display: flex; flex-direction: column; gap: 6px; }
     .setup-step-img {
@@ -609,16 +630,17 @@
       cursor: zoom-in;
     }
     .setup-step-img:hover {
-      transform: scale(1.03);
+      transform: scale(1.04);
       border-color: var(--border2);
       box-shadow: 0 8px 24px rgba(0,0,0,.3);
     }
     .setup-step-caption {
-      font-size: .7rem;
+      font-size: .68rem;
       color: var(--dim);
       line-height: 1.4;
       margin: 0;
     }
+
     /* Lightbox */
     .setup-lightbox {
       position: fixed;
@@ -632,10 +654,7 @@
       backdrop-filter: blur(6px);
       animation: lb-in .15s ease;
     }
-    @keyframes lb-in {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
+    @keyframes lb-in { from { opacity:0; } to { opacity:1; } }
     .setup-lightbox img {
       max-width: 90vw;
       max-height: 90vh;
@@ -747,16 +766,13 @@
   <script>
     // Füllung animiert via CSS :hover – kein JS nötig
 
-    // Setup: Anleitung auf/zuklappen
+    // Setup Accordion
     function toggleSetup(id, btn) {
       const el = document.getElementById(id);
       if (!el) return;
       const isOpen = !el.hidden;
       el.hidden = isOpen;
-      if (btn) {
-        btn.textContent = isOpen ? 'Anleitung anzeigen ▾' : 'Anleitung ausblenden ▴';
-        btn.classList.toggle('open', !isOpen);
-      }
+      btn.setAttribute('aria-expanded', String(!isOpen));
     }
 
     // Lightbox für Setup-Bilder
