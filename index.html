@@ -335,6 +335,10 @@
       transform: translateY(-5px);
       opacity: .17;
     }
+    /* Balken bleibt unten – Gegengewicht zum Hover-Lift */
+    .landing-card:hover .landing-card-bar {
+      transform: translateY(5px);
+    }
 
     /* ── Horizontaler Fortschrittsbalken ──────────────── */
     .landing-card-bar {
@@ -344,6 +348,7 @@
       margin: 10px -20px -20px;
       position: relative;
       overflow: hidden;
+      transition: transform .35s cubic-bezier(.22,.68,0,1.2);
     }
     .landing-card-bar-fill {
       height: 100%;
@@ -395,7 +400,7 @@
     .legend-glass {
       width: 36px;
       height: 48px;
-      background: var(--panel);
+      background: var(--bg);
       border: 1px solid var(--border2);
       border-radius: 4px 4px 6px 6px;
       position: relative;
@@ -411,13 +416,10 @@
       right: 0;
       background: linear-gradient(
         to top,
-        rgba(124,140,248,.55),
-        rgba(124,140,248,.3)
+        rgba(124,140,248,.75),
+        rgba(124,140,248,.45)
       );
       transition: all .3s;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
       overflow: hidden;
     }
     /* Welle oben auf der Füllung */
@@ -452,11 +454,14 @@
     .legend-glass-pct {
       font-size: .58rem;
       font-weight: 700;
-      color: rgba(255,255,255,.8);
-      padding-top: 3px;
-      position: relative;
+      color: rgba(255,255,255,.9);
+      position: absolute;
+      bottom: 2px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      text-shadow: 0 1px 2px rgba(0,0,0,.4);
       z-index: 1;
-      text-shadow: 0 1px 2px rgba(0,0,0,.3);
     }
   </style>
 
