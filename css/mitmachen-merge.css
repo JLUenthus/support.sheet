@@ -74,6 +74,29 @@
   font-family: var(--font-ui);
   font-size: .76rem;
   color: var(--muted);
+  cursor: pointer;
+}
+
+/* Nativer "Datei auswählen"-Button auf denselben Akzent-Pill-Look wie
+   in css/mitmachen.css gebracht, statt grauem OS-Standard-Button. */
+.mmg-upload-field input[type="file"]::file-selector-button,
+.mmg-upload-field input[type="file"]::-webkit-file-upload-button {
+  margin-right: 10px;
+  padding: 6px 14px;
+  border-radius: 7px;
+  border: 1px solid rgba(167, 139, 250, .4);
+  background: rgba(167, 139, 250, .12);
+  color: var(--accent2);
+  font-family: var(--font-ui);
+  font-size: .74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.mmg-upload-field input[type="file"]:hover::file-selector-button,
+.mmg-upload-field input[type="file"]:hover::-webkit-file-upload-button {
+  background: rgba(167, 139, 250, .22);
 }
 
 .mmg-upload-field-status {

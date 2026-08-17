@@ -110,13 +110,46 @@ window.GpoAnalyzer = (function() {
   function analyzeHygiene(model, gpo, rules) {
     const findings = [];
 
+    // Ein deaktivierter Link wendet die GPO nirgends an - fachlich
+    // gleichbedeutend mit "keine Verknuepfung" fuer diese Regel (siehe
+    // .md/todo/GPO_Analyzer_Pre_Real_Data_Hardening.md, Abschnitt 3:
+    // "Analyzer muss deaktivierte Links beruecksichtigen"). Beide Faelle
+    // ("gar kein Link" vs. "Link vorhanden, aber deaktiviert") sind aber
+    // beim GPMC-Abgleich fachlich unterschiedlich zu verifizieren - ein
+    // Techniker soll nicht denken, das Tool haette sich geirrt, wenn er
+    // einen (deaktivierten) Link vorfindet. Deshalb wird unterschieden
+    // und im detail-Objekt an den Renderer weitergegeben (siehe
+    // buildHygieneCard() in gpo-renderer.js).
+    // Fehlt links.json komplett, waere "kein Link gefunden" fuer JEDE GPO
+    // wahr und wuerde die Hygiene-Liste mit lauter falschen "unverknuepft"-
+    // Befunden fluten - das ist derselbe Fehler wie bei der Uebersichtszahl
+    // "Unverknuepfte GPOs" (siehe unlinkedGpoCount() in gpo-renderer.js),
+    // nur auf Finding-Ebene: eine fehlende Datei bedeutet "unbekannt", nicht
+    // "kein Link" (Abschnitt 8). Die Regel wird deshalb komplett
+    // uebersprungen statt falsche Findings zu erzeugen.
     const noLinksRule = findRule(rules, 'GPO_NO_LINKS');
-    if (noLinksRule && !model.links.some(l => l.gpoId === gpo.id)) {
-      findings.push(buildHygieneFinding(noLinksRule, gpo));
+    if (noLinksRule && !(model.dataQuality && model.dataQuality.linksFileMissing)) {
+      const gpoLinks = model.links.filter(l => l.gpoId === gpo.id);
+      const hasEnabledLink = gpoLinks.some(l => l.linkEnabled);
+      if (!hasEnabledLink) {
+        const detail = gpoLinks.length === 0
+          ? { linkStatus: 'none' }
+          : { linkStatus: 'disabled', disabledLinkCount: gpoLinks.length };
+        findings.push(buildHygieneFinding(noLinksRule, gpo, detail));
+      }
     }
 
+    // "Keine Einstellungen" ist nur eine sichere Aussage, wenn der Report
+    // dieser GPO auch tatsaechlich vollstaendig gelesen werden konnte -
+    // sonst ist die leere settings-Liste nur eine fehlende Datengrundlage,
+    // kein fachlicher Befund (siehe .md/todo/GPO_Analyzer_Pre_Real_Data_
+    // Hardening.md, Abschnitt 5/7/10: "Unbekannt ist nicht gleich Nein").
+    // Der analysierbare Status selbst wird separat im Snapshot-Integritaets-
+    // Bereich angezeigt (renderIntegrityPanel() in gpo-renderer.js), nicht
+    // als Finding mit Severity - Datenqualitaet und Finding-Severity werden
+    // bewusst nicht vermischt.
     const noSettingsRule = findRule(rules, 'GPO_NO_SETTINGS');
-    if (noSettingsRule && (gpo.settings || []).length === 0) {
+    if (noSettingsRule && gpo.parseStatus === 'complete' && (gpo.settings || []).length === 0) {
       findings.push(buildHygieneFinding(noSettingsRule, gpo));
     }
 
@@ -137,13 +170,18 @@ window.GpoAnalyzer = (function() {
     const hasComputerSettings = (gpo.settings || []).some(s => s.scope === 'Computer');
     const hasUserSettings = (gpo.settings || []).some(s => s.scope === 'User');
 
+    // Beide DISABLED_ONLY-Regeln behaupten "der jeweils andere Scope hat
+    // keine Einstellungen" - bei einem nur teilweise gelesenen Report kann
+    // das schlicht heissen, dass genau dieser Scope nicht ausgewertet
+    // werden konnte, nicht dass er wirklich leer ist. Deshalb ebenfalls nur
+    // bei parseStatus 'complete' auswerten.
     const computerDisabledRule = findRule(rules, 'GPO_COMPUTER_DISABLED_ONLY');
-    if (computerDisabledRule && !gpo.computerEnabled && hasComputerSettings && !hasUserSettings) {
+    if (computerDisabledRule && gpo.parseStatus === 'complete' && !gpo.computerEnabled && hasComputerSettings && !hasUserSettings) {
       findings.push(buildHygieneFinding(computerDisabledRule, gpo));
     }
 
     const userDisabledRule = findRule(rules, 'GPO_USER_DISABLED_ONLY');
-    if (userDisabledRule && !gpo.userEnabled && hasUserSettings && !hasComputerSettings) {
+    if (userDisabledRule && gpo.parseStatus === 'complete' && !gpo.userEnabled && hasUserSettings && !hasComputerSettings) {
       findings.push(buildHygieneFinding(userDisabledRule, gpo));
     }
 

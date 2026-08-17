@@ -44,6 +44,7 @@ window.GpoRenderer = (function() {
   let _model = null;
   let _findings = [];
   let _diagnoseCommands = [];
+  let _missingFiles = [];
   const _state = { conflictQuery: '', redundantQuery: '' };
 
   let _diagnoseCommandsPromise = null;
@@ -61,11 +62,13 @@ window.GpoRenderer = (function() {
     _model = model;
     _findings = findings || [];
     _diagnoseCommands = await loadDiagnoseCommands();
+    _missingFiles = missingFiles || [];
     _state.conflictQuery = '';
     _state.redundantQuery = '';
     resetSearchInputs();
 
-    renderMissingHint(missingFiles || []);
+    renderMissingHint(_missingFiles);
+    renderIntegrityPanel();
     renderNumGrid();
     renderAmpelRow();
     renderConflictList();
@@ -141,12 +144,64 @@ window.GpoRenderer = (function() {
     hint.appendChild(list);
   }
 
+  // ── Snapshot-Integritaet ────────────────────────────────────
+  // Eigenstaendiger Status ueber die Belastbarkeit der Analyse (Konzept/
+  // .md/todo/GPO_Analyzer_Pre_Real_Data_Hardening.md, Abschnitt 9/10) -
+  // getrennt von renderMissingHint() (welche DATEIEN im ZIP fehlen) und
+  // bewusst KEIN Finding mit Severity, sondern reine Datenqualitaets-
+  // Aussage ueber einzelne GPO-Reports.
+  function renderIntegrityPanel() {
+    const panel = document.getElementById('gpo-integrity-panel');
+    if (!panel) return;
+    panel.replaceChildren();
+
+    const failed = _model.gpos.filter(g => g.parseStatus === 'failed');
+    const partial = _model.gpos.filter(g => g.parseStatus === 'partial');
+
+    if (!failed.length && !partial.length) {
+      panel.className = 'gpo-integrity-panel gpo-integrity-panel--ok';
+      panel.textContent = '✓ Alle GPO-Reports vollständig gelesen.';
+      return;
+    }
+
+    panel.className = 'gpo-integrity-panel gpo-integrity-panel--warn';
+
+    const title = document.createElement('div');
+    title.className = 'gpo-integrity-title';
+    title.textContent = '⚠ Snapshot teilweise unvollständig';
+    panel.appendChild(title);
+
+    const list = document.createElement('ul');
+    list.className = 'gpo-integrity-list';
+    if (failed.length) {
+      const li = document.createElement('li');
+      li.textContent = failed.length + ' GPO-Report(s) konnten nicht gelesen werden: '
+        + failed.map(g => g.name).join(', ');
+      list.appendChild(li);
+    }
+    if (partial.length) {
+      const li = document.createElement('li');
+      li.textContent = partial.length + ' GPO(s) nur teilweise auswertbar: '
+        + partial.map(g => g.name).join(', ');
+      list.appendChild(li);
+    }
+    panel.appendChild(list);
+  }
+
   // ── Zahlen-Grid + Ampel-Zeile ──────────────────────────────
   function countByType(type) {
     return _findings.filter(f => f.type === type).length;
   }
 
+  // null bedeutet "nicht bestimmbar" (links.json fehlte im ZIP) statt einer
+  // falschen Zahl - siehe .md/todo/GPO_Analyzer_Pre_Real_Data_Hardening.md,
+  // Abschnitt 8: eine fehlende Links-Datei darf nicht als "alle GPOs
+  // unverknuepft" interpretiert werden. Liest dataQuality.linksFileMissing
+  // aus dem Modell (gpo-parser.js) statt eigenstaendig aus _missingFiles
+  // abzuleiten - dieselbe Quelle wie der Analyzer (GPO_NO_LINKS), damit
+  // Uebersichtszahl und Findings nicht auseinanderlaufen koennen.
   function unlinkedGpoCount() {
+    if (_model.dataQuality && _model.dataQuality.linksFileMissing) return null;
     const linkedGpoIds = new Set(_model.links.map(l => l.gpoId));
     return _model.gpos.filter(g => !linkedGpoIds.has(g.id)).length;
   }
@@ -176,7 +231,9 @@ window.GpoRenderer = (function() {
       item.className = 'gpo-num-item';
       const val = document.createElement('div');
       val.className = 'gpo-num-value';
-      val.textContent = value;
+      // null = "nicht bestimmbar" (siehe unlinkedGpoCount()) statt einer
+      // aus fehlenden Daten erratenen Zahl.
+      val.textContent = value === null ? '–' : value;
       const lbl = document.createElement('div');
       lbl.className = 'gpo-num-label';
       lbl.textContent = label;
@@ -242,7 +299,6 @@ window.GpoRenderer = (function() {
     }
 
     finding.entries.forEach(entry => {
-      const gpo = gpoById(entry.gpoId);
       const links = linksForGpo(entry.gpoId);
 
       const gpoDetail = document.createElement('div');
@@ -250,17 +306,22 @@ window.GpoRenderer = (function() {
 
       const gpoTitle = document.createElement('div');
       gpoTitle.className = 'gpo-detail-gpo-title';
-      gpoTitle.textContent = entry.gpoName
-        + (gpo && gpo.enforced ? ' 🔒 enforced' : '')
-        + (gpo && gpo.blockInheritance ? ' 🚫 block inheritance' : '');
+      gpoTitle.textContent = entry.gpoName;
       gpoDetail.appendChild(gpoTitle);
 
       if (links.length) {
+        // enforced/blockInheritance je Link statt eines GPO-weiten Badges:
+        // dieselbe GPO kann an einem Ziel enforced sein und an einem
+        // anderen nicht (siehe .md/todo/GPO_Analyzer_Pre_Real_Data_
+        // Hardening.md, Abschnitt 4/5) - ein GPO-Level-Badge wuerde das
+        // falsch als globale Eigenschaft darstellen.
         const linkList = document.createElement('ul');
         linkList.className = 'gpo-detail-link-list';
         links.forEach(l => {
           const li = document.createElement('li');
-          li.textContent = '[' + l.targetType + '] ' + l.target + ' (Reihenfolge ' + l.order + ')';
+          li.textContent = '[' + l.targetType + '] ' + l.target + ' (Reihenfolge ' + l.order + ')'
+            + (l.enforced ? ' 🔒 enforced' : '')
+            + (l.blockInheritance ? ' 🚫 block inheritance' : '');
           linkList.appendChild(li);
         });
         gpoDetail.appendChild(linkList);
@@ -550,6 +611,23 @@ window.GpoRenderer = (function() {
       body.appendChild(detailRow);
     }
 
+    // GPO_NO_LINKS: "gar kein Link" und "Link vorhanden, aber deaktiviert"
+    // sehen sonst identisch aus (beide nutzen dieselbe rule.description) -
+    // beim GPMC-Abgleich wuerde ein Techniker einen vorhandenen (nur
+    // deaktivierten) Link sonst als Diskrepanz zum Tool missverstehen.
+    if (finding.detail && finding.detail.linkStatus === 'disabled') {
+      const detailRow = document.createElement('div');
+      detailRow.className = 'gpo-detail-row';
+      const count = finding.detail.disabledLinkCount || 0;
+      detailRow.textContent = 'Verknüpfung vorhanden, aber deaktiviert (' + count + (count === 1 ? ' Link).' : ' Links).');
+      body.appendChild(detailRow);
+    } else if (finding.detail && finding.detail.linkStatus === 'none') {
+      const detailRow = document.createElement('div');
+      detailRow.className = 'gpo-detail-row';
+      detailRow.textContent = 'Keine Verknüpfung vorhanden.';
+      body.appendChild(detailRow);
+    }
+
     const recSection = buildRecommendationSection(rule);
     if (recSection) body.appendChild(recSection);
 
@@ -831,6 +909,21 @@ window.GpoRenderer = (function() {
       row.textContent = label + ': ' + value;
       wrap.appendChild(row);
     });
+
+    // Datenqualitaets-Hinweis direkt an der GPO, nicht als Finding - siehe
+    // renderIntegrityPanel() fuer die Gesamtuebersicht ueber alle GPOs.
+    if (gpo.parseStatus === 'failed') {
+      const row = document.createElement('div');
+      row.className = 'gpo-detail-row gpo-detail-row--warn';
+      row.textContent = '⚠ Report nicht lesbar: ' + (gpo.reportError || 'unbekannter Fehler');
+      wrap.appendChild(row);
+    } else if (gpo.parseStatus === 'partial') {
+      const row = document.createElement('div');
+      row.className = 'gpo-detail-row gpo-detail-row--warn';
+      row.textContent = '⚠ Nur teilweise auswertbar: ' + (gpo.parseWarnings || []).join(' ');
+      wrap.appendChild(row);
+    }
+
     return wrap;
   }
 

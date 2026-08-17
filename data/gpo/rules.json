@@ -7,7 +7,7 @@
       "name": "GPO ohne Verknüpfung",
       "category": "hygiene",
       "severity": "warning",
-      "description": "Diese GPO ist an keinem Ziel (Domain, Site oder OU) verlinkt und wird dadurch aktuell nirgends angewendet.",
+      "description": "Diese GPO wird aktuell an keinem Ziel wirksam angewendet: entweder besteht keine Verknüpfung, oder alle vorhandenen Verknüpfungen sind deaktiviert.",
       "recommendations": [
         { "text": "Prüfen, ob diese GPO noch benötigt wird." }
       ]

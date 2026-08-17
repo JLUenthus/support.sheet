@@ -222,6 +222,31 @@
   text-transform: none;
   letter-spacing: normal;
   font-weight: 400;
+  cursor: pointer;
+}
+
+/* Der native "Datei auswählen"-Button des Browsers sprengt sonst das
+   dunkle Design (graue OS-Buttons) - hier auf denselben Akzent-Pill-Look
+   wie .mm-action-btn gebracht. ::-webkit-file-upload-button zusaetzlich
+   fuer aeltere Safari/Chromium-Versionen ohne ::file-selector-button. */
+.mm-upload-field input[type="file"]::file-selector-button,
+.mm-upload-field input[type="file"]::-webkit-file-upload-button {
+  margin-right: 10px;
+  padding: 6px 14px;
+  border-radius: 7px;
+  border: 1px solid rgba(167, 139, 250, .4);
+  background: rgba(167, 139, 250, .12);
+  color: var(--accent2);
+  font-family: var(--font-ui);
+  font-size: .74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.mm-upload-field input[type="file"]:hover::file-selector-button,
+.mm-upload-field input[type="file"]:hover::-webkit-file-upload-button {
+  background: rgba(167, 139, 250, .22);
 }
 
 .mm-upload-field-error {
@@ -461,6 +486,21 @@
 }
 
 .mm-row-guide-btn:hover { color: var(--text); border-color: var(--border2); background: var(--panel2); }
+
+.mm-row-guide-edit-btn {
+  font-size: .7rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.mm-row-guide-edit-btn:hover { color: var(--text); border-color: var(--border2); background: var(--panel2); }
 
 .mm-empty {
   text-align: center;
@@ -1034,6 +1074,154 @@ select.mm-field-input { cursor: pointer; }
   flex-wrap: wrap;
 }
 
+/* ── Typ-Auswahl ───────────────────────────────────────────── */
+.mm-type-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.mm-type-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-ui);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: all .15s;
+}
+
+.mm-type-card:hover  { border-color: var(--border2); background: var(--panel2); }
+.mm-type-card.active { border-color: rgba(167, 139, 250, .5); background: rgba(167, 139, 250, .08); }
+.mm-type-icon  { font-size: 1.4rem; margin-bottom: 4px; }
+.mm-type-label { font-size: .88rem; font-weight: 700; color: var(--text); }
+.mm-type-desc  { font-size: .73rem; color: var(--muted); }
+
+.mm-type-hint {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--dim);
+  font-size: .85rem;
+}
+
+/* ── Skript-/Feedback-Formulare ──────────────────────────────
+   .mm-form-section ist ein reiner Sichtbarkeits-Wrapper je
+   Typ-Auswahl (Befehl/Skript/Feedback); da hier display:flex
+   gesetzt wird, braucht es wie ueberall sonst auf dieser Seite
+   die explizite [hidden]-Override (siehe .mm-status[hidden] etc.). -->
+.mm-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mm-form-section[hidden] { display: none; }
+
+.mm-submit-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 24px;
+  align-items: start;
+}
+
+.mm-submit-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mm-submit-right { position: sticky; top: 20px; }
+
+.mm-preview-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.mm-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mm-preview-title {
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.mm-preview-copy-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border2);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  transition: all .15s;
+}
+
+.mm-preview-copy-btn:hover { color: var(--text); }
+
+.mm-preview-code {
+  margin: 0;
+  padding: 14px;
+  font-family: var(--font-mono);
+  font-size: .73rem;
+  color: var(--accent2);
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  min-height: 120px;
+}
+
+.mm-feedback-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.mm-feedback-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-ui);
+  transition: all .15s;
+}
+
+.mm-feedback-card:hover  { border-color: var(--border2); background: var(--panel2); }
+.mm-feedback-card.active { border-color: rgba(167, 139, 250, .5); background: rgba(167, 139, 250, .08); }
+.mm-feedback-icon  { font-size: 1.5rem; margin-bottom: 8px; }
+.mm-feedback-title { font-size: .88rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.mm-feedback-desc  { font-size: .75rem; color: var(--muted); }
+
+.mm-feedback-form-wrap {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mm-feedback-form-wrap[hidden] { display: none; }
+
 /* ── Responsive ────────────────────────────────────────────── */
 @media (max-width: 720px) {
   .mm-row {
@@ -1054,6 +1242,10 @@ select.mm-field-input { cursor: pointer; }
 
   .mm-modal-body { grid-template-columns: 1fr; }
   .mm-cf-right { position: static; }
+
+  .mm-type-row, .mm-feedback-grid { grid-template-columns: 1fr; }
+  .mm-submit-grid { grid-template-columns: 1fr; }
+  .mm-submit-right { position: static; }
 
   .mm-gf-body .ge-editor-wrap { flex-direction: column; }
 }

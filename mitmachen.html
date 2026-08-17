@@ -56,6 +56,34 @@
   <main>
     <div class="mm-page">
 
+      <!-- ── TYP-AUSWAHL ──────────────────────────────────────
+           Landet man auf mitmachen.html, soll erst diese Auswahl
+           erscheinen und NICHTS automatisch geladen werden – der
+           riesige Befehls-Katalog (mm-form-befehl) wird erst beim
+           ersten Klick auf "Befehl einreichen" per init() geladen. -->
+      <div class="mm-type-row" id="mm-type-row">
+        <button class="mm-type-card" id="mm-type-befehl" type="button">
+          <span class="mm-type-icon">⌨️</span>
+          <span class="mm-type-label">Befehl einreichen</span>
+          <span class="mm-type-desc">CMD, PowerShell, MSC-Konsole</span>
+        </button>
+        <button class="mm-type-card" id="mm-type-skript" type="button">
+          <span class="mm-type-icon">📜</span>
+          <span class="mm-type-label">Skript einreichen</span>
+          <span class="mm-type-desc">Fertiges .ps1 Script</span>
+        </button>
+        <button class="mm-type-card" id="mm-type-feedback" type="button">
+          <span class="mm-type-icon">💬</span>
+          <span class="mm-type-label">Feedback & Fehler</span>
+          <span class="mm-type-desc">Bug, Tippfehler, Idee</span>
+        </button>
+      </div>
+
+      <div class="mm-type-hint" id="mm-type-hint">👆 Wähle oben aus, was du einreichen möchtest.</div>
+
+      <!-- ── FORM: BEFEHL EINREICHEN ─────────────────────────── -->
+      <div class="mm-form-section" id="mm-form-befehl" hidden>
+
       <!-- ── STATUS / LADEN ────────────────────────────────── -->
       <div class="mm-status" id="mm-status">
         <div class="mm-status-spinner"></div>
@@ -144,6 +172,121 @@
         <div class="mm-list" id="mm-list"></div>
         <div class="mm-empty" id="mm-empty" hidden>Keine Befehle gefunden.</div>
 
+      </div>
+
+      </div>
+
+      <!-- ── FORM: SKRIPT EINREICHEN ──────────────────────────
+           Unveraendert vom alten mitmachen.html uebernommen (reines
+           Mailto-Formular, kein pendingChanges/Export-Anschluss noetig -
+           Skripte landen ohnehin nicht in support-guides.json/commands.json). -->
+      <div class="mm-form-section" id="mm-form-skript" hidden>
+        <div class="mm-submit-grid">
+          <div class="mm-submit-left">
+
+            <div class="mm-field-group">
+              <label class="mm-field-label" for="mm-s-name">Dein Name <span class="mm-req">*</span></label>
+              <input class="mm-field-input" id="mm-s-name" type="text" placeholder="Max Mustermann">
+            </div>
+
+            <div class="mm-field-group">
+              <label class="mm-field-label" for="mm-s-title">Script-Titel <span class="mm-req">*</span></label>
+              <input class="mm-field-input" id="mm-s-title" type="text" placeholder="Get-SystemInventory">
+            </div>
+
+            <div class="mm-field-group">
+              <label class="mm-field-label" for="mm-s-subtitle">Kurzbeschreibung <span class="mm-req">*</span></label>
+              <input class="mm-field-input" id="mm-s-subtitle" type="text" placeholder="System-Inventar als CSV exportieren">
+            </div>
+
+            <div class="mm-field-group">
+              <label class="mm-field-label" for="mm-s-cat">Kategorie <span class="mm-req">*</span></label>
+              <select class="mm-field-input" id="mm-s-cat">
+                <option value="system">System</option>
+                <option value="network">Netzwerk</option>
+                <option value="security">Sicherheit</option>
+                <option value="inventory">Inventar</option>
+                <option value="eventlog">Event Log</option>
+                <option value="exchange">Exchange</option>
+              </select>
+            </div>
+
+            <div class="mm-field-group">
+              <label class="mm-field-label" for="mm-s-desc">Beschreibung <span class="mm-req">*</span></label>
+              <textarea class="mm-field-input mm-field-textarea" id="mm-s-desc" placeholder="Was macht das Skript? Wofür ist es nützlich?"></textarea>
+            </div>
+
+            <div class="mm-field-group">
+              <label class="mm-field-label" for="mm-s-usage">Verwendungsbeispiele (ein Befehl pro Zeile)</label>
+              <textarea class="mm-field-input mm-field-textarea mm-field-mono" id="mm-s-usage" placeholder=".\Get-SystemInventory.ps1"></textarea>
+            </div>
+
+            <div class="mm-field-group">
+              <label class="mm-field-label" for="mm-s-params">Parameter (Format: -Name : Beschreibung)</label>
+              <textarea class="mm-field-input mm-field-textarea mm-field-mono" id="mm-s-params" placeholder="-OutputPath : Speicherpfad der CSV-Datei"></textarea>
+            </div>
+
+            <div class="mm-field-group">
+              <label class="mm-field-label" for="mm-s-req">Voraussetzungen</label>
+              <input class="mm-field-input" id="mm-s-req" type="text" value="PowerShell 5.1+, Admin-Rechte">
+            </div>
+
+            <div class="mm-field-group">
+              <label class="mm-field-label" for="mm-s-code">Script-Code <span class="mm-req">*</span></label>
+              <textarea class="mm-field-input mm-field-textarea mm-field-mono" id="mm-s-code" placeholder="# Hier den vollständigen Script-Code einfügen..." style="min-height:160px"></textarea>
+            </div>
+
+            <button class="mm-modal-save-btn" id="mm-s-submit" type="button">📧 Per Mail einreichen</button>
+          </div>
+
+          <div class="mm-submit-right">
+            <div class="mm-preview-box">
+              <div class="mm-preview-header">
+                <span class="mm-preview-title">Eintrags-Vorschau</span>
+                <button class="mm-preview-copy-btn" id="mm-s-copy" type="button">📋 Kopieren</button>
+              </div>
+              <pre class="mm-preview-code" id="mm-s-preview">// Formular ausfüllen → Vorschau erscheint hier</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── FORM: FEEDBACK & FEHLER ───────────────────────────
+           Unveraendert vom alten mitmachen.html uebernommen. -->
+      <div class="mm-form-section" id="mm-form-feedback" hidden>
+        <div class="mm-feedback-grid">
+          <button class="mm-feedback-card" id="mm-fb-bug" type="button">
+            <div class="mm-feedback-icon">🐛</div>
+            <div class="mm-feedback-title">Bug melden</div>
+            <div class="mm-feedback-desc">Falscher Befehl, kaputte Funktion, Tippfehler</div>
+          </button>
+          <button class="mm-feedback-card" id="mm-fb-feature" type="button">
+            <div class="mm-feedback-icon">✨</div>
+            <div class="mm-feedback-title">Feature-Wunsch</div>
+            <div class="mm-feedback-desc">Neue Kategorie, neue Seite, nützliche Funktion</div>
+          </button>
+          <button class="mm-feedback-card" id="mm-fb-beschreibung" type="button">
+            <div class="mm-feedback-icon">📝</div>
+            <div class="mm-feedback-title">Beschreibung verbessern</div>
+            <div class="mm-feedback-desc">Unvollständige oder missverständliche Beschreibung</div>
+          </button>
+        </div>
+
+        <div class="mm-feedback-form-wrap" id="mm-fb-form-wrap" hidden>
+          <div class="mm-field-group">
+            <label class="mm-field-label" for="mm-fb-name">Dein Name</label>
+            <input class="mm-field-input" id="mm-fb-name" type="text" placeholder="Max Mustermann">
+          </div>
+          <div class="mm-field-group">
+            <label class="mm-field-label" for="mm-fb-subject">Betreff <span class="mm-req">*</span></label>
+            <input class="mm-field-input" id="mm-fb-subject" type="text">
+          </div>
+          <div class="mm-field-group">
+            <label class="mm-field-label" for="mm-fb-body">Nachricht <span class="mm-req">*</span></label>
+            <textarea class="mm-field-input mm-field-textarea" id="mm-fb-body" style="min-height:120px"></textarea>
+          </div>
+          <button class="mm-modal-save-btn" id="mm-fb-submit" type="button">📧 Per Mail senden</button>
+        </div>
       </div>
 
       <!-- ── MODAL: NEUER COMMAND ──────────────────────────── -->
@@ -366,6 +509,12 @@
               <div class="mm-changes-section-title">Neue Guides</div>
               <div class="mm-changes-list" id="mm-changes-guides"></div>
               <div class="mm-changes-empty" id="mm-changes-guides-empty" hidden>Keine neuen Guides.</div>
+            </div>
+
+            <div class="mm-changes-section">
+              <div class="mm-changes-section-title">Bearbeitete Guides</div>
+              <div class="mm-changes-list" id="mm-changes-edited-guides"></div>
+              <div class="mm-changes-empty" id="mm-changes-edited-guides-empty" hidden>Keine bearbeiteten Guides.</div>
             </div>
 
             <div class="mm-changes-section">

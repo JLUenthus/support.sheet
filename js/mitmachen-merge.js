@@ -26,6 +26,7 @@
   // ohne die Objekte selbst im DOM zwischenspeichern zu muessen.
   let commandsFlat = [];
   let guidesFlat = [];
+  let guideEditsFlat = [];
 
   function notify(message, type) {
     if (typeof showToast === 'function') showToast(message, type);
@@ -129,6 +130,7 @@
 
       const commandsAdditionsFile = zip.file('commands-additions.json');
       const guidesAdditionsFile   = zip.file('support-guides-additions.json');
+      const guidesEditsFile       = zip.file('support-guides-edits.json');
       const mergeInfoFile         = zip.file('merge-info.json');
 
       if (!commandsAdditionsFile || !guidesAdditionsFile || !mergeInfoFile) {
@@ -137,6 +139,9 @@
 
       const commandsAdditions = JSON.parse(await commandsAdditionsFile.async('string'));
       const guidesAdditions   = JSON.parse(await guidesAdditionsFile.async('string'));
+      // support-guides-edits.json ist optional - aeltere Exports kannten die
+      // Bearbeiten-Funktion noch nicht, daher hier auf leere Liste zurueckfallen.
+      const guidesEdits       = guidesEditsFile ? JSON.parse(await guidesEditsFile.async('string')) : { guides: [] };
       const mergeInfo         = JSON.parse(await mergeInfoFile.async('string'));
 
       if (!commandsAdditions.windows || !Array.isArray(commandsAdditions.windows.commands) ||
@@ -146,11 +151,14 @@
       if (!Array.isArray(guidesAdditions.guides)) {
         throw new Error('support-guides-additions.json hat nicht die erwartete Struktur.');
       }
+      if (!Array.isArray(guidesEdits.guides)) {
+        throw new Error('support-guides-edits.json hat nicht die erwartete Struktur.');
+      }
       if (typeof mergeInfo.baseChecksum !== 'string') {
         throw new Error('merge-info.json hat nicht die erwartete Struktur.');
       }
 
-      state.zip = { commandsAdditions, guidesAdditions, mergeInfo };
+      state.zip = { commandsAdditions, guidesAdditions, guidesEdits, mergeInfo };
       setFieldStatus('mmg-field-zip', '✓ ' + file.name, 'ok');
     } catch (err) {
       state.zip = null;
@@ -182,6 +190,7 @@
     el.hidden = false;
     el.textContent = 'Eingereicht von ' + (info.exportedBy || 'unbekannt') + ' am ' + fmtDate(info.exportedAt) +
       ' – ' + (info.newCommands ?? 0) + ' neue Commands, ' + (info.newGuides ?? 0) + ' neue Guides, ' +
+      (info.editedGuides ?? 0) + ' bearbeitete Guide(s), ' +
       (info.newLinks ?? 0) + ' Verknuepfung(en) laut merge-info.json.';
   }
 
@@ -304,11 +313,40 @@
     });
   }
 
+  // Bearbeitete Guides sind keine Duplikate im ueblichen Sinn - sie sollen
+  // den bestehenden Eintrag absichtlich ersetzen, daher immer vorausgewaehlt
+  // und ohne die rote Duplikat-Markierung von buildDiffRow.
+  function renderGuideEditsDiff() {
+    const container = mgEl('mmg-diff-guide-edits');
+    container.replaceChildren();
+
+    guideEditsFlat = [...state.zip.guidesEdits.guides];
+
+    if (!guideEditsFlat.length) {
+      container.appendChild(emptyNote('Keine bearbeiteten Guides in dieser ZIP.'));
+      return;
+    }
+
+    const existingGuideIds = new Set((state.files.guides.guides || []).map(g => g.id));
+
+    guideEditsFlat.forEach(guide => {
+      const exists = existingGuideIds.has(guide.id);
+      container.appendChild(buildDiffRow({
+        checked: true,
+        duplicate: false,
+        name: guide.title,
+        sub: null,
+        meta: guide.id + ' · ' + (exists ? 'wird aktualisiert' : 'Original nicht gefunden, wird als neuer Guide ergaenzt'),
+      }));
+    });
+  }
+
   function runDiff() {
     renderMeta();
     renderChecksumStatus();
     renderCommandsDiff();
     renderGuidesDiff();
+    renderGuideEditsDiff();
     mgEl('mmg-diff').hidden = false;
     mgEl('mmg-success').hidden = true;
   }
@@ -345,6 +383,7 @@
   async function runMerge() {
     const selectedCommands = selectedRows('mmg-diff-commands', commandsFlat);
     const selectedGuides   = selectedRows('mmg-diff-guides', guidesFlat);
+    const selectedEdits    = selectedRows('mmg-diff-guide-edits', guideEditsFlat);
 
     const byCategory = { windows: [], exchange: [], forti: [] };
     selectedCommands.forEach(cmd => byCategory[cmd._category].push(stripDiffCategory(cmd)));
@@ -358,9 +397,18 @@
     };
     const mergedExchange = [...state.files.commandsExchange, ...byCategory.exchange];
     const mergedForti    = [...state.files.commandsForti, ...byCategory.forti];
+
+    // Bearbeitete Guides ersetzen den bestehenden Eintrag per id (oder werden
+    // angehaengt, falls das Original nicht mehr existiert). Reihenfolge der
+    // unveraenderten Guides bleibt dabei erhalten.
+    let guidesWithEdits = state.files.guides.guides.map(g => {
+      const edit = selectedEdits.find(e => e.id === g.id);
+      return edit ? edit : g;
+    });
+    const appendedEdits = selectedEdits.filter(e => !state.files.guides.guides.some(g => g.id === e.id));
     const mergedGuides = {
       ...state.files.guides,
-      guides: [...state.files.guides.guides, ...selectedGuides],
+      guides: [...guidesWithEdits, ...appendedEdits, ...selectedGuides],
     };
 
     const mergeBtn = mgEl('mmg-merge-btn');
@@ -376,7 +424,8 @@
         'Merge durchgefuehrt am ' + new Date().toISOString() + '\n\n' +
         'Neue Commands gemergt: ' + byCategory.windows.length + ' (Windows), ' +
         byCategory.exchange.length + ' (Exchange), ' + byCategory.forti.length + ' (Fortinet)\n' +
-        'Neue Guides gemergt: ' + selectedGuides.length + '\n\n' +
+        'Neue Guides gemergt: ' + selectedGuides.length + '\n' +
+        'Bearbeitete Guides gemergt: ' + selectedEdits.length + '\n\n' +
         'Enthaltene Dateien: commands.json, exchange-commands.json, forti-commands.json, support-guides.json\n' +
         'Bitte entpacken, Dateien manuell ins Repo einfuegen und danach sw.js CACHE_VERSION bumpen.'
       );
@@ -386,8 +435,8 @@
 
       const successEl = mgEl('mmg-success');
       successEl.hidden = false;
-      successEl.textContent = '✓ ' + selectedCommands.length + ' Command(s) und ' + selectedGuides.length +
-        ' Guide(s) uebernommen. Eine ZIP mit allen 4 Dateien und MERGE_INFO.txt wurde heruntergeladen – ' +
+      successEl.textContent = '✓ ' + selectedCommands.length + ' Command(s), ' + selectedGuides.length +
+        ' neue(r) Guide(s) und ' + selectedEdits.length + ' bearbeitete(r) Guide(s) uebernommen. Eine ZIP mit allen 4 Dateien und MERGE_INFO.txt wurde heruntergeladen – ' +
         'bitte entpacken, Dateien manuell ins Repo einfuegen und danach sw.js CACHE_VERSION bumpen.';
       notify('Merge abgeschlossen, ZIP heruntergeladen.', 'success');
     } catch (err) {

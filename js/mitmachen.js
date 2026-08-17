@@ -6,6 +6,10 @@
 (function () {
   const SESSION_KEY = 'mitmachen_data';
 
+  // Ziel-Adresse fuer die Mailto-Formulare (Skript einreichen, Feedback).
+  // Noch ein unausgefuellter Platzhalter, siehe docs/review-2026-07-30.md.
+  const MAIL_TO = 'deine@email.de';
+
   // ── Datenquellen ──────────────────────────────────────────
   // "kind" bestimmt, wie die rohe JSON-Struktur zu einem flachen
   // Array normalisiert wird (siehe parse-Funktionen unten).
@@ -118,7 +122,7 @@
   // Prompt 3) landen NICHT in workingCopy.commandsWindows/.../guides,
   // sondern hier. Erst der Export (Prompt 4) fasst beides zusammen.
   function emptyPendingChanges() {
-    return { newCommands: [], newGuides: [], links: [] };
+    return { newCommands: [], newGuides: [], editedGuides: [], links: [] };
   }
 
   function loadPendingChanges() {
@@ -127,9 +131,10 @@
       if (raw) {
         const parsed = JSON.parse(raw);
         return {
-          newCommands: Array.isArray(parsed.newCommands) ? parsed.newCommands : [],
-          newGuides:   Array.isArray(parsed.newGuides)   ? parsed.newGuides   : [],
-          links:       Array.isArray(parsed.links)       ? parsed.links       : [],
+          newCommands:  Array.isArray(parsed.newCommands)  ? parsed.newCommands  : [],
+          newGuides:    Array.isArray(parsed.newGuides)    ? parsed.newGuides    : [],
+          editedGuides: Array.isArray(parsed.editedGuides) ? parsed.editedGuides : [],
+          links:        Array.isArray(parsed.links)        ? parsed.links        : [],
         };
       }
     } catch (err) {
@@ -420,6 +425,30 @@
     return !!cmd._pending || pendingChanges.links.some(l => l.commandId === cmd.id);
   }
 
+  // Loest den Guide zu einem Command auf, egal ob frisch in dieser Session
+  // angelegt (pendingChanges.newGuides, ueber pendingChanges.links verknuepft)
+  // oder bereits ausgeliefert (workingCopy.guides, ueber cmd.guideRef) - und
+  // bevorzugt dabei eine evtl. bereits in dieser Session vorgenommene
+  // Bearbeitung (pendingChanges.editedGuides), damit ein erneutes Oeffnen
+  // des Editors den zuletzt gespeicherten Stand zeigt, nicht den Original-
+  // inhalt. Ein Command hat in der Praxis nie beides gleichzeitig (der
+  // "Guide verfassen"-Button erscheint nur, wenn hasGuide() bereits false
+  // war), daher keine Prioritaetsfrage zwischen den beiden Quellen.
+  function findGuideForCommand(cmd) {
+    const link = pendingChanges.links.find(l => l.commandId === cmd.id);
+    if (link) {
+      const pendingGuide = pendingChanges.newGuides.find(g => g.id === link.guideId);
+      if (pendingGuide) return { guide: pendingGuide, source: 'pending' };
+    }
+    if (cmd.guideRef) {
+      const editedGuide = pendingChanges.editedGuides.find(g => g.id === cmd.guideRef);
+      if (editedGuide) return { guide: editedGuide, source: 'existing' };
+      const existingGuide = workingCopy.guides.find(g => g.id === cmd.guideRef);
+      if (existingGuide) return { guide: existingGuide, source: 'existing' };
+    }
+    return null;
+  }
+
   function buildRow(cmd, guideIds) {
     const pending = isPendingChange(cmd);
     const row = document.createElement('div');
@@ -455,7 +484,18 @@
     badge.textContent = has ? '✓ Guide' : '○ kein';
     badgeGroup.appendChild(badge);
 
-    if (!has) {
+    if (has) {
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'mm-row-guide-edit-btn';
+      editBtn.textContent = '✏️ Bearbeiten';
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const found = findGuideForCommand(cmd);
+        if (found) openGuideFormForEdit(cmd, found.guide, found.source);
+      });
+      badgeGroup.appendChild(editBtn);
+    } else {
       const guideBtn = document.createElement('button');
       guideBtn.type = 'button';
       guideBtn.className = 'mm-row-guide-btn';
@@ -638,6 +678,33 @@
     document.getElementById('mm-stale-dismiss')?.addEventListener('click', () => {
       document.getElementById('mm-stale-warning').hidden = true;
     });
+  }
+
+  // ── Typ-Auswahl (Befehl / Skript / Feedback) ──────────────
+  // Der grosse Befehls-Katalog wird erst beim ersten Klick auf
+  // "Befehl einreichen" per init() geladen (befehlLoaded-Flag) - vorher
+  // ist bewusst nichts geladen, damit man nicht sofort von der riesigen
+  // Liste erschlagen wird.
+  let befehlLoaded = false;
+
+  function selectType(type) {
+    document.querySelectorAll('.mm-type-card').forEach(c => c.classList.remove('active'));
+    document.getElementById('mm-type-' + type)?.classList.add('active');
+    document.getElementById('mm-type-hint').hidden = true;
+
+    document.querySelectorAll('.mm-form-section').forEach(s => { s.hidden = true; });
+    document.getElementById('mm-form-' + type).hidden = false;
+
+    if (type === 'befehl' && !befehlLoaded) {
+      befehlLoaded = true;
+      init();
+    }
+  }
+
+  function initTypeSelector() {
+    document.getElementById('mm-type-befehl').addEventListener('click', () => selectType('befehl'));
+    document.getElementById('mm-type-skript').addEventListener('click', () => selectType('skript'));
+    document.getElementById('mm-type-feedback').addEventListener('click', () => selectType('feedback'));
   }
 
   // ── Start ─────────────────────────────────────────────────
@@ -1052,6 +1119,9 @@
     targetCmd: null, // Command, fuer den dieser Guide verfasst wird
     tags: [],
     currentId: '',
+    mode: 'create',        // 'create' | 'edit'
+    editingGuideId: null,   // nur in 'edit': ID des bearbeiteten Guides
+    editingSource: null,    // nur in 'edit': 'pending' | 'existing'
   };
 
   function gfEl(id) { return document.getElementById(id); }
@@ -1181,6 +1251,12 @@
     const idDisplay = gfEl('mm-gf-id-display');
     const warning = gfEl('mm-gf-id-warning');
     idDisplay.textContent = gf.currentId || '–';
+
+    // Beim Bearbeiten ist die ID die des Guides selbst - kein Duplikat.
+    if (gf.mode === 'edit') {
+      warning.hidden = true;
+      return;
+    }
 
     const existingIds = collectAllKnownGuideIds();
     const isDuplicate = !!gf.currentId && existingIds.has(gf.currentId);
@@ -1429,10 +1505,70 @@
     notify('Guide „' + newGuide.title + '“ wurde hinzugefügt (noch nicht exportiert) und mit „' + gf.targetCmd.name + '“ verknüpft.', 'success');
   }
 
+  // Bearbeitung eines bereits bestehenden Guides (frisch angelegt in dieser
+  // Session ODER bereits ausgeliefert). ID bleibt in jedem Fall fest - siehe
+  // refreshGuideIdDisplay()'s Sonderfall fuer gf.mode === 'edit'.
+  function saveEditedGuide() {
+    if (!validateGuideForm()) return;
+
+    const updatedFields = {
+      title: gfEl('mm-gf-title').value.trim(),
+      category: getSelectedGuideCategory(),
+      tags: [...gf.tags],
+      content: gfEl('mm-gf-textarea').value,
+      modified: new Date().toISOString(),
+    };
+
+    if (gf.editingSource === 'pending') {
+      const idx = pendingChanges.newGuides.findIndex(g => g.id === gf.editingGuideId);
+      if (idx !== -1) {
+        pendingChanges.newGuides[idx] = { ...pendingChanges.newGuides[idx], ...updatedFields };
+      }
+    } else {
+      // 'existing' - bereits ausgelieferter Guide (support-guides.json).
+      // workingCopy.guides bleibt unangetastet (repraesentiert immer den
+      // echten Original-Stand), die Bearbeitung wird separat in
+      // pendingChanges.editedGuides verfolgt und beim Export als eigene
+      // Datei mitgeschickt (siehe js/mitmachen-export.js).
+      const alreadyEditedIdx = pendingChanges.editedGuides.findIndex(g => g.id === gf.editingGuideId);
+      const base = alreadyEditedIdx !== -1
+        ? pendingChanges.editedGuides[alreadyEditedIdx]
+        : workingCopy.guides.find(g => g.id === gf.editingGuideId);
+      const updatedGuide = { ...base, ...updatedFields };
+
+      if (alreadyEditedIdx !== -1) {
+        pendingChanges.editedGuides[alreadyEditedIdx] = updatedGuide;
+      } else {
+        pendingChanges.editedGuides.push(updatedGuide);
+      }
+    }
+
+    savePendingChanges();
+    closeGuideForm();
+    renderAll();
+    notify('Guide „' + updatedFields.title + '“ wurde aktualisiert (noch nicht exportiert).', 'success');
+  }
+
+  function handleGuideFormSave() {
+    if (gf.mode === 'edit') saveEditedGuide();
+    else saveNewGuide();
+  }
+
+  // Modal-Titel + Speichern-Button je nach Modus - reine Textanpassung,
+  // keine Strukturaenderung.
+  function updateGuideFormModeUI() {
+    const isEdit = gf.mode === 'edit';
+    gfEl('mm-gf-title-heading').textContent = isEdit ? 'Guide bearbeiten' : 'Guide verfassen';
+    gfEl('mm-gf-save').textContent = isEdit ? 'Änderungen speichern' : 'Guide speichern';
+  }
+
   // ── Oeffnen/Schliessen ──
   function resetGuideForm(targetCmd) {
     gf.targetCmd = targetCmd;
     gf.tags = [];
+    gf.mode = 'create';
+    gf.editingGuideId = null;
+    gf.editingSource = null;
 
     gfEl('mm-gf-context').textContent = 'Für: ' + (targetCmd.name || targetCmd.id);
     gfEl('mm-gf-title').value = targetCmd.name || '';
@@ -1445,10 +1581,45 @@
     ['title', 'content'].forEach(clearGfFieldError);
     deriveGuideIdFromTarget();
     updateGuidePreview();
+    updateGuideFormModeUI();
 
     const viewButtons = document.querySelectorAll('#mm-gf-view-toggle .gg-view-btn');
     viewButtons.forEach(b => b.classList.toggle('active', b.dataset.mode === 'split'));
     gfEl('mm-gf-editor-wrap').dataset.mode = 'split';
+  }
+
+  // Oeffnet denselben Editor, aber vorbefuellt mit dem Inhalt eines bereits
+  // bestehenden Guides (source: 'pending' fuer noch nicht exportierte, neu
+  // in dieser Session angelegte Guides, 'existing' fuer bereits ausgelieferte
+  // aus support-guides.json). Aufgerufen ueber den "✏️ Bearbeiten"-Button in
+  // buildRow() (siehe findGuideForCommand()).
+  function openGuideFormForEdit(targetCmd, guide, source) {
+    gf.targetCmd = targetCmd;
+    gf.tags = Array.isArray(guide.tags) ? [...guide.tags] : [];
+    gf.mode = 'edit';
+    gf.editingGuideId = guide.id;
+    gf.editingSource = source;
+    gf.currentId = guide.id;
+
+    gfEl('mm-gf-context').textContent = 'Für: ' + (targetCmd.name || targetCmd.id);
+    gfEl('mm-gf-title').value = guide.title || '';
+    renderGuideCategorySelect();
+    gfEl('mm-gf-category-custom').hidden = true;
+    gfEl('mm-gf-category-custom').value = '';
+    gfEl('mm-gf-category').value = guide.category || 'Support';
+    gfEl('mm-gf-tag-input').value = '';
+    renderGuideTagPills();
+    gfEl('mm-gf-textarea').value = guide.content || '';
+    ['title', 'content'].forEach(clearGfFieldError);
+    refreshGuideIdDisplay();
+    updateGuidePreview();
+    updateGuideFormModeUI();
+
+    const viewButtons = document.querySelectorAll('#mm-gf-view-toggle .gg-view-btn');
+    viewButtons.forEach(b => b.classList.toggle('active', b.dataset.mode === 'split'));
+    gfEl('mm-gf-editor-wrap').dataset.mode = 'split';
+
+    gfEl('mm-gf-modal').hidden = false;
   }
 
   function openGuideForm(targetCmd) {
@@ -1464,7 +1635,7 @@
     gfEl('mm-gf-close').addEventListener('click', closeGuideForm);
     gfEl('mm-gf-cancel').addEventListener('click', closeGuideForm);
     gfEl('mm-gf-backdrop').addEventListener('click', closeGuideForm);
-    gfEl('mm-gf-save').addEventListener('click', saveNewGuide);
+    gfEl('mm-gf-save').addEventListener('click', handleGuideFormSave);
 
     gfEl('mm-gf-title').addEventListener('input', () => clearGfFieldError('title'));
 
@@ -1512,7 +1683,8 @@
 
   function updateChangesButtonState() {
     const btn = chEl('mm-changes-btn');
-    const empty = !pendingChanges.newCommands.length && !pendingChanges.newGuides.length && !pendingChanges.links.length;
+    const empty = !pendingChanges.newCommands.length && !pendingChanges.newGuides.length &&
+      !pendingChanges.editedGuides.length && !pendingChanges.links.length;
     btn.disabled = empty;
   }
 
@@ -1577,6 +1749,13 @@
       return label;
     }, removeNewGuide);
 
+    renderChangesList('mm-changes-edited-guides', 'mm-changes-edited-guides-empty', pendingChanges.editedGuides, (guide) => {
+      const label = document.createElement('span');
+      label.className = 'mm-changes-row-name';
+      label.textContent = guide.title;
+      return label;
+    }, removeEditedGuide);
+
     renderChangesList('mm-changes-links', 'mm-changes-links-empty', pendingChanges.links, (link) => {
       const label = document.createElement('span');
       label.className = 'mm-changes-row-name';
@@ -1605,6 +1784,15 @@
     const removed = pendingChanges.newGuides[index];
     pendingChanges.newGuides.splice(index, 1);
     pendingChanges.links = pendingChanges.links.filter(l => l.guideId !== removed.id);
+    savePendingChanges();
+    renderChangesModal();
+    renderAll();
+  }
+
+  // Das Entfernen einer Bearbeitung wirft nur die pending-Aenderung weg –
+  // der Original-Guide in workingCopy.guides wurde nie angefasst.
+  function removeEditedGuide(index) {
+    pendingChanges.editedGuides.splice(index, 1);
     savePendingChanges();
     renderChangesModal();
     renderAll();
@@ -1688,7 +1876,138 @@
     });
   }
 
+  // ============================================================
+  // "Skript einreichen" – unveraendert aus der alten mitmachen.html
+  // uebernommen (reines Mailto-Formular, keine Kategorien-Fetch noetig,
+  // die Kategorien-Liste im Select ist statisch wie in scripts.html).
+  // ============================================================
+  const SKRIPT_CAT_LABELS = {
+    system: 'System', network: 'Netzwerk', security: 'Sicherheit',
+    inventory: 'Inventar', eventlog: 'Event Log', exchange: 'Exchange',
+  };
+
+  function sEl(id) { return document.getElementById(id); }
+
+  function updatePreviewScript() {
+    const title    = sEl('mm-s-title').value.trim()    || 'Script-Name';
+    const subtitle = sEl('mm-s-subtitle').value.trim() || 'Kurzbeschreibung';
+    const cat      = sEl('mm-s-cat').value             || 'system';
+    const desc     = sEl('mm-s-desc').value.trim()     || 'Beschreibung';
+    const req      = sEl('mm-s-req').value.trim()      || 'PowerShell 5.1+';
+
+    const usageRaw = sEl('mm-s-usage').value || '';
+    const usage = usageRaw.split('\n').filter(l => l.trim())
+      .map(l => `    { "label": "Beispiel", "cmd": "${l.trim().replace(/"/g, '\\"')}" }`)
+      .join(',\n');
+
+    const slug = title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+
+    sEl('mm-s-preview').textContent =
+`// In scripts.html einfügen:
+{
+  "id": "${slug}",
+  "title": "${title}",
+  "file": "powershell/${title}.ps1",
+  "category": "${cat}",
+  "subtitle": "${subtitle.replace(/"/g, '\\"')}",
+  "desc": "${desc.replace(/"/g, '\\"').replace(/\n/g, ' ')}",
+  "requirements": "${req}",
+  "usage": [
+${usage || '    { "label": "Beispiel", "cmd": ".\\\\' + title + '.ps1" }'}
+  ]
+}`;
+  }
+
+  function copyPreviewScript() {
+    const txt = sEl('mm-s-preview').textContent;
+    if (txt.startsWith('//') && txt.includes('Formular')) return;
+    navigator.clipboard.writeText(txt).then(() => notify('Vorschau kopiert.', 'success'));
+  }
+
+  function submitSkript() {
+    const name  = sEl('mm-s-name').value.trim();
+    const title = sEl('mm-s-title').value.trim();
+    const desc  = sEl('mm-s-desc').value.trim();
+    const code  = sEl('mm-s-code').value.trim();
+    const json  = sEl('mm-s-preview').textContent;
+
+    if (!name || !title || !desc || !code) {
+      notify('Bitte alle Pflichtfelder (*) ausfüllen.', 'error');
+      return;
+    }
+
+    const subject = encodeURIComponent(`[support.sheet] Neues Skript: ${title}`);
+    const body = encodeURIComponent(
+`Hallo,
+
+ich möchte folgendes Skript einreichen:
+
+──────────────────────────────
+VON: ${name}
+──────────────────────────────
+
+${json}
+
+──────────────────────────────
+SCRIPT-CODE:
+──────────────────────────────
+${code}
+
+Viele Grüße
+${name}`);
+
+    window.location.href = `mailto:${MAIL_TO}?subject=${subject}&body=${body}`;
+    notify('Mail-Client geöffnet! Bitte die vorausgefüllte Mail absenden.', 'success');
+  }
+
+  function initSkriptForm() {
+    ['mm-s-title', 'mm-s-subtitle', 'mm-s-desc', 'mm-s-usage', 'mm-s-params', 'mm-s-req'].forEach(id => {
+      sEl(id).addEventListener('input', updatePreviewScript);
+    });
+    sEl('mm-s-cat').addEventListener('change', updatePreviewScript);
+    sEl('mm-s-copy').addEventListener('click', copyPreviewScript);
+    sEl('mm-s-submit').addEventListener('click', submitSkript);
+  }
+
+  // ============================================================
+  // "Feedback & Fehler" – unveraendert aus der alten mitmachen.html
+  // uebernommen (reines Mailto-Formular).
+  // ============================================================
+  const FEEDBACK_SUBJECTS = {
+    bug: '[support.sheet] Bug: ',
+    feature: '[support.sheet] Feature-Wunsch: ',
+    beschreibung: '[support.sheet] Beschreibung verbessern: ',
+  };
+
+  function openFeedback(type) {
+    document.querySelectorAll('.mm-feedback-card').forEach(c => c.classList.toggle('active', c.id === 'mm-fb-' + type));
+    sEl('mm-fb-form-wrap').hidden = false;
+    sEl('mm-fb-subject').value = FEEDBACK_SUBJECTS[type] || '';
+    sEl('mm-fb-subject').focus();
+  }
+
+  function submitFeedback() {
+    const name    = sEl('mm-fb-name').value.trim();
+    const subject = sEl('mm-fb-subject').value.trim();
+    const body    = sEl('mm-fb-body').value.trim();
+    if (!subject || !body) {
+      notify('Betreff und Nachricht sind Pflichtfelder.', 'error');
+      return;
+    }
+    const fullBody = encodeURIComponent(`${body}\n\n${name ? 'Grüße,\n' + name : ''}`);
+    window.location.href = `mailto:${MAIL_TO}?subject=${encodeURIComponent(subject)}&body=${fullBody}`;
+    notify('Mail-Client geöffnet! Bitte die vorausgefüllte Mail absenden.', 'success');
+  }
+
+  function initFeedbackForm() {
+    sEl('mm-fb-bug').addEventListener('click', () => openFeedback('bug'));
+    sEl('mm-fb-feature').addEventListener('click', () => openFeedback('feature'));
+    sEl('mm-fb-beschreibung').addEventListener('click', () => openFeedback('beschreibung'));
+    sEl('mm-fb-submit').addEventListener('click', submitFeedback);
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
+    initTypeSelector();
     initFilterBar();
     initUploadPanel();
     initStaleWarning();
@@ -1697,6 +2016,7 @@
     initGuidePicker();
     initGuideForm();
     initChangesModal();
-    init();
+    initSkriptForm();
+    initFeedbackForm();
   });
 })();

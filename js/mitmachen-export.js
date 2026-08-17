@@ -15,6 +15,7 @@ window.MitmachenExport = (function () {
     '  commands-Datei\n' +
     '- support-guides-additions.json: neue Guides zum Einfuegen in\n' +
     '  support-guides.json\n' +
+    '- support-guides-edits.json: Aenderungen an bereits bestehenden Guides\n' +
     '- merge-info.json: Metadaten zum Beitrag\n' +
     '\n' +
     'Nach dem Merge bitte sw.js CACHE_VERSION bumpen.\n' +
@@ -57,6 +58,14 @@ window.MitmachenExport = (function () {
     return { guides: newGuides.map(g => ({ ...g })) };
   }
 
+  // support-guides-edits.json: Aenderungen an bereits ausgelieferten Guides.
+  // Gleiche Struktur wie support-guides-additions.json, damit der Maintainer
+  // sie mit demselben Diff-Mechanismus einlesen kann - der Merge ersetzt aber
+  // per id statt anzuhaengen.
+  function buildGuidesEdits(editedGuides) {
+    return { guides: editedGuides.map(g => ({ ...g })) };
+  }
+
   function buildMergeInfo(opts) {
     return {
       exportedAt: new Date().toISOString(),
@@ -64,6 +73,7 @@ window.MitmachenExport = (function () {
       baseChecksum: opts.baseChecksum,
       newCommands: opts.newCommandsCount,
       newGuides: opts.newGuidesCount,
+      editedGuides: opts.editedGuidesCount,
       newLinks: opts.newLinksCount,
     };
   }
@@ -95,12 +105,16 @@ window.MitmachenExport = (function () {
     zip.file('support-guides-additions.json', JSON.stringify(
       buildGuidesAdditions(pendingChanges.newGuides), null, 2
     ));
+    zip.file('support-guides-edits.json', JSON.stringify(
+      buildGuidesEdits(pendingChanges.editedGuides), null, 2
+    ));
     zip.file('merge-info.json', JSON.stringify(
       buildMergeInfo({
         exportedBy,
         baseChecksum,
         newCommandsCount: pendingChanges.newCommands.length,
         newGuidesCount: pendingChanges.newGuides.length,
+        editedGuidesCount: pendingChanges.editedGuides.length,
         newLinksCount: pendingChanges.links.length,
       }), null, 2
     ));

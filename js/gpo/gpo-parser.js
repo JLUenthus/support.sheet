@@ -12,20 +12,18 @@ window.GpoParser = (function() {
     const rawFilters    = raw.filters    || [];
     const rawWmiFilters = raw.wmiFilters || [];
 
-    const links = flattenLinks(rawLinks);
+    // raw.links ist nur dann undefined, wenn links.json im ZIP komplett
+    // fehlte (gpo-loader.js setzt den Key sonst immer, auch fuer eine
+    // Datei mit leerem Array) - das unterscheidet "keine Verknuepfungen
+    // bekannt" (leere Datei) von "Verknuepfungsdaten fehlen komplett"
+    // (Datei fehlt). Wird von Analyzer (GPO_NO_LINKS) UND Renderer
+    // (Uebersicht "Unverknuepfte GPOs") aus genau diesem einen Feld
+    // gelesen, siehe .md/todo/GPO_Analyzer_Pre_Real_Data_Hardening.md,
+    // Abschnitt 8: eine fehlende Links-Datei darf nicht als
+    // "alle GPOs unverknuepft" interpretiert werden.
+    const linksFileMissing = raw.links === undefined;
 
-    // Vereinfachte Sicht je GPO: "wird irgendwo enforced verlinkt" /
-    // "liegt an mindestens einem Block-Inheritance-Ziel". Die
-    // vollstaendigen Einzel-Links bleiben im "links"-Array erhalten.
-    const enforcedGpoIds = new Set();
-    const blockedGpoIds  = new Set();
-    rawLinks.forEach(target => {
-      const blocked = !!target.blockInheritance;
-      (target.gpoLinks || []).forEach(gl => {
-        if (gl.enforced) enforcedGpoIds.add(gl.gpoId);
-        if (blocked) blockedGpoIds.add(gl.gpoId);
-      });
-    });
+    const links = flattenLinks(rawLinks);
 
     const filtersByGpo = {};
     rawFilters.forEach(f => {
@@ -58,13 +56,30 @@ window.GpoParser = (function() {
       wmiFilter: g.wmiFilterId
         ? (wmiFilterById[g.wmiFilterId] || { id: g.wmiFilterId, name: null, query: null })
         : null,
-      enforced: enforcedGpoIds.has(g.id),
-      blockInheritance: blockedGpoIds.has(g.id),
+      reportError: g.reportError || null,
+      // Fehlt parseStatus (aeltere Snapshots vor der Phase-2-Erweiterung des
+      // Collectors), wird "complete" angenommen - diese Snapshots kannten
+      // die Unterscheidung noch nicht, hatten aber schon reportError; ein
+      // erfolgreicher Report (reportError=null) ohne parseStatus-Feld war
+      // faktisch immer vollstaendig lesbar.
+      parseStatus: g.parseStatus || 'complete',
+      parseWarnings: g.parseWarnings || [],
+      // Bewusst KEIN enforced/blockInheritance mehr hier: beides ist eine
+      // Eigenschaft eines einzelnen Links bzw. Ziels, nicht der GPO selbst -
+      // eine GPO kann an einem Ziel enforced sein und an einem anderen
+      // nicht (siehe .md/todo/GPO_Analyzer_Pre_Real_Data_Hardening.md,
+      // Abschnitt 4/5). Die frueher hier aggregierten GPO-weiten Booleans
+      // wurden nirgends mehr gebraucht (einzige Nutzung war ein falscher
+      // GPO-Level-Badge in gpo-renderer.js, jetzt durch Link-Ebene ersetzt)
+      // und deshalb ersatzlos entfernt statt als irrefuehrendes Feld
+      // stehenzubleiben. Verbindliche Werte stehen ausschliesslich in
+      // "links" (enforced/linkEnabled) und "ouTree" (blockInheritance je
+      // Zielknoten).
     }));
 
-    const ouTree = buildOuTree(rawLinks);
+    const ouTree = buildOuTree(rawLinks, links);
 
-    return { gpos, links, ouTree };
+    return { gpos, links, ouTree, dataQuality: { linksFileMissing } };
   }
 
   // Fuer reine Enabled/Disabled-Policies ohne zusaetzlichen Parameter ist
@@ -81,16 +96,33 @@ window.GpoParser = (function() {
 
   // Ein Eintrag pro (GPO, Ziel) statt eines Eintrags pro Ziel mit
   // gpoLinks[] - einfacher fuer die weitere Verarbeitung im Analyzer.
+  // enforced/linkEnabled sind Eigenschaften genau dieses einen Links,
+  // blockInheritance ist eine Eigenschaft des Ziels und wird hier je Link
+  // mitgefuehrt (denormalisiert), damit der Renderer sie ohne Zusatz-Lookup
+  // direkt neben dem jeweiligen Link anzeigen kann. Dies ist die EINZIGE
+  // Stelle, die diese drei Werte aus den rohen Collector-Daten liest -
+  // buildOuTree() liest sie unten aus genau diesem "links"-Array statt sie
+  // ein zweites Mal aus rawLinks zu berechnen (keine zwei unabhaengigen,
+  // potenziell divergierenden Berechnungen derselben Sache).
   function flattenLinks(rawLinks) {
     const links = [];
     rawLinks.forEach(target => {
       const targetType = (target.targetType || '').toLowerCase();
+      const blockInheritance = !!target.blockInheritance;
       (target.gpoLinks || []).forEach(gl => {
         links.push({
           gpoId: gl.gpoId,
           target: target.target,
           targetType: targetType,
           order: gl.order,
+          enforced: !!gl.enforced,
+          // Fehlt linkEnabled (aeltere/unvollstaendige Snapshots), wird
+          // standardmaessig true angenommen: ein im GPMC neu angelegter
+          // Link ist per Default aktiv, und "unbekannt" darf hier nicht
+          // stillschweigend zu "deaktiviert" werden (das waere eine
+          // fachlich falsche, nicht durch die Daten gedeckte Aussage).
+          linkEnabled: gl.linkEnabled === undefined ? true : !!gl.linkEnabled,
+          blockInheritance: blockInheritance,
         });
       });
     });
@@ -126,7 +158,16 @@ window.GpoParser = (function() {
   // Baum aus Domain-/OU-Zielen in links.json. Sites gehoeren nicht zur
   // OU-Hierarchie und bleiben ausserhalb dieses Baums (weiterhin flach
   // ueber "links" abrufbar).
-  function buildOuTree(rawLinks) {
+  //
+  // "links" (bereits von flattenLinks() normalisiert) ist hier die einzige
+  // Quelle fuer enforced/linkEnabled je Vorkommen - vorher wurden diese
+  // Werte ein zweites Mal direkt aus rawLinks/t.gpoLinks gelesen, was bei
+  // kuenftigen Aenderungen an einer der beiden Stellen zu divergierenden
+  // Ergebnissen zwischen OU-Baum und dem Rest des Modells haette fuehren
+  // koennen. rawLinks wird weiterhin fuer die Ziel-/Knoten-Struktur selbst
+  // gebraucht (Name, targetType, blockInheritance je Ziel - keine GPO-
+  // bezogene Information, siehe Kommentar am Knoten unten).
+  function buildOuTree(rawLinks, links) {
     const relevant = rawLinks.filter(t => {
       const tt = (t.targetType || '').toLowerCase();
       return tt === 'domain' || tt === 'ou';
@@ -145,7 +186,9 @@ window.GpoParser = (function() {
         // erhalten statt auf die GPO aggregiert zu werden (Baum-Ansicht,
         // Konzept Abschnitt 11, braucht die Werte pro Vorkommen).
         blockInheritance: !!t.blockInheritance,
-        gpoLinks: (t.gpoLinks || []).map(gl => ({ gpoId: gl.gpoId, order: gl.order, enforced: !!gl.enforced })),
+        gpoLinks: links
+          .filter(l => l.target === t.target)
+          .map(l => ({ gpoId: l.gpoId, order: l.order, enforced: l.enforced, linkEnabled: l.linkEnabled })),
         children: [],
       };
     });
