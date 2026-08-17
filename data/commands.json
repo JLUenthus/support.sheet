@@ -1018,7 +1018,8 @@
         "admin",
         "info"
       ],
-      "guideRef": "support-gpo"
+      "guideRef": "support-gpo",
+      "risk": "low"
     },
     {
       "id": "gpo-gpo-report-als-html",
@@ -1031,7 +1032,8 @@
         "admin",
         "info"
       ],
-      "guideRef": "support-gpo"
+      "guideRef": "support-gpo",
+      "risk": "low"
     },
     {
       "id": "gpo-gpo-remote-report",
@@ -1069,6 +1071,34 @@
         "admin"
       ],
       "guideRef": "support-gpo"
+    },
+    {
+      "id": "gpo-rsop-anzeigen",
+      "name": "RSoP anzeigen (GUI)",
+      "cmd": "rsop.msc",
+      "desc": "Resultierende Gruppenrichtlinien grafisch anzeigen – welche Einstellung von welcher GPO stammt. Reine Anzeige, keine Änderung.",
+      "tags": [
+        "gpo",
+        "windows",
+        "admin",
+        "msc",
+        "info"
+      ],
+      "guideRef": "support-gpo",
+      "risk": "low"
+    },
+    {
+      "id": "gpo-richtlinien-sofort-aktualisieren",
+      "name": "Richtlinien sofort aktualisieren",
+      "cmd": "gpupdate /force",
+      "desc": "Erzwingt einen sofortigen Refresh aller Gruppenrichtlinien, auch wenn sich seit dem letzten Zyklus nichts geändert hat. Kann laufende Anwendungen kurz beeinträchtigen.",
+      "tags": [
+        "gpo",
+        "windows",
+        "admin"
+      ],
+      "guideRef": "support-gpo",
+      "risk": "medium"
     },
     {
       "id": "quick-autostart-alle-benutzer",

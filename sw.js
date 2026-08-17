@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260817-1600';
+const CACHE_VERSION = '20260818-1100';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -107,6 +107,15 @@ const ASSETS = [
   './powershell/Get-EventLogCollector-Server.ps1',
   './powershell/Exchange-PreflightCheck.ps1',
   './powershell/Set-BraveDebloat.ps1',
+  './powershell/gpo/Get-GPOAnalyzerSnapshot.ps1',
+  './gpo.html',
+  './css/gpo/gpo.css',
+  './js/gpo/gpo-loader.js',
+  './js/gpo/gpo-parser.js',
+  './js/gpo/gpo-analyzer.js',
+  './js/gpo/gpo-rules.js',
+  './js/gpo/gpo-renderer.js',
+  './data/gpo/rules.json',
 ];
 
 // ── INSTALL: Cache alle eigenen Assets ───────────────────

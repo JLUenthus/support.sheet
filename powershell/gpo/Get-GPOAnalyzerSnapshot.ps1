@@ -1,0 +1,487 @@
+#Requires -Version 5.1
+<#
+.SYNOPSIS
+    GPO-Sammelscript fuer den support.sheet GPO Analyzer.
+.DESCRIPTION
+    Erzeugt einen moeglichst vollstaendigen Snapshot aller GPOs der aktuellen
+    Domaene (Inventar, Einstellungen, Links, Security Filtering, WMI-Filter,
+    Block Inheritance) und verpackt ihn als ZIP zum Hochladen auf gpo.html.
+.NOTES
+    Autor: support.sheet | Version: 1.0
+    Benoetigt: PowerShell 5.1+, RSAT-Module GroupPolicy und ActiveDirectory
+    Ausfuehrung: auf einem Domain Controller oder einem domaenen-verbundenen
+    Client mit installierten RSAT-Tools. Keine Admin-Rechte noetig, nur
+    Leserechte auf GPOs/AD.
+#>
+
+$ScriptVersion = '1.0'
+
+Write-Host ""
+Write-Host "======================================================" -ForegroundColor Cyan
+Write-Host "   support.sheet - GPO Analyzer Snapshot Collector    " -ForegroundColor Cyan
+Write-Host "======================================================" -ForegroundColor Cyan
+Write-Host ""
+
+# ── Modul-Check (frueh und klar melden) ─────────────────────
+$missingModules = @(@('GroupPolicy', 'ActiveDirectory') | Where-Object { -not (Get-Module -ListAvailable -Name $_) })
+if ($missingModules.Count -gt 0) {
+    Write-Host "  FEHLER: Benoetigte PowerShell-Module fehlen: $($missingModules -join ', ')" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "  Dieses Script braucht die RSAT-Tools fuer Gruppenrichtlinien" -ForegroundColor Yellow
+    Write-Host "  und Active Directory (fuer OUs, WMI-Filter und Sites)." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "  Auf einem Client (Windows 10/11):" -ForegroundColor Gray
+    Write-Host "  Einstellungen > Optionale Features > RSAT: Gruppenrichtlinienverwaltungs-Tools" -ForegroundColor Gray
+    Write-Host "  Einstellungen > Optionale Features > RSAT: Active Directory-Modul fuer PowerShell" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "  Auf einem Domain Controller sind beide Module normalerweise bereits vorhanden." -ForegroundColor Gray
+    Write-Host ""
+    exit 1
+}
+
+try {
+    Import-Module GroupPolicy -ErrorAction Stop
+    Import-Module ActiveDirectory -ErrorAction Stop
+} catch {
+    Write-Host "  FEHLER: Module konnten nicht geladen werden: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
+
+try {
+    $domain = Get-ADDomain -ErrorAction Stop
+} catch {
+    Write-Host "  FEHLER: Keine Verbindung zu einer Active-Directory-Domaene moeglich." -ForegroundColor Red
+    Write-Host "  $($_.Exception.Message)" -ForegroundColor Gray
+    exit 1
+}
+
+Write-Host "  Domaene: $($domain.DNSRoot)" -ForegroundColor Gray
+Write-Host ""
+
+# ── Hilfsfunktionen: JSON-Ausgabe ────────────────────────────
+# ConvertTo-Json kollabiert ein einzelnes Array-Element beim Pipen zu einem
+# reinen Objekt (kein Array mehr) und ein leeres Array zu gar keiner Ausgabe.
+# Der Komma-Operator vor dem Pipe erzwingt in beiden Faellen ein sauberes
+# JSON-Array, unabhaengig von der Anzahl der Eintraege.
+function Write-JsonArray {
+    param([object[]]$Items, [Parameter(Mandatory)][string]$Path, [int]$Depth = 12)
+    if ($null -eq $Items) { $Items = @() }
+    (, $Items) | ConvertTo-Json -Depth $Depth | Out-File -FilePath $Path -Encoding UTF8
+}
+
+function Write-JsonObject {
+    param($Data, [Parameter(Mandatory)][string]$Path, [int]$Depth = 12)
+    $Data | ConvertTo-Json -Depth $Depth | Out-File -FilePath $Path -Encoding UTF8
+}
+
+function Normalize-Guid {
+    param([string]$Value)
+    if (-not $Value) { return $null }
+    return ($Value -replace '[{}]', '').ToUpperInvariant()
+}
+
+# ── Hilfsfunktionen: GPO-Report-XML parsen ──────────────────
+# Die Namespace-Praefixe im GPO-Report-XML (q1, q2, ...) sind nicht stabil
+# ueber Windows-/GPMC-Versionen hinweg. XPath mit local-name() umgeht das
+# Problem, ohne einen XmlNamespaceManager pflegen zu muessen.
+
+# Kategorie-Verschachtelung ist je nach GPMC-Version leicht unterschiedlich
+# (verschachtelte <Category><Name>.../Category> oder ein flaches
+# <Category>Text</Category>). Beide Formen werden abgedeckt.
+function Get-CategoryPath {
+    param([System.Xml.XmlNode]$PolicyNode)
+    $current = $PolicyNode.SelectSingleNode("*[local-name()='Category']")
+    if (-not $current) { return $null }
+
+    $names = New-Object System.Collections.Generic.List[string]
+    while ($current) {
+        $nameNode = $current.SelectSingleNode("*[local-name()='Name']")
+        if ($nameNode -and $nameNode.InnerText) {
+            $names.Add($nameNode.InnerText)
+        } elseif ($current.InnerText -and $current.ChildNodes.Count -eq 0) {
+            $names.Add($current.InnerText)
+        }
+        $current = $current.SelectSingleNode("*[local-name()='Category']")
+    }
+    if ($names.Count -eq 0) { return $null }
+    return ($names -join ' > ')
+}
+
+# Best-effort Wert-Extraktion: liefert eine stabile Textdarstellung der
+# Policy-Parameter (Dropdown/Text/Boolean/Decimal/...), keine vollstaendige
+# semantische Auswertung. Reicht fuer Gleichheits-/Konfliktvergleiche im
+# Analyzer, was der eigentliche Zweck ist.
+function Get-PolicyValueSummary {
+    param([System.Xml.XmlNode]$PolicyNode)
+    $ignoreNames = @('Name', 'State', 'Category', 'Explain', 'Supported', 'Precedence')
+    $parts = New-Object System.Collections.Generic.List[string]
+
+    function Walk-ValueNode {
+        param([System.Xml.XmlNode]$Node)
+        foreach ($child in $Node.ChildNodes) {
+            if ($child.NodeType -ne 'Element') { continue }
+            if ($ignoreNames -contains $child.LocalName) { continue }
+
+            $childElements = @($child.ChildNodes | Where-Object { $_.NodeType -eq 'Element' })
+            if ($childElements.Count -gt 0) {
+                $nameNode = $child.SelectSingleNode("*[local-name()='Name']")
+                $valueNode = $child.SelectSingleNode("*[local-name()='Value']")
+                if (-not $valueNode) { $valueNode = $child.SelectSingleNode("*[local-name()='State']") }
+                if ($nameNode -and $valueNode) {
+                    $parts.Add("$($nameNode.InnerText)=$($valueNode.InnerText)")
+                } else {
+                    Walk-ValueNode -Node $child
+                }
+            } elseif ($child.InnerText) {
+                $parts.Add("$($child.LocalName)=$($child.InnerText)")
+            }
+        }
+    }
+
+    Walk-ValueNode -Node $PolicyNode
+    return ($parts -join '; ')
+}
+
+function Get-AdmTmplSettings {
+    param([System.Xml.XmlNode]$ScopeNode, [string]$Scope)
+    $results = @()
+    $policyNodes = @($ScopeNode.SelectNodes(".//*[local-name()='Policy']"))
+    foreach ($p in $policyNodes) {
+        $nameNode = $p.SelectSingleNode("*[local-name()='Name']")
+        $stateNode = $p.SelectSingleNode("*[local-name()='State']")
+        if (-not $nameNode -or -not $stateNode) { continue }
+        $results += [ordered]@{
+            scope    = $Scope
+            category = Get-CategoryPath -PolicyNode $p
+            name     = $nameNode.InnerText
+            state    = $stateNode.InnerText
+            value    = Get-PolicyValueSummary -PolicyNode $p
+        }
+    }
+    return $results
+}
+
+# Account-Richtlinie (Kennwort-/Sperrrichtlinie) liegt als eigener Knoten
+# direkt unter Computer\ExtensionData\Extension, nicht als Policy-Element.
+function Get-AccountPolicySettings {
+    param([System.Xml.XmlNode]$ComputerNode)
+    $results = @()
+    $accountNodes = @($ComputerNode.SelectNodes(".//*[local-name()='Account']"))
+    foreach ($acct in $accountNodes) {
+        foreach ($child in $acct.ChildNodes) {
+            if ($child.NodeType -ne 'Element') { continue }
+            $results += [ordered]@{
+                scope    = 'Computer'
+                category = 'Security Settings > Account Policies'
+                name     = $child.LocalName
+                state    = 'Configured'
+                value    = $child.InnerText
+            }
+        }
+    }
+    return $results
+}
+
+function Get-SecurityOptionsSettings {
+    param([System.Xml.XmlNode]$ComputerNode)
+    $results = @()
+    $optionNodes = @($ComputerNode.SelectNodes(".//*[local-name()='SecurityOptions']"))
+    foreach ($opt in $optionNodes) {
+        $displayNameNode = $opt.SelectSingleNode("*[local-name()='Display']/*[local-name()='Name']")
+        $keyNameNode = $opt.SelectSingleNode("*[local-name()='KeyName']")
+        $name = if ($displayNameNode) { $displayNameNode.InnerText } elseif ($keyNameNode) { $keyNameNode.InnerText } else { 'Unbekannte Security Option' }
+
+        $valueNode = $opt.SelectSingleNode("*[local-name()='SettingNumber']")
+        if (-not $valueNode) { $valueNode = $opt.SelectSingleNode("*[local-name()='SettingBoolean']") }
+        if (-not $valueNode) { $valueNode = $opt.SelectSingleNode("*[local-name()='SettingString']") }
+
+        $results += [ordered]@{
+            scope    = 'Computer'
+            category = 'Security Settings > Security Options'
+            name     = $name
+            state    = 'Configured'
+            value    = if ($valueNode) { $valueNode.InnerText } else { $null }
+        }
+    }
+    return $results
+}
+
+function Get-UserRightsSettings {
+    param([System.Xml.XmlNode]$ComputerNode)
+    $results = @()
+    $rightNodes = @($ComputerNode.SelectNodes(".//*[local-name()='UserRightsAssignment']"))
+    foreach ($right in $rightNodes) {
+        $nameNode = $right.SelectSingleNode("*[local-name()='Name']")
+        $members = @($right.SelectNodes("*[local-name()='Member']/*[local-name()='Name']") | ForEach-Object { $_.InnerText })
+        $results += [ordered]@{
+            scope    = 'Computer'
+            category = 'Security Settings > User Rights Assignment'
+            name     = if ($nameNode) { $nameNode.InnerText } else { 'Unbekanntes Recht' }
+            state    = 'Configured'
+            value    = ($members -join ', ')
+        }
+    }
+    return $results
+}
+
+function ConvertFrom-GpoReportXml {
+    param([Parameter(Mandatory)][string]$Xml)
+    $doc = [xml]$Xml
+    $settings = @()
+
+    $computerNode = $doc.SelectSingleNode("//*[local-name()='Computer']")
+    $userNode = $doc.SelectSingleNode("//*[local-name()='User']")
+
+    if ($computerNode) {
+        $settings += Get-AdmTmplSettings -ScopeNode $computerNode -Scope 'Computer'
+        $settings += Get-AccountPolicySettings -ComputerNode $computerNode
+        $settings += Get-SecurityOptionsSettings -ComputerNode $computerNode
+        $settings += Get-UserRightsSettings -ComputerNode $computerNode
+    }
+    if ($userNode) {
+        $settings += Get-AdmTmplSettings -ScopeNode $userNode -Scope 'User'
+    }
+    return $settings
+}
+
+# WMI-Filter-Query steckt kodiert in msWMI-Parm2:
+# "<Anzahl>;<len_ns>;<len_query>;<namespace>;<query>;..." pro Klausel.
+# Best effort - bei mehreren ANDed Klauseln werden die Query-Texte verkettet.
+function Get-WmiFilterQueryText {
+    param([string]$Raw)
+    if (-not $Raw) { return $null }
+    try {
+        $parts = $Raw -split ';'
+        $count = [int]$parts[0]
+        $queries = New-Object System.Collections.Generic.List[string]
+        $idx = 1
+        for ($i = 0; $i -lt $count; $i++) {
+            $query = $parts[$idx + 3]
+            if ($query) { $queries.Add($query) }
+            $idx += 4
+        }
+        if ($queries.Count -eq 0) { return $null }
+        return ($queries -join ' AND ')
+    } catch {
+        return $null
+    }
+}
+
+# ── 1) GPO-Inventar + Einstellungen ─────────────────────────
+Write-Host "[1] GPOs sammeln ..." -ForegroundColor Yellow
+$allGpos = @(Get-GPO -All -Domain $domain.DNSRoot -ErrorAction Stop)
+Write-Host "  $($allGpos.Count) GPOs gefunden." -ForegroundColor Gray
+
+$gpoRecords = @()
+$skippedGpos = @()
+
+foreach ($gpo in $allGpos) {
+    $wmiFilterId = $null
+    if ($gpo.WmiFilter -and $gpo.WmiFilter.Path -match 'ID="(\{[0-9A-Fa-f-]+\})"') {
+        $wmiFilterId = Normalize-Guid -Value $matches[1]
+    }
+
+    $settings = @()
+    $reportError = $null
+    try {
+        $reportXml = Get-GPOReport -Guid $gpo.Id -ReportType Xml -Domain $domain.DNSRoot -ErrorAction Stop
+        $settings = @(ConvertFrom-GpoReportXml -Xml $reportXml)
+    } catch {
+        $reportError = $_.Exception.Message
+        $skippedGpos += [ordered]@{
+            id    = $gpo.Id.Guid
+            name  = $gpo.DisplayName
+            error = $reportError
+        }
+    }
+
+    $gpoRecords += [ordered]@{
+        id                    = $gpo.Id.Guid
+        name                  = $gpo.DisplayName
+        status                = $gpo.GpoStatus.ToString()
+        created               = $gpo.CreationTime.ToString('yyyy-MM-ddTHH:mm:ss')
+        modified              = $gpo.ModificationTime.ToString('yyyy-MM-ddTHH:mm:ss')
+        computerConfigEnabled = [bool]$gpo.Computer.Enabled
+        userConfigEnabled     = [bool]$gpo.User.Enabled
+        wmiFilterId           = $wmiFilterId
+        settings              = $settings
+        reportError           = $reportError
+    }
+}
+
+if ($skippedGpos.Count -gt 0) {
+    Write-Host "  $($skippedGpos.Count) GPO(s) ohne lesbaren Report (siehe Zusammenfassung am Ende)." -ForegroundColor Yellow
+}
+
+# ── 2) Security Filtering ───────────────────────────────────
+Write-Host "[2] Security Filtering sammeln ..." -ForegroundColor Yellow
+$filterRecords = @()
+foreach ($gpo in $allGpos) {
+    try {
+        $perms = @(Get-GPPermission -Guid $gpo.Id -All -ErrorAction Stop)
+    } catch {
+        continue
+    }
+    $applyPerms = @($perms | Where-Object { $_.Permission -eq 'GpoApply' })
+    foreach ($perm in $applyPerms) {
+        $filterRecords += [ordered]@{
+            gpoId      = $gpo.Id.Guid
+            trustee    = $perm.Trustee.Name
+            trusteeSid = if ($perm.Trustee.Sid) { $perm.Trustee.Sid.Value } else { $null }
+            permission = $perm.Permission.ToString()
+        }
+    }
+}
+
+# ── 3) WMI-Filter-Katalog ────────────────────────────────────
+Write-Host "[3] WMI-Filter sammeln ..." -ForegroundColor Yellow
+$wmiFilterRecords = @()
+try {
+    $somObjects = @(Get-ADObject -Filter "objectClass -eq 'msWMI-Som'" -Properties 'msWMI-Name', 'msWMI-ID', 'msWMI-Parm2' -ErrorAction Stop)
+    foreach ($som in $somObjects) {
+        $filterId = Normalize-Guid -Value $som.'msWMI-ID'
+        $linkedGpoIds = @($gpoRecords | Where-Object { $_.wmiFilterId -and $_.wmiFilterId -eq $filterId } | ForEach-Object { $_.id })
+        $wmiFilterRecords += [ordered]@{
+            id           = $filterId
+            name         = $som.'msWMI-Name'
+            query        = Get-WmiFilterQueryText -Raw $som.'msWMI-Parm2'
+            linkedGpoIds = $linkedGpoIds
+        }
+    }
+} catch {
+    Write-Host "  WMI-Filter konnten nicht gelesen werden: $($_.Exception.Message)" -ForegroundColor Yellow
+}
+
+# ── 4) Links + Block Inheritance (Domain/OU rekursiv, Sites separat) ──
+Write-Host "[4] Links und Block Inheritance sammeln ..." -ForegroundColor Yellow
+$linkRecords = @()
+
+function Add-LinkRecordFromInheritance {
+    param([string]$Target, [string]$TargetType, $Inheritance)
+    $script:linkRecords += [ordered]@{
+        target           = $Target
+        targetType       = $TargetType
+        blockInheritance = [bool]$Inheritance.GpoInheritanceBlocked
+        gpoLinks         = @($Inheritance.GpoLinks | ForEach-Object {
+                [ordered]@{
+                    gpoId       = $_.GpoId.Guid
+                    order       = $_.Order
+                    enforced    = [bool]$_.Enforced
+                    linkEnabled = [bool]$_.Enabled
+                }
+            })
+    }
+}
+
+try {
+    $domainInheritance = Get-GPInheritance -Target $domain.DistinguishedName -ErrorAction Stop
+    Add-LinkRecordFromInheritance -Target $domain.DistinguishedName -TargetType 'Domain' -Inheritance $domainInheritance
+} catch {
+    Write-Host "  Domain-Verknuepfungen konnten nicht gelesen werden: $($_.Exception.Message)" -ForegroundColor Yellow
+}
+
+$ous = @(Get-ADOrganizationalUnit -Filter * -Properties DistinguishedName -ErrorAction Stop)
+foreach ($ou in $ous) {
+    try {
+        $inheritance = Get-GPInheritance -Target $ou.DistinguishedName -ErrorAction Stop
+        Add-LinkRecordFromInheritance -Target $ou.DistinguishedName -TargetType 'OU' -Inheritance $inheritance
+    } catch {
+        Write-Host "  Verknuepfungen fuer $($ou.DistinguishedName) konnten nicht gelesen werden: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+}
+
+# Get-GPInheritance kennt nur Domain/OU. Site-Verknuepfungen stecken im
+# gPLink-Attribut des Site-Objekts in der Configuration-Partition und
+# muessen manuell geparst werden: "[LDAP://cn={GUID},...;<Flag>]" je Link,
+# Flag-Bit 0 = deaktiviert, Bit 1 = enforced. Fehlt der Zugriff auf die
+# Configuration-Partition, wird dieser Teil ohne Abbruch uebersprungen.
+try {
+    $configNC = (Get-ADRootDSE -ErrorAction Stop).ConfigurationNamingContext
+    $sites = @(Get-ADObject -SearchBase $configNC -Filter "objectClass -eq 'site'" -Properties 'gPLink', 'distinguishedName' -ErrorAction Stop)
+    foreach ($site in $sites) {
+        if (-not $site.gPLink) { continue }
+        $siteLinkMatches = [regex]::Matches($site.gPLink, '\[LDAP://cn=(\{[0-9A-Fa-f-]+\}),cn=policies,cn=system,[^;]+;(\d+)\]')
+        $siteLinks = @()
+        $order = 1
+        foreach ($m in $siteLinkMatches) {
+            $flag = [int]$m.Groups[2].Value
+            $siteLinks += [ordered]@{
+                gpoId       = Normalize-Guid -Value $m.Groups[1].Value
+                order       = $order
+                enforced    = (($flag -band 2) -ne 0)
+                linkEnabled = (($flag -band 1) -eq 0)
+            }
+            $order++
+        }
+        $linkRecords += [ordered]@{
+            target           = $site.DistinguishedName
+            targetType       = 'Site'
+            blockInheritance = $false
+            gpoLinks         = $siteLinks
+        }
+    }
+} catch {
+    Write-Host "  Site-Verknuepfungen konnten nicht gelesen werden: $($_.Exception.Message)" -ForegroundColor Yellow
+}
+
+# ── 5) Metadaten ─────────────────────────────────────────────
+$metadata = [ordered]@{
+    domain           = $domain.DNSRoot
+    collectedAt      = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ss')
+    collectedBy      = "$env:USERDOMAIN\$env:USERNAME"
+    computerName     = $env:COMPUTERNAME
+    gpoCount         = $gpoRecords.Count
+    ouCount          = $ous.Count
+    collectorVersion = $ScriptVersion
+    skippedGpos      = $skippedGpos
+}
+
+# ── Verpacken ────────────────────────────────────────────────
+Write-Host ""
+Write-Host "[5] Snapshot verpacken ..." -ForegroundColor Yellow
+
+$dateStamp = Get-Date -Format 'yyyy-MM-dd'
+$outputRoot = 'C:\Temp'
+if (-not (Test-Path $outputRoot)) {
+    New-Item -ItemType Directory -Path $outputRoot -Force | Out-Null
+}
+
+$workDir = Join-Path $outputRoot "gpo-snapshot-$dateStamp-work"
+if (Test-Path $workDir) { Remove-Item $workDir -Recurse -Force }
+New-Item -ItemType Directory -Path $workDir -Force | Out-Null
+
+Write-JsonArray -Items $gpoRecords -Path (Join-Path $workDir 'gpos.json')
+Write-JsonArray -Items $linkRecords -Path (Join-Path $workDir 'links.json')
+Write-JsonArray -Items $filterRecords -Path (Join-Path $workDir 'filters.json')
+Write-JsonArray -Items $wmiFilterRecords -Path (Join-Path $workDir 'wmi-filters.json')
+Write-JsonObject -Data $metadata -Path (Join-Path $workDir 'metadata.json')
+
+$zipPath = Join-Path $outputRoot "gpo-snapshot-$dateStamp.zip"
+if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
+Compress-Archive -Path (Join-Path $workDir '*') -DestinationPath $zipPath -Force
+Remove-Item $workDir -Recurse -Force
+
+Write-Host ""
+Write-Host "======================================================" -ForegroundColor Cyan
+Write-Host "              Sammlung abgeschlossen                  " -ForegroundColor Cyan
+Write-Host "======================================================" -ForegroundColor Cyan
+Write-Host "  GPOs:               $($gpoRecords.Count)" -ForegroundColor White
+Write-Host "  OUs:                $($ous.Count)" -ForegroundColor White
+Write-Host "  Links (Ziele):      $($linkRecords.Count)" -ForegroundColor White
+Write-Host "  Security Filter:    $($filterRecords.Count)" -ForegroundColor White
+Write-Host "  WMI-Filter:         $($wmiFilterRecords.Count)" -ForegroundColor White
+if ($skippedGpos.Count -gt 0) {
+    Write-Host ""
+    Write-Host "  Uebersprungene GPOs (Report nicht lesbar):" -ForegroundColor Yellow
+    foreach ($s in $skippedGpos) {
+        Write-Host "    - $($s.name) [$($s.id)]: $($s.error)" -ForegroundColor Yellow
+    }
+}
+Write-Host ""
+Write-Host "  Datei gespeichert unter:" -ForegroundColor Green
+Write-Host "  $zipPath" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  Jetzt auf support.sheet hochladen (gpo.html)." -ForegroundColor Gray
+Write-Host ""
+
+Start-Process explorer.exe -ArgumentList "/select,`"$zipPath`""

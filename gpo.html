@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>support.sheet – GPO Analyzer</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/gpo/gpo.css">
+</head>
+<body>
+
+  <!-- Wiederverwendet von windows.html/mitmachen.html fuer createCommandCard()
+       (js/render.js) - Weiterfuehrende Diagnose bei Konflikt-/Hygiene-Findings. -->
+  <template id="command-template">
+    <div class="command-card">
+      <div class="card-header">
+        <h3 data-field="name"></h3>
+        <button class="star-btn" data-action="star"
+                aria-label="Zu Favoriten hinzufügen"
+                aria-pressed="false">★</button>
+      </div>
+      <p data-field="desc"></p>
+      <code data-field="cmd"></code>
+      <div class="card-footer">
+        <div data-field="tags"></div>
+        <button class="copy-btn" data-action="copy">📋 Kopieren</button>
+      </div>
+    </div>
+  </template>
+
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-icon" id="as-logo-icon">🗂️</div>
+      <div class="logo-text" id="as-logo-label">support<span>.sheet</span></div>
+    </a>
+    <div class="header-right">
+      <div class="pill pill-count" style="border-color:rgba(45,212,191,.3);background:rgba(45,212,191,.08);color:#2dd4bf;">🗂️ GPO Analyzer</div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ── UPLOAD ─────────────────────────────────────────── -->
+    <section class="gpo-section">
+      <h2 class="section-title">GPO-Snapshot hochladen</h2>
+      <div class="gpo-upload-zone" id="gpo-upload-zone">
+        <div class="gpo-upload-icon">🗂️</div>
+        <div class="gpo-upload-text">ZIP-Datei hier ablegen oder klicken</div>
+        <div class="gpo-upload-sub">Erwartet: gpo-snapshot-*.zip (gpos.json, links.json, filters.json, wmi-filters.json, metadata.json)</div>
+        <input type="file" id="gpo-file-input" accept=".zip" style="display:none">
+      </div>
+
+      <div class="gpo-missing-hint" id="gpo-missing-hint" hidden></div>
+
+      <div class="gpo-disclaimer">
+        <span class="gpo-disclaimer-icon">ℹ️</span>
+        <div class="gpo-disclaimer-text">
+          <strong>Hinweis zur Interpretation:</strong>
+          Sammelscript: <a href="powershell/gpo/Get-GPOAnalyzerSnapshot.ps1" download>Get-GPOAnalyzerSnapshot.ps1</a>.
+          Läuft auf einem Domain Controller oder einem domänenverbundenen Client mit den RSAT-Modulen
+          GroupPolicy und Active Directory.
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ERGEBNISSE ─────────────────────────────────────── -->
+    <div id="gpo-results" class="gpo-results-hidden">
+
+      <nav class="gpo-page-nav" id="gpo-page-nav">
+        <a href="#gpo-overview-section" class="gpo-page-nav-link">Übersicht</a>
+        <a href="#gpo-conflict-section" class="gpo-page-nav-link">Konflikte</a>
+        <a href="#gpo-redundant-section" class="gpo-page-nav-link">Redundanzen</a>
+        <a href="#gpo-hygiene-section" class="gpo-page-nav-link">Hygiene</a>
+        <a href="#gpo-tree-section" class="gpo-page-nav-link">Struktur</a>
+      </nav>
+
+      <section class="gpo-section" id="gpo-overview-section">
+        <h2 class="section-title">Übersicht</h2>
+        <div class="gpo-num-grid" id="gpo-num-grid"></div>
+        <div class="gpo-ampel-row" id="gpo-ampel-row"></div>
+      </section>
+
+      <section class="gpo-section" id="gpo-conflict-section">
+        <div class="gpo-list-header">
+          <h2 class="section-title">🔴 Konflikte <span class="gpo-section-count" id="gpo-conflict-count">0</span></h2>
+          <input type="text" id="gpo-conflict-search" class="gpo-search-input" placeholder="Setting-Name durchsuchen …">
+        </div>
+        <div id="gpo-conflict-list"></div>
+        <div class="gpo-empty" id="gpo-conflict-empty" hidden>✅ Keine Konflikte erkannt.</div>
+      </section>
+
+      <section class="gpo-section" id="gpo-redundant-section">
+        <div class="gpo-list-header">
+          <h2 class="section-title">🔵 Redundante Einstellungen <span class="gpo-section-count" id="gpo-redundant-count">0</span></h2>
+          <input type="text" id="gpo-redundant-search" class="gpo-search-input" placeholder="Setting-Name durchsuchen …">
+        </div>
+        <div id="gpo-redundant-list"></div>
+        <div class="gpo-empty" id="gpo-redundant-empty" hidden>Keine mehrfach definierten Einstellungen erkannt.</div>
+      </section>
+
+      <section class="gpo-section" id="gpo-hygiene-section">
+        <h2 class="section-title">⚠ GPO-Hygiene <span class="gpo-section-count" id="gpo-hygiene-count">0</span></h2>
+        <div id="gpo-hygiene-list"></div>
+        <div class="gpo-empty" id="gpo-hygiene-empty" hidden>✅ Keine Auffälligkeiten erkannt.</div>
+      </section>
+
+      <section class="gpo-section" id="gpo-tree-section">
+        <h2 class="section-title">🌳 Struktur</h2>
+        <div id="gpo-tree-container"></div>
+        <div class="gpo-empty" id="gpo-tree-empty" hidden>Kein Link-Baum verfügbar (links.json fehlt oder ist leer).</div>
+
+        <div class="gpo-detail-panel" id="gpo-detail-panel" hidden>
+          <div class="gpo-detail-panel-header">
+            <h3 class="gpo-detail-panel-title" id="gpo-detail-panel-title"></h3>
+            <button type="button" class="gpo-detail-panel-close" id="gpo-detail-panel-close" aria-label="Schließen">✕</button>
+          </div>
+          <div id="gpo-detail-panel-body"></div>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <script src="js/jszip.min.js"></script>
+  <!-- Fuer createCommandCard()-Wiederverwendung (js/render.js) im
+       "Weiterfuehrende Diagnose"-Bereich der Konflikt-/Hygiene-Findings. -->
+  <script src="js/toast.js"></script>
+  <script src="js/variables.js"></script>
+  <script src="js/recent.js"></script>
+  <script src="js/favorites.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/gpo/gpo-parser.js"></script>
+  <script src="js/gpo/gpo-rules.js"></script>
+  <script src="js/gpo/gpo-analyzer.js"></script>
+  <script src="js/gpo/gpo-renderer.js"></script>
+  <script src="js/gpo/gpo-loader.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+    }
+  </script>
+  <script src="nav.js"></script>
+</body>
+</html>

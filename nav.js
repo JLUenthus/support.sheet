@@ -29,6 +29,7 @@
         { id:'eventlog', href:'eventlog.html', label:'Log Analyzer',   icon:'📋', color:'#e8b339', desc:'Windows Event Logs analysieren' },
         { id:'entra',    href:'entra.html',    label:'Entra Analyzer', icon:'🔐', color:'#7c8cf8', desc:'Sign-In Logs analysieren' },
         { id:'har',      href:'har.html',      label:'HAR Analyzer',   icon:'🌐', color:'#60a5fa', desc:'Browser Sessions analysieren' },
+        { id:'gpo',      href:'gpo.html',      label:'GPO Analyzer',   icon:'🗂️', color:'#2dd4bf', desc:'GPO-Snapshots analysieren' },
       ]
     },
     { id:'private',  href:'private.html',  label:'Privat',          icon:'🔒', color:'#f87171', desc:'Lokaler privater Bereich' },
@@ -194,6 +195,7 @@
                  : currentPage.id === 'eventlog'        ? '.analyzer'
                  : currentPage.id === 'entra'           ? '.entra'
                  : currentPage.id === 'har'             ? '.har'
+                 : currentPage.id === 'gpo'             ? '.gpo'
                  : currentPage.id === 'guides-overview' ? '.guides'
                  : currentPage.id === 'guides-create'   ? '.guides'
                  : currentPage.id === 'guides-manage'   ? '.guides'

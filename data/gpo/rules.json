@@ -1,0 +1,74 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-08-17",
+  "rules": [
+    {
+      "id": "GPO_NO_LINKS",
+      "name": "GPO ohne Verknüpfung",
+      "category": "hygiene",
+      "severity": "warning",
+      "description": "Diese GPO ist an keinem Ziel (Domain, Site oder OU) verlinkt und wird dadurch aktuell nirgends angewendet.",
+      "recommendations": [
+        { "text": "Prüfen, ob diese GPO noch benötigt wird." }
+      ]
+    },
+    {
+      "id": "GPO_NO_SETTINGS",
+      "name": "GPO ohne relevante Einstellungen",
+      "category": "hygiene",
+      "severity": "warning",
+      "description": "Diese GPO enthält keine konfigurierten Einstellungen.",
+      "recommendations": [
+        { "text": "Prüfen, ob diese GPO noch benötigt wird." }
+      ]
+    },
+    {
+      "id": "GPO_VERY_OLD",
+      "name": "Sehr alte GPO",
+      "category": "hygiene",
+      "severity": "warning",
+      "description": "Diese GPO wurde lange nicht mehr geändert und könnte historisch sein.",
+      "recommendations": [
+        { "text": "Prüfen, ob diese GPO noch benötigt wird." }
+      ]
+    },
+    {
+      "id": "GPO_COMPUTER_DISABLED_ONLY",
+      "name": "Computer Configuration deaktiviert",
+      "category": "hygiene",
+      "severity": "warning",
+      "description": "Diese GPO enthält ausschließlich Computer-Einstellungen, aber die Computer Configuration ist deaktiviert. Dadurch wirkt sich die GPO aktuell nirgends aus.",
+      "recommendations": [
+        { "text": "Prüfen, ob diese GPO noch benötigt wird." }
+      ]
+    },
+    {
+      "id": "GPO_USER_DISABLED_ONLY",
+      "name": "User Configuration deaktiviert",
+      "category": "hygiene",
+      "severity": "warning",
+      "description": "Diese GPO enthält ausschließlich User-Einstellungen, aber die User Configuration ist deaktiviert. Dadurch wirkt sich die GPO aktuell nirgends aus.",
+      "recommendations": [
+        { "text": "Prüfen, ob diese GPO noch benötigt wird." }
+      ]
+    },
+    {
+      "id": "SECURITY_FILTER_SERVER_OU_USER_FILTER",
+      "name": "Security Filter auf Server-/RDS-OU zeigt auf Benutzergruppe",
+      "category": "security-filter",
+      "severity": "info",
+      "description": "Diese GPO ist mit einer Server-/RDS-OU verknüpft, wird aber über einen Benutzerfilter statt eines Computer-basierten Filters eingeschränkt.",
+      "recommendations": [
+        { "text": "Prüfen, ob dies beabsichtigt ist." }
+      ]
+    },
+    {
+      "id": "WMI_FILTER_ASSIGNED",
+      "name": "WMI-Filter zugewiesen",
+      "category": "wmi-filter",
+      "severity": "info",
+      "description": "Diese GPO nutzt einen WMI-Filter, der die Anwendung zusätzlich einschränkt. Die Filter-Syntax selbst wird nicht bewertet.",
+      "recommendations": []
+    }
+  ]
+}
