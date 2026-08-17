@@ -169,7 +169,10 @@
       "label": "Account Lockout",
       "rules": {
         "confirm": ["read-result:locked-out", "analyze-eventlog:4740"],
-        "ruleOut": ["read-result:ok", "read-result:pw-expired"]
+        "ruleOut": [
+          { "id": "read-result:ok", "scope": "current" },
+          { "id": "read-result:pw-expired", "scope": "current" }
+        ]
       }
     },
     {
@@ -177,7 +180,10 @@
       "label": "Passwort abgelaufen",
       "rules": {
         "confirm": ["read-result:pw-expired"],
-        "ruleOut": ["read-result:locked-out", "read-result:ok"]
+        "ruleOut": [
+          { "id": "read-result:locked-out", "scope": "current" },
+          { "id": "read-result:ok", "scope": "current" }
+        ]
       }
     },
     {

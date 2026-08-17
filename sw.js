@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260814-0636';
+const CACHE_VERSION = '20260817-1600';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -11,6 +11,7 @@ const ASSETS = [
   './forti.html',
   './scripts.html',
   './mitmachen.html',
+  './mitmachen-merge.html',
   './tools.html',
   './eventlog.html',
   './data/eventlog-rules.json',
@@ -76,6 +77,8 @@ const ASSETS = [
   './favicon.ico',
   './css/main.css',
   './css/toast.css',
+  './css/mitmachen.css',
+  './css/mitmachen-merge.css',
   './css/variables.css',
   './css/recent.css',
   './css/favorites.css',
@@ -83,6 +86,10 @@ const ASSETS = [
   './css/tools.css',
   './js/loader.js',
   './js/toast.js',
+  './js/mitmachen.js',
+  './js/mitmachen-checksum.js',
+  './js/mitmachen-export.js',
+  './js/mitmachen-merge.js',
   './js/guide-overlay.js',
   './js/variables.js',
   './js/recent.js',

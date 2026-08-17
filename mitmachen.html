@@ -14,6 +14,11 @@
   <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/recent.css">
+  <link rel="stylesheet" href="css/favorites.css">
+  <link rel="stylesheet" href="css/guides.css">
+  <link rel="stylesheet" href="css/mitmachen.css">
 </head>
 <body>
 
@@ -27,818 +32,450 @@
     </div>
   </header>
 
-  
+  <!-- ── TEMPLATE ────────────────────────────────────────── -->
+  <!-- Identisch zu windows.html – createCommandCard() aus render.js
+       erwartet exakt diese Felder/Klassen. Nur fuer die Live-Vorschau
+       im "+ Neuer Command"-Formular verwendet, keine sichtbare Liste. -->
+  <template id="command-template">
+    <div class="command-card">
+      <div class="card-header">
+        <h3 data-field="name"></h3>
+        <button class="star-btn" data-action="star"
+                aria-label="Zu Favoriten hinzufügen"
+                aria-pressed="false">★</button>
+      </div>
+      <p data-field="desc"></p>
+      <code data-field="cmd"></code>
+      <div class="card-footer">
+        <div data-field="tags"></div>
+        <button class="copy-btn" data-action="copy">📋 Kopieren</button>
+      </div>
+    </div>
+  </template>
+
   <main>
+    <div class="mm-page">
 
-    <!-- ── TYP-AUSWAHL ─────────────────────────────────────── -->
-    <div class="type-row">
-      <button class="type-card active" onclick="selectType('befehl', this)">
-        <span class="type-icon">⌨️</span>
-        <span class="type-label">Befehl einreichen</span>
-        <span class="type-desc">CMD, PowerShell, MSC-Konsole</span>
-      </button>
-      <button class="type-card" onclick="selectType('skript', this)">
-        <span class="type-icon">📜</span>
-        <span class="type-label">Skript einreichen</span>
-        <span class="type-desc">Fertiges .ps1 Script</span>
-      </button>
-      <button class="type-card" onclick="selectType('feedback', this)">
-        <span class="type-icon">💬</span>
-        <span class="type-label">Feedback & Fehler</span>
-        <span class="type-desc">Bug, Tippfehler, Idee</span>
-      </button>
-    </div>
+      <!-- ── STATUS / LADEN ────────────────────────────────── -->
+      <div class="mm-status" id="mm-status">
+        <div class="mm-status-spinner"></div>
+        <div class="mm-status-text">Daten werden geladen …</div>
+      </div>
 
-    <!-- ── FORM: BEFEHL ───────────────────────────────────────── -->
-    <div class="form-section active" id="form-befehl">
-      <div class="form-grid">
-        <div class="form-left">
+      <!-- ── FEHLER PRO DATEI (blockiert die Seite nicht) ──── -->
+      <div class="mm-errors" id="mm-errors" hidden></div>
 
-          <div class="field-group">
-            <label class="field-label">Dein Name <span class="req">*</span></label>
-            <input class="field-input" id="b-name" type="text" placeholder="Max Muster">
-          </div>
+      <!-- ── HINWEIS: EVTL. VERALTETER STAND ─────────────────── -->
+      <div class="mm-stale-warning" id="mm-stale-warning" hidden>
+        ⚠️ Du arbeitest eventuell auf einem veralteten Stand, Seite neu laden empfohlen.
+        <button class="mm-stale-dismiss" id="mm-stale-dismiss" type="button">Verstanden</button>
+      </div>
 
-          <div class="field-group">
-            <label class="field-label">Titel des Befehls <span class="req">*</span></label>
-            <input class="field-input" id="b-title" type="text" placeholder="z.B. DNS-Cache leeren" oninput="updatePreview()">
-          </div>
+      <!-- ── WEG B: MANUELLER UPLOAD ───────────────────────── -->
+      <div class="mm-upload-panel" id="mm-upload-panel" hidden>
+        <div class="mm-upload-head">
+          <span class="mm-upload-title">Dateien manuell hochladen</span>
+          <button class="mm-upload-close" id="mm-upload-close" type="button">Schließen</button>
+        </div>
+        <p class="mm-upload-hint">
+          Falls die Daten nicht automatisch geladen werden konnten (z.B. offline oder lokal
+          ohne Server), können die Dateien hier einzeln ausgewählt werden. Es müssen nur die
+          Dateien ausgewählt werden, die fehlen oder ersetzt werden sollen.
+        </p>
+        <div class="mm-upload-grid">
+          <label class="mm-upload-field">
+            <span>Windows Commands (commands.json)</span>
+            <input type="file" accept=".json,application/json" data-upload-key="commandsWindows">
+          </label>
+          <label class="mm-upload-field">
+            <span>Exchange Commands (exchange-commands.json)</span>
+            <input type="file" accept=".json,application/json" data-upload-key="commandsExchange">
+          </label>
+          <label class="mm-upload-field">
+            <span>Fortinet Commands (forti-commands.json)</span>
+            <input type="file" accept=".json,application/json" data-upload-key="commandsForti">
+          </label>
+          <label class="mm-upload-field">
+            <span>Support-Guides (support-guides.json)</span>
+            <input type="file" accept=".json,application/json" data-upload-key="guides">
+          </label>
+        </div>
+        <button class="mm-upload-apply-btn" id="mm-upload-apply" type="button">Ausgewählte Dateien übernehmen</button>
+      </div>
 
-          <div class="field-group">
-            <label class="field-label">Befehl <span class="req">*</span></label>
-            <input class="field-input field-mono" id="b-cmd" type="text" placeholder="ipconfig /flushdns" oninput="updatePreview()">
-          </div>
+      <!-- ── ÜBERSICHT ──────────────────────────────────────── -->
+      <div class="mm-overview" id="mm-overview" hidden>
 
-          <div class="field-group">
-            <label class="field-label">Kategorie <span class="req">*</span></label>
-            <select class="field-input" id="b-cat" onchange="updatePreview()"><option value="network">Netzwerk</option></select>
-          </div>
-
-          <div class="field-group">
-            <label class="field-label">Beschreibung <span class="req">*</span></label>
-            <textarea class="field-input field-textarea" id="b-desc" placeholder="Was macht der Befehl? Wann ist er nützlich? Besonderheiten?" oninput="updatePreview()"></textarea>
-          </div>
-
-          <div class="field-group">
-            <label class="field-label">Tags wählen</label>
-            <div class="tag-grid" id="b-tags"><!-- dynamisch geladen --></div>
-          </div>
-
-          <div class="field-group">
-            <label class="field-label">Anmerkungen (optional)</label>
-            <textarea class="field-input field-textarea" id="b-note" placeholder="z.B. Nur auf Windows 11, benötigt Admin-Rechte, ..."></textarea>
-          </div>
-
-          <!-- ── Sammel-Aktionen ────────────────────────────── -->
-          <div class="collect-actions">
-            <button class="collect-add-btn" id="collect-add-btn" onclick="addToCollection()">
-              ＋ Zur Sammlung hinzufügen
-            </button>
-            <span class="collect-counter" id="collect-counter" hidden></span>
-          </div>
-
-          <!-- ── Gesammelte Befehle ─────────────────────────── -->
-          <div id="collect-list"></div>
-
+        <!-- ── AUTORNAME (einmalig, wird in sessionStorage gemerkt) ── -->
+        <div class="mm-author-banner" id="mm-author-banner" hidden>
+          <span class="mm-author-banner-label">👤 Dein Name für den späteren Export:</span>
+          <input class="mm-field-input" id="mm-author-input" type="text" placeholder="Max Mustermann" autocomplete="off">
+          <button class="mm-action-btn" id="mm-author-save" type="button">Speichern</button>
+        </div>
+        <div class="mm-author-display" id="mm-author-display" hidden>
+          👤 Angemeldet als <strong id="mm-author-display-name"></strong>
+          <button class="mm-author-change-btn" id="mm-author-change" type="button">ändern</button>
         </div>
 
-        <!-- Live Preview -->
-        <div class="form-right">
-          <div class="preview-box">
-            <div class="preview-header">
-              <span class="preview-title">JSON-Vorschau</span>
-              <button class="preview-copy-btn" onclick="copyPreview()">📋 Kopieren</button>
+        <div class="mm-head">
+          <div class="mm-counts">
+            <div class="mm-count-line" id="mm-count-commands">0 Windows Commands · 0 Exchange · 0 Fortinet</div>
+            <div class="mm-count-line mm-count-line--guides" id="mm-count-guides">0 Support-Guides</div>
+          </div>
+          <div class="mm-actions">
+            <button class="mm-action-btn" id="mm-new-command" type="button">+ Neuer Command</button>
+            <button class="mm-action-btn" id="mm-new-guide" type="button">+ Neuer Guide</button>
+            <button class="mm-action-btn" id="mm-changes-btn" type="button" disabled>Meine Änderungen ansehen</button>
+          </div>
+        </div>
+
+        <div class="mm-toolbar">
+          <button class="mm-upload-toggle" id="mm-upload-toggle" type="button">Dateien manuell hochladen</button>
+          <select class="mm-filter-select" id="mm-filter-category">
+            <option value="">Alle Kategorien</option>
+            <option value="windows">Windows</option>
+            <option value="exchange">Exchange</option>
+            <option value="forti">Fortinet</option>
+          </select>
+          <input class="mm-filter-search" id="mm-filter-search" type="text" placeholder="Suche nach Name, Befehl oder Tag …">
+        </div>
+
+        <div class="mm-list-meta" id="mm-list-meta"></div>
+        <div class="mm-list" id="mm-list"></div>
+        <div class="mm-empty" id="mm-empty" hidden>Keine Befehle gefunden.</div>
+
+      </div>
+
+      <!-- ── MODAL: NEUER COMMAND ──────────────────────────── -->
+      <div class="mm-modal" id="mm-cf-modal" hidden>
+        <div class="mm-modal-backdrop" id="mm-cf-backdrop"></div>
+        <div class="mm-modal-panel" role="dialog" aria-modal="true" aria-labelledby="mm-cf-title">
+          <div class="mm-modal-header">
+            <span class="mm-modal-title" id="mm-cf-title">Neuer Command</span>
+            <button class="mm-modal-close" id="mm-cf-close" type="button" aria-label="Schließen">✕</button>
+          </div>
+
+          <div class="mm-modal-body">
+            <div class="mm-cf-left">
+
+              <div class="mm-field-group">
+                <label class="mm-field-label" for="mm-cf-category">Kategorie</label>
+                <select class="mm-field-input" id="mm-cf-category">
+                  <option value="windows">Windows</option>
+                  <option value="exchange">Exchange</option>
+                  <option value="forti">Fortinet</option>
+                </select>
+              </div>
+
+              <div class="mm-field-group">
+                <label class="mm-field-label" for="mm-cf-name">Name <span class="mm-req">*</span></label>
+                <input class="mm-field-input" id="mm-cf-name" type="text" placeholder="z.B. DNS-Cache leeren">
+                <span class="mm-field-error" id="mm-cf-name-error"></span>
+              </div>
+
+              <div class="mm-field-group">
+                <label class="mm-field-label" for="mm-cf-cmd">Command <span class="mm-req">*</span></label>
+                <input class="mm-field-input mm-field-mono" id="mm-cf-cmd" type="text" placeholder="ipconfig /flushdns">
+                <span class="mm-field-error" id="mm-cf-cmd-error"></span>
+              </div>
+
+              <div class="mm-field-group">
+                <label class="mm-field-label" for="mm-cf-desc">Beschreibung <span class="mm-req">*</span></label>
+                <textarea class="mm-field-input mm-field-textarea" id="mm-cf-desc" placeholder="Was macht der Befehl? Wann ist er nützlich?"></textarea>
+                <span class="mm-field-error" id="mm-cf-desc-error"></span>
+              </div>
+
+              <div class="mm-field-group">
+                <label class="mm-field-label">Tags <span class="mm-req">*</span></label>
+                <div class="mm-tag-suggestions" id="mm-cf-tag-suggestions"></div>
+                <div class="mm-tag-custom-row">
+                  <input class="mm-field-input" id="mm-cf-tag-input" type="text" placeholder="Eigenen Tag eingeben und Enter drücken">
+                  <button class="mm-tag-add-btn" id="mm-cf-tag-add" type="button">+ Hinzufügen</button>
+                </div>
+                <div class="mm-tag-selected" id="mm-cf-tag-selected"></div>
+                <span class="mm-field-error" id="mm-cf-tags-error"></span>
+              </div>
+
+              <div class="mm-field-group">
+                <label class="mm-field-label">Risk-Level</label>
+                <div class="mm-radio-row">
+                  <label class="mm-radio-chip">
+                    <input type="radio" name="mm-cf-risk" value="low" checked>
+                    <span>Low</span>
+                  </label>
+                  <label class="mm-radio-chip">
+                    <input type="radio" name="mm-cf-risk" value="medium">
+                    <span>Medium</span>
+                  </label>
+                  <label class="mm-radio-chip">
+                    <input type="radio" name="mm-cf-risk" value="high">
+                    <span>High</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="mm-field-group">
+                <label class="mm-field-label">Direkt einen Guide dazu verfassen?</label>
+                <div class="mm-toggle-row">
+                  <button class="mm-toggle-btn" id="mm-cf-guide-yes" type="button" aria-pressed="false">Ja</button>
+                  <button class="mm-toggle-btn active" id="mm-cf-guide-no" type="button" aria-pressed="true">Nein</button>
+                </div>
+              </div>
+
+              <div class="mm-field-group">
+                <label class="mm-field-label">ID (automatisch generiert)</label>
+                <code class="mm-id-display" id="mm-cf-id-display">–</code>
+                <div class="mm-id-warning" id="mm-cf-id-warning" hidden>
+                  Diese ID ist bereits vergeben.
+                  <button class="mm-id-suggestion-btn" id="mm-cf-id-suggestion-btn" type="button"></button>
+                </div>
+              </div>
+
             </div>
-            <pre class="preview-code" id="b-preview">// Formular ausfüllen → Preview erscheint hier</pre>
-          </div>
-          <p class="preview-hint">Die JSON-Vorschau wird automatisch generiert und in die Mail eingefügt – direkt copy-paste-fähig für die commands.json.</p>
-        </div>
-      </div>
 
-      <button class="submit-btn" onclick="submitBefehl()">📧 Per Mail einreichen</button>
-    </div>
-
-    <!-- ── FORM: SKRIPT ───────────────────────────────────────── -->
-    <div class="form-section" id="form-skript">
-      <div class="form-grid">
-        <div class="form-left">
-
-          <div class="field-group">
-            <label class="field-label">Dein Name <span class="req">*</span></label>
-            <input class="field-input" id="s-name" type="text" placeholder="Max Muster">
-          </div>
-
-          <div class="field-group">
-            <label class="field-label">Script-Titel <span class="req">*</span></label>
-            <input class="field-input" id="s-title" type="text" placeholder="Get-SystemInventory" oninput="updatePreviewScript()">
-          </div>
-
-          <div class="field-group">
-            <label class="field-label">Kurzbeschreibung <span class="req">*</span></label>
-            <input class="field-input" id="s-subtitle" type="text" placeholder="System-Inventar als CSV exportieren" oninput="updatePreviewScript()">
-          </div>
-
-          <div class="field-group">
-            <label class="field-label">Kategorie <span class="req">*</span></label>
-            <select class="field-input" id="s-cat" onchange="updatePreviewScript()"><option value="system">System</option></select>
-          </div>
-
-          <div class="field-group">
-            <label class="field-label">Beschreibung <span class="req">*</span></label>
-            <textarea class="field-input field-textarea" id="s-desc" placeholder="Was macht das Skript? Wofür ist es nützlich?" oninput="updatePreviewScript()"></textarea>
-          </div>
-
-          <div class="field-group">
-            <label class="field-label">Verwendungsbeispiele (ein Befehl pro Zeile)</label>
-            <textarea class="field-input field-textarea field-mono" id="s-usage" placeholder=".\\Get-SystemInventory.ps1&#10;.\\Get-SystemInventory.ps1 -OutputPath C:\Temp\inv.csv" oninput="updatePreviewScript()"></textarea>
-          </div>
-
-          <div class="field-group">
-            <label class="field-label">Parameter (Format: -Name : Beschreibung)</label>
-            <textarea class="field-input field-textarea field-mono" id="s-params" placeholder="-OutputPath : Speicherpfad der CSV-Datei&#10;-ComputerName : Ziel-Computer (Standard: lokal)" oninput="updatePreviewScript()"></textarea>
-          </div>
-
-          <div class="field-group">
-            <label class="field-label">Voraussetzungen</label>
-            <input class="field-input" id="s-req" type="text" value="PowerShell 5.1+, Admin-Rechte" oninput="updatePreviewScript()">
-          </div>
-
-          <div class="field-group">
-            <label class="field-label">Script-Code <span class="req">*</span></label>
-            <textarea class="field-input field-textarea field-mono" id="s-code" placeholder="# Hier den vollständigen Script-Code einfügen..." style="min-height:160px"></textarea>
-          </div>
-
-        </div>
-
-        <div class="form-right">
-          <div class="preview-box">
-            <div class="preview-header">
-              <span class="preview-title">Eintrags-Vorschau</span>
-              <button class="preview-copy-btn" onclick="copyPreviewScript()">📋 Kopieren</button>
+            <div class="mm-cf-right">
+              <div class="mm-cf-preview-label">Vorschau</div>
+              <div class="mm-cf-preview-card" id="mm-cf-preview-card"></div>
             </div>
-            <pre class="preview-code" id="s-preview">// Formular ausfüllen → Preview erscheint hier</pre>
+          </div>
+
+          <div class="mm-modal-footer">
+            <button class="mm-modal-cancel-btn" id="mm-cf-cancel" type="button">Abbrechen</button>
+            <button class="mm-modal-save-btn" id="mm-cf-save" type="button">Command hinzufügen</button>
           </div>
         </div>
       </div>
 
-      <button class="submit-btn" onclick="submitSkript()">📧 Per Mail einreichen</button>
+      <!-- ── MODAL: COMMAND FUER NEUEN GUIDE AUSWAEHLEN ─────── -->
+      <div class="mm-modal" id="mm-gp-modal" hidden>
+        <div class="mm-modal-backdrop" id="mm-gp-backdrop"></div>
+        <div class="mm-modal-panel mm-gp-panel" role="dialog" aria-modal="true" aria-labelledby="mm-gp-title">
+          <div class="mm-modal-header">
+            <span class="mm-modal-title" id="mm-gp-title">Guide zu welchem Command verfassen?</span>
+            <button class="mm-modal-close" id="mm-gp-close" type="button" aria-label="Schließen">✕</button>
+          </div>
+
+          <div class="mm-modal-body mm-gp-body">
+            <input class="mm-field-input" id="mm-gp-search" type="text" placeholder="Suche nach Name, Befehl oder Tag …" autocomplete="off">
+            <div class="mm-gp-list" id="mm-gp-list"></div>
+            <div class="mm-gp-empty" id="mm-gp-empty" hidden>Keine Commands ohne Guide gefunden.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MODAL: GUIDE VERFASSEN ─────────────────────────── -->
+      <!-- Editor-Bausteine (Toolbar, Split-Ansicht, Tag-Pills) 1:1 aus
+           guide.sheet uebernommen (siehe guides-create.html/guides-editor.js),
+           schlank ohne IndexedDB/File-System-Anbindung – landet nur in
+           pendingChanges.newGuides (sessionStorage) bis zum Export. -->
+      <div class="mm-modal" id="mm-gf-modal" hidden>
+        <div class="mm-modal-backdrop" id="mm-gf-backdrop"></div>
+        <div class="mm-modal-panel mm-gf-panel" role="dialog" aria-modal="true" aria-labelledby="mm-gf-title-heading">
+          <div class="mm-modal-header">
+            <span class="mm-modal-title" id="mm-gf-title-heading">Guide verfassen</span>
+            <button class="mm-modal-close" id="mm-gf-close" type="button" aria-label="Schließen">✕</button>
+          </div>
+
+          <div class="mm-modal-body mm-gf-body">
+
+            <div class="mm-gf-context" id="mm-gf-context"></div>
+
+            <input type="text" id="mm-gf-title" class="ge-title-input" placeholder="Guide-Titel…" autocomplete="off">
+            <span class="mm-field-error" id="mm-gf-title-error"></span>
+
+            <div class="ge-form-row">
+              <select id="mm-gf-category" class="gg-select"></select>
+              <input type="text" id="mm-gf-category-custom" class="mm-field-input" placeholder="Neue Kategorie…" hidden style="max-width:220px">
+            </div>
+
+            <div class="ge-tags-block">
+              <div class="ge-tags-row">
+                <div class="ge-tags-pills" id="mm-gf-tags-pills"></div>
+                <input type="text" id="mm-gf-tag-input" class="ge-tag-input" placeholder="Tag eingeben (Enter, Komma oder Klick woanders)…" autocomplete="off">
+                <button type="button" class="ge-tag-add-btn" id="mm-gf-tag-add-btn">+ Hinzufügen</button>
+              </div>
+            </div>
+
+            <div class="mm-field-group">
+              <label class="mm-field-label">Guide-ID (automatisch generiert)</label>
+              <code class="mm-id-display" id="mm-gf-id-display">–</code>
+              <div class="mm-id-warning" id="mm-gf-id-warning" hidden>
+                Diese ID ist bereits vergeben.
+                <button class="mm-id-suggestion-btn" id="mm-gf-id-suggestion-btn" type="button"></button>
+              </div>
+            </div>
+
+            <div class="gg-view-toggle" id="mm-gf-view-toggle">
+              <button type="button" class="gg-view-btn active" data-mode="split">Split</button>
+              <button type="button" class="gg-view-btn" data-mode="editor">Nur Editor</button>
+              <button type="button" class="gg-view-btn" data-mode="preview">Nur Vorschau</button>
+            </div>
+
+            <div class="ge-toolbar" id="mm-gf-toolbar">
+              <button type="button" data-action="h1" title="Überschrift 1">H1</button>
+              <button type="button" data-action="h2" title="Überschrift 2">H2</button>
+              <button type="button" data-action="h3" title="Überschrift 3">H3</button>
+              <button type="button" data-action="bullet" title="Stichpunkte">• Liste</button>
+              <button type="button" data-action="ordered" title="Nummerierte Liste">1. Liste</button>
+              <span class="ge-toolbar-sep"></span>
+              <button type="button" data-action="bold" title="Fett"><strong>B</strong></button>
+              <button type="button" data-action="italic" title="Kursiv"><em>I</em></button>
+              <button type="button" data-action="code" title="Inline-Code">`Code`</button>
+              <button type="button" data-action="codeblock" title="Code-Block">```</button>
+              <button type="button" data-action="powershell" title="PowerShell-Block">PS</button>
+              <button type="button" data-action="cmd" title="CMD-Block">CMD</button>
+              <span class="ge-toolbar-sep"></span>
+              <button type="button" data-action="link" title="Link">🔗</button>
+              <button type="button" data-action="table" title="Tabelle">▦</button>
+              <button type="button" data-action="checklist" title="Checkliste – [ ] leer lassen = offen, [x] = erledigt">☑️</button>
+            </div>
+
+            <div class="ge-editor-wrap" id="mm-gf-editor-wrap" data-mode="split">
+              <textarea id="mm-gf-textarea" class="ge-textarea" spellcheck="false"></textarea>
+              <div class="ge-preview gv-content" id="mm-gf-preview"></div>
+            </div>
+            <span class="mm-field-error" id="mm-gf-content-error"></span>
+
+          </div>
+
+          <div class="mm-modal-footer">
+            <button class="mm-modal-cancel-btn" id="mm-gf-cancel" type="button">Abbrechen</button>
+            <button class="mm-modal-save-btn" id="mm-gf-save" type="button">Guide speichern</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MODAL: MEINE ÄNDERUNGEN + EXPORT ────────────────── -->
+      <div class="mm-modal" id="mm-changes-modal" hidden>
+        <div class="mm-modal-backdrop" id="mm-changes-backdrop"></div>
+        <div class="mm-modal-panel mm-changes-panel" role="dialog" aria-modal="true" aria-labelledby="mm-changes-title">
+          <div class="mm-modal-header">
+            <span class="mm-modal-title" id="mm-changes-title">Meine Änderungen</span>
+            <button class="mm-modal-close" id="mm-changes-close" type="button" aria-label="Schließen">✕</button>
+          </div>
+
+          <div class="mm-modal-body mm-changes-body">
+
+            <div class="mm-changes-section">
+              <div class="mm-changes-section-title">Neue Commands</div>
+              <div class="mm-changes-list" id="mm-changes-commands"></div>
+              <div class="mm-changes-empty" id="mm-changes-commands-empty" hidden>Keine neuen Commands.</div>
+            </div>
+
+            <div class="mm-changes-section">
+              <div class="mm-changes-section-title">Neue Guides</div>
+              <div class="mm-changes-list" id="mm-changes-guides"></div>
+              <div class="mm-changes-empty" id="mm-changes-guides-empty" hidden>Keine neuen Guides.</div>
+            </div>
+
+            <div class="mm-changes-section">
+              <div class="mm-changes-section-title">Verknüpfungen</div>
+              <div class="mm-changes-list" id="mm-changes-links"></div>
+              <div class="mm-changes-empty" id="mm-changes-links-empty" hidden>Keine Verknüpfungen.</div>
+            </div>
+
+            <div class="mm-changes-export" id="mm-changes-export">
+              <div class="mm-field-group">
+                <label class="mm-field-label" for="mm-export-name">Dein Name <span class="mm-req">*</span></label>
+                <input class="mm-field-input" id="mm-export-name" type="text" placeholder="Max Mustermann" autocomplete="off">
+                <span class="mm-field-error" id="mm-export-name-error"></span>
+              </div>
+              <button class="mm-modal-save-btn" id="mm-export-btn" type="button">Export herunterladen</button>
+            </div>
+
+            <div class="mm-export-success" id="mm-export-success" hidden>
+              <div class="mm-export-success-text">
+                ✅ Export heruntergeladen. Bitte die ZIP-Datei per Mail, Teams oder OneDrive an den Maintainer schicken.
+              </div>
+              <div class="mm-export-success-actions">
+                <button class="mm-modal-cancel-btn" id="mm-export-keep" type="button">Weiter sammeln</button>
+                <button class="mm-modal-save-btn" id="mm-export-clear" type="button">Änderungen jetzt leeren</button>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="mm-modal-footer">
+            <button class="mm-modal-cancel-btn" id="mm-changes-close-footer" type="button">Schließen</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Link-/Tabellen-Dialog fuer die Toolbar – Markup 1:1 aus
+           guides-create.html uebernommen, wird ausschliesslich vom
+           Guide-Formular oben verwendet. -->
+      <div id="link-dialog" class="link-dialog" hidden>
+        <div class="link-dialog-backdrop"></div>
+        <div class="link-dialog-panel">
+          <div class="link-dialog-header">
+            <span class="link-dialog-title">Link einfügen</span>
+            <button class="link-dialog-close" id="link-dialog-close">✕</button>
+          </div>
+          <div class="link-dialog-body">
+            <label class="link-dialog-label">
+              Linktext
+              <input type="text" id="link-dialog-text" placeholder="z.B. Microsoft Docs" class="link-dialog-input" autocomplete="off">
+            </label>
+            <label class="link-dialog-label">
+              URL
+              <input type="url" id="link-dialog-url" placeholder="https://..." class="link-dialog-input" autocomplete="off">
+            </label>
+          </div>
+          <div class="link-dialog-footer">
+            <button class="link-dialog-btn-cancel" id="link-dialog-cancel">Abbrechen</button>
+            <button class="link-dialog-btn-ok" id="link-dialog-ok">Einfügen</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="table-dialog" class="link-dialog" hidden>
+        <div class="link-dialog-backdrop"></div>
+        <div class="link-dialog-panel">
+          <div class="link-dialog-header">
+            <span class="link-dialog-title">Tabelle einfügen</span>
+            <button class="link-dialog-close" id="table-dialog-close">✕</button>
+          </div>
+          <div class="link-dialog-body">
+            <label class="link-dialog-label">
+              Spalten
+              <input type="number" id="table-cols" value="2" min="1" max="8" class="link-dialog-input">
+            </label>
+            <label class="link-dialog-label">
+              Zeilen
+              <input type="number" id="table-rows" value="3" min="1" max="20" class="link-dialog-input">
+            </label>
+            <label class="link-dialog-label">
+              Spaltenname Vorlage
+              <input type="text" id="table-header" value="Spalte" class="link-dialog-input" placeholder="Spalte (wird nummeriert)">
+            </label>
+          </div>
+          <div class="link-dialog-footer">
+            <button class="link-dialog-btn-cancel" id="table-dialog-cancel">Abbrechen</button>
+            <button class="link-dialog-btn-ok" id="table-dialog-ok">Einfügen</button>
+          </div>
+        </div>
+      </div>
+
     </div>
-
-    <!-- ── FORM: FEEDBACK ─────────────────────────────────────── -->
-    <div class="form-section" id="form-feedback">
-      <div class="feedback-grid">
-
-        <div class="feedback-card" onclick="openFeedback('bug')">
-          <div class="feedback-icon">🐛</div>
-          <div class="feedback-title">Bug melden</div>
-          <div class="feedback-desc">Falscher Befehl, kaputte Funktion, Tippfehler</div>
-        </div>
-
-        <div class="feedback-card" onclick="openFeedback('feature')">
-          <div class="feedback-icon">✨</div>
-          <div class="feedback-title">Feature-Wunsch</div>
-          <div class="feedback-desc">Neue Kategorie, neue Seite, nützliche Funktion</div>
-        </div>
-
-        <div class="feedback-card" onclick="openFeedback('beschreibung')">
-          <div class="feedback-icon">📝</div>
-          <div class="feedback-title">Beschreibung verbessern</div>
-          <div class="feedback-desc">Unvollständige oder missverständliche Beschreibung</div>
-        </div>
-
-      </div>
-
-      <div class="feedback-form" id="feedback-form" hidden>
-        <div class="field-group">
-          <label class="field-label">Dein Name</label>
-          <input class="field-input" id="f-name" type="text" placeholder="Max Muster">
-        </div>
-        <div class="field-group">
-          <label class="field-label">Betreff <span class="req">*</span></label>
-          <input class="field-input" id="f-subject" type="text">
-        </div>
-        <div class="field-group">
-          <label class="field-label">Nachricht <span class="req">*</span></label>
-          <textarea class="field-input field-textarea" id="f-body" style="min-height:120px"></textarea>
-        </div>
-        <button class="submit-btn" onclick="submitFeedback()">📧 Per Mail senden</button>
-      </div>
-    </div>
-
-    <!-- ── ERFOLG ─────────────────────────────────────────────── -->
-    <div class="success-msg" id="success">
-      <div class="success-icon">✅</div>
-      <div class="success-text">
-        <strong>Mail-Client geöffnet!</strong> Bitte die vorausgefüllte Mail absenden.
-      </div>
-      <div class="success-process">
-        <div class="process-title">Was passiert als nächstes?</div>
-        <div class="process-steps">
-          <div class="process-step">
-            <span class="process-num">1</span>
-            <span>Einreichung wird geprüft – meist innerhalb weniger Tage</span>
-          </div>
-          <div class="process-step">
-            <span class="process-num">2</span>
-            <span>Bei Commands: JSON-Format und Tags werden angepasst falls nötig</span>
-          </div>
-          <div class="process-step">
-            <span class="process-num">3</span>
-            <span>Nach Aufnahme erscheint der Command beim nächsten Update live auf der Seite</span>
-          </div>
-        </div>
-        <div class="process-note">
-          Keine Rückmeldung erhalten? Kein Problem – alle Einreichungen werden gesichtet, auch wenn es manchmal etwas länger dauert.
-        </div>
-      </div>
-    </div>
-
   </main>
 
-
-  <style>
-    /* ── Typ-Auswahl ───────────────────────────────────────── */
-    .type-row  { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:28px; }
-    .type-card {
-      background:var(--panel); border:1px solid var(--border); border-radius:var(--r);
-      padding:16px; cursor:pointer; text-align:left; font-family:var(--font-ui);
-      display:flex; flex-direction:column; gap:4px; transition:all .15s;
-    }
-    .type-card:hover  { border-color:var(--border2); background:var(--panel2); }
-    .type-card.active { border-color:rgba(167,139,250,.5); background:rgba(167,139,250,.08); }
-    .type-icon  { font-size:1.4rem; margin-bottom:4px; }
-    .type-label { font-size:.88rem; font-weight:700; color:var(--text); }
-    .type-desc  { font-size:.73rem; color:var(--muted); }
-
-    /* ── Form Sections ─────────────────────────────────────── */
-    .form-section         { display:none; }
-    .form-section.active  { display:block; }
-    .form-grid { display:grid; grid-template-columns:1fr 380px; gap:24px; align-items:start; }
-    .form-left { display:flex; flex-direction:column; gap:16px; }
-
-    /* ── Fields ────────────────────────────────────────────── */
-    .field-group  { display:flex; flex-direction:column; gap:5px; }
-    .field-label  { font-size:.72rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; }
-    .req          { color:var(--red); }
-    .field-input  {
-      background:var(--bg); border:1px solid var(--border); border-radius:8px;
-      padding:9px 12px; color:var(--text); font-family:var(--font-ui); font-size:.85rem;
-      outline:none; transition:border-color .15s; width:100%;
-    }
-    .field-input:focus  { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
-    .field-textarea     { min-height:80px; resize:vertical; }
-    .field-mono         { font-family:var(--font-mono); font-size:.78rem; }
-    select.field-input  { cursor:pointer; }
-
-    /* ── Tags ──────────────────────────────────────────────── */
-    .tag-grid { display:flex; flex-wrap:wrap; gap:8px; }
-    .tag-check {
-      display:flex; align-items:center; gap:5px;
-      padding:4px 10px; border-radius:6px; border:1px solid var(--border);
-      background:var(--panel); cursor:pointer; font-size:.75rem; color:var(--muted);
-      transition:all .15s; user-select:none;
-    }
-    .tag-check:hover { border-color:var(--border2); color:var(--text); }
-    .tag-check input { display:none; }
-    .tag-check:has(input:checked) { border-color:rgba(124,140,248,.5); background:rgba(124,140,248,.1); color:var(--accent); }
-
-    /* ── Preview ───────────────────────────────────────────── */
-    .form-right     { position:sticky; top:110px; }
-    .preview-box    { background:var(--bg); border:1px solid var(--border); border-radius:var(--r); overflow:hidden; }
-    .preview-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid var(--border); }
-    .preview-title  { font-size:.75rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
-    .preview-copy-btn { padding:4px 10px; border-radius:6px; border:1px solid var(--border2); background:var(--panel); color:var(--muted); font-size:.72rem; font-weight:600; cursor:pointer; font-family:var(--font-ui); transition:all .15s; }
-    .preview-copy-btn:hover { color:var(--text); }
-    .preview-code   { margin:0; padding:14px; font-family:var(--font-mono); font-size:.73rem; color:var(--accent); line-height:1.6; overflow-x:auto; white-space:pre-wrap; word-break:break-all; min-height:120px; }
-    .preview-hint   { font-size:.72rem; color:var(--dim); margin-top:10px; line-height:1.5; }
-
-    /* ── Submit ────────────────────────────────────────────── */
-    .submit-btn {
-      margin-top:20px; padding:11px 28px; border-radius:9px;
-      border:1px solid rgba(167,139,250,.4); background:rgba(167,139,250,.1);
-      color:#a78bfa; font-family:var(--font-ui); font-size:.88rem; font-weight:700;
-      cursor:pointer; transition:all .15s;
-    }
-    .submit-btn:hover { background:rgba(167,139,250,.2); }
-
-    /* ── Feedback ──────────────────────────────────────────── */
-    .feedback-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
-    .feedback-card { background:var(--panel); border:1px solid var(--border); border-radius:var(--r); padding:18px; cursor:pointer; transition:all .15s; }
-    .feedback-card:hover { border-color:var(--border2); background:var(--panel2); }
-    .feedback-icon  { font-size:1.5rem; margin-bottom:8px; }
-    .feedback-title { font-size:.88rem; font-weight:700; color:var(--text); margin-bottom:4px; }
-    .feedback-desc  { font-size:.75rem; color:var(--muted); }
-    .feedback-form  { background:var(--panel); border:1px solid var(--border); border-radius:var(--r); padding:20px; display:flex; flex-direction:column; gap:14px; }
-
-    /* ── Collect Actions ───────────────────────────────────── */
-    .collect-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 4px;
-      flex-wrap: wrap;
-    }
-
-    .collect-add-btn {
-      padding: 9px 18px;
-      border-radius: 8px;
-      border: 1px solid rgba(124,140,248,.4);
-      background: rgba(124,140,248,.08);
-      color: var(--accent);
-      font-family: var(--font-ui);
-      font-size: .82rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all .15s;
-    }
-    .collect-add-btn:hover:not(:disabled) { background: rgba(124,140,248,.18); }
-    .collect-add-btn:disabled { opacity: .45; cursor: not-allowed; }
-
-    .collect-counter {
-      font-size: .75rem;
-      color: var(--muted);
-      font-weight: 600;
-    }
-
-    /* Gesammelte Befehle */
-    #collect-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-
-    .collect-card {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--accent);
-      border-radius: var(--r);
-      padding: 10px 12px;
-    }
-
-    .collect-card-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .collect-num {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: var(--accent-bg);
-      border: 1px solid var(--border2);
-      color: var(--accent);
-      font-size: .68rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .collect-title {
-      font-size: .82rem;
-      font-weight: 700;
-      color: var(--text);
-      flex: 1;
-    }
-
-    .collect-cmd {
-      font-family: var(--font-mono);
-      font-size: .72rem;
-      color: var(--muted);
-      background: var(--panel2);
-      padding: 2px 7px;
-      border-radius: 4px;
-    }
-
-    .collect-remove-btn {
-      margin-left: auto;
-      width: 22px;
-      height: 22px;
-      border-radius: 5px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--dim);
-      cursor: pointer;
-      font-size: .72rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all .15s;
-      flex-shrink: 0;
-    }
-    .collect-remove-btn:hover { color: var(--red); border-color: rgba(248,113,113,.4); background: rgba(248,113,113,.06); }
-    .success-msg { display:none; margin-top:20px; padding:0; background:rgba(74,222,128,.06); border:1px solid rgba(74,222,128,.25); border-radius:var(--r); overflow:hidden; }
-    .success-msg.show { display:block; }
-    .success-icon { font-size:1.5rem; padding:20px 20px 0; }
-    .success-text { padding:8px 20px 16px; color:var(--green); font-weight:700; font-size:.95rem; border-bottom:1px solid rgba(74,222,128,.15); }
-    .success-process { padding:16px 20px 20px; }
-    .process-title { font-size:.72rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:12px; }
-    .process-steps { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
-    .process-step { display:flex; align-items:flex-start; gap:10px; font-size:.82rem; color:var(--muted); }
-    .process-num { width:20px; height:20px; border-radius:50%; background:rgba(74,222,128,.15); border:1px solid rgba(74,222,128,.3); color:var(--green); font-size:.7rem; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
-    .process-note { font-size:.75rem; color:var(--dim); padding-top:12px; border-top:1px solid var(--border); line-height:1.5; }
-
-    @media (max-width:900px) {
-      .form-grid { grid-template-columns:1fr; }
-      .form-right { position:static; }
-      .type-row, .feedback-grid { grid-template-columns:1fr; }
-    }
-  </style>
+  <script src="js/toast.js"></script>
+  <script src="js/settings-store.js"></script>
+  <script src="js/variables.js"></script>
+  <script src="js/recent.js"></script>
+  <script src="js/favorites.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/marked.min.js"></script>
+  <script src="js/jszip.min.js"></script>
+  <script src="js/mitmachen-checksum.js"></script>
+  <script src="js/mitmachen-export.js"></script>
+  <script src="js/mitmachen.js"></script>
 
   <script>
-    // ── Kategorien & Tags aus commands.json laden ─────────────
-    async function loadSchema() {
-      try {
-        const res = await fetch('./data/commands.json');
-        const data = await res.json();
-        const commands = data.commands || [];
-
-        // Primäre Kategorien (erster Tag) in Reihenfolge ihres ersten Auftretens
-        const cats = [];
-        const catSeen = new Set();
-        commands.forEach(cmd => {
-          const primary = cmd.tags?.[0];
-          if (primary && !catSeen.has(primary)) {
-            catSeen.add(primary);
-            cats.push(primary);
-          }
-        });
-
-        // CAT_LABELS aus render.js CATEGORY_MAP verwenden falls verfügbar
-        const labelMap = typeof CATEGORY_MAP !== 'undefined' ? CATEGORY_MAP : {};
-
-        // Selects befüllen
-        ['b-cat', 's-cat'].forEach(id => {
-          const sel = document.getElementById(id);
-          if (!sel) return;
-          sel.innerHTML = '';
-          cats.forEach(tag => {
-            const opt = document.createElement('option');
-            opt.value = tag;
-            opt.textContent = labelMap[tag]?.label || tag;
-            sel.appendChild(opt);
-          });
-          // network als Standard vorwählen falls vorhanden
-          if ([...sel.options].some(o => o.value === 'network')) sel.value = 'network';
-        });
-
-        // CAT_LABELS für Submit-Funktion
-        cats.forEach(tag => {
-          CAT_LABELS[tag] = labelMap[tag]?.label || tag;
-        });
-
-        // Alle Tags als Checkboxen
-        const allTags = [...new Set(commands.flatMap(c => c.tags || []))].sort();
-        const tagGrid = document.getElementById('b-tags');
-        if (tagGrid) {
-          tagGrid.innerHTML = '';
-          // Immer-Tags zuerst
-          const priority = ['windows', 'admin', 'info', 'quick', 'diag', 'caution', 'powershell', 'server'];
-          const sorted = [...priority.filter(t => allTags.includes(t)),
-                          ...allTags.filter(t => !priority.includes(t))];
-          sorted.forEach(tag => {
-            const label = document.createElement('label');
-            label.className = 'tag-check';
-            const cb = document.createElement('input');
-            cb.type = 'checkbox';
-            cb.className = 'b-tag';
-            cb.value = tag;
-            if (tag === 'windows') cb.checked = true;
-            cb.addEventListener('change', updatePreview);
-            const span = document.createElement('span');
-            span.textContent = tag + (tag === 'caution' ? ' ⚠️' : '');
-            label.appendChild(cb);
-            label.appendChild(span);
-            tagGrid.appendChild(label);
-          });
-        }
-
-        updatePreview();
-      } catch (e) {
-        console.warn('Schema-Load fehlgeschlagen:', e);
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', loadSchema);
-
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch(() => {});
       });
-    }
-
-    const MAIL_TO = 'deine@email.de'; // ← E-Mail eintragen
-
-    let CAT_LABELS = {}; // dynamisch aus commands.json geladen
-
-    // ── Typ wechseln ──────────────────────────────────────────
-    function selectType(type, el) {
-      document.querySelectorAll('.type-card').forEach(c => c.classList.remove('active'));
-      el.classList.add('active');
-      document.querySelectorAll('.form-section').forEach(f => f.classList.remove('active'));
-      document.getElementById('form-' + type).classList.add('active');
-      document.getElementById('success').classList.remove('show');
-    }
-
-    // ── Live Preview: Befehl ──────────────────────────────────
-    function updatePreview() {
-      const title = document.getElementById('b-title').value || 'Titel';
-      const cmd   = document.getElementById('b-cmd').value   || 'befehl';
-      const cat   = document.getElementById('b-cat').value   || 'network';
-      const desc  = document.getElementById('b-desc').value  || 'Beschreibung';
-      const tags  = [...document.querySelectorAll('.b-tag:checked')].map(c => `"${c.value}"`).join(', ');
-      const id    = cat + '-' + title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 28);
-
-      const escapedCmd  = cmd.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-      const escapedDesc = desc.replace(/"/g, '\\"');
-
-      document.getElementById('b-preview').textContent =
-`{
-  "id": "${id}",
-  "name": "${title}",
-  "cmd": "${escapedCmd}",
-  "desc": "${escapedDesc}",
-  "tags": [${tags || '"windows"'}]
-},`;
-    }
-
-    // ── Live Preview: Skript ──────────────────────────────────
-    function updatePreviewScript() {
-      const title    = document.getElementById('s-title').value    || 'Script-Name';
-      const subtitle = document.getElementById('s-subtitle').value || 'Kurzbeschreibung';
-      const cat      = document.getElementById('s-cat').value      || 'system';
-      const desc     = document.getElementById('s-desc').value     || 'Beschreibung';
-      const req      = document.getElementById('s-req').value      || 'PowerShell 5.1+';
-
-      const usageRaw = document.getElementById('s-usage').value || '';
-      const usage = usageRaw.split('\n').filter(l => l.trim())
-        .map(l => `    { "label": "Beispiel", "cmd": "${l.trim().replace(/"/g, '\\"')}" }`)
-        .join(',\n');
-
-      const slug = title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
-
-      document.getElementById('s-preview').textContent =
-`// In scripts.html einfügen:
-{
-  "id": "${slug}",
-  "title": "${title}",
-  "file": "powershell/${title}.ps1",
-  "category": "${cat}",
-  "subtitle": "${subtitle.replace(/"/g, '\\"')}",
-  "desc": "${desc.replace(/"/g, '\\"').replace(/\n/g, ' ')}",
-  "requirements": "${req}",
-  "usage": [
-${usage || '    { "label": "Beispiel", "cmd": ".\\\\${title}.ps1" }'}
-  ]
-}`;
-    }
-
-    function copyPreview() {
-      const txt = document.getElementById('b-preview').textContent;
-      if (txt.startsWith('//')) return;
-      navigator.clipboard.writeText(txt).then(() => {
-        const btn = document.querySelector('#form-befehl .preview-copy-btn');
-        const orig = btn.textContent;
-        btn.textContent = '✓ Kopiert';
-        setTimeout(() => btn.textContent = orig, 1500);
-      });
-    }
-
-    function copyPreviewScript() {
-      const txt = document.getElementById('s-preview').textContent;
-      if (txt.startsWith('//') && txt.includes('Formular')) return;
-      navigator.clipboard.writeText(txt).then(() => {
-        const btn = document.querySelector('#form-skript .preview-copy-btn');
-        const orig = btn.textContent;
-        btn.textContent = '✓ Kopiert';
-        setTimeout(() => btn.textContent = orig, 1500);
-      });
-    }
-
-    // ── Sammel-System (max 5 Commands) ───────────────────────
-    const MAX_COMMANDS = 5;
-    let _pendingCommands = []; // { id, name, cmd, cat, desc, tags, note }
-
-    function currentFormData() {
-      const title = document.getElementById('b-title').value.trim();
-      const cmd   = document.getElementById('b-cmd').value.trim();
-      const cat   = document.getElementById('b-cat').value;
-      const desc  = document.getElementById('b-desc').value.trim();
-      const note  = document.getElementById('b-note').value.trim();
-      const tags  = [...document.querySelectorAll('.b-tag:checked')].map(c => c.value);
-      const id    = cat + '-' + title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 28);
-      return { id, name: title, cmd, cat, desc, tags, note };
-    }
-
-    function addToCollection() {
-      const name = document.getElementById('b-name').value.trim();
-      if (!name) { alert('Bitte zuerst deinen Namen eintragen.'); return; }
-
-      const entry = currentFormData();
-      if (!entry.name || !entry.cmd || !entry.desc) {
-        alert('Bitte Titel, Befehl und Beschreibung ausfüllen.'); return;
-      }
-      if (_pendingCommands.length >= MAX_COMMANDS) {
-        alert(`Maximal ${MAX_COMMANDS} Befehle pro Einreichung.`); return;
-      }
-
-      _pendingCommands.push(entry);
-      renderCollectList();
-      clearForm();
-    }
-
-    function removeFromCollection(idx) {
-      _pendingCommands.splice(idx, 1);
-      renderCollectList();
-    }
-
-    function clearForm() {
-      ['b-title','b-cmd','b-desc','b-note'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-      });
-      document.querySelectorAll('.b-tag:checked').forEach(cb => {
-        if (cb.value !== 'windows') cb.checked = false;
-      });
-      document.getElementById('b-preview').textContent = '// Formular ausfüllen → Preview erscheint hier';
-    }
-
-    function renderCollectList() {
-      const list    = document.getElementById('collect-list');
-      const counter = document.getElementById('collect-counter');
-      const addBtn  = document.getElementById('collect-add-btn');
-      list.replaceChildren();
-
-      const count = _pendingCommands.length;
-      const remaining = MAX_COMMANDS - count;
-
-      if (counter) {
-        counter.hidden = count === 0;
-        counter.textContent = `${count} von ${MAX_COMMANDS} Befehlen gesammelt`;
-      }
-      if (addBtn) {
-        addBtn.disabled = count >= MAX_COMMANDS;
-        addBtn.textContent = count >= MAX_COMMANDS
-          ? `Limit erreicht (${MAX_COMMANDS})`
-          : `＋ Weiteren Befehl hinzufügen (noch ${remaining})`;
-      }
-
-      _pendingCommands.forEach((entry, idx) => {
-        const card = document.createElement('div');
-        card.className = 'collect-card';
-
-        const header = document.createElement('div');
-        header.className = 'collect-card-header';
-
-        const num = document.createElement('span');
-        num.className = 'collect-num';
-        num.textContent = idx + 1;
-
-        const title = document.createElement('span');
-        title.className = 'collect-title';
-        title.textContent = entry.name;
-
-        const cmdEl = document.createElement('code');
-        cmdEl.className = 'collect-cmd';
-        cmdEl.textContent = entry.cmd.length > 50 ? entry.cmd.slice(0, 50) + '…' : entry.cmd;
-
-        const removeBtn = document.createElement('button');
-        removeBtn.className = 'collect-remove-btn';
-        removeBtn.textContent = '✕';
-        removeBtn.setAttribute('aria-label', 'Entfernen');
-        removeBtn.addEventListener('click', () => removeFromCollection(idx));
-
-        header.appendChild(num);
-        header.appendChild(title);
-        header.appendChild(cmdEl);
-        header.appendChild(removeBtn);
-        card.appendChild(header);
-        list.appendChild(card);
-      });
-    }
-
-    // ── Submit: Befehl ────────────────────────────────────────
-    function submitBefehl() {
-      const name = document.getElementById('b-name').value.trim();
-      if (!name) { alert('Bitte deinen Namen eintragen.'); return; }
-
-      // Aktuelles Formular noch nicht hinzugefügt? → prüfen ob es Daten hat
-      const current = currentFormData();
-      const hasCurrentData = current.name && current.cmd && current.desc;
-
-      // Wenn Sammlung leer und kein aktueller Eintrag → Fehler
-      if (_pendingCommands.length === 0 && !hasCurrentData) {
-        alert('Bitte mindestens einen Befehl ausfüllen oder zur Sammlung hinzufügen.');
-        return;
-      }
-
-      // Wenn Sammlung leer aber Formular gefüllt → direkt als einzelnen Eintrag senden
-      const toSend = _pendingCommands.length > 0
-        ? [..._pendingCommands]
-        : [current];
-
-      // JSON-Array für Mail bauen
-      const jsonEntries = toSend.map(e => {
-        const escapedCmd  = e.cmd.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-        const escapedDesc = e.desc.replace(/"/g, '\\"');
-        const tagsStr     = e.tags.map(t => `"${t}"`).join(', ');
-        return `  {\n    "id": "${e.id}",\n    "name": "${e.name}",\n    "cmd": "${escapedCmd}",\n    "desc": "${escapedDesc}",\n    "tags": [${tagsStr}]\n  }`;
-      }).join(',\n');
-
-      const summaryLines = toSend.map((e, i) =>
-        `${i+1}. ${e.name}\n   Befehl: ${e.cmd}\n   Tags: ${e.tags.join(', ') || '–'}${e.note ? '\n   Hinweis: ' + e.note : ''}`
-      ).join('\n\n');
-
-      const plural = toSend.length > 1 ? `${toSend.length} Befehle` : `1 Befehl`;
-      const subject = encodeURIComponent(`[support.sheet] Einreichung: ${plural} von ${name}`);
-      const body = encodeURIComponent(
-`Hallo,
-
-ich möchte folgende Befehle einreichen:
-
-──────────────────────────────
-VON: ${name}
-──────────────────────────────
-
-${summaryLines}
-
-──────────────────────────────
-JSON FÜR commands.json:
-──────────────────────────────
-[
-${jsonEntries}
-]
-
-Viele Grüße
-${name}`);
-
-      window.location.href = `mailto:${MAIL_TO}?subject=${subject}&body=${body}`;
-      _pendingCommands = [];
-      renderCollectList();
-      clearForm();
-      showSuccess();
-    }
-    // ── Submit: Skript ────────────────────────────────────────
-    function submitSkript() {
-      const name  = document.getElementById('s-name').value.trim();
-      const title = document.getElementById('s-title').value.trim();
-      const desc  = document.getElementById('s-desc').value.trim();
-      const code  = document.getElementById('s-code').value.trim();
-      const json  = document.getElementById('s-preview').textContent;
-
-      if (!name || !title || !desc || !code) { alert('Bitte alle Pflichtfelder (*) ausfüllen.'); return; }
-
-      const subject = encodeURIComponent(`[support.sheet] Neues Skript: ${title}`);
-      const body = encodeURIComponent(
-`Hallo,
-
-ich möchte folgendes Skript einreichen:
-
-──────────────────────────────
-VON: ${name}
-──────────────────────────────
-
-${json}
-
-──────────────────────────────
-SCRIPT-CODE:
-──────────────────────────────
-${code}
-
-Viele Grüße
-${name}`);
-
-      window.location.href = `mailto:${MAIL_TO}?subject=${subject}&body=${body}`;
-      showSuccess();
-    }
-
-    // ── Feedback ──────────────────────────────────────────────
-    const FEEDBACK_SUBJECTS = {
-      bug: '[support.sheet] Bug: ',
-      feature: '[support.sheet] Feature-Wunsch: ',
-      beschreibung: '[support.sheet] Beschreibung verbessern: '
-    };
-
-    function openFeedback(type) {
-      document.querySelectorAll('.feedback-card').forEach(c => c.style.opacity = '.5');
-      document.getElementById('feedback-form').hidden = false;
-      document.getElementById('f-subject').value = FEEDBACK_SUBJECTS[type] || '';
-      document.getElementById('f-subject').focus();
-    }
-
-    function submitFeedback() {
-      const name    = document.getElementById('f-name').value.trim();
-      const subject = document.getElementById('f-subject').value.trim();
-      const body    = document.getElementById('f-body').value.trim();
-      if (!subject || !body) { alert('Betreff und Nachricht sind Pflichtfelder.'); return; }
-      const fullBody = encodeURIComponent(`${body}\n\n${name ? 'Grüße,\n' + name : ''}`);
-      window.location.href = `mailto:${MAIL_TO}?subject=${encodeURIComponent(subject)}&body=${fullBody}`;
-      showSuccess();
-    }
-
-    function showSuccess() {
-      const el = document.getElementById('success');
-      el.classList.add('show');
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   </script>
 

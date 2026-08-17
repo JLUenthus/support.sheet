@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>support.sheet – Mitmachen Merge (intern)</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/mitmachen-merge.css">
+</head>
+<body>
+
+  <!-- Bewusst KEIN nav.js hier eingebunden – diese Seite ist nur fuer den
+       Maintainer, nicht in der Navigation, nicht von mitmachen.html aus
+       verlinkt, nur ueber direkten URL-Aufruf erreichbar. -->
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-icon">🛠️</div>
+      <div class="logo-text">support<span>.sheet</span></div>
+    </a>
+    <div class="header-right">
+      <div class="pill pill-count" style="border-color:rgba(148,163,184,.3);background:rgba(148,163,184,.08);color:#94a3b8;">🔒 Merge (intern)</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="mmg-page">
+
+      <h1 class="mmg-title">Mitmachen – Merge</h1>
+      <p class="mmg-hint">
+        Internes Werkzeug nur fuer den Maintainer. Aktuelle Original-Dateien und die
+        Export-ZIP eines Kollegen hochladen, Beitraege pruefen und auswaehlen, dann die
+        fertigen Dateien herunterladen und manuell ins Repo einfuegen. Kein automatischer
+        Commit, kein Upload irgendwohin.
+      </p>
+
+      <!-- ── UPLOAD: ORIGINAL-DATEIEN ─────────────────────────── -->
+      <div class="mmg-section">
+        <div class="mmg-section-title">Aktuelle Original-Dateien</div>
+        <div class="mmg-upload-grid">
+          <label class="mmg-upload-field" id="mmg-field-commandsWindows">
+            <span class="mmg-upload-field-label">commands.json</span>
+            <input type="file" accept=".json,application/json" data-key="commandsWindows">
+            <span class="mmg-upload-field-status" data-status></span>
+          </label>
+          <label class="mmg-upload-field" id="mmg-field-commandsExchange">
+            <span class="mmg-upload-field-label">exchange-commands.json</span>
+            <input type="file" accept=".json,application/json" data-key="commandsExchange">
+            <span class="mmg-upload-field-status" data-status></span>
+          </label>
+          <label class="mmg-upload-field" id="mmg-field-commandsForti">
+            <span class="mmg-upload-field-label">forti-commands.json</span>
+            <input type="file" accept=".json,application/json" data-key="commandsForti">
+            <span class="mmg-upload-field-status" data-status></span>
+          </label>
+          <label class="mmg-upload-field" id="mmg-field-guides">
+            <span class="mmg-upload-field-label">support-guides.json</span>
+            <input type="file" accept=".json,application/json" data-key="guides">
+            <span class="mmg-upload-field-status" data-status></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- ── UPLOAD: EXPORT-ZIP ────────────────────────────────── -->
+      <div class="mmg-section">
+        <div class="mmg-section-title">Export-ZIP des Kollegen</div>
+        <label class="mmg-upload-field mmg-upload-field--zip" id="mmg-field-zip">
+          <span class="mmg-upload-field-label">mitmachen-export-*.zip</span>
+          <input type="file" accept=".zip,application/zip" id="mmg-zip-input">
+          <span class="mmg-upload-field-status" data-status></span>
+        </label>
+      </div>
+
+      <!-- ── FEHLER (pro Datei) ───────────────────────────────── -->
+      <div class="mmg-errors" id="mmg-errors" hidden></div>
+
+      <!-- ── METADATEN + CHECKSUM-VERGLEICH ───────────────────── -->
+      <div class="mmg-meta" id="mmg-meta" hidden></div>
+      <div class="mmg-checksum-status" id="mmg-checksum-status" hidden></div>
+
+      <!-- ── DIFF-ANSICHT ──────────────────────────────────────── -->
+      <div class="mmg-diff" id="mmg-diff" hidden>
+
+        <div class="mmg-section">
+          <div class="mmg-section-title">Neue Commands</div>
+          <div class="mmg-diff-list" id="mmg-diff-commands"></div>
+        </div>
+
+        <div class="mmg-section">
+          <div class="mmg-section-title">Neue Guides</div>
+          <div class="mmg-diff-list" id="mmg-diff-guides"></div>
+        </div>
+
+        <button class="mmg-merge-btn" id="mmg-merge-btn" type="button">Zusammenführen</button>
+      </div>
+
+      <!-- ── ERFOLG ────────────────────────────────────────────── -->
+      <div class="mmg-success" id="mmg-success" hidden></div>
+
+    </div>
+  </main>
+
+  <script src="js/toast.js"></script>
+  <script src="js/jszip.min.js"></script>
+  <script src="js/mitmachen-checksum.js"></script>
+  <script src="js/mitmachen-merge.js"></script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+
+</body>
+</html>

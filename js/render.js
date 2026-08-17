@@ -627,7 +627,13 @@ function renderCommands(commands, containerId = 'commands-container') {
 
 
 // ── Start ─────────────────────────────────────────────────
+// Nur auf Seiten mit eigenem Command-Grid automatisch laden (windows.html/
+// exchange.html/forti.html). Seiten, die render.js nur wegen einzelner
+// Funktionen wie createCommandCard() einbinden (z.B. mitmachen.html fuer die
+// Live-Vorschau), haben kein #commands-container und sollen keinen
+// zusaetzlichen, ungenutzten commands.json-Fetch ausloesen.
 document.addEventListener('DOMContentLoaded', () => {
+  if (!document.getElementById('commands-container')) return;
   loadCommands()
     .then(commands => {
       _allCommands = commands;

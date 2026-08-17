@@ -1,0 +1,243 @@
+/* ============================================================
+   support.sheet – mitmachen-merge.css
+   Internes Merge-Werkzeug fuer den Maintainer. Bewusst simpel und
+   funktional gehalten, kein Feinschliff-Design noetig. Nutzt
+   ausschliesslich Design-Tokens aus css/main.css.
+   ============================================================ */
+
+.mmg-page {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mmg-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.mmg-hint {
+  font-size: .82rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.mmg-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mmg-section-title {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+/* ── Upload-Felder ─────────────────────────────────────────── */
+.mmg-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.mmg-upload-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+
+.mmg-upload-field:hover { border-color: var(--border2); background: var(--panel2); }
+.mmg-upload-field--loaded { border-color: rgba(74, 222, 128, .4); }
+
+.mmg-upload-field-label {
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+
+.mmg-upload-field input[type="file"] {
+  font-family: var(--font-ui);
+  font-size: .76rem;
+  color: var(--muted);
+}
+
+.mmg-upload-field-status {
+  font-size: .74rem;
+  color: var(--dim);
+  min-height: 1em;
+}
+
+.mmg-upload-field-status--ok { color: var(--green); }
+.mmg-upload-field-status--error { color: var(--red); }
+
+/* ── Fehler ────────────────────────────────────────────────── */
+.mmg-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mmg-errors[hidden] { display: none; }
+
+.mmg-error-item {
+  padding: 10px 14px;
+  background: var(--red-bg);
+  border: 1px solid rgba(248, 113, 113, .3);
+  border-radius: var(--r);
+  color: var(--red);
+  font-size: .8rem;
+  line-height: 1.5;
+}
+
+/* ── Metadaten + Checksum ──────────────────────────────────── */
+.mmg-meta {
+  font-size: .8rem;
+  color: var(--muted);
+  padding: 12px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+.mmg-checksum-status {
+  padding: 12px 14px;
+  border-radius: var(--r);
+  font-size: .82rem;
+  line-height: 1.5;
+}
+
+.mmg-checksum-status--ok {
+  background: var(--green-bg);
+  border: 1px solid rgba(74, 222, 128, .3);
+  color: var(--green);
+}
+
+.mmg-checksum-status--warn {
+  background: var(--amber-bg);
+  border: 1px solid rgba(251, 191, 36, .3);
+  color: var(--amber);
+}
+
+/* ── Diff-Liste ────────────────────────────────────────────── */
+.mmg-diff {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mmg-diff[hidden] { display: none; }
+
+.mmg-diff-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mmg-diff-empty {
+  font-size: .78rem;
+  color: var(--dim);
+  padding: 6px 0;
+}
+
+.mmg-diff-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  cursor: pointer;
+}
+
+.mmg-diff-row:hover { border-color: var(--border2); }
+
+.mmg-diff-row--duplicate {
+  background: var(--red-bg);
+  border-color: rgba(248, 113, 113, .35);
+}
+
+.mmg-diff-checkbox {
+  margin-top: 3px;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.mmg-diff-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.mmg-diff-name {
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.mmg-diff-sub {
+  font-family: var(--font-mono);
+  font-size: .74rem;
+  color: var(--muted);
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 5px;
+  width: fit-content;
+  word-break: break-all;
+}
+
+.mmg-diff-meta {
+  font-size: .72rem;
+  color: var(--dim);
+}
+
+.mmg-diff-row--duplicate .mmg-diff-meta { color: var(--red); font-weight: 600; }
+
+.mmg-merge-btn {
+  align-self: flex-start;
+  padding: 11px 24px;
+  border-radius: 9px;
+  border: 1px solid rgba(74, 222, 128, .4);
+  background: rgba(74, 222, 128, .1);
+  color: var(--green);
+  font-family: var(--font-ui);
+  font-size: .9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.mmg-merge-btn:hover { background: rgba(74, 222, 128, .2); }
+
+/* ── Erfolg ────────────────────────────────────────────────── */
+.mmg-success {
+  padding: 16px;
+  background: var(--green-bg);
+  border: 1px solid rgba(74, 222, 128, .3);
+  border-radius: var(--r);
+  color: var(--text);
+  font-size: .85rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .mmg-upload-grid { grid-template-columns: 1fr; }
+}
