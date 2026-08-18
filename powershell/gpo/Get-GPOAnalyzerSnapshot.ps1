@@ -61,17 +61,36 @@ Write-Host ""
 # ── Hilfsfunktionen: JSON-Ausgabe ────────────────────────────
 # ConvertTo-Json kollabiert ein einzelnes Array-Element beim Pipen zu einem
 # reinen Objekt (kein Array mehr) und ein leeres Array zu gar keiner Ausgabe.
-# Der Komma-Operator vor dem Pipe erzwingt in beiden Faellen ein sauberes
-# JSON-Array, unabhaengig von der Anzahl der Eintraege.
+# Der fruehere "Komma-Operator vor dem Pipe"-Workaround ((, $Items) |
+# ConvertTo-Json) hat sich in echten Windows-PowerShell-5.1-Laeufen
+# (Domain Controller) als selbst fehlerhaft erwiesen: statt eines sauberen
+# JSON-Arrays [ ... ] wurde teils {"value": [ ... ]} erzeugt, was der
+# Browser-seitige JSON.parse() zurecht ablehnt. Deshalb hier stattdessen
+# jedes Element EINZELN mit -Compress serialisiert und das Array manuell
+# per String-Join gebaut - das umgeht ConvertTo-Json's Pipeline-/Anzahl-
+# abhaengiges Verhalten komplett, unabhaengig von PS-Version/-Edition.
+# Ausserdem: [System.IO.File]::WriteAllText statt Out-File -Encoding UTF8,
+# da Out-File in Windows PowerShell 5.1 (Desktop Edition) immer eine
+# UTF-8-BOM schreibt, die JSON.parse() beim Einlesen ebenfalls als
+# ungueltiges Zeichen ablehnt.
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
 function Write-JsonArray {
     param([object[]]$Items, [Parameter(Mandatory)][string]$Path, [int]$Depth = 12)
     if ($null -eq $Items) { $Items = @() }
-    (, $Items) | ConvertTo-Json -Depth $Depth | Out-File -FilePath $Path -Encoding UTF8
+    if ($Items.Count -eq 0) {
+        $json = '[]'
+    } else {
+        $itemsJson = $Items | ForEach-Object { $_ | ConvertTo-Json -Depth $Depth -Compress }
+        $json = '[' + ($itemsJson -join ',') + ']'
+    }
+    [System.IO.File]::WriteAllText($Path, $json, $Utf8NoBom)
 }
 
 function Write-JsonObject {
     param($Data, [Parameter(Mandatory)][string]$Path, [int]$Depth = 12)
-    $Data | ConvertTo-Json -Depth $Depth | Out-File -FilePath $Path -Encoding UTF8
+    $json = $Data | ConvertTo-Json -Depth $Depth
+    [System.IO.File]::WriteAllText($Path, $json, $Utf8NoBom)
 }
 
 function Normalize-Guid {
@@ -224,8 +243,16 @@ function Get-UserRightsSettings {
     return $results
 }
 
+# Computer- und User-Scope werden absichtlich in getrennten try/catch-
+# Bloecken gelesen: schlaegt nur einer der beiden Scopes fehl (z.B.
+# beschaedigtes XML-Fragment in einer Kategorie), bleibt der andere Scope
+# trotzdem nutzbar, statt den kompletten Report wegzuwerfen. $Warnings
+# sammelt scope-bezogene Fehler und macht dem Aufrufer die Unterscheidung
+# complete (keine Warnings) / partial (einzelne Scopes fehlgeschlagen)
+# moeglich - der Report insgesamt gilt nur als "failed", wenn das XML
+# selbst nicht mal geparst werden konnte (siehe Aufrufer unten).
 function ConvertFrom-GpoReportXml {
-    param([Parameter(Mandatory)][string]$Xml)
+    param([Parameter(Mandatory)][string]$Xml, [ref]$Warnings)
     $doc = [xml]$Xml
     $settings = @()
 
@@ -233,13 +260,21 @@ function ConvertFrom-GpoReportXml {
     $userNode = $doc.SelectSingleNode("//*[local-name()='User']")
 
     if ($computerNode) {
-        $settings += Get-AdmTmplSettings -ScopeNode $computerNode -Scope 'Computer'
-        $settings += Get-AccountPolicySettings -ComputerNode $computerNode
-        $settings += Get-SecurityOptionsSettings -ComputerNode $computerNode
-        $settings += Get-UserRightsSettings -ComputerNode $computerNode
+        try {
+            $settings += Get-AdmTmplSettings -ScopeNode $computerNode -Scope 'Computer'
+            $settings += Get-AccountPolicySettings -ComputerNode $computerNode
+            $settings += Get-SecurityOptionsSettings -ComputerNode $computerNode
+            $settings += Get-UserRightsSettings -ComputerNode $computerNode
+        } catch {
+            $Warnings.Value += "Computer Configuration konnte nicht vollstaendig gelesen werden: $($_.Exception.Message)"
+        }
     }
     if ($userNode) {
-        $settings += Get-AdmTmplSettings -ScopeNode $userNode -Scope 'User'
+        try {
+            $settings += Get-AdmTmplSettings -ScopeNode $userNode -Scope 'User'
+        } catch {
+            $Warnings.Value += "User Configuration konnte nicht vollstaendig gelesen werden: $($_.Exception.Message)"
+        }
     }
     return $settings
 }
@@ -281,13 +316,38 @@ foreach ($gpo in $allGpos) {
         $wmiFilterId = Normalize-Guid -Value $matches[1]
     }
 
+    # reportError bleibt nur gesetzt, wenn der Report insgesamt nicht lesbar
+    # war (Get-GPOReport-Aufruf schlaegt fehl oder das zurueckgegebene XML
+    # laesst sich nicht mal parsen) - das ist der einzige echte "failed"-
+    # Fall. Schlaegt nur ein einzelner Scope (Computer/User) innerhalb eines
+    # ansonsten lesbaren Reports fehl, bleibt reportError leer und der
+    # Report gilt als "partial" (parseWarnings traegt den Grund) - der
+    # jeweils andere Scope bleibt nutzbar statt komplett verworfen zu werden.
     $settings = @()
     $reportError = $null
+    $parseWarnings = @()
     try {
         $reportXml = Get-GPOReport -Guid $gpo.Id -ReportType Xml -Domain $domain.DNSRoot -ErrorAction Stop
-        $settings = @(ConvertFrom-GpoReportXml -Xml $reportXml)
     } catch {
         $reportError = $_.Exception.Message
+    }
+
+    if (-not $reportError) {
+        try {
+            $warningsRef = [ref]@()
+            $settings = @(ConvertFrom-GpoReportXml -Xml $reportXml -Warnings $warningsRef)
+            $parseWarnings = @($warningsRef.Value)
+        } catch {
+            # XML selbst nicht parsebar (z.B. abgeschnittener/beschaedigter
+            # Report) - das betrifft beide Scopes gleichermassen, damit
+            # zaehlt das als komplett fehlgeschlagen, nicht nur "partial".
+            $reportError = "GPO-Report-XML konnte nicht geparst werden: $($_.Exception.Message)"
+        }
+    }
+
+    $parseStatus = if ($reportError) { 'failed' } elseif ($parseWarnings.Count -gt 0) { 'partial' } else { 'complete' }
+
+    if ($reportError) {
         $skippedGpos += [ordered]@{
             id    = $gpo.Id.Guid
             name  = $gpo.DisplayName
@@ -306,6 +366,8 @@ foreach ($gpo in $allGpos) {
         wmiFilterId           = $wmiFilterId
         settings              = $settings
         reportError           = $reportError
+        parseStatus           = $parseStatus
+        parseWarnings         = $parseWarnings
     }
 }
 
