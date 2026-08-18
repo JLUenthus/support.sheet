@@ -27,9 +27,62 @@ window.GpoRenderer = (function() {
     'metadata.json': 'Domänen-Name und Erstellungszeitpunkt des Snapshots fehlen.',
   };
 
-  // Fester Hinweistext aus dem Konzept, Abschnitt 5/6.
-  const CONFLICT_DESC  = 'Mehrere GPOs definieren dieselbe Einstellung mit unterschiedlichen Werten.';
-  const REDUNDANT_DESC = 'Mehrfach definiert, aktuell kein direkter Wertkonflikt erkennbar.';
+  // Fester Hinweistext aus dem Konzept, Abschnitt 5/6 - jetzt der "Was"-
+  // Baustein von buildFindingBody() (Roadmap Abschnitt 1.6).
+  const CONFLICT_DESC  = 'Diese Einstellung wird von mehreren GPOs unterschiedlich definiert.';
+  const REDUNDANT_DESC = 'Diese Einstellung wird von mehreren GPOs identisch definiert.';
+
+  // Fester "Naechster Schritt"-Hinweis fuer Konflikte UND Mehrfach-
+  // definitionen (Roadmap Abschnitt 1.6: "der feste Hinweis auf gpresult/
+  // rsop.msc") - ersetzt das vorherige, laengere finding.hint aus
+  // gpo-analyzer.js (dessen "Potenzieller Konflikt"-Einleitung jetzt
+  // redundant waere, da die Bewertung diese Unterscheidung bereits ueber
+  // scopeExplanation trifft).
+  const SCOPE_CHECK_HINT = 'Effektive Richtlinie mit gpresult /h oder rsop.msc prüfen.';
+
+  // Fallback-Text fuer den Fall, dass eine Regel (aktuell nur
+  // WMI_FILTER_ASSIGNED) keine recommendations hinterlegt hat - "Naechster
+  // Schritt" darf laut Roadmap Abschnitt 1.6 nie leer/fehlend sein.
+  const NO_ACTION_HINT = 'Keine Aktion erforderlich – dient nur der Übersicht.';
+
+  // Hygiene-Kategorisierung nach data/gpo/rules.json's "bucket"-Feld
+  // (gpo-analyzer.js unveraendert, nur Anzeige - siehe .md/todo/
+  // GPO_Analyzer_Roadmap_vor_v2_v2_spaeter.md, Abschnitt 1.3). Reihenfolge
+  // hier ist gleichzeitig die Anzeige-Reihenfolge der Abschnitte.
+  const BUCKET_ORDER = ['kritisch', 'pruefen', 'wartung', 'struktur', 'information'];
+  const BUCKET_LABELS = {
+    kritisch: '🔴 Kritisch',
+    pruefen: '🟡 Prüfen',
+    wartung: '🕒 Wartung',
+    struktur: '🌳 Struktur',
+    information: 'ℹ️ Information',
+  };
+
+  // Severity-basiertes Badge fuer Hygiene-Findings (statt vorher immer
+  // fest "⚠") - notwendig, seit GPO_VERY_OLD von "warning" auf "info"
+  // herabgestuft wurde (Abschnitt 1.4): sonst wuerde die weniger
+  // alarmistische Einstufung im JSON von der UI ignoriert.
+  const HYGIENE_SEVERITY_ICONS = { critical: '🔴', warning: '⚠', info: 'ℹ️' };
+
+  // Sichtbare Labels je scopeRelation (gpo-analyzer.js, Prompt 2 /
+  // .md/todo/GPO_Analyzer_Roadmap_vor_v2_v2_spaeter.md, Abschnitt 1.2).
+  // "Redundant" taucht hier bewusst nirgends mehr auf - der Roadmap-Begriff
+  // ist "Mehrfachdefinition".
+  const REDUNDANT_SCOPE_LABELS = {
+    overlap: '🔵 Identische Mehrfachdefinition',
+    none: '🔵 Mehrfachdefinition ohne direkten Konflikt',
+    mixed: '🔵 Mehrfachdefinition (gemischter Scope)',
+    unknown: '🔵 Mehrfachdefinition (Scope unklar)',
+  };
+
+  // Labels fuer die Paar-fuer-Paar-Aufschluesselung bei scopeRelation
+  // "mixed" (siehe buildRedundantCard()).
+  const PAIR_RESULT_LABELS = {
+    overlap: 'überlappt',
+    none: 'getrennt',
+    unknown: 'nicht sicher bestimmbar',
+    mixed: 'teilweise überlappend',
+  };
 
   // Verknuepfung mit dem Command-System (Konzept Abschnitt 15) - dieselben
   // vier Befehle fuer Konflikt- und Hygiene-Findings, aus data/commands.json
@@ -193,6 +246,13 @@ window.GpoRenderer = (function() {
     return _findings.filter(f => f.type === type).length;
   }
 
+  // Konflikte werden nach conflictLevel getrennt gezaehlt (Roadmap
+  // .md/todo/GPO_Analyzer_Roadmap_vor_v2_v2_spaeter.md, Abschnitt 1.1/2.1:
+  // "echte" vs. "potenzielle" Konflikte statt einer einzigen Zahl).
+  function countByConflictLevel(level) {
+    return _findings.filter(f => f.type === 'conflict' && f.conflictLevel === level).length;
+  }
+
   // null bedeutet "nicht bestimmbar" (links.json fehlte im ZIP) statt einer
   // falschen Zahl - siehe .md/todo/GPO_Analyzer_Pre_Real_Data_Hardening.md,
   // Abschnitt 8: eine fehlende Links-Datei darf nicht als "alle GPOs
@@ -216,14 +276,14 @@ window.GpoRenderer = (function() {
     const grid = document.getElementById('gpo-num-grid');
     grid.replaceChildren();
 
-    const conflictCount  = countByType('conflict');
     const redundantCount = countByType('redundant');
 
     [
       ['GPOs', _model.gpos.length],
       ['Verknüpfungen', _model.links.length],
-      ['Konflikte', conflictCount],
-      ['Redundante Einstellungen', redundantCount],
+      ['Echte Konflikte', countByConflictLevel('real')],
+      ['Potenzielle Konflikte', countByConflictLevel('potential')],
+      ['Mehrfach definierte Einstellungen', redundantCount],
       ['Auffälligkeiten', anomalyCount()],
       ['Unverknüpfte GPOs', unlinkedGpoCount()],
     ].forEach(([label, value]) => {
@@ -247,13 +307,13 @@ window.GpoRenderer = (function() {
     const row = document.getElementById('gpo-ampel-row');
     row.replaceChildren();
 
-    const conflictCount  = countByType('conflict');
     const redundantCount = countByType('redundant');
 
     [
-      ['🔴', conflictCount, 'Konflikte'],
+      ['🔴', countByConflictLevel('real'), 'echte Konflikte'],
+      ['🟡', countByConflictLevel('potential'), 'potenzielle Konflikte'],
       ['🟡', anomalyCount(), 'Auffälligkeiten'],
-      ['🔵', redundantCount, 'redundante Einstellungen'],
+      ['🔵', redundantCount, 'mehrfach definierte Einstellungen'],
     ].forEach(([icon, count, label]) => {
       const pill = document.createElement('div');
       pill.className = 'gpo-ampel-pill';
@@ -366,13 +426,12 @@ window.GpoRenderer = (function() {
     });
   }
 
-  function buildRecommendationSection(rule) {
+  // Nur noch die reinen Empfehlungs-Zeilen, ohne eigene Ueberschrift - die
+  // Ueberschrift "Naechster Schritt" liefert jetzt zentral buildFindingBody()
+  // (Roadmap Abschnitt 1.6), nicht mehr jede Karte einzeln.
+  function buildRecommendationRows(rule) {
     if (!rule || !rule.recommendations || !rule.recommendations.length) return null;
     const wrap = document.createElement('div');
-    const title = document.createElement('div');
-    title.className = 'gpo-finding-sub-title';
-    title.textContent = 'Empfehlung';
-    wrap.appendChild(title);
     rule.recommendations.forEach(rec => {
       const p = document.createElement('div');
       p.className = 'gpo-detail-row';
@@ -380,6 +439,186 @@ window.GpoRenderer = (function() {
       wrap.appendChild(p);
     });
     return wrap;
+  }
+
+  function buildDefinedInList(finding) {
+    const wrap = document.createElement('div');
+    wrap.className = 'gpo-redundant-defined-in';
+    const label = document.createElement('span');
+    label.className = 'gpo-finding-sub-title';
+    label.textContent = 'Definiert in';
+    wrap.appendChild(label);
+    const gpoNames = document.createElement('div');
+    gpoNames.className = 'gpo-redundant-gpo-list';
+    gpoNames.textContent = finding.entries.map(e => e.gpoName).join(', ');
+    wrap.appendChild(gpoNames);
+    return wrap;
+  }
+
+  function buildScopePairsList(pairs) {
+    const pairList = document.createElement('ul');
+    pairList.className = 'gpo-redundant-scope-pairs';
+    pairs.forEach(p => {
+      const li = document.createElement('li');
+      const label = PAIR_RESULT_LABELS[p.result] || p.result;
+      li.textContent = p.gpoAName + ' ↔ ' + p.gpoBName + ': ' + label;
+      pairList.appendChild(li);
+    });
+    return pairList;
+  }
+
+  // ── Vereinheitlichte Finding-Textstruktur (Roadmap Abschnitt 1.6) ──
+  // Jede Karte bekommt exakt drei, immer in dieser Reihenfolge vorhandene
+  // Abschnitte: "Was" (was wurde gefunden), "Bewertung" (warum relevant),
+  // "Naechster Schritt" (konkrete Empfehlung). Gemeinsam ist nur diese
+  // Textstruktur und die Dispatch-Stelle hier - welche Daten je Typ in
+  // welchen Abschnitt einfliessen, entscheidet resolveFindingSections()
+  // pro finding.type, die Datenform selbst bleibt je Typ unterschiedlich.
+  function buildFindingBody(finding) {
+    const sections = resolveFindingSections(finding);
+
+    const body = document.createElement('div');
+    body.className = 'gpo-finding-body';
+
+    body.appendChild(buildBodySection('Was', sections.was));
+    body.appendChild(buildBodySection('Bewertung', sections.bewertung));
+    body.appendChild(buildBodySection('Nächster Schritt', sections.naechsterSchritt, true));
+
+    return body;
+  }
+
+  function buildBodySection(title, content, isNextStep) {
+    const wrap = document.createElement('div');
+    wrap.className = 'gpo-body-section' + (isNextStep ? ' gpo-body-section--next-step' : '');
+    const titleEl = document.createElement('div');
+    titleEl.className = 'gpo-finding-sub-title';
+    titleEl.textContent = title;
+    wrap.appendChild(titleEl);
+    appendBodyContent(wrap, content);
+    return wrap;
+  }
+
+  // content darf ein String, ein DOM-Node, oder ein Array aus beidem sein -
+  // haelt die einzelnen resolve*Sections()-Funktionen frei von wiederholtem
+  // DOM-Boilerplate fuer den Fall, dass ein Abschnitt mehrere Bausteine
+  // kombiniert (z.B. Konflikt-"Was" = Fliesstext + Entry-Liste).
+  function appendBodyContent(wrap, content) {
+    if (!content) return;
+    if (Array.isArray(content)) {
+      content.forEach(c => appendBodyContent(wrap, c));
+      return;
+    }
+    if (typeof content === 'string') {
+      const p = document.createElement('p');
+      p.className = 'gpo-finding-desc';
+      p.textContent = content;
+      wrap.appendChild(p);
+      return;
+    }
+    wrap.appendChild(content);
+  }
+
+  function resolveFindingSections(finding) {
+    switch (finding.type) {
+      case 'conflict': return resolveConflictSections(finding);
+      case 'redundant': return resolveRedundantSections(finding);
+      case 'hygiene': return resolveHygieneSections(finding);
+      case 'security-filter': return resolveSecurityFilterSections(finding);
+      case 'wmi-filter': return resolveWmiFilterSections(finding);
+      default: return { was: null, bewertung: null, naechsterSchritt: null };
+    }
+  }
+
+  function resolveConflictSections(finding) {
+    return {
+      was: [CONFLICT_DESC, buildEntryRowList(finding)],
+      bewertung: finding.scopeExplanation || '',
+      naechsterSchritt: SCOPE_CHECK_HINT,
+    };
+  }
+
+  function resolveRedundantSections(finding) {
+    const value = finding.entries[0] ? finding.entries[0].value : '';
+    const was = [
+      REDUNDANT_DESC + ' Wert: ' + (value || '(leer)'),
+      buildDefinedInList(finding),
+    ];
+
+    // "mixed" bekommt explizit die Paar-fuer-Paar-Aufschluesselung, nicht
+    // nur das Label - genau die Untergruppen, die sich ueberlappen bzw.
+    // nicht, sollen fuer den Techniker sichtbar sein.
+    const bewertung = [finding.scopeExplanation || ''];
+    if (finding.scopeRelation === 'mixed' && (finding.scopePairs || []).length) {
+      bewertung.push(buildScopePairsList(finding.scopePairs));
+    }
+
+    return { was, bewertung, naechsterSchritt: SCOPE_CHECK_HINT };
+  }
+
+  function resolveHygieneSections(finding) {
+    const rule = finding.rule || {};
+    const was = 'GPO: ' + finding.gpoName;
+
+    const bewertung = [resolveRuleText(rule.description, finding.detail) || ''];
+
+    if (finding.detail && finding.detail.modified) {
+      const modifiedLabel = (finding.detail.modified || '').replace('T', ' ').substring(0, 16);
+      bewertung.push('Zuletzt geändert: ' + modifiedLabel
+        + (finding.detail.ageYears != null ? ' (vor ' + finding.detail.ageYears + '+ Jahren)' : ''));
+    }
+
+    // GPO_NO_LINKS: "gar kein Link" und "Link vorhanden, aber deaktiviert"
+    // sehen sonst identisch aus (beide nutzen dieselbe rule.description) -
+    // beim GPMC-Abgleich wuerde ein Techniker einen vorhandenen (nur
+    // deaktivierten) Link sonst als Diskrepanz zum Tool missverstehen.
+    if (finding.detail && finding.detail.linkStatus === 'disabled') {
+      const count = finding.detail.disabledLinkCount || 0;
+      bewertung.push('Verknüpfung vorhanden, aber deaktiviert (' + count + (count === 1 ? ' Link).' : ' Links).'));
+    } else if (finding.detail && finding.detail.linkStatus === 'none') {
+      bewertung.push('Keine Verknüpfung vorhanden.');
+    }
+
+    return {
+      was,
+      bewertung,
+      naechsterSchritt: buildRecommendationRows(rule) || NO_ACTION_HINT,
+    };
+  }
+
+  function resolveSecurityFilterSections(finding) {
+    const rule = finding.rule || {};
+    const was = [
+      'Verknüpft mit: [' + finding.targetType + '] ' + finding.target,
+      'Security Filter: ' + (finding.securityFilter || []).map(f => f.trustee).join(', '),
+    ];
+
+    return {
+      was,
+      bewertung: rule.description || '',
+      naechsterSchritt: buildRecommendationRows(rule) || NO_ACTION_HINT,
+    };
+  }
+
+  function resolveWmiFilterSections(finding) {
+    const rule = finding.rule || {};
+    const wmiFilter = finding.wmiFilter || {};
+    const was = ['Filter: ' + (wmiFilter.name || wmiFilter.id || 'unbekannt')];
+
+    if (wmiFilter.query) {
+      const queryRow = document.createElement('div');
+      queryRow.className = 'gpo-detail-row';
+      const code = document.createElement('code');
+      code.className = 'gpo-entry-value';
+      code.textContent = wmiFilter.query;
+      queryRow.appendChild(code);
+      was.push(queryRow);
+    }
+
+    return {
+      was,
+      bewertung: rule.description || '',
+      naechsterSchritt: buildRecommendationRows(rule) || NO_ACTION_HINT,
+    };
   }
 
   // Einzige Verzweigung nach finding.type fuer die Kartendarstellung -
@@ -402,8 +641,14 @@ window.GpoRenderer = (function() {
   }
 
   // ── Konflikt-Liste (Konzept Abschnitt 5) ────────────────────
+  // conflictLevel "real" vs. "potential" (gpo-analyzer.js,
+  // determineScopeOverlap()) laeuft weiterhin ueber denselben Karten-
+  // Aufbau, bekommt aber ein sichtbares Label welcher der beiden Zustaende
+  // vorliegt (Roadmap .md/todo/GPO_Analyzer_Roadmap_vor_v2_v2_spaeter.md,
+  // Abschnitt 1.1/2.1).
   function buildConflictCard(finding) {
     const { category, name } = splitSettingKey(finding.settingKey);
+    const isReal = finding.conflictLevel === 'real';
 
     const card = document.createElement('div');
     card.className = 'gpo-finding-card gpo-finding-card--conflict';
@@ -412,8 +657,8 @@ window.GpoRenderer = (function() {
     header.className = 'gpo-finding-header';
 
     const badge = document.createElement('span');
-    badge.className = 'gpo-sev-pill gpo-sev-pill--critical';
-    badge.textContent = '🔴 Konflikt';
+    badge.className = 'gpo-sev-pill ' + (isReal ? 'gpo-sev-pill--critical' : 'gpo-sev-pill--warning');
+    badge.textContent = isReal ? '🔴 Echter Konflikt' : '🟡 Potenzieller Konflikt';
 
     const title = document.createElement('span');
     title.className = 'gpo-finding-title';
@@ -429,22 +674,7 @@ window.GpoRenderer = (function() {
 
     header.append(badge, title, scopeBadge, expand);
 
-    const body = document.createElement('div');
-    body.className = 'gpo-finding-body';
-
-    const desc = document.createElement('p');
-    desc.className = 'gpo-finding-desc';
-    desc.textContent = CONFLICT_DESC;
-    body.appendChild(desc);
-
-    body.appendChild(buildEntryRowList(finding));
-
-    // Kein "GPO X gewinnt" - stattdessen immer der feste RSoP-Hinweis.
-    const hint = document.createElement('div');
-    hint.className = 'gpo-conflict-hint';
-    hint.textContent = finding.hint;
-    body.appendChild(hint);
-
+    const body = buildFindingBody(finding);
     body.appendChild(buildDetailSection(finding, category));
 
     const diagnoseSection = buildDiagnoseSection();
@@ -485,6 +715,10 @@ window.GpoRenderer = (function() {
   }
 
   // ── Redundanz-Liste (Konzept Abschnitt 6) ───────────────────
+  // scopeRelation ("overlap"|"none"|"mixed"|"unknown", gpo-analyzer.js
+  // Prompt 2) bestimmt Label und - bei "mixed" - eine explizite Paar-fuer-
+  // Paar-Aufschluesselung statt nur des Labels (Roadmap .md/todo/
+  // GPO_Analyzer_Roadmap_vor_v2_v2_spaeter.md, Abschnitt 1.2).
   function buildRedundantCard(finding) {
     const { category, name } = splitSettingKey(finding.settingKey);
 
@@ -496,7 +730,7 @@ window.GpoRenderer = (function() {
 
     const badge = document.createElement('span');
     badge.className = 'gpo-sev-pill gpo-sev-pill--info';
-    badge.textContent = '🔵 Redundant';
+    badge.textContent = REDUNDANT_SCOPE_LABELS[finding.scopeRelation] || REDUNDANT_SCOPE_LABELS.unknown;
 
     const title = document.createElement('span');
     title.className = 'gpo-finding-title';
@@ -512,27 +746,7 @@ window.GpoRenderer = (function() {
 
     header.append(badge, title, scopeBadge, expand);
 
-    const body = document.createElement('div');
-    body.className = 'gpo-finding-body';
-
-    const value = finding.entries[0] ? finding.entries[0].value : '';
-    const desc = document.createElement('p');
-    desc.className = 'gpo-finding-desc';
-    desc.textContent = REDUNDANT_DESC + ' Wert: ' + (value || '(leer)');
-    body.appendChild(desc);
-
-    const definedIn = document.createElement('div');
-    definedIn.className = 'gpo-redundant-defined-in';
-    const definedLabel = document.createElement('span');
-    definedLabel.className = 'gpo-finding-sub-title';
-    definedLabel.textContent = 'Definiert in';
-    definedIn.appendChild(definedLabel);
-    const gpoNames = document.createElement('div');
-    gpoNames.className = 'gpo-redundant-gpo-list';
-    gpoNames.textContent = finding.entries.map(e => e.gpoName).join(', ');
-    definedIn.appendChild(gpoNames);
-    body.appendChild(definedIn);
-
+    const body = buildFindingBody(finding);
     body.appendChild(buildDetailSection(finding, category));
 
     makeExpandable(header, body, expand);
@@ -569,6 +783,18 @@ window.GpoRenderer = (function() {
     filtered.forEach(f => list.appendChild(buildFindingCard(f)));
   }
 
+  // rules.json darf einen "{years}"-Platzhalter enthalten (aktuell nur
+  // GPO_VERY_OLD, Abschnitt 1.4) statt den Schwellwert hart zu schreiben -
+  // wird hier aus finding.detail.thresholdYears aufgeloest, das der
+  // Analyzer bereits pro Finding mitliefert.
+  function resolveRuleText(text, detail) {
+    if (!text) return text;
+    if (detail && detail.thresholdYears != null) {
+      return text.replace(/\{years\}/g, detail.thresholdYears);
+    }
+    return text;
+  }
+
   // ── GPO-Hygiene: Hygiene- + Security-Filter- + WMI-Filter-Findings
   // (Konzept Abschnitt 8, 9, 10) ───────────────────────────────
   function buildHygieneCard(finding) {
@@ -581,8 +807,9 @@ window.GpoRenderer = (function() {
     header.className = 'gpo-finding-header';
 
     const badge = document.createElement('span');
-    badge.className = 'gpo-sev-pill gpo-sev-pill--warning';
-    badge.textContent = '⚠ ' + (rule.name || 'Hygiene');
+    const severity = finding.severity || rule.severity || 'warning';
+    badge.className = 'gpo-sev-pill gpo-sev-pill--' + severity;
+    badge.textContent = (HYGIENE_SEVERITY_ICONS[severity] || '⚠') + ' ' + (resolveRuleText(rule.name, finding.detail) || 'Hygiene');
 
     const title = document.createElement('span');
     title.className = 'gpo-finding-title';
@@ -594,42 +821,7 @@ window.GpoRenderer = (function() {
 
     header.append(badge, title, expand);
 
-    const body = document.createElement('div');
-    body.className = 'gpo-finding-body';
-
-    const desc = document.createElement('p');
-    desc.className = 'gpo-finding-desc';
-    desc.textContent = rule.description || '';
-    body.appendChild(desc);
-
-    if (finding.detail && finding.detail.modified) {
-      const detailRow = document.createElement('div');
-      detailRow.className = 'gpo-detail-row';
-      const modifiedLabel = (finding.detail.modified || '').replace('T', ' ').substring(0, 16);
-      detailRow.textContent = 'Zuletzt geändert: ' + modifiedLabel
-        + (finding.detail.ageYears != null ? ' (vor ' + finding.detail.ageYears + '+ Jahren)' : '');
-      body.appendChild(detailRow);
-    }
-
-    // GPO_NO_LINKS: "gar kein Link" und "Link vorhanden, aber deaktiviert"
-    // sehen sonst identisch aus (beide nutzen dieselbe rule.description) -
-    // beim GPMC-Abgleich wuerde ein Techniker einen vorhandenen (nur
-    // deaktivierten) Link sonst als Diskrepanz zum Tool missverstehen.
-    if (finding.detail && finding.detail.linkStatus === 'disabled') {
-      const detailRow = document.createElement('div');
-      detailRow.className = 'gpo-detail-row';
-      const count = finding.detail.disabledLinkCount || 0;
-      detailRow.textContent = 'Verknüpfung vorhanden, aber deaktiviert (' + count + (count === 1 ? ' Link).' : ' Links).');
-      body.appendChild(detailRow);
-    } else if (finding.detail && finding.detail.linkStatus === 'none') {
-      const detailRow = document.createElement('div');
-      detailRow.className = 'gpo-detail-row';
-      detailRow.textContent = 'Keine Verknüpfung vorhanden.';
-      body.appendChild(detailRow);
-    }
-
-    const recSection = buildRecommendationSection(rule);
-    if (recSection) body.appendChild(recSection);
+    const body = buildFindingBody(finding);
 
     const diagnoseSection = buildDiagnoseSection();
     if (diagnoseSection) body.appendChild(diagnoseSection);
@@ -662,26 +854,7 @@ window.GpoRenderer = (function() {
 
     header.append(badge, title, expand);
 
-    const body = document.createElement('div');
-    body.className = 'gpo-finding-body';
-
-    const desc = document.createElement('p');
-    desc.className = 'gpo-finding-desc';
-    desc.textContent = rule.description || '';
-    body.appendChild(desc);
-
-    const linkRow = document.createElement('div');
-    linkRow.className = 'gpo-detail-row';
-    linkRow.textContent = 'Verknüpft mit: [' + finding.targetType + '] ' + finding.target;
-    body.appendChild(linkRow);
-
-    const filterRow = document.createElement('div');
-    filterRow.className = 'gpo-detail-row';
-    filterRow.textContent = 'Security Filter: ' + (finding.securityFilter || []).map(f => f.trustee).join(', ');
-    body.appendChild(filterRow);
-
-    const recSection = buildRecommendationSection(rule);
-    if (recSection) body.appendChild(recSection);
+    const body = buildFindingBody(finding);
 
     makeExpandable(header, body, expand);
     card.append(header, body);
@@ -690,7 +863,6 @@ window.GpoRenderer = (function() {
 
   function buildWmiFilterCard(finding) {
     const rule = finding.rule || {};
-    const wmiFilter = finding.wmiFilter || {};
 
     const card = document.createElement('div');
     card.className = 'gpo-finding-card gpo-finding-card--wmi-filter';
@@ -712,34 +884,19 @@ window.GpoRenderer = (function() {
 
     header.append(badge, title, expand);
 
-    const body = document.createElement('div');
-    body.className = 'gpo-finding-body';
-
-    const desc = document.createElement('p');
-    desc.className = 'gpo-finding-desc';
-    desc.textContent = rule.description || '';
-    body.appendChild(desc);
-
-    const nameRow = document.createElement('div');
-    nameRow.className = 'gpo-detail-row';
-    nameRow.textContent = 'Filter: ' + (wmiFilter.name || wmiFilter.id || 'unbekannt');
-    body.appendChild(nameRow);
-
-    if (wmiFilter.query) {
-      const queryRow = document.createElement('div');
-      queryRow.className = 'gpo-detail-row';
-      const code = document.createElement('code');
-      code.className = 'gpo-entry-value';
-      code.textContent = wmiFilter.query;
-      queryRow.appendChild(code);
-      body.appendChild(queryRow);
-    }
+    const body = buildFindingBody(finding);
 
     makeExpandable(header, body, expand);
     card.append(header, body);
     return card;
   }
 
+  // Gruppiert nach rule.bucket statt einer flachen Liste (Roadmap .md/todo/
+  // GPO_Analyzer_Roadmap_vor_v2_v2_spaeter.md, Abschnitt 1.3) - leere
+  // Abschnitte werden ausgeblendet, Reihenfolge folgt BUCKET_ORDER. Findings
+  // ohne (bekanntes) bucket-Feld landen in einem Sicherheitsnetz-Abschnitt
+  // statt kommentarlos zu verschwinden - sollte bei vollstaendig gepflegten
+  // Regeln nicht vorkommen.
   function renderHygieneList() {
     const list  = document.getElementById('gpo-hygiene-list');
     const empty = document.getElementById('gpo-hygiene-empty');
@@ -755,10 +912,40 @@ window.GpoRenderer = (function() {
     }
     empty.hidden = true;
 
-    hygieneFindings.forEach(f => {
-      const card = buildFindingCard(f);
-      if (card) list.appendChild(card);
+    const grouped = new Set();
+
+    function renderBucketSection(bucketKey, label, items) {
+      if (!items.length) return;
+      items.forEach(f => grouped.add(f));
+
+      const section = document.createElement('div');
+      section.className = 'gpo-hygiene-bucket';
+
+      const title = document.createElement('div');
+      title.className = 'gpo-hygiene-bucket-title';
+      const labelSpan = document.createElement('span');
+      labelSpan.textContent = label;
+      const countSpan = document.createElement('span');
+      countSpan.className = 'gpo-section-count';
+      countSpan.textContent = items.length;
+      title.append(labelSpan, ' ', countSpan);
+      section.appendChild(title);
+
+      items.forEach(f => {
+        const card = buildFindingCard(f);
+        if (card) section.appendChild(card);
+      });
+
+      list.appendChild(section);
+    }
+
+    BUCKET_ORDER.forEach(bucket => {
+      const items = hygieneFindings.filter(f => (f.rule && f.rule.bucket) === bucket);
+      renderBucketSection(bucket, BUCKET_LABELS[bucket], items);
     });
+
+    const ungrouped = hygieneFindings.filter(f => !grouped.has(f));
+    renderBucketSection('sonstige', '❔ Sonstige', ungrouped);
   }
 
   // ── Struktur-Baum (Konzept Abschnitt 11) ────────────────────

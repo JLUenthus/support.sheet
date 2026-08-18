@@ -56,30 +56,272 @@ window.GpoAnalyzer = (function() {
       const findingEntries = entries.map(e => ({ gpoId: e.gpoId, gpoName: e.gpoName, value: e.value }));
 
       if (distinctValues.size === 1) {
-        // Konsistent + mehrfach definiert = redundant (Info-Charakter,
-        // kein Wertkonflikt erkennbar).
+        // Identischer Wert ueber mehrere GPOs - der Scope-Bezug entscheidet,
+        // ob das eine "identische Mehrfachdefinition" (alle Ziele
+        // ueberlappen), eine "Mehrfachdefinition ohne direkten Konflikt"
+        // (eindeutig getrennte Ziele) oder ein gemischtes Bild ist (Roadmap
+        // .md/todo/GPO_Analyzer_Roadmap_vor_v2_v2_spaeter.md, Abschnitt 1.2).
+        // Anders als bei Konflikten (unten) werden hier ALLE Paare der
+        // Gruppe verglichen, nicht nur Paare mit unterschiedlichem Wert -
+        // bei identischem Wert gibt es diese Einschraenkung nicht.
+        const overlap = computeGroupOverlap(entries, model, null);
+        const scopeRelation = aggregateOverlapResults(overlap.flatResults);
+
         findings.push({
           type: 'redundant',
           settingKey: settingKey,
           scope: scope,
           entries: findingEntries,
           severity: 'info',
+          // scopeRelation ist NICHT dasselbe Feld wie conflictLevel bei
+          // Konflikten (siehe Hinweis vor Prompt 2: "mixed" bleibt bei
+          // Konflikten "real", bekommt bei Mehrfachdefinitionen aber einen
+          // eigenen Zustand statt in eine bestehende Kategorie gepresst zu
+          // werden) - deshalb ein eigener, vierwertiger Zustand.
+          scopeRelation: scopeRelation,
+          scopePairs: overlap.comparisons.map(c => ({
+            gpoAName: c.gpoAName,
+            gpoBName: c.gpoBName,
+            result: c.overlap.result,
+          })),
+          scopeExplanation: buildRedundantScopeExplanation(scopeRelation),
         });
-      } else {
-        // Unterschiedliche konfigurierte Werte = widerspruechlich, echter
-        // Konflikt.
-        findings.push({
-          type: 'conflict',
-          settingKey: settingKey,
-          scope: scope,
-          entries: findingEntries,
-          severity: 'critical',
-          hint: RSOP_HINT,
-        });
+        return;
       }
+
+      // Unterschiedliche konfigurierte Werte allein sind noch kein echter
+      // Konflikt (siehe .md/todo/GPO_Analyzer_Roadmap_vor_v2_v2_spaeter.md,
+      // Abschnitt 1.1: "GPO A wirkt auf Terminalserver, GPO B auf normale
+      // Computer" ist technisch eine unterschiedliche Definition, aber kein
+      // Konflikt). Scope-Ueberlappung wird deshalb NUR zwischen GPO-Paaren
+      // mit tatsaechlich unterschiedlichem Wert bestimmt - zwei GPOs mit
+      // demselben Wert stehen nicht im Konflikt zueinander und duerfen das
+      // Ergebnis nicht verwaessern.
+      const conflictOverlap = computeGroupOverlap(entries, model, (a, b) => a.value !== b.value);
+      const comparisons = conflictOverlap.comparisons;
+      const aggregated = aggregateOverlapResults(conflictOverlap.flatResults);
+
+      // "none" bei ALLEN Paaren der Gruppe = fachlich kein Konflikt,
+      // sondern zwei getrennt gueltige Definitionen an eindeutig
+      // getrennten Zielbereichen (Roadmap Abschnitt 1.1, "Kein Konflikt") -
+      // kein Finding.
+      if (aggregated === 'none') return;
+
+      // "mixed" enthaelt per Definition von aggregateOverlapResults() immer
+      // mindestens ein bestaetigtes "overlap" - ein echter Konflikt liegt
+      // also in jedem Fall vor, auch wenn nicht ALLE Paare ueberlappen.
+      // Diese Zuordnung ist eine bewusste Erweiterung ueber die explizit
+      // vorgegebene Tabelle hinaus (die "mixed" nicht auffuehrt), da ein
+      // bestaetigter Overlap nicht zu einer schwaecheren Aussage
+      // heruntergestuft werden darf.
+      const conflictLevel = aggregated === 'unknown' ? 'potential' : 'real';
+      const severity = conflictLevel === 'real' ? 'critical' : 'warning';
+
+      findings.push({
+        type: 'conflict',
+        settingKey: settingKey,
+        scope: scope,
+        entries: findingEntries,
+        severity: severity,
+        // WICHTIGE EINSCHRAENKUNG: conflictLevel "real" bedeutet in dieser
+        // Phase ausschliesslich, dass sich die Ziel-Links nach der
+        // OU-/Domain-Logik in determineScopeOverlap() ueberlappen.
+        // Security Filtering und WMI-Filtering fliessen bewusst NICHT in
+        // diese Pruefung ein und koennen einen scheinbaren Overlap spaeter
+        // einschraenken (zwei GPOs an derselben OU koennen ueber
+        // unterschiedliche Security-Filter trotzdem auf unterschiedliche
+        // Computer wirken). "real" ist deshalb keine Aussage ueber
+        // tatsaechlich effektiv wirksame Konflikte, sondern ueber
+        // ueberlappende Ziel-Bereiche im Snapshot (vollstaendige RSoP-/
+        // Vererbungssimulation ist SPAETER-Scope, Roadmap Abschnitt 3.1/3.2).
+        conflictLevel: conflictLevel,
+        scopeExplanation: buildScopeExplanation(conflictLevel, aggregated, comparisons),
+        hint: RSOP_HINT,
+      });
     });
 
     return findings;
+  }
+
+  function gpoById(model, id) {
+    return (model.gpos || []).find(g => g.id === id) || { id: id };
+  }
+
+  // Nur Links mit linkEnabled !== false beruecksichtigen - ein deaktivierter
+  // Link wendet die GPO nirgends an und darf keinen (scheinbaren) Scope-
+  // Overlap erzeugen.
+  function activeLinksForGpo(gpoId, model) {
+    return (model.links || []).filter(l => l.gpoId === gpoId && l.linkEnabled !== false);
+  }
+
+  // Reihenfolge der Pruefung ist absichtlich: Site vor Domain, damit sich
+  // die beiden Regeln nicht widersprechen (eine Site-Verknuepfung neben
+  // einer Domain-Verknuepfung bleibt "unknown", nicht faelschlich
+  // "overlap").
+  function determineLinkPairOverlap(linkA, linkB) {
+    // 1. Site-zu-OU-/Domain-Zuordnung ist ohne Subnetz-Daten nicht
+    // zuverlaessig bestimmbar - gilt auch wenn die andere Seite "domain" ist.
+    if (linkA.targetType === 'site' || linkB.targetType === 'site') {
+      return 'unknown';
+    }
+    // 2. Domain-Link wirkt potenziell auf alles darunter.
+    if (linkA.targetType === 'domain' || linkB.targetType === 'domain') {
+      return 'overlap';
+    }
+    // 3. Beide OU: Pfad-Vergleich (Vorfahre/Nachfahre oder identisch).
+    return ouPathsOverlap(linkA.target, linkB.target) ? 'overlap' : 'none';
+  }
+
+  // AD-Distinguished-Names listen vom Blatt zur Wurzel - die DN einer
+  // Eltern-OU ist deshalb immer ein exaktes Komma-getrenntes Suffix der DN
+  // jeder Kind-OU darunter. Case-insensitiv, wie in AD ueblich.
+  function isAncestorOrEqualOu(ancestorDn, dn) {
+    const a = (ancestorDn || '').toLowerCase();
+    const d = (dn || '').toLowerCase();
+    if (!a || !d) return false;
+    return a === d || d.endsWith(',' + a);
+  }
+
+  function ouPathsOverlap(dnA, dnB) {
+    return isAncestorOrEqualOu(dnA, dnB) || isAncestorOrEqualOu(dnB, dnA);
+  }
+
+  // Ermittelt den Scope-Overlap zwischen zwei GPOs anhand ihrer aktiven
+  // Ziel-Links. Bewusst begrenzte Logik (keine vollstaendige RSoP-/
+  // Vererbungssimulation, das ist SPAETER-Scope laut Roadmap Abschnitt
+  // 3.1/3.2): siehe determineLinkPairOverlap() fuer die eigentliche
+  // Paar-Logik.
+  function determineScopeOverlap(gpoA, gpoB, model) {
+    const linksA = activeLinksForGpo(gpoA.id, model);
+    const linksB = activeLinksForGpo(gpoB.id, model);
+
+    // Hat eine der beiden GPOs keinen aktiven Link, ist der Scope-Vergleich
+    // nicht durchfuehrbar - "unknown" statt "kein Konflikt" (Grundsatz
+    // "Unbekannt ist nicht gleich Nein").
+    if (!linksA.length || !linksB.length) {
+      return { result: 'unknown', pairs: [] };
+    }
+
+    const pairs = [];
+    linksA.forEach(la => {
+      linksB.forEach(lb => {
+        pairs.push({
+          targetA: la.target,
+          targetTypeA: la.targetType,
+          targetB: lb.target,
+          targetTypeB: lb.targetType,
+          result: determineLinkPairOverlap(la, lb),
+        });
+      });
+    });
+
+    return { result: aggregateOverlapResults(pairs.map(p => p.result)), pairs: pairs };
+  }
+
+  // Ruft determineScopeOverlap() fuer jedes (gefilterte) GPO-Paar aus
+  // "entries" auf. Gemeinsam von Konflikt- und Mehrfachdefinitions-Zweig
+  // genutzt (Prompt 2: "keine eigene, zweite Aggregationslogik... dieselbe
+  // Funktion wiederverwenden") - liefert sowohl die flache Liste aller
+  // atomaren Link-Paar-Ergebnisse (fuer aggregateOverlapResults) als auch
+  // die GPO-Paar-Ergebnisse selbst (fuer die Anzeige, z.B. die "mixed"-
+  // Aufschluesselung bei Mehrfachdefinitionen).
+  function computeGroupOverlap(entries, model, shouldCompare) {
+    const flatResults = [];
+    const comparisons = [];
+    for (let i = 0; i < entries.length; i++) {
+      for (let j = i + 1; j < entries.length; j++) {
+        if (shouldCompare && !shouldCompare(entries[i], entries[j])) continue;
+        const gpoA = gpoById(model, entries[i].gpoId);
+        const gpoB = gpoById(model, entries[j].gpoId);
+        const overlap = determineScopeOverlap(gpoA, gpoB, model);
+        if (overlap.pairs.length === 0) {
+          // Mind. eine der beiden GPOs hat keinen aktiven Link - dieses
+          // Paar traegt "unknown" bei, statt aus der Aggregation zu
+          // verschwinden (leere pairs-Liste wuerde sonst stillschweigend
+          // uebergangen).
+          flatResults.push(overlap.result);
+        } else {
+          overlap.pairs.forEach(p => flatResults.push(p.result));
+        }
+        comparisons.push({
+          gpoAId: entries[i].gpoId,
+          gpoAName: entries[i].gpoName,
+          gpoBId: entries[j].gpoId,
+          gpoBName: entries[j].gpoName,
+          overlap: overlap,
+        });
+      }
+    }
+    return { flatResults: flatResults, comparisons: comparisons };
+  }
+
+  // Fasst die Einzelergebnisse mehrerer Link-/GPO-Paare zu EINEM
+  // Gesamtergebnis zusammen. Separat/exportierbar gehalten (nicht in
+  // determineScopeOverlap() verschachtelt) - wird in einem spaeteren
+  // Prompt auf einer anderen Ebene wiederverwendet (z.B. Mehrfach-
+  // definitionen mit unterschiedlichem Scope, Roadmap Abschnitt 1.2).
+  function aggregateOverlapResults(results) {
+    const list = results || [];
+    const hasOverlap = list.includes('overlap');
+    const hasNone = list.includes('none');
+    const hasUnknown = list.includes('unknown');
+
+    if (hasOverlap && !hasNone && !hasUnknown) return 'overlap';
+    if (hasNone && !hasOverlap && !hasUnknown) return 'none';
+    if (hasOverlap && hasNone) return 'mixed';
+    if (hasOverlap && hasUnknown) return 'mixed';
+    if (hasUnknown) return 'unknown';
+    // Leere Liste - kann nur vorkommen, wenn keine Link-Paare uebergeben
+    // wurden; sicherer Fallback statt eines stillschweigenden "none".
+    return 'unknown';
+  }
+
+  function describeTarget(targetType, target) {
+    return '[' + (targetType || '?') + '] ' + (target || '?');
+  }
+
+  // Einfacher, sachlicher Satz (bessere Finding-Texte sind ein spaeterer
+  // Prompt, Roadmap Abschnitt 1.6/2.6) - haelt aber bereits die wichtige
+  // Einschraenkung fest, dass Security-/WMI-Filter hier nicht einfliessen.
+  function buildScopeExplanation(conflictLevel, aggregatedResult, comparisons) {
+    const CAVEAT = ' (Security-/WMI-Filter nicht berücksichtigt).';
+
+    if (conflictLevel === 'potential') {
+      return 'Zielbereich nicht sicher überlappend bestimmbar, z. B. über eine Site-Verknüpfung oder einen fehlenden aktiven Link' + CAVEAT;
+    }
+
+    const singlePair = (comparisons.length === 1 && comparisons[0].overlap.pairs.length === 1)
+      ? comparisons[0].overlap.pairs[0]
+      : null;
+
+    if (singlePair) {
+      return 'Zielbereiche überlappen sich: ' + describeTarget(singlePair.targetTypeA, singlePair.targetA) +
+        ' und ' + describeTarget(singlePair.targetTypeB, singlePair.targetB) + CAVEAT;
+    }
+
+    const suffix = aggregatedResult === 'mixed' ? ' teilweise' : '';
+    return 'Zielbereiche überlappen sich' + suffix + CAVEAT;
+  }
+
+  // Analog zu buildScopeExplanation(), aber fuer Mehrfachdefinitionen
+  // (identischer Wert). "mixed" bekommt hier bewusst nur den allgemeinen
+  // Hinweis auf die Aufschluesselung - die eigentliche Paar-fuer-Paar-Liste
+  // steht in finding.scopePairs und wird vom Renderer separat dargestellt
+  // (Prompt 2: "nicht nur das Label 'mixed' ohne Aufschluesselung
+  // anzeigen").
+  function buildRedundantScopeExplanation(scopeRelation) {
+    const CAVEAT = ' (Security-/WMI-Filter nicht berücksichtigt).';
+    if (scopeRelation === 'overlap') {
+      return 'Alle beteiligten GPOs überlappen sich paarweise' + CAVEAT;
+    }
+    if (scopeRelation === 'none') {
+      return 'Alle beteiligten GPOs liegen in eindeutig getrennten Zielbereichen' + CAVEAT;
+    }
+    if (scopeRelation === 'unknown') {
+      return 'Scope-Bezug nicht sicher bestimmbar, z. B. über eine Site-Verknüpfung oder einen fehlenden aktiven Link' + CAVEAT;
+    }
+    // mixed
+    return 'Nicht alle beteiligten GPOs überlappen sich - siehe Aufschlüsselung unten' + CAVEAT;
   }
 
   // Gruppiert nach (scope + settingKey), nicht nur settingKey - eine
@@ -162,6 +404,11 @@ window.GpoAnalyzer = (function() {
           findings.push(buildHygieneFinding(veryOldRule, gpo, {
             modified: gpo.modified,
             ageYears: Math.floor(ageYears),
+            // rules.json's Name traegt einen "{years}"-Platzhalter statt
+            // eines hart codierten Schwellwerts (Roadmap Abschnitt 1.4) -
+            // thresholdYears liefert dem Renderer den Wert zur Substitution,
+            // ohne VERY_OLD_THRESHOLD_YEARS selbst exportieren zu muessen.
+            thresholdYears: VERY_OLD_THRESHOLD_YEARS,
           }));
         }
       }
@@ -257,5 +504,8 @@ window.GpoAnalyzer = (function() {
     return (rules || []).find(r => r.id === id) || null;
   }
 
-  return { analyze };
+  // aggregateOverlapResults() ist exportiert, da sie in einem spaeteren
+  // Prompt auf einer anderen Ebene wiederverwendet wird (siehe Kommentar
+  // an der Funktion selbst).
+  return { analyze, aggregateOverlapResults };
 })();

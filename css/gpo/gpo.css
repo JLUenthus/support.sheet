@@ -205,6 +205,19 @@
 .gpo-finding-card--security-filter { border-left-color: var(--amber); }
 .gpo-finding-card--wmi-filter      { border-left-color: var(--accent); }
 
+/* ── Hygiene: nach bucket gruppierte Abschnitte ─────────────── */
+.gpo-hygiene-bucket { margin-bottom: 20px; }
+.gpo-hygiene-bucket:last-child { margin-bottom: 0; }
+.gpo-hygiene-bucket-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
 .gpo-finding-header {
   display: flex;
   align-items: center;
@@ -270,22 +283,34 @@
   padding: 3px 8px;
 }
 
-/* Fester RSoP-Hinweis - keine Aussage welche GPO "gewinnt" */
-.gpo-conflict-hint {
+/* Vereinheitlichte Finding-Textstruktur: "Was" / "Bewertung" /
+   "Naechster Schritt" (Roadmap Abschnitt 1.6, buildFindingBody() in
+   gpo-renderer.js) - gilt fuer alle fuenf Finding-Typen gleichermassen. */
+.gpo-body-section:first-child .gpo-finding-sub-title { margin-top: 0; }
+.gpo-body-section--next-step {
   margin-top: 12px;
   padding: 10px 12px;
-  background: var(--red-bg);
-  border: 1px solid rgba(248, 113, 113, .25);
-  border-left: 3px solid var(--red);
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
   border-radius: var(--r);
-  font-size: .78rem;
-  color: var(--muted);
-  line-height: 1.5;
 }
+.gpo-body-section--next-step .gpo-finding-sub-title { margin-top: 0; }
 
 /* Redundanz: "Definiert in" */
 .gpo-redundant-defined-in { margin: 10px 0; }
 .gpo-redundant-gpo-list { font-size: .82rem; color: var(--text); margin-top: 4px; }
+
+/* scopeRelation "mixed": explizite Paar-fuer-Paar-Aufschluesselung statt
+   nur des Labels (gpo-analyzer.js Prompt 2). */
+.gpo-redundant-scope-pairs {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.gpo-redundant-scope-pairs li { font-size: .78rem; color: var(--muted); line-height: 1.5; }
 
 /* Detail-Ansicht (Pfad/Kategorie + Links der beteiligten GPOs) */
 .gpo-detail { margin-top: 4px; }
