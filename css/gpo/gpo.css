@@ -136,6 +136,14 @@
 }
 .gpo-ampel-pill:hover { border-color: var(--border2); filter: brightness(1.15); }
 
+/* ── Wartungsampel (V2.6.2) ───────────────────────────────────
+   Eigene Zeile, bewusst getrennt von .gpo-ampel-row - nutzt dieselbe
+   .gpo-ampel-pill-Optik (bereits neutral/gedaempft, keine Rot-/Gelb-
+   faerbung) statt einer zweiten Pill-Definition. */
+.gpo-maintenance-panel { margin-top: 10px; }
+.gpo-maintenance-panel:empty { display: none; }
+.gpo-maintenance-breakdown { margin-top: 6px; font-size: .74rem; color: var(--dim); }
+
 /* ── Prioritaeten-Liste (V2.1 Dashboard) ─────────────────────
    Max. 5 wichtigste Findings, Prioritaet: echte Konflikte > potenzielle
    Konflikte > Hygiene-/Security-Filter-Findings im Bucket "kritisch" >
@@ -204,6 +212,13 @@
   cursor: pointer;
 }
 .gpo-filter-select:focus { border-color: var(--accent); }
+
+/* V2.6.3: bewusst klein/gedaempft, deutlich unterscheidbar von den
+   grossen, fett gesetzten Dashboard-Gesamtzahlen (.gpo-num-value/
+   .gpo-ampel-pill) - zeigt nur, wie viele Findings die aktuelle Filter-
+   Kombination ergibt, nie eine Gesamtzahl. */
+.gpo-filter-result-count { font-size: .74rem; color: var(--dim); }
+.gpo-filter-result-count:empty { display: none; }
 
 .gpo-hygiene-bucket-title--clickable { cursor: pointer; }
 .gpo-hygiene-bucket-title--clickable:hover { color: var(--accent); }
@@ -534,27 +549,50 @@
 }
 .gpo-detail-panel-body summary.gpo-finding-sub-title:hover { color: var(--text); }
 
-/* ── GPO Explorer (V2.3) ─────────────────────────────────────── */
-.gpo-explorer-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  margin-bottom: 6px;
-  border-radius: var(--r);
-  background: var(--panel);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  transition: all .15s;
+/* ── GPO Explorer (V2.3, sortierbare Admin-Tabelle seit V2.6.1) ── */
+.gpo-explorer-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .82rem;
 }
+.gpo-explorer-th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: .7rem;
+  font-weight: 700;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.gpo-explorer-th:hover { color: var(--text); }
+.gpo-explorer-th--active { color: var(--accent); }
+.gpo-explorer-row { cursor: pointer; transition: background .15s; }
 .gpo-explorer-row:hover, .gpo-explorer-row:focus {
-  border-color: var(--accent);
   background: var(--accent-bg);
   outline: none;
 }
-.gpo-explorer-name { font-size: .85rem; font-weight: 600; color: var(--text); flex: 1; }
-.gpo-explorer-status { font-size: .74rem; color: var(--muted); flex-shrink: 0; }
-.gpo-explorer-badge { font-size: .74rem; color: var(--amber); flex-shrink: 0; white-space: nowrap; }
+.gpo-explorer-cell {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  vertical-align: middle;
+}
+.gpo-explorer-cell--name { color: var(--text); font-weight: 600; }
+.gpo-explorer-warn-icon { margin-right: 6px; cursor: help; }
+.gpo-explorer-badge {
+  font-size: .74rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.gpo-explorer-badge--critical { background: var(--red-bg); color: var(--red); }
+.gpo-explorer-badge--warning  { background: var(--amber-bg); color: var(--amber); }
+.gpo-explorer-badge--info     { background: var(--teal-bg); color: var(--teal); }
 
 /* ── Weiterfuehrende Diagnose (Konzept Abschnitt 15) ────────── */
 /* .command-card/.card-header/.star-btn/.copy-btn etc. kommen bereits aus
