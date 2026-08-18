@@ -86,17 +86,36 @@
 
       <section class="gpo-section" id="gpo-overview-section">
         <h2 class="section-title">GPO Analyzer</h2>
-        <div class="gpo-integrity-panel" id="gpo-integrity-panel"></div>
-        <div class="gpo-num-grid" id="gpo-num-grid"></div>
-        <div class="gpo-ampel-row" id="gpo-ampel-row"></div>
+
+        <div class="gpo-dash-tier gpo-dash-tier--status">
+          <div class="gpo-integrity-panel" id="gpo-integrity-panel"></div>
+          <div class="gpo-num-grid" id="gpo-num-grid"></div>
+        </div>
+
+        <div class="gpo-dash-tier gpo-dash-tier--problems">
+          <div class="gpo-finding-sub-title">Aktuelle Probleme</div>
+          <div class="gpo-ampel-row" id="gpo-ampel-row"></div>
+        </div>
+
         <div class="gpo-maintenance-panel" id="gpo-maintenance-panel"></div>
         <div class="gpo-priority-list" id="gpo-priority-list"></div>
       </section>
 
       <div class="gpo-filter-bar" id="gpo-filter-bar">
-        <div class="gpo-filter-row" id="gpo-filter-type-row"></div>
-        <div class="gpo-filter-row gpo-filter-row--secondary" id="gpo-filter-secondary-row"></div>
-        <div class="gpo-filter-result-count" id="gpo-filter-result-count"></div>
+        <div class="gpo-filter-group">
+          <div class="gpo-filter-group-label">Finding-Typ</div>
+          <div class="gpo-filter-row" id="gpo-filter-type-row"></div>
+        </div>
+
+        <div class="gpo-filter-group gpo-filter-group--secondary" id="gpo-filter-secondary-group" hidden>
+          <div class="gpo-filter-group-label">Optionen</div>
+          <div class="gpo-filter-row gpo-filter-row--secondary" id="gpo-filter-secondary-row"></div>
+        </div>
+
+        <div class="gpo-filter-group gpo-filter-group--result">
+          <div class="gpo-filter-group-label">Ergebnis</div>
+          <div class="gpo-filter-result-count" id="gpo-filter-result-count"></div>
+        </div>
       </div>
       <div class="gpo-empty" id="gpo-filter-empty-state" hidden>Keine Findings für diese Auswahl.</div>
 

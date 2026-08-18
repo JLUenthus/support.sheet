@@ -378,24 +378,67 @@ window.GpoRenderer = (function() {
   // Kachel-Klicks setzen jetzt zusaetzlich den passenden Filter (V2.2) -
   // der Anker-Sprung aus V2.1 bleibt (href unveraendert), es kommt nur ein
   // weiterer Listener dazu, kein zweiter, paralleler Klick-Mechanismus.
+  // V2.7.2: sehr kurze Erklaerungszeile je Karte - erzeugt bewusst KEINE neue
+  // fachliche Aussage, sondern spiegelt nur die bereits vorhandene Severity-
+  // Einstufung dieser Gruppe in ein Handlungswort (critical -> "direkt",
+  // warning -> "manuell/bei Bedarf", info -> "zur Info", identisch zu den
+  // bereits bestehenden Texten SCOPE_CHECK_HINT/POTENTIAL_CONFLICT_NOTE bzw.
+  // dem konstant "info"-Severity-Feld bei Mehrfachdefinitionen in
+  // gpo-analyzer.js). Bei 0 ersetzt "Keine gefunden" den Hinweis, statt eine
+  // Handlungsaufforderung fuer eine leere Gruppe stehen zu lassen.
+  function ampelHint(count, nonZeroHint) {
+    return count === 0 ? 'Keine gefunden' : nonZeroHint;
+  }
+
+  // V2.7.1/V2.7.2: severityKey treibt nur die CSS-Modifier-Klasse (Farbgebung
+  // aus bestehenden Severity-Farben) - Zahl/Anchor/Klick-Handler bleiben
+  // exakt wie zuvor. count === 0 bekommt bewusst KEINE Alarm-Farbe (gruen/
+  // Haekchen statt rot/gelb/blau), damit das Dashboard bei 0 Findings
+  // beruhigend statt kaputt wirkt (Anforderung "muss auch bei 0 Findings
+  // sinnvoll aussehen").
   function renderAmpelRow() {
     const row = document.getElementById('gpo-ampel-row');
     row.replaceChildren();
 
     [
-      ['🔴', countByConflictLevel('real'), 'Echte Konflikte', '#gpo-conflict-section',
+      ['🔴', countByConflictLevel('real'), 'Echte Konflikte', '#gpo-conflict-section', 'critical',
+        ampelHint(countByConflictLevel('real'), 'Direkt prüfen'),
         () => { setExclusiveTypeFilter('conflict'); _state.conflictStatusFilter = 'real'; applyFilters(); }],
-      ['🟡', countByConflictLevel('potential'), 'Potenzielle Konflikte', '#gpo-conflict-section',
+      ['🟡', countByConflictLevel('potential'), 'Potenzielle Konflikte', '#gpo-conflict-section', 'warning',
+        ampelHint(countByConflictLevel('potential'), 'Manuell prüfen'),
         () => { setExclusiveTypeFilter('conflict'); _state.conflictStatusFilter = 'potential'; applyFilters(); }],
-      ['🔵', countByType('redundant'), 'Mehrfachdefinitionen', '#gpo-redundant-section',
+      ['🔵', countByType('redundant'), 'Mehrfachdefinitionen', '#gpo-redundant-section', 'info',
+        ampelHint(countByType('redundant'), 'Zur Info'),
         () => { setExclusiveTypeFilter('redundant'); applyFilters(); }],
-      ['⚠', anomalyCount(), 'Prüfungen', '#gpo-hygiene-section',
+      ['⚠', anomalyCount(), 'Prüfungen', '#gpo-hygiene-section', 'warning',
+        ampelHint(anomalyCount(), 'Bei Bedarf prüfen'),
         () => { setExclusiveTypeFilter('hygiene', 'security-filter'); applyFilters(); }],
-    ].forEach(([icon, count, label, anchor, onClick]) => {
+    ].forEach(([icon, count, label, anchor, severityKey, hint, onClick]) => {
+      const isZero = count === 0;
+
       const pill = document.createElement('a');
-      pill.className = 'gpo-ampel-pill';
+      pill.className = 'gpo-ampel-pill ' + (isZero ? 'gpo-ampel-pill--zero' : 'gpo-ampel-pill--' + severityKey);
       pill.href = anchor;
-      pill.textContent = icon + ' ' + count + ' ' + label;
+
+      const top = document.createElement('span');
+      top.className = 'gpo-ampel-top';
+      const iconEl = document.createElement('span');
+      iconEl.className = 'gpo-ampel-icon';
+      iconEl.textContent = isZero ? '✓' : icon;
+      const countEl = document.createElement('span');
+      countEl.className = 'gpo-ampel-count';
+      countEl.textContent = count;
+      top.append(iconEl, countEl);
+
+      const labelEl = document.createElement('span');
+      labelEl.className = 'gpo-ampel-label';
+      labelEl.textContent = label;
+
+      const hintEl = document.createElement('span');
+      hintEl.className = 'gpo-ampel-hint';
+      hintEl.textContent = hint;
+
+      pill.append(top, labelEl, hintEl);
       pill.addEventListener('click', onClick);
       row.appendChild(pill);
     });
@@ -563,21 +606,48 @@ window.GpoRenderer = (function() {
     return select;
   }
 
+  // V2.7.4: reine Anzeige-Ummantelung um buildFilterSelect() (unveraendert)
+  // - haengt nur ein kleines Feldlabel davor ("Status"/"Bucket"), damit auf
+  // einen Blick klar ist, welches Select welchen Filter setzt, statt zwei
+  // nebeneinanderstehende, anfangs identisch beschriftete "Alle"-Dropdowns
+  // zu haben. Keine neue Werte-/Change-Logik, onChange bleibt exakt wie
+  // uebergeben.
+  function buildLabeledSelect(labelText, options, currentValue, onChange) {
+    const wrap = document.createElement('span');
+    wrap.className = 'gpo-filter-select-wrap';
+    const label = document.createElement('span');
+    label.className = 'gpo-filter-select-label';
+    label.textContent = labelText;
+    wrap.append(label, buildFilterSelect(options, currentValue, onChange));
+    return wrap;
+  }
+
   // Zweites Filterfeld ist kontextabhaengig ("Konfliktstatus: falls
   // vorhanden"): Konfliktstatus nur sichtbar, wenn Konflikte ueberhaupt
   // angezeigt werden, Bucket-Filter nur, wenn mindestens einer der
   // Bucket-tragenden Typen angezeigt wird.
+  // V2.7.4: reine Darstellungs-Gruppierung ("Finding-Typ"/"Optionen"/
+  // "Ergebnis") um dieselben drei Bereiche - passesFilters()/
+  // ensureFindingPassesFilter()/_state und alle Klick-Handler bleiben exakt
+  // wie zuvor, hier aendert sich ausschliesslich Beschriftung/Optik.
   function renderFilterBar() {
     const typeRow = document.getElementById('gpo-filter-type-row');
     const secondaryRow = document.getElementById('gpo-filter-secondary-row');
+    const secondaryGroup = document.getElementById('gpo-filter-secondary-group');
     if (!typeRow || !secondaryRow) return;
     typeRow.replaceChildren();
     secondaryRow.replaceChildren();
 
+    // "Alle" bleibt fachlich ein normaler Typ-Filter-Reset (dieselben drei
+    // _state-Zuweisungen wie zuvor), bekommt aber eine eigene CSS-Klasse
+    // und - nur wenn es tatsaechlich etwas zurueckzusetzen gibt - ein
+    // Reset-Icon, damit er als Reset-Aktion schnell auffindbar ist statt
+    // wie ein gleichwertiger Typ-Chip zwischen den anderen unterzugehen.
+    const allActive = isAllTypesActive() && _state.conflictStatusFilter === 'all' && _state.bucketFilter === 'all';
     const allChip = document.createElement('button');
     allChip.type = 'button';
-    allChip.className = 'gpo-filter-chip' + (isAllTypesActive() ? ' gpo-filter-chip--active' : '');
-    allChip.textContent = 'Alle';
+    allChip.className = 'gpo-filter-chip gpo-filter-chip--reset' + (allActive ? ' gpo-filter-chip--active' : '');
+    allChip.textContent = (allActive ? '' : '↺ ') + 'Alle';
     allChip.addEventListener('click', () => {
       _state.typeFilter = freshTypeFilter();
       _state.conflictStatusFilter = 'all';
@@ -599,7 +669,7 @@ window.GpoRenderer = (function() {
     });
 
     if (_state.typeFilter.conflict) {
-      secondaryRow.appendChild(buildFilterSelect(CONFLICT_STATUS_OPTIONS, _state.conflictStatusFilter, (val) => {
+      secondaryRow.appendChild(buildLabeledSelect('Status', CONFLICT_STATUS_OPTIONS, _state.conflictStatusFilter, (val) => {
         _state.conflictStatusFilter = val;
         applyFilters();
       }));
@@ -607,11 +677,15 @@ window.GpoRenderer = (function() {
 
     if (_state.typeFilter.hygiene || _state.typeFilter['security-filter'] || _state.typeFilter['wmi-filter']) {
       const bucketOptions = [{ key: 'all', label: 'Alle' }].concat(BUCKET_ORDER.map(b => ({ key: b, label: BUCKET_LABELS[b] })));
-      secondaryRow.appendChild(buildFilterSelect(bucketOptions, _state.bucketFilter, (val) => {
+      secondaryRow.appendChild(buildLabeledSelect('Bucket', bucketOptions, _state.bucketFilter, (val) => {
         _state.bucketFilter = val;
         applyFilters();
       }));
     }
+
+    // "Optionen"-Gruppe nur anzeigen, wenn tatsaechlich mindestens ein
+    // Select gerendert wurde - sonst bliebe eine leere Ueberschrift stehen.
+    if (secondaryGroup) secondaryGroup.hidden = secondaryRow.children.length === 0;
 
     // V2.6.3: macht sichtbar, wie viele Findings die aktuelle Chip-/Select-
     // Kombination ergibt - ueber dieselbe passesFilters()-Funktion wie die
@@ -666,13 +740,19 @@ window.GpoRenderer = (function() {
   // Setting-Suche herausgefiltert), uebernimmt der native Anker-Sprung zur
   // Sektion.
   function buildPriorityItem(f) {
+    const iconChar = priorityIcon(f);
+    // V2.7.1: linker Akzentstreifen je Schwere - dieselbe Zuordnung wie
+    // explorerFindingsBadgeInfo() (PRIORITY_ICON_SEVERITY_CLASS, V2.6.1),
+    // keine zweite Severity-Einstufung.
+    const severityClass = PRIORITY_ICON_SEVERITY_CLASS[iconChar] || 'info';
+
     const item = document.createElement('a');
-    item.className = 'gpo-priority-item';
+    item.className = 'gpo-priority-item gpo-priority-item--' + severityClass;
     item.href = priorityAnchor(f);
 
     const icon = document.createElement('span');
     icon.className = 'gpo-priority-icon';
-    icon.textContent = priorityIcon(f);
+    icon.textContent = iconChar;
 
     const label = document.createElement('span');
     label.className = 'gpo-priority-label';
@@ -710,18 +790,29 @@ window.GpoRenderer = (function() {
     return item;
   }
 
+  // V2.7.1: Ebene 4 der Dashboard-Hierarchie ("Was sollte ich zuerst
+  // ansehen?") - bleibt immer sichtbar, auch bei 0 Findings, statt bei
+  // leerer Liste komplett zu verschwinden (Anforderung "Dashboard muss auch
+  // bei 0 Findings sinnvoll aussehen"). collectPriorityFindings() selbst ist
+  // unveraendert (weiterhin dieselbe Top-5-Priorisierung, keine neue Logik).
   function renderPriorityList() {
     const container = document.getElementById('gpo-priority-list');
     if (!container) return;
     container.replaceChildren();
 
-    const items = collectPriorityFindings();
-    if (!items.length) return;
-
     const title = document.createElement('div');
     title.className = 'gpo-finding-sub-title';
-    title.textContent = 'Wichtigste Findings';
+    title.textContent = 'Was sollte ich zuerst ansehen?';
     container.appendChild(title);
+
+    const items = collectPriorityFindings();
+    if (!items.length) {
+      const ok = document.createElement('div');
+      ok.className = 'gpo-priority-ok';
+      ok.textContent = '✅ Keine dringenden Probleme gefunden.';
+      container.appendChild(ok);
+      return;
+    }
 
     items.forEach(f => container.appendChild(buildPriorityItem(f)));
   }
@@ -766,7 +857,7 @@ window.GpoRenderer = (function() {
       gpoTitle.textContent = entry.gpoName;
       gpoDetail.appendChild(gpoTitle);
 
-      gpoDetail.appendChild(buildLinkList(entry.gpoId));
+      gpoDetail.appendChild(buildLinkList(entry.gpoId, finding.type));
 
       wrap.appendChild(gpoDetail);
     });
@@ -774,10 +865,21 @@ window.GpoRenderer = (function() {
     return wrap;
   }
 
+  // Gruppenbezeichnung je Finding-Typ fuer den "0 Links"-Hinweistext in
+  // buildLinkList() unten - dieselbe Formulierung bis auf dieses eine Wort
+  // fuer Konflikt- und Mehrfachdefinitions-Karten (Textkorrektur vor
+  // V2.7.6, siehe Analyse "Server- RDS Konfiguration"/Loopback-Gruppe).
+  const UNLINKED_GROUP_LABELS = { conflict: 'Konfliktgruppe', redundant: 'Mehrfachdefinitions-Gruppe' };
+
   // Link-Liste einer einzelnen GPO - genutzt von buildDetailSection() (hier)
   // UND vom GPO-Detail-Panel (V2.3, buildGpoDetailLinks()), damit die
   // enforced/blockInheritance/deaktiviert-Darstellung nicht zweimal steht.
-  function buildLinkList(gpoId) {
+  // findingType (optional): 'conflict'/'redundant', wenn diese Zelle
+  // innerhalb einer Konflikt-/Mehrfachdefinitions-Karte steht - steuert
+  // ausschliesslich den Text im "0 Links"-Fall unten, keine Logikaenderung.
+  // buildGpoDetailLinks() (GPO-Detailansicht, kein Finding-Kontext) ruft
+  // ohne dieses Argument auf und bekommt weiterhin den generischen Text.
+  function buildLinkList(gpoId, findingType) {
     // links.json fehlte komplett - "Keine Verknuepfung gefunden." waere hier
     // eine erfundene Aussage ueber genau diese GPO statt einer tatsaechlich
     // ermittelten (V2.5.2). Deckt beide verbliebenen Aufrufer ab
@@ -796,7 +898,19 @@ window.GpoRenderer = (function() {
     if (!links.length) {
       const noLink = document.createElement('div');
       noLink.className = 'gpo-detail-no-link';
-      noLink.textContent = 'Keine Verknüpfung gefunden.';
+      // Innerhalb einer Konflikt-/Mehrfachdefinitions-Karte waere "Keine
+      // Verknuepfung gefunden." missverstaendlich: die GPO ist trotzdem
+      // Gruppenmitglied (Gruppenbildung erfolgt ueber settingKey+Wert,
+      // nicht ueber Scope - siehe groupSettingsByKeyAndScope() in
+      // gpo-analyzer.js), nur der Overlap mit den anderen beteiligten GPOs
+      // ist mangels eigener Links nicht bestimmbar (determineScopeOverlap()
+      // liefert in diesem Fall 'unknown', nicht 'none'). Ausserhalb eines
+      // Finding-Kontexts (findingType undefined, z.B. GPO-Detailansicht)
+      // bleibt der bisherige, generische Text unveraendert.
+      const groupLabel = UNLINKED_GROUP_LABELS[findingType];
+      noLink.textContent = groupLabel
+        ? 'Diese GPO ist Teil der ' + groupLabel + '. Ihr eigener Zielbereich überlappt nicht nachweisbar mit den anderen beteiligten GPOs (keine Verknüpfung vorhanden).'
+        : 'Keine Verknüpfung gefunden.';
       return noLink;
     }
 
@@ -965,7 +1079,7 @@ window.GpoRenderer = (function() {
       missingLinkGpos.forEach(id => {
         const row = document.createElement('div');
         row.className = 'gpo-detail-row';
-        row.textContent = '⛔ ' + gpoNameById.get(id) + ': keine Verknüpfung gefunden.';
+        row.textContent = '⛔ ' + gpoNameById.get(id) + ': keine Verknüpfung vorhanden – Overlap nicht bestimmbar.';
         missingWrap.appendChild(row);
       });
       container.appendChild(missingWrap);
@@ -1049,7 +1163,7 @@ window.GpoRenderer = (function() {
       row.append(gpoLabel, arrow, value);
       group.appendChild(row);
 
-      group.appendChild(buildLinkList(entry.gpoId));
+      group.appendChild(buildLinkList(entry.gpoId, finding.type));
       wrap.appendChild(group);
     });
     return wrap;
@@ -1116,16 +1230,22 @@ window.GpoRenderer = (function() {
     const body = document.createElement('div');
     body.className = 'gpo-finding-body';
 
-    body.appendChild(buildBodySection('Was', sections.was));
-    body.appendChild(buildBodySection('Bewertung', sections.bewertung));
-    body.appendChild(buildBodySection('Nächster Schritt', sections.naechsterSchritt, true));
+    // V2.7.5: "kind" liefert nur den CSS-Hook fuer die optische Trennung
+    // Tatsache/Einordnung/Handlungsempfehlung (siehe .gpo-body-section--was/
+    // --bewertung/--next-step in gpo.css) - welcher Inhalt in welchen
+    // Abschnitt einfliesst, entscheidet unveraendert resolveFindingSections()/
+    // appendBodyContent() weiter unten, hier aendert sich nichts an Text,
+    // Reihenfolge oder Struktur.
+    body.appendChild(buildBodySection('Was', sections.was, 'was'));
+    body.appendChild(buildBodySection('Bewertung', sections.bewertung, 'bewertung'));
+    body.appendChild(buildBodySection('Nächster Schritt', sections.naechsterSchritt, 'next-step'));
 
     return body;
   }
 
-  function buildBodySection(title, content, isNextStep) {
+  function buildBodySection(title, content, kind) {
     const wrap = document.createElement('div');
-    wrap.className = 'gpo-body-section' + (isNextStep ? ' gpo-body-section--next-step' : '');
+    wrap.className = 'gpo-body-section gpo-body-section--' + kind;
     const titleEl = document.createElement('div');
     titleEl.className = 'gpo-finding-sub-title';
     titleEl.textContent = title;
@@ -1305,8 +1425,16 @@ window.GpoRenderer = (function() {
     const { category, name } = splitSettingKey(finding.settingKey);
     const isReal = finding.conflictLevel === 'real';
 
+    // V2.7.5: der linke Rand unterschied bisher NICHT zwischen echt/
+    // potenziell (beide waren rot) - nur das kleine Badge tat es. Jetzt
+    // folgt der Rand derselben, bereits vorhandenen Farbe wie das Badge
+    // (kritisch=rot, potenziell=gelb/amber, dieselben Variablen wie
+    // .gpo-sev-pill--critical/--warning) - macht "potenziell = unsicher"
+    // schon beim Ueberfliegen der Liste sichtbar, ohne eine neue Farbe
+    // einzufuehren oder finding.conflictLevel selbst zu aendern.
     const card = document.createElement('div');
-    card.className = 'gpo-finding-card gpo-finding-card--conflict';
+    card.className = 'gpo-finding-card gpo-finding-card--conflict '
+      + (isReal ? 'gpo-finding-card--conflict-real' : 'gpo-finding-card--conflict-potential');
 
     const header = document.createElement('div');
     header.className = 'gpo-finding-header';
@@ -2039,6 +2167,28 @@ window.GpoRenderer = (function() {
     return String(linksForGpo(gpo.id).length);
   }
 
+  // V2.7.3: "sehr alt" liest ausschliesslich, ob der Analyzer fuer genau
+  // diese GPO bereits das bestehende GPO_VERY_OLD-Finding erzeugt hat
+  // (gpo-analyzer.js, VERY_OLD_THRESHOLD_YEARS unveraendert) - keine neue
+  // Altersgrenze, keine neue Analyse, reine Ablesung eines bereits
+  // vorhandenen Fakts. "aging" ist eine rein optische Zwischenstufe (kein
+  // Finding, keine Regel, kein neuer Schwellenwert): sie nutzt denselben
+  // Jahres-Uebergang (12 Monate), den formatRelativeModified() (V2.6.1)
+  // bereits fuer die Text-Granularitaet verwendet, nur zusaetzlich als
+  // dezente Farbabstufung. Beide Stufen faerben ausschliesslich das
+  // Datum selbst (--dim), nie die Findings-Badge-Farbe - Alter und
+  // Findings bleiben getrennte visuelle Kanaele.
+  function isVeryOldGpo(gpo) {
+    return relatedFindingsForGpo(gpo).some(f => f.rule && f.rule.id === 'GPO_VERY_OLD');
+  }
+
+  function explorerAgeTier(gpo) {
+    if (isVeryOldGpo(gpo)) return 'very-old';
+    const days = ageInDays(gpo);
+    if (days != null && days >= 365) return 'aging';
+    return 'normal';
+  }
+
   // Ein Badge pro GPO statt einem pro Finding-Typ (sonst pro Zeile
   // potenziell 5 Badges) - Icon/Farbe folgen derselben Prioritaet wie die
   // Prioritaetenliste des Dashboards (real > potential > kritisch-Bucket >
@@ -2131,6 +2281,10 @@ window.GpoRenderer = (function() {
   // Explorer. parseStatus-Warnung (failed/partial) bleibt als Icon+Tooltip
   // an der Name-Zelle erhalten, statt beim Tabellenumbau verlorenzugehen -
   // "Status" (Spalte) ist ausschliesslich gpo.status (aktiv/deaktiviert).
+  // V2.7.3: jede Zelle traegt zusaetzlich data-label = EXPLORER_COLUMNS-
+  // Label (dieselbe Beschriftung wie der Tabellenkopf, keine zweite
+  // Textquelle) - genutzt von der mobilen Karten-Darstellung (CSS
+  // ::before, siehe gpo.css), Desktop-Tabelle ignoriert das Attribut.
   function buildExplorerRow(gpo) {
     const row = document.createElement('tr');
     row.className = 'gpo-explorer-row';
@@ -2138,6 +2292,7 @@ window.GpoRenderer = (function() {
 
     const nameCell = document.createElement('td');
     nameCell.className = 'gpo-explorer-cell gpo-explorer-cell--name';
+    nameCell.dataset.label = EXPLORER_COLUMNS[0].label;
     if (gpo.parseStatus === 'failed' || gpo.parseStatus === 'partial') {
       const warnIcon = document.createElement('span');
       warnIcon.className = 'gpo-explorer-warn-icon';
@@ -2149,19 +2304,35 @@ window.GpoRenderer = (function() {
 
     const statusCell = document.createElement('td');
     statusCell.className = 'gpo-explorer-cell';
+    statusCell.dataset.label = EXPLORER_COLUMNS[1].label;
     statusCell.textContent = gpo.status === 'AllSettingsEnabled' ? 'aktiv' : 'deaktiviert';
 
+    // Alter (V2.7.3): faerbt ausschliesslich diese Zelle (--dim, siehe
+    // explorerAgeTier()) und bleibt damit optisch vollstaendig getrennt von
+    // der Findings-Badge-Farbe weiter unten - eine alte GPO ohne Findings
+    // bekommt hier NIE eine Findings-Farbe (rot/gelb/tuerkis).
     const modifiedCell = document.createElement('td');
-    modifiedCell.className = 'gpo-explorer-cell';
-    modifiedCell.textContent = formatRelativeModified(gpo);
+    const ageTier = explorerAgeTier(gpo);
+    modifiedCell.className = 'gpo-explorer-cell gpo-explorer-cell--age-' + ageTier;
+    modifiedCell.dataset.label = EXPLORER_COLUMNS[2].label;
+    if (ageTier === 'very-old') {
+      const ageIcon = document.createElement('span');
+      ageIcon.className = 'gpo-explorer-age-icon';
+      ageIcon.textContent = '🕒';
+      ageIcon.title = 'Sehr alt - siehe Wartungshinweis im Dashboard';
+      modifiedCell.appendChild(ageIcon);
+    }
+    modifiedCell.append(formatRelativeModified(gpo));
     modifiedCell.title = formatDate(gpo.modified);
 
     const linksCell = document.createElement('td');
     linksCell.className = 'gpo-explorer-cell';
+    linksCell.dataset.label = EXPLORER_COLUMNS[3].label;
     linksCell.textContent = explorerLinksLabel(gpo);
 
     const findingsCell = document.createElement('td');
     findingsCell.className = 'gpo-explorer-cell';
+    findingsCell.dataset.label = EXPLORER_COLUMNS[4].label;
     const badgeInfo = explorerFindingsBadgeInfo(gpo);
     if (badgeInfo) {
       const badge = document.createElement('span');

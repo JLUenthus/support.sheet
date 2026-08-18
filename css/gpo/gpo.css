@@ -96,45 +96,95 @@
 .gpo-results-hidden  { display: none; }
 .gpo-results-visible { display: block; }
 
-/* ── Zahlen-Grid ─────────────────────────────────────────── */
+/* ── Dashboard-Ebenen (V2.7.1) ────────────────────────────────
+   Rein strukturelle Gruppierung der bestehenden Dashboard-Bloecke in
+   Ebenen (Snapshot-/Integritaetsstatus -> Problemkennzahlen -> Wartung ->
+   Prioritaeten -> Detailbereiche). Nur die erste Trennlinie (Status vs.
+   Probleme) bekommt eine sichtbare Linie - genug, um die Haupt-
+   Unterscheidung "Bestandsdaten" vs. "Probleme" sichtbar zu machen, ohne
+   die Seite in lauter Kaesten zu zerschneiden. */
+.gpo-dash-tier { margin-bottom: 20px; }
+.gpo-dash-tier--status {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── Zahlen-Grid ─────────────────────────────────────────────
+   V2.7.1: bewusst zurueckhaltend/kompakt (reine Bestandszahlen des
+   Snapshots, keine Probleme) - deutlich leiser als .gpo-ampel-pill
+   darunter, damit die Problemkennzahlen die groessere visuelle
+   Aufmerksamkeit bekommen (Anforderung "Problemkennzahlen staerker
+   hervorheben als reine Bestandszahlen"). */
 .gpo-num-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
-  gap: 10px;
-  margin-bottom: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 8px;
 }
 .gpo-num-item {
-  display: block;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 14px 16px;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
   text-decoration: none;
   cursor: pointer;
-  transition: border-color .15s, background .15s;
 }
-.gpo-num-item:hover { border-color: var(--border2); background: var(--panel2); }
-.gpo-num-value { font-size: 1.5rem; font-weight: 700; color: var(--text); font-family: var(--font-mono); }
-.gpo-num-label { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+.gpo-num-item:hover .gpo-num-value { color: var(--accent); }
+.gpo-num-value {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  transition: color .15s;
+}
+.gpo-num-label { font-size: .74rem; color: var(--dim); }
 
-/* ── Findings-Uebersicht (V2.1 Dashboard) ───────────────────── */
-.gpo-ampel-row { display: flex; flex-wrap: wrap; gap: 8px; }
+/* ── Findings-Uebersicht (V2.1 Dashboard, V2.7.1 Kartenoptik) ───────
+   Jede Pille ist jetzt eine kleine zweizeilige Karte (Icon+Zahl oben,
+   Label darunter) statt einer flachen Textpille - macht die
+   Problemkennzahlen zur optisch dominantesten Dashboard-Ebene. Farbe kommt
+   ausschliesslich aus den bereits vorhandenen Severity-Variablen
+   (--red/--amber/--teal/--green), keine neue Farbwelt. count === 0 bekommt
+   bewusst die gruene "Alles ok"-Optik statt der jeweiligen Alarmfarbe. */
+.gpo-ampel-row { display: flex; flex-wrap: wrap; gap: 10px; }
 .gpo-ampel-pill {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: .78rem;
-  font-weight: 700;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 130px;
+  padding: 10px 16px;
+  border-radius: var(--r);
   border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
   background: var(--panel);
-  color: var(--muted);
   text-decoration: none;
   cursor: pointer;
   transition: filter .15s, border-color .15s;
 }
-.gpo-ampel-pill:hover { border-color: var(--border2); filter: brightness(1.15); }
+.gpo-ampel-pill:hover { border-color: var(--border2); filter: brightness(1.12); }
+.gpo-ampel-top { display: flex; align-items: center; gap: 6px; }
+.gpo-ampel-icon { font-size: .85rem; }
+.gpo-ampel-count { font-size: 1.35rem; font-weight: 700; font-family: var(--font-mono); color: var(--text); }
+.gpo-ampel-label { font-size: .74rem; color: var(--muted); font-weight: 600; }
+/* V2.7.2: sehr kurze, optionale Erklaerungszeile je Karte (siehe
+   ampelHint() in gpo-renderer.js) - bewusst leiser als Zahl/Label, keine
+   eigene Farbe, damit sie nicht mit der Severity-Farbe der Karte
+   konkurriert. */
+.gpo-ampel-hint { font-size: .68rem; color: var(--dim); }
+
+/* Kritische Probleme bekommen zusaetzlich zur Farbe einen dickeren linken
+   Rand (dieselbe Konvention wie .gpo-finding-card--conflict) - macht sie
+   auch ohne Farbwahrnehmung staerker gewichtet als die uebrigen drei
+   Karten (Anforderung "kritische Probleme visuell staerker als neutrale
+   Information"). */
+.gpo-ampel-pill--critical { border-color: rgba(248, 113, 113, .3); border-left-color: var(--red); background: var(--red-bg); }
+.gpo-ampel-pill--critical .gpo-ampel-count { color: var(--red); }
+.gpo-ampel-pill--warning  { border-color: rgba(251, 191, 36, .3); background: var(--amber-bg); }
+.gpo-ampel-pill--warning  .gpo-ampel-count { color: var(--amber); }
+.gpo-ampel-pill--info     { border-color: rgba(45, 212, 191, .3); background: var(--teal-bg); }
+.gpo-ampel-pill--info     .gpo-ampel-count { color: var(--teal); }
+.gpo-ampel-pill--zero     { border-color: rgba(74, 222, 128, .25); background: var(--green-bg); }
+.gpo-ampel-pill--zero     .gpo-ampel-count { color: var(--green); }
 
 /* ── Wartungsampel (V2.6.2) ───────────────────────────────────
    Eigene Zeile, bewusst getrennt von .gpo-ampel-row - nutzt dieselbe
@@ -158,29 +208,59 @@
   padding: 8px 12px;
   border-radius: var(--r);
   border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
   background: var(--panel);
   text-decoration: none;
   color: var(--text);
   font-size: .8rem;
   transition: border-color .15s, background .15s;
 }
-.gpo-priority-item:hover { border-color: var(--border2); background: var(--panel2); }
+.gpo-priority-item:hover {
+  border-top-color: var(--border2);
+  border-right-color: var(--border2);
+  border-bottom-color: var(--border2);
+  background: var(--panel2);
+}
+.gpo-priority-item--critical { border-left-color: var(--red); }
+.gpo-priority-item--warning  { border-left-color: var(--amber); }
+.gpo-priority-item--info     { border-left-color: var(--teal); }
 .gpo-priority-icon { flex-shrink: 0; }
 .gpo-priority-label { flex: 1; }
 
-/* ── Filter-Leiste (V2.2) ─────────────────────────────────────
+/* V2.7.1: Ebene 4 bleibt bei 0 Findings sichtbar (siehe renderPriorityList())
+   statt komplett zu verschwinden - reuse der bereits etablierten "alles ok"-
+   Farbe (--green, siehe .gpo-integrity-panel--ok/.gpo-ampel-pill--zero). */
+.gpo-priority-ok { font-size: .82rem; font-weight: 600; color: var(--green); padding: 6px 12px; }
+
+/* ── Filter-Leiste (V2.2, V2.7.4 gruppierte Darstellung) ────────
    Reine Darstellungs-Filterung ueber bereits vorhandene Findings, keine
-   erneute Analyse. Erste Zeile: Finding-Typ (Mehrfachauswahl-Chips),
-   zweite Zeile: kontextabhaengige Detail-Filter (Konfliktstatus/Bucket) -
-   siehe renderFilterBar()/passesFilters() in gpo-renderer.js. */
+   erneute Analyse. Drei sichtbar getrennte Gruppen: Finding-Typ
+   (Mehrfachauswahl-Chips), Optionen (kontextabhaengige Konfliktstatus-/
+   Bucket-Selects), Ergebnis (Trefferzahl) - siehe renderFilterBar()/
+   passesFilters() in gpo-renderer.js. Gruppierung ist rein optisch, keine
+   neue Filterlogik. */
 .gpo-filter-bar {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
   margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border);
 }
+.gpo-filter-group { display: flex; flex-direction: column; gap: 6px; }
+.gpo-filter-group[hidden] { display: none; }
+.gpo-filter-group-label {
+  font-size: .68rem;
+  font-weight: 700;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+/* Ergebnis-Gruppe bleibt bewusst zurueckhaltend - dieselbe Aufgabe wie
+   bisher (Trefferzahl), nur jetzt mit eigener Ueberschrift statt lose
+   unter der Filterleiste zu stehen. */
+.gpo-filter-group--result { gap: 2px; }
+
 .gpo-filter-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .gpo-filter-chip {
   padding: 6px 14px;
@@ -200,6 +280,13 @@
   border-color: rgba(124, 140, 248, .4);
   background: var(--accent-bg);
 }
+/* Reset-Chip ("Alle", V2.7.4): eigene, etwas kraeftigere Umrandung, damit
+   er als Reset-Aktion schnell auffindbar ist statt zwischen den
+   gleichwertigen Typ-Chips unterzugehen. Das Reset-Icon (siehe
+   renderFilterBar()) erscheint nur, wenn ueberhaupt etwas abweicht -
+   ist alles bereits auf "Alle" zurueckgesetzt, sieht der Chip wie ein
+   normaler aktiver Chip aus. */
+.gpo-filter-chip--reset { border-width: 1.5px; font-weight: 700; }
 .gpo-filter-select {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -212,6 +299,21 @@
   cursor: pointer;
 }
 .gpo-filter-select:focus { border-color: var(--accent); }
+
+/* Feldlabel vor Status-/Bucket-Select (V2.7.4) - macht auf einen Blick
+   erkennbar, welches Select welchen Filter setzt, statt zwei anfangs
+   identisch "Alle" beschrifteten Dropdowns nebeneinander zu haben. */
+.gpo-filter-select-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.gpo-filter-select-label {
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--muted);
+}
 
 /* V2.6.3: bewusst klein/gedaempft, deutlich unterscheidbar von den
    grossen, fett gesetzten Dashboard-Gesamtzahlen (.gpo-num-value/
@@ -296,6 +398,12 @@
 .gpo-finding-card--hygiene         { border-left-color: var(--amber); }
 .gpo-finding-card--security-filter { border-left-color: var(--amber); }
 .gpo-finding-card--wmi-filter      { border-left-color: var(--accent); }
+/* V2.7.5: der Rand einer Konflikt-Karte folgt jetzt conflictLevel statt
+   immer rot zu sein - dieselben Farben wie die bestehenden .gpo-sev-pill--
+   critical/--warning-Badges, keine neue Farbe. Macht "potenziell = nicht
+   sicher" schon am Kartenrand erkennbar, nicht erst am kleinen Badge. */
+.gpo-finding-card--conflict-real      { border-left-color: var(--red); }
+.gpo-finding-card--conflict-potential { border-left-color: var(--amber); }
 
 /* ── Hygiene: nach bucket gruppierte Abschnitte ─────────────── */
 .gpo-hygiene-bucket { margin-bottom: 20px; }
@@ -378,8 +486,25 @@
 
 /* Vereinheitlichte Finding-Textstruktur: "Was" / "Bewertung" /
    "Naechster Schritt" (Roadmap Abschnitt 1.6, buildFindingBody() in
-   gpo-renderer.js) - gilt fuer alle fuenf Finding-Typen gleichermassen. */
+   gpo-renderer.js) - gilt fuer alle fuenf Finding-Typen gleichermassen.
+   V2.7.5: die drei Abschnitte bekommen zusaetzlich unterscheidbare
+   Typografie, damit "Tatsache" (Was) und "Einordnung" (Bewertung) sich
+   nicht mehr optisch gleich lesen, nur weil beide denselben
+   .gpo-finding-desc-Absatz nutzen - reine Typografie/Farbe aus bereits
+   vorhandenen Variablen, keine Aenderung an Text oder Struktur. */
 .gpo-body-section:first-child .gpo-finding-sub-title { margin-top: 0; }
+
+/* "Was": die technische Tatsache - etwas heller/praesenter als der
+   Standard-Fliesstext, damit sie beim Ueberfliegen zuerst auffaellt. */
+.gpo-body-section--was .gpo-finding-desc { color: var(--text); }
+
+/* "Bewertung": die Einordnung - kursiv statt einer neuen Farbe, liest sich
+   dadurch bewusst als Interpretation statt als weitere Tatsachenzeile.
+   Gilt nur fuer die eigenen Fliesstext-Absaetze, nicht fuer verschachtelte
+   Listen (z.B. die Mehrfachdefinitions-Aufschluesselung), die weiterhin
+   normal lesbar bleiben sollen. */
+.gpo-body-section--bewertung > .gpo-finding-desc { font-style: italic; }
+
 .gpo-body-section--next-step {
   margin-top: 12px;
   padding: 10px 12px;
@@ -389,6 +514,12 @@
   border-radius: var(--r);
 }
 .gpo-body-section--next-step .gpo-finding-sub-title { margin-top: 0; }
+/* Kleines Pfeil-Icon nur ueber CSS-Pseudoelement - keine Aenderung am
+   tatsaechlichen Text/DOM der Ueberschrift ("Naechster Schritt" bleibt
+   textContent), macht die Handlungsempfehlung aber schon am Icon
+   erkennbar, nicht erst am Lesen der Ueberschrift. */
+.gpo-body-section--next-step .gpo-finding-sub-title::before { content: '→ '; }
+.gpo-body-section--next-step .gpo-finding-desc { color: var(--text); font-weight: 600; font-style: normal; }
 
 /* Redundanz: "Definiert in" */
 .gpo-redundant-defined-in { margin: 10px 0; }
@@ -549,7 +680,12 @@
 }
 .gpo-detail-panel-body summary.gpo-finding-sub-title:hover { color: var(--text); }
 
-/* ── GPO Explorer (V2.3, sortierbare Admin-Tabelle seit V2.6.1) ── */
+/* ── GPO Explorer (V2.3, sortierbare Admin-Tabelle seit V2.6.1,
+   V2.7.3 Alters-Hervorhebung + mobile Kartenansicht) ── */
+/* Sicherheitsnetz: sollte die Tabelle zwischen den Breakpoints trotzdem
+   einmal breiter als ihr Container werden, scrollt nur dieser Bereich statt
+   die gesamte Seite horizontal zu ueberdehnen. */
+#gpo-explorer-list { overflow-x: auto; }
 .gpo-explorer-table {
   width: 100%;
   border-collapse: collapse;
@@ -583,6 +719,16 @@
 }
 .gpo-explorer-cell--name { color: var(--text); font-weight: 600; }
 .gpo-explorer-warn-icon { margin-right: 6px; cursor: help; }
+
+/* Alter (V2.7.3): ausschliesslich Textfarbe/Icon dieser einen Zelle, nie
+   Rot/Gelb/Tuerkis (das bleibt den Findings-Badges vorbehalten) - eine
+   alte GPO ohne Findings sieht dadurch nie wie ein kritischer Befund aus.
+   "aging" nutzt dieselbe --dim-Farbe wie "very-old", der Zeit-Icon macht
+   den staerkeren Fall zusaetzlich eindeutig unterscheidbar. */
+.gpo-explorer-cell--age-aging,
+.gpo-explorer-cell--age-very-old { color: var(--dim); }
+.gpo-explorer-age-icon { margin-right: 4px; font-size: .78rem; cursor: help; }
+
 .gpo-explorer-badge {
   font-size: .74rem;
   font-weight: 700;
@@ -593,6 +739,55 @@
 .gpo-explorer-badge--critical { background: var(--red-bg); color: var(--red); }
 .gpo-explorer-badge--warning  { background: var(--amber-bg); color: var(--amber); }
 .gpo-explorer-badge--info     { background: var(--teal-bg); color: var(--teal); }
+
+/* Mobile Kartenansicht (V2.7.3): unterhalb 640px (bestehender Mobile-
+   Breakpoint dieses Projekts, siehe css/main.css) wird dieselbe Tabelle
+   ohne neue DOM-Struktur/JS-Zweig zu gestapelten Karten - jede <tr> wird
+   ein Block, jede <td> zeigt ihr data-label (siehe buildExplorerRow() in
+   gpo-renderer.js) vor dem Wert. Suche/Sortierung/Klick-Verhalten bleiben
+   unveraendert, nur die Darstellung aendert sich rein visuell. */
+@media (max-width: 640px) {
+  .gpo-explorer-table,
+  .gpo-explorer-table tbody,
+  .gpo-explorer-row,
+  .gpo-explorer-cell {
+    display: block;
+    width: 100%;
+  }
+  .gpo-explorer-table thead { display: none; }
+  .gpo-explorer-row {
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    margin-bottom: 8px;
+    padding: 8px 12px;
+  }
+  .gpo-explorer-cell {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: none;
+  }
+  .gpo-explorer-cell::before {
+    content: attr(data-label);
+    font-size: .68rem;
+    font-weight: 700;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    flex-shrink: 0;
+  }
+  .gpo-explorer-cell--name {
+    display: block;
+    font-size: .88rem;
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .gpo-explorer-cell--name::before { content: none; }
+}
 
 /* ── Weiterfuehrende Diagnose (Konzept Abschnitt 15) ────────── */
 /* .command-card/.card-header/.star-btn/.copy-btn etc. kommen bereits aus
