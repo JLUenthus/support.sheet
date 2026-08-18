@@ -80,15 +80,23 @@
         <a href="#gpo-conflict-section" class="gpo-page-nav-link">Konflikte</a>
         <a href="#gpo-redundant-section" class="gpo-page-nav-link">Mehrfachdefinitionen</a>
         <a href="#gpo-hygiene-section" class="gpo-page-nav-link">Hygiene</a>
+        <a href="#gpo-explorer-section" class="gpo-page-nav-link">GPOs</a>
         <a href="#gpo-tree-section" class="gpo-page-nav-link">Struktur</a>
       </nav>
 
       <section class="gpo-section" id="gpo-overview-section">
-        <h2 class="section-title">Übersicht</h2>
+        <h2 class="section-title">GPO Analyzer</h2>
         <div class="gpo-integrity-panel" id="gpo-integrity-panel"></div>
         <div class="gpo-num-grid" id="gpo-num-grid"></div>
         <div class="gpo-ampel-row" id="gpo-ampel-row"></div>
+        <div class="gpo-priority-list" id="gpo-priority-list"></div>
       </section>
+
+      <div class="gpo-filter-bar" id="gpo-filter-bar">
+        <div class="gpo-filter-row" id="gpo-filter-type-row"></div>
+        <div class="gpo-filter-row gpo-filter-row--secondary" id="gpo-filter-secondary-row"></div>
+      </div>
+      <div class="gpo-empty" id="gpo-filter-empty-state" hidden>Keine Findings für diese Auswahl.</div>
 
       <section class="gpo-section" id="gpo-conflict-section">
         <div class="gpo-list-header">
@@ -112,6 +120,15 @@
         <h2 class="section-title">⚠ GPO-Hygiene <span class="gpo-section-count" id="gpo-hygiene-count">0</span></h2>
         <div id="gpo-hygiene-list"></div>
         <div class="gpo-empty" id="gpo-hygiene-empty" hidden>✅ Keine Auffälligkeiten erkannt.</div>
+      </section>
+
+      <section class="gpo-section" id="gpo-explorer-section">
+        <div class="gpo-list-header">
+          <h2 class="section-title">🗂️ GPOs <span class="gpo-section-count" id="gpo-explorer-count">0</span></h2>
+          <input type="text" id="gpo-explorer-search" class="gpo-search-input" placeholder="GPO-Name durchsuchen …">
+        </div>
+        <div id="gpo-explorer-list"></div>
+        <div class="gpo-empty" id="gpo-explorer-empty" hidden>Keine GPOs gefunden.</div>
       </section>
 
       <section class="gpo-section" id="gpo-tree-section">

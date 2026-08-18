@@ -70,7 +70,8 @@
   border-left: 3px solid var(--amber);
 }
 .gpo-integrity-title { font-size: .82rem; font-weight: 700; color: var(--amber); margin-bottom: 8px; }
-.gpo-integrity-list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.gpo-integrity-sub { font-size: .74rem; opacity: .85; margin-top: 2px; }
+.gpo-integrity-list { margin: 8px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
 .gpo-integrity-list li { font-size: .78rem; color: var(--muted); line-height: 1.5; }
 
 /* ── Disclaimer ──────────────────────────────────────────── */
@@ -103,15 +104,20 @@
   margin-bottom: 14px;
 }
 .gpo-num-item {
+  display: block;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--r);
   padding: 14px 16px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
 }
+.gpo-num-item:hover { border-color: var(--border2); background: var(--panel2); }
 .gpo-num-value { font-size: 1.5rem; font-weight: 700; color: var(--text); font-family: var(--font-mono); }
 .gpo-num-label { font-size: .72rem; color: var(--muted); margin-top: 2px; }
 
-/* ── Ampel-Zeile ─────────────────────────────────────────── */
+/* ── Findings-Uebersicht (V2.1 Dashboard) ───────────────────── */
 .gpo-ampel-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .gpo-ampel-pill {
   display: flex;
@@ -124,12 +130,83 @@
   border: 1px solid var(--border);
   background: var(--panel);
   color: var(--muted);
+  text-decoration: none;
+  cursor: pointer;
+  transition: filter .15s, border-color .15s;
 }
-.gpo-ampel-pill--ok {
-  border-color: rgba(74, 222, 128, .4);
-  background: rgba(74, 222, 128, .08);
-  color: var(--green);
+.gpo-ampel-pill:hover { border-color: var(--border2); filter: brightness(1.15); }
+
+/* ── Prioritaeten-Liste (V2.1 Dashboard) ─────────────────────
+   Max. 5 wichtigste Findings, Prioritaet: echte Konflikte > potenzielle
+   Konflikte > Hygiene-/Security-Filter-Findings im Bucket "kritisch" >
+   alle uebrigen Hygiene-/Security-Filter-Findings (renderPriorityList()
+   in gpo-renderer.js). */
+.gpo-priority-list { margin-top: 14px; display: flex; flex-direction: column; gap: 4px; }
+.gpo-priority-list:empty { display: none; }
+.gpo-priority-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: var(--panel);
+  text-decoration: none;
+  color: var(--text);
+  font-size: .8rem;
+  transition: border-color .15s, background .15s;
 }
+.gpo-priority-item:hover { border-color: var(--border2); background: var(--panel2); }
+.gpo-priority-icon { flex-shrink: 0; }
+.gpo-priority-label { flex: 1; }
+
+/* ── Filter-Leiste (V2.2) ─────────────────────────────────────
+   Reine Darstellungs-Filterung ueber bereits vorhandene Findings, keine
+   erneute Analyse. Erste Zeile: Finding-Typ (Mehrfachauswahl-Chips),
+   zweite Zeile: kontextabhaengige Detail-Filter (Konfliktstatus/Bucket) -
+   siehe renderFilterBar()/passesFilters() in gpo-renderer.js. */
+.gpo-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.gpo-filter-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.gpo-filter-chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.gpo-filter-chip:hover { color: var(--text); border-color: var(--border2); background: var(--panel2); }
+.gpo-filter-chip--active {
+  color: var(--accent);
+  border-color: rgba(124, 140, 248, .4);
+  background: var(--accent-bg);
+}
+.gpo-filter-select {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 12px;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: .78rem;
+  outline: none;
+  cursor: pointer;
+}
+.gpo-filter-select:focus { border-color: var(--accent); }
+
+.gpo-hygiene-bucket-title--clickable { cursor: pointer; }
+.gpo-hygiene-bucket-title--clickable:hover { color: var(--accent); }
 
 /* ── Seiten-Navigation (Uebersicht / Konflikte / Redundanzen / Hygiene) ── */
 .gpo-page-nav {
@@ -270,6 +347,7 @@
 
 /* Wertevergleich der beteiligten GPOs */
 .gpo-entry-row-list { display: flex; flex-direction: column; gap: 6px; }
+.gpo-entry-row-list > .gpo-detail-gpo { display: flex; flex-direction: column; gap: 6px; }
 .gpo-entry-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .gpo-entry-gpo { font-size: .82rem; color: var(--text); font-weight: 600; }
 .gpo-entry-arrow { color: var(--accent); font-size: .85rem; }
@@ -327,6 +405,39 @@
 .gpo-detail-link-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 2px; }
 .gpo-detail-link-list li { font-size: .74rem; color: var(--muted); }
 .gpo-detail-no-link { font-size: .74rem; color: var(--dim); font-style: italic; }
+
+/* ── Scope-Visualisierung (V2.5, nur Konflikt-Karten) ────────────
+   Reduzierter, statischer Ausschnitt des bestehenden ouTree - keine neue
+   Graph-/Canvas-Engine, reine DOM-/CSS-Baumstruktur. Gemeinsame Knoten
+   (worueber sich die beteiligten GPOs ueberlappen) werden per Randfarbe/
+   Fettung hervorgehoben. */
+.gpo-scope-viz { margin-top: 16px; }
+.gpo-scope-tree { margin-top: 4px; }
+.gpo-scope-tree-node-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .8rem;
+  color: var(--muted);
+  padding: 2px 0;
+}
+.gpo-scope-tree-node-name { color: var(--text); }
+.gpo-scope-tree-node--shared > .gpo-scope-tree-node-header .gpo-scope-tree-node-name {
+  color: var(--accent);
+  font-weight: 700;
+}
+.gpo-scope-tree-badge { font-size: .7rem; color: var(--dim); }
+.gpo-scope-tree-gpo { font-size: .78rem; color: var(--accent); padding: 2px 0 2px 22px; }
+.gpo-scope-tree-gpo--disabled { color: var(--dim); text-decoration: line-through; }
+.gpo-scope-tree-children { margin-left: 4px; }
+.gpo-scope-tree-children > .gpo-scope-tree-node {
+  margin: 2px 0 2px 8px;
+  padding-left: 14px;
+  border-left: 2px solid var(--border);
+}
+.gpo-scope-tree-children > .gpo-scope-tree-node--shared { border-left-color: var(--accent); }
+.gpo-scope-viz-site-note { margin-top: 8px; }
+.gpo-scope-viz-caveat { margin-top: 10px; font-size: .74rem; color: var(--dim); font-style: italic; }
 
 /* ── Struktur-Baum (Konzept Abschnitt 11) ───────────────────── */
 .gpo-tree-node { margin-bottom: 2px; }
@@ -409,6 +520,41 @@
   flex-shrink: 0;
 }
 .gpo-detail-panel-close:hover { color: var(--text); border-color: var(--border2); }
+
+/* Verknuepfungen/Security Filtering/WMI Filter/Einstellungen als eigene
+   <details> statt einer einzigen langen Liste (V2.3, "ruhiger als GPMC").
+   .gpo-finding-sub-title bleibt fuer Schrift/Farbe wiederverwendet, hier
+   nur Cursor + Marker-Feinschliff fuer den <summary>-Kontext. */
+.gpo-detail-panel-body details { margin-bottom: 14px; }
+.gpo-detail-panel-body details:last-child { margin-bottom: 0; }
+.gpo-detail-panel-body summary.gpo-finding-sub-title {
+  cursor: pointer;
+  margin: 0 0 8px;
+  list-style-position: outside;
+}
+.gpo-detail-panel-body summary.gpo-finding-sub-title:hover { color: var(--text); }
+
+/* ── GPO Explorer (V2.3) ─────────────────────────────────────── */
+.gpo-explorer-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 6px;
+  border-radius: var(--r);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all .15s;
+}
+.gpo-explorer-row:hover, .gpo-explorer-row:focus {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  outline: none;
+}
+.gpo-explorer-name { font-size: .85rem; font-weight: 600; color: var(--text); flex: 1; }
+.gpo-explorer-status { font-size: .74rem; color: var(--muted); flex-shrink: 0; }
+.gpo-explorer-badge { font-size: .74rem; color: var(--amber); flex-shrink: 0; white-space: nowrap; }
 
 /* ── Weiterfuehrende Diagnose (Konzept Abschnitt 15) ────────── */
 /* .command-card/.card-header/.star-btn/.copy-btn etc. kommen bereits aus

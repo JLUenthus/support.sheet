@@ -94,11 +94,52 @@ window.GpoRenderer = (function() {
     'gpo-richtlinien-sofort-aktualisieren',  // gpupdate /force
   ];
 
+  // Finding-Typ-Filter (V2.2) - Mehrfachauswahl-Chips statt Radio-Gruppe,
+  // damit Kombinationen wie "nur Konflikte + Mehrfachdefinitionen" moeglich
+  // sind (Roadmap Abschnitt 2.2, Beispiel 3).
+  const TYPE_FILTER_OPTIONS = [
+    { key: 'conflict', label: 'Konflikte' },
+    { key: 'redundant', label: 'Mehrfachdefinitionen' },
+    { key: 'hygiene', label: 'Hygiene' },
+    { key: 'security-filter', label: 'Security Filter' },
+    { key: 'wmi-filter', label: 'WMI Filter' },
+  ];
+
+  const CONFLICT_STATUS_OPTIONS = [
+    { key: 'all', label: 'Alle' },
+    { key: 'real', label: 'Echte Konflikte' },
+    { key: 'potential', label: 'Potenzielle Konflikte' },
+  ];
+
+  function freshTypeFilter() {
+    const obj = {};
+    TYPE_FILTER_OPTIONS.forEach(opt => { obj[opt.key] = true; });
+    return obj;
+  }
+
   let _model = null;
   let _findings = [];
   let _diagnoseCommands = [];
   let _missingFiles = [];
-  const _state = { conflictQuery: '', redundantQuery: '' };
+  const _state = {
+    conflictQuery: '',
+    redundantQuery: '',
+    explorerQuery: '',
+    // Alle drei unten reine Darstellungs-Filter (V2.2) - beeinflussen nur,
+    // was renderConflictList()/renderRedundantList()/renderHygieneList()
+    // anzeigen, nie die Findings selbst oder analyze().
+    typeFilter: freshTypeFilter(),
+    conflictStatusFilter: 'all',
+    bucketFilter: 'all',
+  };
+
+  // Finding -> bereits gerenderte Karte (Konflikt-/Redundanz-/Hygiene-Liste).
+  // Erlaubt der Prioritaeten-Liste (V2.1 Dashboard), beim Klick direkt zur
+  // bestehenden Karte zu springen und sie aufzuklappen, statt eine zweite
+  // Kartendarstellung zu bauen. Wird in renderOverview() pro Snapshot-Load
+  // geleert, in renderConflictList()/renderRedundantList()/renderHygieneList()
+  // beim Bauen der jeweiligen Karten befuellt.
+  const _findingCardMap = new Map();
 
   let _diagnoseCommandsPromise = null;
   function loadDiagnoseCommands() {
@@ -118,15 +159,24 @@ window.GpoRenderer = (function() {
     _missingFiles = missingFiles || [];
     _state.conflictQuery = '';
     _state.redundantQuery = '';
+    _state.explorerQuery = '';
+    _state.typeFilter = freshTypeFilter();
+    _state.conflictStatusFilter = 'all';
+    _state.bucketFilter = 'all';
+    _findingCardMap.clear();
     resetSearchInputs();
 
     renderMissingHint(_missingFiles);
     renderIntegrityPanel();
     renderNumGrid();
     renderAmpelRow();
+    renderFilterBar();
+    updateSectionVisibility();
     renderConflictList();
     renderRedundantList();
     renderHygieneList();
+    renderPriorityList();
+    renderExplorerList();
     renderOuTree();
     closeGpoDetail();
     document.getElementById('gpo-results').className = 'gpo-results-visible';
@@ -165,6 +215,8 @@ window.GpoRenderer = (function() {
     if (conflictSearch) conflictSearch.value = '';
     const redundantSearch = document.getElementById('gpo-redundant-search');
     if (redundantSearch) redundantSearch.value = '';
+    const explorerSearch = document.getElementById('gpo-explorer-search');
+    if (explorerSearch) explorerSearch.value = '';
   }
 
   // ── Fehlende-Datei-Hinweis ─────────────────────────────────
@@ -208,12 +260,18 @@ window.GpoRenderer = (function() {
     if (!panel) return;
     panel.replaceChildren();
 
+    const total = _model.gpos.length;
     const failed = _model.gpos.filter(g => g.parseStatus === 'failed');
     const partial = _model.gpos.filter(g => g.parseStatus === 'partial');
 
     if (!failed.length && !partial.length) {
       panel.className = 'gpo-integrity-panel gpo-integrity-panel--ok';
-      panel.textContent = '✓ Alle GPO-Reports vollständig gelesen.';
+      const title = document.createElement('div');
+      title.textContent = '✓ Snapshot vollständig';
+      const sub = document.createElement('div');
+      sub.className = 'gpo-integrity-sub';
+      sub.textContent = total + '/' + total + ' GPOs gelesen';
+      panel.append(title, sub);
       return;
     }
 
@@ -221,8 +279,13 @@ window.GpoRenderer = (function() {
 
     const title = document.createElement('div');
     title.className = 'gpo-integrity-title';
-    title.textContent = '⚠ Snapshot teilweise unvollständig';
+    title.textContent = '⚠ Snapshot teilweise auswertbar';
     panel.appendChild(title);
+
+    const sub = document.createElement('div');
+    sub.className = 'gpo-integrity-sub';
+    sub.textContent = (failed.length + partial.length) + ' GPO(s) mit Einschränkungen';
+    panel.appendChild(sub);
 
     const list = document.createElement('ul');
     list.className = 'gpo-integrity-list';
@@ -253,46 +316,36 @@ window.GpoRenderer = (function() {
     return _findings.filter(f => f.type === 'conflict' && f.conflictLevel === level).length;
   }
 
-  // null bedeutet "nicht bestimmbar" (links.json fehlte im ZIP) statt einer
-  // falschen Zahl - siehe .md/todo/GPO_Analyzer_Pre_Real_Data_Hardening.md,
-  // Abschnitt 8: eine fehlende Links-Datei darf nicht als "alle GPOs
-  // unverknuepft" interpretiert werden. Liest dataQuality.linksFileMissing
-  // aus dem Modell (gpo-parser.js) statt eigenstaendig aus _missingFiles
-  // abzuleiten - dieselbe Quelle wie der Analyzer (GPO_NO_LINKS), damit
-  // Uebersichtszahl und Findings nicht auseinanderlaufen koennen.
-  function unlinkedGpoCount() {
-    if (_model.dataQuality && _model.dataQuality.linksFileMissing) return null;
-    const linkedGpoIds = new Set(_model.links.map(l => l.gpoId));
-    return _model.gpos.filter(g => !linkedGpoIds.has(g.id)).length;
-  }
-
   // Hygiene + Security-Filter zaehlen als "Auffaelligkeit", WMI-Filter
   // bewusst nicht (siehe Kommentar am Dateianfang).
   function anomalyCount() {
     return _findings.filter(f => f.type === 'hygiene' || f.type === 'security-filter').length;
   }
 
+  // Dashboard-Kompaktuebersicht (V2.1, .md/todo/GPO_Analyzer_Roadmap...
+  // Abschnitt 2.1): nur noch die reinen Bestandszahlen des Snapshots (GPOs,
+  // Verknuepfungen). Konflikt-/Redundanz-/Pruefungs-Zahlen stehen nur noch
+  // in renderAmpelRow() - vorher standen dieselben Zahlen redundant in
+  // beiden Bloecken.
   function renderNumGrid() {
     const grid = document.getElementById('gpo-num-grid');
     grid.replaceChildren();
 
-    const redundantCount = countByType('redundant');
+    // null = "nicht bestimmbar" (links.json fehlte im ZIP) statt einer
+    // falschen Zahl - siehe .md/todo/GPO_Analyzer_Pre_Real_Data_Hardening.md,
+    // Abschnitt 8: eine fehlende Links-Datei darf nicht als "0 Verknuepfungen"
+    // dargestellt werden.
+    const linksFileMissing = _model.dataQuality && _model.dataQuality.linksFileMissing;
 
     [
       ['GPOs', _model.gpos.length],
-      ['Verknüpfungen', _model.links.length],
-      ['Echte Konflikte', countByConflictLevel('real')],
-      ['Potenzielle Konflikte', countByConflictLevel('potential')],
-      ['Mehrfach definierte Einstellungen', redundantCount],
-      ['Auffälligkeiten', anomalyCount()],
-      ['Unverknüpfte GPOs', unlinkedGpoCount()],
+      ['Verknüpfungen', linksFileMissing ? null : _model.links.length],
     ].forEach(([label, value]) => {
-      const item = document.createElement('div');
+      const item = document.createElement('a');
       item.className = 'gpo-num-item';
+      item.href = '#gpo-tree-section';
       const val = document.createElement('div');
       val.className = 'gpo-num-value';
-      // null = "nicht bestimmbar" (siehe unlinkedGpoCount()) statt einer
-      // aus fehlenden Daten erratenen Zahl.
       val.textContent = value === null ? '–' : value;
       const lbl = document.createElement('div');
       lbl.className = 'gpo-num-label';
@@ -303,28 +356,243 @@ window.GpoRenderer = (function() {
     });
   }
 
+  // Findings-Uebersicht (V2.1 Dashboard): die einzige Stelle, an der
+  // Konflikt-/Mehrfachdefinitions-/Pruefungs-Zahlen erscheinen. Jede Kachel
+  // springt zur zugehoerigen Sektion (Anker) - echtes Klick-zu-Filter kommt
+  // erst mit der Filter-Infrastruktur aus V2.2 (siehe Roadmap).
+  // Kachel-Klicks setzen jetzt zusaetzlich den passenden Filter (V2.2) -
+  // der Anker-Sprung aus V2.1 bleibt (href unveraendert), es kommt nur ein
+  // weiterer Listener dazu, kein zweiter, paralleler Klick-Mechanismus.
   function renderAmpelRow() {
     const row = document.getElementById('gpo-ampel-row');
     row.replaceChildren();
 
-    const redundantCount = countByType('redundant');
-
     [
-      ['🔴', countByConflictLevel('real'), 'echte Konflikte'],
-      ['🟡', countByConflictLevel('potential'), 'potenzielle Konflikte'],
-      ['🟡', anomalyCount(), 'Auffälligkeiten'],
-      ['🔵', redundantCount, 'mehrfach definierte Einstellungen'],
-    ].forEach(([icon, count, label]) => {
-      const pill = document.createElement('div');
+      ['🔴', countByConflictLevel('real'), 'Echte Konflikte', '#gpo-conflict-section',
+        () => { setExclusiveTypeFilter('conflict'); _state.conflictStatusFilter = 'real'; applyFilters(); }],
+      ['🟡', countByConflictLevel('potential'), 'Potenzielle Konflikte', '#gpo-conflict-section',
+        () => { setExclusiveTypeFilter('conflict'); _state.conflictStatusFilter = 'potential'; applyFilters(); }],
+      ['🔵', countByType('redundant'), 'Mehrfachdefinitionen', '#gpo-redundant-section',
+        () => { setExclusiveTypeFilter('redundant'); applyFilters(); }],
+      ['⚠', anomalyCount(), 'Prüfungen', '#gpo-hygiene-section',
+        () => { setExclusiveTypeFilter('hygiene', 'security-filter'); applyFilters(); }],
+    ].forEach(([icon, count, label, anchor, onClick]) => {
+      const pill = document.createElement('a');
       pill.className = 'gpo-ampel-pill';
+      pill.href = anchor;
       pill.textContent = icon + ' ' + count + ' ' + label;
+      pill.addEventListener('click', onClick);
       row.appendChild(pill);
     });
+  }
 
-    const ok = document.createElement('div');
-    ok.className = 'gpo-ampel-pill gpo-ampel-pill--ok';
-    ok.textContent = '✓ ' + _model.gpos.length + ' GPOs analysiert';
-    row.appendChild(ok);
+  // ── Filter-Leiste (V2.2) ─────────────────────────────────────
+  // Reine Darstellungs-Filterung auf den bereits von analyze() berechneten
+  // Findings - keine erneute Analyse, keine Datenaenderung. passesFilters()
+  // ist die einzige Stelle, an der die Filterlogik steht; alle drei Listen
+  // (Konflikt/Redundanz/Hygiene) rufen dieselbe Funktion auf statt sie
+  // eigenstaendig zu duplizieren.
+  function passesFilters(f) {
+    if (!_state.typeFilter[f.type]) return false;
+    if (f.type === 'conflict' && _state.conflictStatusFilter !== 'all' && f.conflictLevel !== _state.conflictStatusFilter) {
+      return false;
+    }
+    if (['hygiene', 'security-filter', 'wmi-filter'].includes(f.type) && _state.bucketFilter !== 'all') {
+      if (!f.rule || f.rule.bucket !== _state.bucketFilter) return false;
+    }
+    return true;
+  }
+
+  function setExclusiveTypeFilter(...types) {
+    TYPE_FILTER_OPTIONS.forEach(opt => { _state.typeFilter[opt.key] = types.includes(opt.key); });
+  }
+
+  function isAllTypesActive() {
+    return TYPE_FILTER_OPTIONS.every(opt => _state.typeFilter[opt.key]);
+  }
+
+  // Blendet ganze Abschnitte aus, wenn ihr Finding-Typ komplett abgewaehlt
+  // ist (statt eine leere Sektion mit Leer-Text stehen zu lassen) - zeigt
+  // stattdessen den Seiten-weiten Hinweis, wenn dadurch WIRKLICH nichts
+  // mehr uebrig bleibt (kein leerer Bildschirm, Roadmap Abschnitt 2.2).
+  function updateSectionVisibility() {
+    const conflictSection = document.getElementById('gpo-conflict-section');
+    const redundantSection = document.getElementById('gpo-redundant-section');
+    const hygieneSection = document.getElementById('gpo-hygiene-section');
+    const emptyState = document.getElementById('gpo-filter-empty-state');
+
+    const showConflict = _state.typeFilter.conflict;
+    const showRedundant = _state.typeFilter.redundant;
+    const showHygiene = _state.typeFilter.hygiene || _state.typeFilter['security-filter'] || _state.typeFilter['wmi-filter'];
+
+    if (conflictSection) conflictSection.hidden = !showConflict;
+    if (redundantSection) redundantSection.hidden = !showRedundant;
+    if (hygieneSection) hygieneSection.hidden = !showHygiene;
+    if (emptyState) emptyState.hidden = showConflict || showRedundant || showHygiene;
+  }
+
+  // Wird bei jeder Filter-Aenderung aufgerufen - rendert nur die Filter-
+  // Leiste selbst und die drei bestehenden Listen neu (aus den bereits
+  // vorhandenen _findings), ruft nie analyze() erneut auf. Zahlen-Grid/
+  // Ampel-Zeile/Prioritaeten-Liste bleiben bewusst unveraendert (zeigen
+  // weiterhin die tatsaechlichen Gesamtzahlen des Snapshots, nicht die
+  // gerade gefilterte Ansicht).
+  function applyFilters() {
+    updateSectionVisibility();
+    renderFilterBar();
+    renderConflictList();
+    renderRedundantList();
+    renderHygieneList();
+  }
+
+  function buildFilterSelect(options, currentValue, onChange) {
+    const select = document.createElement('select');
+    select.className = 'gpo-filter-select';
+    options.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt.key;
+      o.textContent = opt.label;
+      if (opt.key === currentValue) o.selected = true;
+      select.appendChild(o);
+    });
+    select.addEventListener('change', (e) => onChange(e.target.value));
+    return select;
+  }
+
+  // Zweites Filterfeld ist kontextabhaengig ("Konfliktstatus: falls
+  // vorhanden"): Konfliktstatus nur sichtbar, wenn Konflikte ueberhaupt
+  // angezeigt werden, Bucket-Filter nur, wenn mindestens einer der
+  // Bucket-tragenden Typen angezeigt wird.
+  function renderFilterBar() {
+    const typeRow = document.getElementById('gpo-filter-type-row');
+    const secondaryRow = document.getElementById('gpo-filter-secondary-row');
+    if (!typeRow || !secondaryRow) return;
+    typeRow.replaceChildren();
+    secondaryRow.replaceChildren();
+
+    const allChip = document.createElement('button');
+    allChip.type = 'button';
+    allChip.className = 'gpo-filter-chip' + (isAllTypesActive() ? ' gpo-filter-chip--active' : '');
+    allChip.textContent = 'Alle';
+    allChip.addEventListener('click', () => {
+      _state.typeFilter = freshTypeFilter();
+      _state.conflictStatusFilter = 'all';
+      _state.bucketFilter = 'all';
+      applyFilters();
+    });
+    typeRow.appendChild(allChip);
+
+    TYPE_FILTER_OPTIONS.forEach(opt => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'gpo-filter-chip' + (_state.typeFilter[opt.key] ? ' gpo-filter-chip--active' : '');
+      chip.textContent = opt.label;
+      chip.addEventListener('click', () => {
+        _state.typeFilter[opt.key] = !_state.typeFilter[opt.key];
+        applyFilters();
+      });
+      typeRow.appendChild(chip);
+    });
+
+    if (_state.typeFilter.conflict) {
+      secondaryRow.appendChild(buildFilterSelect(CONFLICT_STATUS_OPTIONS, _state.conflictStatusFilter, (val) => {
+        _state.conflictStatusFilter = val;
+        applyFilters();
+      }));
+    }
+
+    if (_state.typeFilter.hygiene || _state.typeFilter['security-filter'] || _state.typeFilter['wmi-filter']) {
+      const bucketOptions = [{ key: 'all', label: 'Alle' }].concat(BUCKET_ORDER.map(b => ({ key: b, label: BUCKET_LABELS[b] })));
+      secondaryRow.appendChild(buildFilterSelect(bucketOptions, _state.bucketFilter, (val) => {
+        _state.bucketFilter = val;
+        applyFilters();
+      }));
+    }
+  }
+
+  // ── Prioritaeten-Liste (V2.1 Dashboard) ─────────────────────
+  // Reine Anzeige-Priorisierung ueber bereits vorhandene Felder, keine neue
+  // Analyse-Logik: echte Konflikte > potenzielle Konflikte > Hygiene-/
+  // Security-Filter-Findings im Bucket "kritisch" > alle uebrigen Hygiene-/
+  // Security-Filter-Findings (Roadmap: Prioritaet 1-4). Maximal 5 Eintraege.
+  function priorityIcon(f) {
+    if (f.type === 'conflict') return f.conflictLevel === 'real' ? '🔴' : '🟡';
+    if (f.rule && f.rule.bucket === 'kritisch') return '🔴';
+    return HYGIENE_SEVERITY_ICONS[f.severity] || '⚠';
+  }
+
+  function priorityLabel(f) {
+    if (f.type === 'conflict') return splitSettingKey(f.settingKey).name;
+    const ruleName = resolveRuleText(f.rule && f.rule.name, f.detail) || 'Prüfung';
+    return ruleName + ' – ' + f.gpoName;
+  }
+
+  function priorityAnchor(f) {
+    return f.type === 'conflict' ? '#gpo-conflict-section' : '#gpo-hygiene-section';
+  }
+
+  function collectPriorityFindings() {
+    const realConflicts = _findings.filter(f => f.type === 'conflict' && f.conflictLevel === 'real');
+    const potentialConflicts = _findings.filter(f => f.type === 'conflict' && f.conflictLevel === 'potential');
+    const criticalChecks = _findings.filter(f => ['hygiene', 'security-filter'].includes(f.type) && f.rule && f.rule.bucket === 'kritisch');
+    const otherChecks = _findings.filter(f => ['hygiene', 'security-filter'].includes(f.type) && !(f.rule && f.rule.bucket === 'kritisch'));
+
+    const items = [];
+    [realConflicts, potentialConflicts, criticalChecks, otherChecks].forEach(group => {
+      group.forEach(f => { if (items.length < 5) items.push(f); });
+    });
+    return items;
+  }
+
+  // Springt bevorzugt direkt zur bereits gerenderten Karte in der jeweiligen
+  // Liste (ueber _findingCardMap) und klappt sie auf - dieselbe Karte, keine
+  // zweite Darstellung. Ist sie nicht (mehr) im DOM (z.B. durch die
+  // Setting-Suche herausgefiltert), uebernimmt der native Anker-Sprung zur
+  // Sektion.
+  function buildPriorityItem(f) {
+    const item = document.createElement('a');
+    item.className = 'gpo-priority-item';
+    item.href = priorityAnchor(f);
+
+    const icon = document.createElement('span');
+    icon.className = 'gpo-priority-icon';
+    icon.textContent = priorityIcon(f);
+
+    const label = document.createElement('span');
+    label.className = 'gpo-priority-label';
+    label.textContent = priorityLabel(f);
+
+    item.append(icon, label);
+
+    item.addEventListener('click', (e) => {
+      const card = _findingCardMap.get(f);
+      if (card && card.isConnected) {
+        e.preventDefault();
+        const body = card.querySelector('.gpo-finding-body');
+        const expand = card.querySelector('.gpo-finding-expand');
+        if (body) body.classList.add('open');
+        if (expand) expand.classList.add('open');
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+
+    return item;
+  }
+
+  function renderPriorityList() {
+    const container = document.getElementById('gpo-priority-list');
+    if (!container) return;
+    container.replaceChildren();
+
+    const items = collectPriorityFindings();
+    if (!items.length) return;
+
+    const title = document.createElement('div');
+    title.className = 'gpo-finding-sub-title';
+    title.textContent = 'Wichtigste Findings';
+    container.appendChild(title);
+
+    items.forEach(f => container.appendChild(buildPriorityItem(f)));
   }
 
   // ── Gemeinsame Helfer fuer Konflikt-/Redundanz-Karten ──────
@@ -359,8 +627,6 @@ window.GpoRenderer = (function() {
     }
 
     finding.entries.forEach(entry => {
-      const links = linksForGpo(entry.gpoId);
-
       const gpoDetail = document.createElement('div');
       gpoDetail.className = 'gpo-detail-gpo';
 
@@ -369,28 +635,7 @@ window.GpoRenderer = (function() {
       gpoTitle.textContent = entry.gpoName;
       gpoDetail.appendChild(gpoTitle);
 
-      if (links.length) {
-        // enforced/blockInheritance je Link statt eines GPO-weiten Badges:
-        // dieselbe GPO kann an einem Ziel enforced sein und an einem
-        // anderen nicht (siehe .md/todo/GPO_Analyzer_Pre_Real_Data_
-        // Hardening.md, Abschnitt 4/5) - ein GPO-Level-Badge wuerde das
-        // falsch als globale Eigenschaft darstellen.
-        const linkList = document.createElement('ul');
-        linkList.className = 'gpo-detail-link-list';
-        links.forEach(l => {
-          const li = document.createElement('li');
-          li.textContent = '[' + l.targetType + '] ' + l.target + ' (Reihenfolge ' + l.order + ')'
-            + (l.enforced ? ' 🔒 enforced' : '')
-            + (l.blockInheritance ? ' 🚫 block inheritance' : '');
-          linkList.appendChild(li);
-        });
-        gpoDetail.appendChild(linkList);
-      } else {
-        const noLink = document.createElement('div');
-        noLink.className = 'gpo-detail-no-link';
-        noLink.textContent = 'Keine Verknüpfung gefunden.';
-        gpoDetail.appendChild(noLink);
-      }
+      gpoDetail.appendChild(buildLinkList(entry.gpoId));
 
       wrap.appendChild(gpoDetail);
     });
@@ -398,10 +643,227 @@ window.GpoRenderer = (function() {
     return wrap;
   }
 
+  // Link-Liste einer einzelnen GPO - genutzt von buildDetailSection() (hier)
+  // UND vom GPO-Detail-Panel (V2.3, buildGpoDetailLinks()), damit die
+  // enforced/blockInheritance/deaktiviert-Darstellung nicht zweimal steht.
+  function buildLinkList(gpoId) {
+    const links = linksForGpo(gpoId);
+    if (!links.length) {
+      const noLink = document.createElement('div');
+      noLink.className = 'gpo-detail-no-link';
+      noLink.textContent = 'Keine Verknüpfung gefunden.';
+      return noLink;
+    }
+
+    // enforced/blockInheritance/linkEnabled je Link statt eines GPO-weiten
+    // Badges: dieselbe GPO kann an einem Ziel enforced sein und an einem
+    // anderen nicht (siehe .md/todo/GPO_Analyzer_Pre_Real_Data_Hardening.md,
+    // Abschnitt 4/5) - ein GPO-Level-Badge wuerde das falsch als globale
+    // Eigenschaft darstellen.
+    const linkList = document.createElement('ul');
+    linkList.className = 'gpo-detail-link-list';
+    links.forEach(l => {
+      const li = document.createElement('li');
+      li.textContent = '[' + l.targetType + '] ' + l.target + ' (Reihenfolge ' + l.order + ')'
+        + (l.enforced ? ' 🔒 enforced' : '')
+        + (l.blockInheritance ? ' 🚫 block inheritance' : '')
+        + (l.linkEnabled === false ? ' ⛔ deaktiviert' : '');
+      linkList.appendChild(li);
+    });
+    return linkList;
+  }
+
+  // ── Scope-Visualisierung (V2.5) ─────────────────────────────
+  // Reine Darstellung auf dem bestehenden ouTree-/Link-Modell (gpo-parser.js)
+  // - keine zweite Scope-Berechnung, keine neue Analyse-Logik. Sucht den
+  // Pfad von der Domain-Wurzel zu einem Ziel innerhalb des bereits
+  // vorhandenen _model.ouTree per einfacher Tiefensuche (reine Anzeige-
+  // Traversierung, kein neues Modell).
+  function findOuTreePath(target) {
+    const roots = _model.ouTree || [];
+    function search(node, path) {
+      const nextPath = path.concat([node]);
+      if (node.target === target) return nextPath;
+      for (const child of (node.children || [])) {
+        const found = search(child, nextPath);
+        if (found) return found;
+      }
+      return null;
+    }
+    for (const root of roots) {
+      const found = search(root, []);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  // Baut fuer die an einem Konflikt beteiligten GPOs einen reduzierten
+  // Ausschnitt des bestehenden OU-Baums (nur die Zweige, die zu einer
+  // ihrer Verknuepfungen fuehren) statt des kompletten Struktur-Baums -
+  // zeigt genau, worauf sich "Zielbereiche ueberlappen sich" bezieht.
+  // Site-Verknuepfungen sind bewusst NICHT Teil von ouTree (gpo-parser.js)
+  // und werden deshalb separat als Hinweiszeile gefuehrt, nicht in den Baum
+  // gezwungen. Security-/WMI-Filter fliessen bewusst nicht ein (Roadmap
+  // Abschnitt 2.5: "bleiben ausdruecklich ausserhalb").
+  function buildScopeVisualization(finding) {
+    const gpoIds = finding.entries.map(e => e.gpoId);
+    const gpoNameById = new Map(finding.entries.map(e => [e.gpoId, e.gpoName]));
+
+    const targetAssignments = new Map(); // target -> [{gpoId, gpoName, link}]
+    const pathsByTarget = new Map();     // target -> ouTree-Pfad (Wurzel..Ziel)
+    const siteNotes = [];                // GPOs mit Site-Verknuepfung
+    const gpoHasAnyLink = new Set();
+
+    gpoIds.forEach(gpoId => {
+      const gpoName = gpoNameById.get(gpoId);
+      linksForGpo(gpoId).forEach(l => {
+        gpoHasAnyLink.add(gpoId);
+        if (l.targetType === 'site') {
+          siteNotes.push({ gpoId, gpoName, link: l });
+          return;
+        }
+        if (!targetAssignments.has(l.target)) targetAssignments.set(l.target, []);
+        targetAssignments.get(l.target).push({ gpoId, gpoName, link: l });
+        if (!pathsByTarget.has(l.target)) {
+          const path = findOuTreePath(l.target);
+          if (path) pathsByTarget.set(l.target, path);
+        }
+      });
+    });
+
+    // "Gemeinsame" Knoten = Knoten, die im Pfad von mindestens zwei
+    // verschiedenen beteiligten GPOs liegen - ausschliesslich ueber AKTIVE
+    // Links berechnet (linkEnabled !== false), exakt dieselbe Aktiv-
+    // Definition wie activeLinksForGpo() in gpo-analyzer.js, damit die
+    // Hervorhebung nicht mehr "ueberlappend" markiert als der Analyzer
+    // selbst zugrunde legt.
+    const pathTargetsByGpo = new Map();
+    targetAssignments.forEach((assignees, target) => {
+      const path = pathsByTarget.get(target);
+      if (!path) return;
+      assignees.forEach(a => {
+        if (a.link.linkEnabled === false) return;
+        if (!pathTargetsByGpo.has(a.gpoId)) pathTargetsByGpo.set(a.gpoId, new Set());
+        path.forEach(n => pathTargetsByGpo.get(a.gpoId).add(n.target));
+      });
+    });
+    const nodeGpoCount = new Map();
+    pathTargetsByGpo.forEach(targetsSet => {
+      targetsSet.forEach(t => nodeGpoCount.set(t, (nodeGpoCount.get(t) || 0) + 1));
+    });
+    const sharedNodeTargets = new Set([...nodeGpoCount].filter(([, c]) => c >= 2).map(([t]) => t));
+
+    const includedNodeTargets = new Set();
+    pathsByTarget.forEach(path => path.forEach(n => includedNodeTargets.add(n.target)));
+
+    const container = document.createElement('div');
+    container.className = 'gpo-scope-viz';
+
+    const title = document.createElement('div');
+    title.className = 'gpo-finding-sub-title';
+    title.textContent = 'Scope-Visualisierung';
+    container.appendChild(title);
+
+    const roots = (_model.ouTree || []).filter(r => includedNodeTargets.has(r.target));
+    if (roots.length) {
+      const treeWrap = document.createElement('div');
+      treeWrap.className = 'gpo-scope-tree';
+      roots.forEach(r => treeWrap.appendChild(
+        buildScopeTreeNode(r, includedNodeTargets, targetAssignments, sharedNodeTargets)
+      ));
+      container.appendChild(treeWrap);
+    }
+
+    if (siteNotes.length) {
+      const siteWrap = document.createElement('div');
+      siteWrap.className = 'gpo-scope-viz-site-note';
+      siteNotes.forEach(s => {
+        const row = document.createElement('div');
+        row.className = 'gpo-detail-row';
+        row.textContent = '📡 ' + s.gpoName + ' ist über eine Site-Verknüpfung eingebunden ('
+          + s.link.target + ') - nicht Teil der OU-Hierarchie, Zielbereich nicht sicher bestimmbar.';
+        siteWrap.appendChild(row);
+      });
+      container.appendChild(siteWrap);
+    }
+
+    const missingLinkGpos = gpoIds.filter(id => !gpoHasAnyLink.has(id));
+    if (missingLinkGpos.length) {
+      const missingWrap = document.createElement('div');
+      missingWrap.className = 'gpo-scope-viz-site-note';
+      missingLinkGpos.forEach(id => {
+        const row = document.createElement('div');
+        row.className = 'gpo-detail-row';
+        row.textContent = '⛔ ' + gpoNameById.get(id) + ': keine Verknüpfung gefunden.';
+        missingWrap.appendChild(row);
+      });
+      container.appendChild(missingWrap);
+    }
+
+    const caveat = document.createElement('div');
+    caveat.className = 'gpo-scope-viz-caveat';
+    caveat.textContent = 'Security- und WMI-Filter werden in dieser Darstellung nicht berücksichtigt.';
+    container.appendChild(caveat);
+
+    return container;
+  }
+
+  function buildScopeTreeNode(node, includedNodeTargets, targetAssignments, sharedNodeTargets) {
+    const wrap = document.createElement('div');
+    wrap.className = 'gpo-scope-tree-node' + (sharedNodeTargets.has(node.target) ? ' gpo-scope-tree-node--shared' : '');
+
+    const header = document.createElement('div');
+    header.className = 'gpo-scope-tree-node-header';
+    const icon = document.createElement('span');
+    icon.textContent = node.targetType === 'domain' ? '🏛️' : '📁';
+    const name = document.createElement('span');
+    name.className = 'gpo-scope-tree-node-name';
+    name.textContent = node.name || node.target;
+    header.append(icon, name);
+    if (node.blockInheritance) {
+      const badge = document.createElement('span');
+      badge.className = 'gpo-scope-tree-badge';
+      badge.textContent = '🚫 Block Inheritance';
+      header.appendChild(badge);
+    }
+    wrap.appendChild(header);
+
+    (targetAssignments.get(node.target) || []).forEach(a => {
+      const gpoRow = document.createElement('div');
+      gpoRow.className = 'gpo-scope-tree-gpo' + (a.link.linkEnabled === false ? ' gpo-scope-tree-gpo--disabled' : '');
+      gpoRow.textContent = '📌 ' + a.gpoName
+        + (a.link.enforced ? ' 🔒 enforced' : '')
+        + (a.link.linkEnabled === false ? ' ⛔ deaktiviert' : '');
+      wrap.appendChild(gpoRow);
+    });
+
+    const children = (node.children || []).filter(c => includedNodeTargets.has(c.target));
+    if (children.length) {
+      const childWrap = document.createElement('div');
+      childWrap.className = 'gpo-scope-tree-children';
+      children.forEach(c => childWrap.appendChild(
+        buildScopeTreeNode(c, includedNodeTargets, targetAssignments, sharedNodeTargets)
+      ));
+      wrap.appendChild(childWrap);
+    }
+
+    return wrap;
+  }
+
+  // "Beteiligte GPOs" (V2.4): pro GPO Wert UND Ziel-/Link-Fakten zusammen
+  // zeigen, statt Wert hier und Link-Details erst weiter unten in "Details"
+  // getrennt zu haben - der Techniker soll direkt sehen, welche GPO welchen
+  // Wert setzt UND worauf sie verknuepft ist, ohne zu scrollen. Nutzt
+  // buildLinkList() (bereits vorhanden, V2.3) wieder statt Scope-/Link-
+  // Fakten neu zu interpretieren, und .gpo-detail-gpo (bereits vorhanden)
+  // fuer die optische Box je GPO statt einer neuen CSS-Klasse.
   function buildEntryRowList(finding) {
     const wrap = document.createElement('div');
     wrap.className = 'gpo-entry-row-list';
     finding.entries.forEach(entry => {
+      const group = document.createElement('div');
+      group.className = 'gpo-detail-gpo';
+
       const row = document.createElement('div');
       row.className = 'gpo-entry-row';
       const gpoLabel = document.createElement('span');
@@ -414,7 +876,10 @@ window.GpoRenderer = (function() {
       value.className = 'gpo-entry-value';
       value.textContent = entry.value || '(leer)';
       row.append(gpoLabel, arrow, value);
-      wrap.appendChild(row);
+      group.appendChild(row);
+
+      group.appendChild(buildLinkList(entry.gpoId));
+      wrap.appendChild(group);
     });
     return wrap;
   }
@@ -529,10 +994,21 @@ window.GpoRenderer = (function() {
     }
   }
 
+  // Fester Zusatzhinweis nur fuer "potential" (V2.4) - ergaenzt die
+  // bestehende scopeExplanation (wird NICHT ersetzt/neu formuliert), macht
+  // aber zusaetzlich unmissverstaendlich klar, dass es sich um eine
+  // Datenluecke im Snapshot handelt, nicht um ein Analyse-Versagen.
+  const POTENTIAL_CONFLICT_NOTE = 'Der tatsächliche Scope-Overlap konnte anhand der vorhandenen Snapshot-Daten nicht sicher bestimmt werden.';
+
   function resolveConflictSections(finding) {
+    const bewertung = [finding.scopeExplanation || ''];
+    if (finding.conflictLevel === 'potential') {
+      bewertung.push(POTENTIAL_CONFLICT_NOTE);
+    }
+
     return {
       was: [CONFLICT_DESC, buildEntryRowList(finding)],
-      bewertung: finding.scopeExplanation || '',
+      bewertung,
       naechsterSchritt: SCOPE_CHECK_HINT,
     };
   }
@@ -599,11 +1075,13 @@ window.GpoRenderer = (function() {
     };
   }
 
-  function resolveWmiFilterSections(finding) {
-    const rule = finding.rule || {};
-    const wmiFilter = finding.wmiFilter || {};
-    const was = ['Filter: ' + (wmiFilter.name || wmiFilter.id || 'unbekannt')];
-
+  // Reine Fakten-Darstellung eines WMI-Filters (Name/Id + Query) - genutzt
+  // vom WMI-Filter-Finding (hier) UND vom GPO-Detail-Panel (V2.3,
+  // buildGpoDetailWmiFilter()), damit dieselbe Darstellung nicht zweimal
+  // gebaut wird. Liefert ein Array aus String/Node, direkt konsumierbar
+  // von appendBodyContent().
+  function buildWmiFilterFacts(wmiFilter) {
+    const facts = ['Filter: ' + (wmiFilter.name || wmiFilter.id || 'unbekannt')];
     if (wmiFilter.query) {
       const queryRow = document.createElement('div');
       queryRow.className = 'gpo-detail-row';
@@ -611,11 +1089,17 @@ window.GpoRenderer = (function() {
       code.className = 'gpo-entry-value';
       code.textContent = wmiFilter.query;
       queryRow.appendChild(code);
-      was.push(queryRow);
+      facts.push(queryRow);
     }
+    return facts;
+  }
+
+  function resolveWmiFilterSections(finding) {
+    const rule = finding.rule || {};
+    const wmiFilter = finding.wmiFilter || {};
 
     return {
-      was,
+      was: buildWmiFilterFacts(wmiFilter),
       bewertung: rule.description || '',
       naechsterSchritt: buildRecommendationRows(rule) || NO_ACTION_HINT,
     };
@@ -676,6 +1160,7 @@ window.GpoRenderer = (function() {
 
     const body = buildFindingBody(finding);
     body.appendChild(buildDetailSection(finding, category));
+    body.appendChild(buildScopeVisualization(finding));
 
     const diagnoseSection = buildDiagnoseSection();
     if (diagnoseSection) body.appendChild(diagnoseSection);
@@ -692,26 +1177,32 @@ window.GpoRenderer = (function() {
     list.replaceChildren();
 
     const conflicts = _findings.filter(f => f.type === 'conflict');
-    countEl.textContent = conflicts.length;
 
     if (!conflicts.length) {
+      countEl.textContent = 0;
       empty.hidden = false;
       return;
     }
     empty.hidden = true;
 
     const q = _state.conflictQuery.toLowerCase();
-    const filtered = q ? conflicts.filter(f => f.settingKey.toLowerCase().includes(q)) : conflicts;
+    let filtered = conflicts.filter(passesFilters);
+    if (q) filtered = filtered.filter(f => f.settingKey.toLowerCase().includes(q));
+    countEl.textContent = filtered.length;
 
     if (!filtered.length) {
       const noMatch = document.createElement('div');
       noMatch.className = 'gpo-empty';
-      noMatch.textContent = 'Keine Treffer für die Suche.';
+      noMatch.textContent = 'Keine Findings für diese Auswahl.';
       list.appendChild(noMatch);
       return;
     }
 
-    filtered.forEach(f => list.appendChild(buildFindingCard(f)));
+    filtered.forEach(f => {
+      const card = buildFindingCard(f);
+      _findingCardMap.set(f, card);
+      list.appendChild(card);
+    });
   }
 
   // ── Redundanz-Liste (Konzept Abschnitt 6) ───────────────────
@@ -761,26 +1252,32 @@ window.GpoRenderer = (function() {
     list.replaceChildren();
 
     const redundants = _findings.filter(f => f.type === 'redundant');
-    countEl.textContent = redundants.length;
 
     if (!redundants.length) {
+      countEl.textContent = 0;
       empty.hidden = false;
       return;
     }
     empty.hidden = true;
 
     const q = _state.redundantQuery.toLowerCase();
-    const filtered = q ? redundants.filter(f => f.settingKey.toLowerCase().includes(q)) : redundants;
+    let filtered = redundants.filter(passesFilters);
+    if (q) filtered = filtered.filter(f => f.settingKey.toLowerCase().includes(q));
+    countEl.textContent = filtered.length;
 
     if (!filtered.length) {
       const noMatch = document.createElement('div');
       noMatch.className = 'gpo-empty';
-      noMatch.textContent = 'Keine Treffer für die Suche.';
+      noMatch.textContent = 'Keine Findings für diese Auswahl.';
       list.appendChild(noMatch);
       return;
     }
 
-    filtered.forEach(f => list.appendChild(buildFindingCard(f)));
+    filtered.forEach(f => {
+      const card = buildFindingCard(f);
+      _findingCardMap.set(f, card);
+      list.appendChild(card);
+    });
   }
 
   // rules.json darf einen "{years}"-Platzhalter enthalten (aktuell nur
@@ -903,14 +1400,25 @@ window.GpoRenderer = (function() {
     const countEl = document.getElementById('gpo-hygiene-count');
     list.replaceChildren();
 
-    const hygieneFindings = _findings.filter(f => ['hygiene', 'security-filter', 'wmi-filter'].includes(f.type));
-    countEl.textContent = hygieneFindings.length;
+    const allHygieneFindings = _findings.filter(f => ['hygiene', 'security-filter', 'wmi-filter'].includes(f.type));
 
-    if (!hygieneFindings.length) {
+    if (!allHygieneFindings.length) {
+      countEl.textContent = 0;
       empty.hidden = false;
       return;
     }
     empty.hidden = true;
+
+    const hygieneFindings = allHygieneFindings.filter(passesFilters);
+    countEl.textContent = hygieneFindings.length;
+
+    if (!hygieneFindings.length) {
+      const noMatch = document.createElement('div');
+      noMatch.className = 'gpo-empty';
+      noMatch.textContent = 'Keine Findings für diese Auswahl.';
+      list.appendChild(noMatch);
+      return;
+    }
 
     const grouped = new Set();
 
@@ -931,9 +1439,26 @@ window.GpoRenderer = (function() {
       title.append(labelSpan, ' ', countSpan);
       section.appendChild(title);
 
+      // Bucket-Titel klickbar (V2.2, "analog fuer die Bucket-Kacheln"):
+      // schraenkt den Finding-Typ auf die Bucket-tragenden Typen ein und
+      // setzt den Bucket-Filter genau auf diesen Bucket - ergibt z.B.
+      // "nur kritische Hygiene-Findings". "sonstige" hat keinen gueltigen
+      // Bucket-Filterwert und bleibt deshalb nicht klickbar.
+      if (bucketKey !== 'sonstige') {
+        title.classList.add('gpo-hygiene-bucket-title--clickable');
+        title.addEventListener('click', () => {
+          setExclusiveTypeFilter('hygiene', 'security-filter', 'wmi-filter');
+          _state.bucketFilter = bucketKey;
+          applyFilters();
+        });
+      }
+
       items.forEach(f => {
         const card = buildFindingCard(f);
-        if (card) section.appendChild(card);
+        if (card) {
+          _findingCardMap.set(f, card);
+          section.appendChild(card);
+        }
       });
 
       list.appendChild(section);
@@ -1082,12 +1607,25 @@ window.GpoRenderer = (function() {
     return iso.replace('T', ' ').substring(0, 16);
   }
 
+  // Reine Anzeige-Berechnung aus gpo.modified (kein neues Analyse-Feld,
+  // keine Regel/kein Finding) - dieselbe Formel wie GPO_VERY_OLD in
+  // gpo-analyzer.js, hier aber unabhaengig vom dortigen Schwellwert als
+  // reine Tatsache dargestellt (V2.3 GPO-Detailansicht).
+  function computeAgeLabel(gpo) {
+    if (!gpo.modified) return '–';
+    const modifiedDate = new Date(gpo.modified);
+    if (isNaN(modifiedDate.getTime())) return '–';
+    const ageYears = Math.floor((Date.now() - modifiedDate.getTime()) / (365.25 * 24 * 3600 * 1000));
+    return ageYears + (ageYears === 1 ? ' Jahr' : ' Jahre');
+  }
+
   function buildGpoDetailMeta(gpo) {
     const wrap = document.createElement('div');
     [
       ['Status', gpo.status || '–'],
       ['Erstellt', formatDate(gpo.created)],
       ['Geändert', formatDate(gpo.modified)],
+      ['Alter', computeAgeLabel(gpo)],
       ['Computer Configuration', gpo.computerEnabled ? 'aktiviert' : 'deaktiviert'],
       ['User Configuration', gpo.userEnabled ? 'aktiviert' : 'deaktiviert'],
     ].forEach(([label, value]) => {
@@ -1114,19 +1652,74 @@ window.GpoRenderer = (function() {
     return wrap;
   }
 
+  // Verknuepfungen/Security Filtering/WMI Filter/Einstellungen als
+  // eigene <details> statt einer einzigen, langen Liste (Roadmap V2.3:
+  // "Informationen gruppieren", "keine riesige Tabelle mit allen Daten auf
+  // einmal") - nutzt <details>/<summary> statt eines eigenen JS-Toggle-
+  // Mechanismus, da dafuer keine zusaetzliche Verdrahtung noetig ist.
+  function buildGpoDetailLinks(gpo) {
+    const links = linksForGpo(gpo.id);
+    const details = document.createElement('details');
+    details.open = true;
+    const summary = document.createElement('summary');
+    summary.className = 'gpo-finding-sub-title';
+    summary.textContent = 'Verknüpfungen (' + links.length + ')';
+    details.appendChild(summary);
+    details.appendChild(buildLinkList(gpo.id));
+    return details;
+  }
+
+  // null, wenn kein (vom Standard abweichender oder nicht) Security Filter
+  // vorhanden ist - Abschnitt wird dann in openGpoDetail() gar nicht erst
+  // angehaengt (weniger, aber relevantere Abschnitte statt einer leeren
+  // Box, siehe UX-Vorgabe "ruhiger als GPMC").
+  function buildGpoDetailSecurityFilter(gpo) {
+    const filters = gpo.securityFilter || [];
+    if (!filters.length) return null;
+
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    summary.className = 'gpo-finding-sub-title';
+    summary.textContent = 'Security Filtering (' + filters.length + ')';
+    details.appendChild(summary);
+
+    filters.forEach(f => {
+      const row = document.createElement('div');
+      row.className = 'gpo-detail-row';
+      row.textContent = f.trustee + (f.permission ? ' (' + f.permission + ')' : '');
+      details.appendChild(row);
+    });
+
+    return details;
+  }
+
+  // null, wenn kein WMI-Filter zugewiesen ist - siehe Kommentar an
+  // buildGpoDetailSecurityFilter().
+  function buildGpoDetailWmiFilter(gpo) {
+    if (!gpo.wmiFilter) return null;
+
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    summary.className = 'gpo-finding-sub-title';
+    summary.textContent = 'WMI Filter';
+    details.appendChild(summary);
+    appendBodyContent(details, buildWmiFilterFacts(gpo.wmiFilter));
+    return details;
+  }
+
   function buildGpoDetailSettings(gpo) {
-    const wrap = document.createElement('div');
-    const title = document.createElement('div');
-    title.className = 'gpo-finding-sub-title';
-    title.textContent = 'Einstellungen (' + (gpo.settings || []).length + ')';
-    wrap.appendChild(title);
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    summary.className = 'gpo-finding-sub-title';
+    summary.textContent = 'Einstellungen (' + (gpo.settings || []).length + ')';
+    details.appendChild(summary);
 
     if (!gpo.settings || !gpo.settings.length) {
       const noneRow = document.createElement('div');
       noneRow.className = 'gpo-detail-row';
       noneRow.textContent = 'Keine konfigurierten Einstellungen.';
-      wrap.appendChild(noneRow);
-      return wrap;
+      details.appendChild(noneRow);
+      return details;
     }
 
     const list = document.createElement('div');
@@ -1143,8 +1736,8 @@ window.GpoRenderer = (function() {
       row.append(label, value);
       list.appendChild(row);
     });
-    wrap.appendChild(list);
-    return wrap;
+    details.appendChild(list);
+    return details;
   }
 
   function buildGpoDetailFindings(gpo) {
@@ -1181,6 +1774,11 @@ window.GpoRenderer = (function() {
     title.textContent = gpo.name;
     body.replaceChildren();
     body.appendChild(buildGpoDetailMeta(gpo));
+    body.appendChild(buildGpoDetailLinks(gpo));
+    const secFilterDetails = buildGpoDetailSecurityFilter(gpo);
+    if (secFilterDetails) body.appendChild(secFilterDetails);
+    const wmiDetails = buildGpoDetailWmiFilter(gpo);
+    if (wmiDetails) body.appendChild(wmiDetails);
     body.appendChild(buildGpoDetailSettings(gpo));
     body.appendChild(buildGpoDetailFindings(gpo));
 
@@ -1191,6 +1789,100 @@ window.GpoRenderer = (function() {
   function closeGpoDetail() {
     const panel = document.getElementById('gpo-detail-panel');
     if (panel) panel.hidden = true;
+  }
+
+  // ── GPO Explorer (V2.3) ──────────────────────────────────────
+  // Durchsuch-/klickbare Liste aller GPOs, ein weiterer Einstiegspunkt in
+  // dieselbe GPO-Detailansicht (openGpoDetail()) wie der OU-Baum - kein
+  // eigenes Detail-System, keine neue Analyse. "Kurzer Status-Hinweis" nutzt
+  // dieselbe linksForGpo()-Quelle wie der Rest der Detailansicht;
+  // parseStatus-Probleme (failed/partial) haben Vorrang vor der reinen
+  // Link-Zahl, da sie beim Ueberfliegen vieler GPOs wichtiger sind.
+  function explorerStatusHint(gpo) {
+    if (gpo.parseStatus === 'failed') return '⚠ Report nicht lesbar';
+    if (gpo.parseStatus === 'partial') return '⚠ Nur teilweise lesbar';
+    const linkCount = linksForGpo(gpo.id).length;
+    return linkCount + (linkCount === 1 ? ' Verknüpfung' : ' Verknüpfungen');
+  }
+
+  // Ein Badge pro GPO statt einem pro Finding-Typ (sonst pro Zeile
+  // potenziell 5 Badges) - Icon folgt derselben Prioritaet wie die
+  // Prioritaeten-Liste des Dashboards (real > potential > kritisch-Bucket >
+  // sonstiges), ueber dieselbe priorityIcon()-Funktion (V2.1), keine
+  // zweite Icon-Zuordnung.
+  function gpoFindingsBadge(gpo) {
+    const related = _findings.filter(f => findingInvolvesGpo(f, gpo.id));
+    if (!related.length) return null;
+    const worst = related.find(f => f.type === 'conflict' && f.conflictLevel === 'real')
+      || related.find(f => f.type === 'conflict' && f.conflictLevel === 'potential')
+      || related.find(f => ['hygiene', 'security-filter'].includes(f.type) && f.rule && f.rule.bucket === 'kritisch')
+      || related[0];
+    return priorityIcon(worst) + ' ' + related.length + ' ' + (related.length === 1 ? 'Finding' : 'Findings');
+  }
+
+  // Gleiches Interaktionsmuster wie buildOuGpoRow() im OU-Baum: klick-
+  // und tastaturbedienbare Zeile, oeffnet ueber openGpoDetail() dieselbe,
+  // einzige GPO-Detailansicht - kein zweites Detail-System fuer den
+  // Explorer.
+  function buildExplorerRow(gpo) {
+    const row = document.createElement('div');
+    row.className = 'gpo-explorer-row';
+    row.tabIndex = 0;
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'gpo-explorer-name';
+    nameEl.textContent = gpo.name;
+
+    const statusEl = document.createElement('span');
+    statusEl.className = 'gpo-explorer-status';
+    statusEl.textContent = explorerStatusHint(gpo);
+
+    row.append(nameEl, statusEl);
+
+    const badgeText = gpoFindingsBadge(gpo);
+    if (badgeText) {
+      const badge = document.createElement('span');
+      badge.className = 'gpo-explorer-badge';
+      badge.textContent = badgeText;
+      row.appendChild(badge);
+    }
+
+    row.addEventListener('click', () => openGpoDetail(gpo.id));
+    row.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openGpoDetail(gpo.id); }
+    });
+
+    return row;
+  }
+
+  function renderExplorerList() {
+    const list = document.getElementById('gpo-explorer-list');
+    const empty = document.getElementById('gpo-explorer-empty');
+    const countEl = document.getElementById('gpo-explorer-count');
+    if (!list || !empty || !countEl) return;
+    list.replaceChildren();
+
+    const gpos = _model.gpos || [];
+    countEl.textContent = gpos.length;
+
+    if (!gpos.length) {
+      empty.hidden = false;
+      return;
+    }
+    empty.hidden = true;
+
+    const q = _state.explorerQuery.toLowerCase();
+    const filtered = q ? gpos.filter(g => (g.name || '').toLowerCase().includes(q)) : gpos;
+
+    if (!filtered.length) {
+      const noMatch = document.createElement('div');
+      noMatch.className = 'gpo-empty';
+      noMatch.textContent = 'Keine GPOs gefunden.';
+      list.appendChild(noMatch);
+      return;
+    }
+
+    filtered.forEach(gpo => list.appendChild(buildExplorerRow(gpo)));
   }
 
   // ── Suchfelder + Detail-Panel (einmalig verdrahtet, nicht bei jedem
@@ -1208,6 +1900,13 @@ window.GpoRenderer = (function() {
       redundantSearch.addEventListener('input', (e) => {
         _state.redundantQuery = e.target.value.trim();
         renderRedundantList();
+      });
+    }
+    const explorerSearch = document.getElementById('gpo-explorer-search');
+    if (explorerSearch) {
+      explorerSearch.addEventListener('input', (e) => {
+        _state.explorerQuery = e.target.value.trim();
+        renderExplorerList();
       });
     }
     const detailClose = document.getElementById('gpo-detail-panel-close');
