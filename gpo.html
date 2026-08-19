@@ -49,43 +49,144 @@
 
   <main>
 
-    <!-- ── UPLOAD ─────────────────────────────────────────── -->
-    <section class="gpo-section">
-      <h2 class="section-title">GPO-Snapshot hochladen</h2>
+    <!-- ── EINSTIEG (V3.6) ────────────────────────────────────
+         Schritt 1 -> Schritt 2 (bestehender Upload, unveraendert
+         wiederverwendet, siehe #gpo-upload-zone/#gpo-file-input/
+         #gpo-missing-hint) -> Was dich erwartet -> Hinweis zur
+         Interpretation -> BSI-Grundlage. Reine Einstiegs-/
+         Erklaerungsebene vor der eigentlichen Analyse - keine neue
+         Fachlogik, kein neuer Upload-Mechanismus. -->
+    <section class="gpo-section" id="gpo-onboarding-step1">
+      <h2 class="section-title">Schritt 1 – Collector ausführen</h2>
+      <p class="gpo-bsi-intro">Führe den GPO-Analyzer-Collector in der Zielumgebung aus. Der Collector sammelt die für die Analyse benötigten GPO-, Link-, Filter- und Computerinformationen.</p>
+
+      <div class="gpo-onboarding-card">
+        <div class="gpo-onboarding-card-icon">🖥️</div>
+        <div class="gpo-onboarding-card-body">
+          <div class="gpo-onboarding-card-title">Get-GPOAnalyzerSnapshot.ps1</div>
+          <div class="gpo-onboarding-card-desc">
+            Läuft auf einem Domain Controller oder einem domänenverbundenen Client mit den RSAT-Modulen
+            GroupPolicy und Active Directory. Keine Admin-Rechte nötig, nur Leserechte auf GPOs/AD.
+          </div>
+          <a href="powershell/gpo/Get-GPOAnalyzerSnapshot.ps1" download class="gpo-onboarding-card-download">⬇️ Collector-Skript herunterladen</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="gpo-section" id="gpo-onboarding-step2">
+      <h2 class="section-title">Schritt 2 – Snapshot hochladen</h2>
+      <p class="gpo-bsi-intro">Lade anschließend den vom Collector erzeugten Snapshot hoch. Der Analyzer liest die enthaltenen Daten automatisch ein und bereitet daraus die GPO-, Finding-, Struktur- und BSI-Auswertung auf.</p>
+
       <div class="gpo-upload-zone" id="gpo-upload-zone">
         <div class="gpo-upload-icon">🗂️</div>
         <div class="gpo-upload-text">ZIP-Datei hier ablegen oder klicken</div>
         <div class="gpo-upload-sub">Erwartet: gpo-snapshot-*.zip (gpos.json, links.json, filters.json, wmi-filters.json, metadata.json)</div>
         <input type="file" id="gpo-file-input" accept=".zip" style="display:none">
+
+        <!-- V3.6 Loading-State: liegt im selben Upload-Bereich, damit kein
+             separates Vollbild-Overlay noetig ist. role="status" +
+             aria-live="polite" machen Statuswechsel fuer Screenreader
+             hoerbar, ohne dass der Spinner die einzige Information waere. -->
+        <div class="gpo-upload-loading" id="gpo-upload-loading" hidden role="status" aria-live="polite">
+          <div class="gpo-upload-loading-spinner" aria-hidden="true"></div>
+          <div class="gpo-upload-loading-text" id="gpo-upload-loading-text">Snapshot wird verarbeitet …</div>
+          <div class="gpo-upload-loading-sub">Die GPO-Daten werden eingelesen und analysiert. Dies kann bei größeren Umgebungen einen Moment dauern.</div>
+        </div>
+      </div>
+
+      <div class="gpo-upload-error" id="gpo-upload-error" hidden role="alert">
+        <span class="gpo-upload-error-icon">⚠</span>
+        <div class="gpo-upload-error-text">
+          <strong>Snapshot konnte nicht verarbeitet werden.</strong>
+          Bitte prüfe die Datei und versuche es erneut.
+        </div>
       </div>
 
       <div class="gpo-missing-hint" id="gpo-missing-hint" hidden></div>
 
-      <div class="gpo-disclaimer">
-        <span class="gpo-disclaimer-icon">ℹ️</span>
-        <div class="gpo-disclaimer-text">
-          <strong>Hinweis zur Interpretation:</strong>
-          Sammelscript: <a href="powershell/gpo/Get-GPOAnalyzerSnapshot.ps1" download>Get-GPOAnalyzerSnapshot.ps1</a>.
-          Läuft auf einem Domain Controller oder einem domänenverbundenen Client mit den RSAT-Modulen
-          GroupPolicy und Active Directory.
+      <p class="gpo-onboarding-note">Enthält der Snapshot zusätzlich <code>computers.json</code>, wertet der Analyzer automatisch auch die Computer-basierte BSI-Coverage aus. Fehlt eine erwartete Datei, zeigt der Analyzer das oben transparent an, statt sie stillschweigend zu ignorieren.</p>
+    </section>
+
+    <details class="gpo-section gpo-onboarding-collapsible" id="gpo-onboarding-expect" open>
+      <summary class="gpo-onboarding-collapsible-summary">Was dich erwartet</summary>
+      <div class="gpo-onboarding-expect-grid">
+        <div class="gpo-onboarding-expect-card">
+          <div class="gpo-onboarding-expect-icon">🖥️</div>
+          <div class="gpo-onboarding-expect-title">System-/GPO-Übersicht</div>
+          <div class="gpo-onboarding-expect-desc">GPO-Bestand, aktive/deaktivierte GPOs, Verknüpfungen und grundlegende Struktur der Umgebung.</div>
+        </div>
+        <div class="gpo-onboarding-expect-card">
+          <div class="gpo-onboarding-expect-icon">🎯</div>
+          <div class="gpo-onboarding-expect-title">Wahrscheinliche Hauptursachen</div>
+          <div class="gpo-onboarding-expect-desc">Der Analyzer gruppiert erkannte Konflikte, Mehrfachdefinitionen und weitere Auffälligkeiten, damit zusammengehörige Probleme schneller untersucht werden können.</div>
+        </div>
+        <div class="gpo-onboarding-expect-card">
+          <div class="gpo-onboarding-expect-icon">💡</div>
+          <div class="gpo-onboarding-expect-title">Optimierungsvorschläge</div>
+          <div class="gpo-onboarding-expect-desc">Vorhandene Hinweise und Verbesserungspotenziale werden übersichtlich dargestellt.</div>
+        </div>
+        <div class="gpo-onboarding-expect-card">
+          <div class="gpo-onboarding-expect-icon">🔎</div>
+          <div class="gpo-onboarding-expect-title">Analyseergebnis</div>
+          <div class="gpo-onboarding-expect-desc">Findings und technische Hinweise mit den zugehörigen Details und Nachweisen.</div>
+        </div>
+        <div class="gpo-onboarding-expect-card">
+          <div class="gpo-onboarding-expect-icon">📋</div>
+          <div class="gpo-onboarding-expect-title">GPO-Detaildaten</div>
+          <div class="gpo-onboarding-expect-desc">Zu jeder GPO stehen Verknüpfungen, Security-/WMI-Filter, Einstellungen und zugehörige Findings im Detail zur Verfügung.</div>
         </div>
       </div>
-    </section>
+    </details>
+
+    <div class="gpo-disclaimer" id="gpo-onboarding-disclaimer">
+      <span class="gpo-disclaimer-icon">ℹ️</span>
+      <div class="gpo-disclaimer-text">
+        <strong>Hinweis zur Interpretation:</strong>
+        Die Ergebnisse des GPO Analyzers sind technische Analyse- und Prüfhilfen. Sie ersetzen keine
+        vollständige Prüfung der Umgebung, RSoP-/gpresult-Auswertung oder fachliche Bewertung.
+        Insbesondere bedeutet „Covered" bei der BSI-Coverage, dass eine auswertbare GPO-Konfiguration
+        gefunden wurde – nicht, dass die BSI-Anforderung automatisch erfüllt ist. Bei nicht eindeutig
+        bestimmbaren Ergebnissen wird dies ausdrücklich als „Nicht bestimmbar" bzw. „Prüfen" dargestellt.
+      </div>
+    </div>
+
+    <details class="gpo-section gpo-onboarding-collapsible" id="gpo-onboarding-bsi-grundlage" open>
+      <summary class="gpo-onboarding-collapsible-summary">🛡️ BSI-Grundlage</summary>
+      <p class="gpo-bsi-intro">Die BSI-Coverage orientiert sich an den in der Anwendung hinterlegten BSI-Anforderungen. Die fachlichen Anforderungen und Empfehlungen stammen aus den verifizierten offiziellen Veröffentlichungen des Bundesamtes für Sicherheit in der Informationstechnik (BSI).</p>
+      <div class="gpo-bsi-grid" id="gpo-onboarding-bsi-grid"></div>
+    </details>
 
     <!-- ── ERGEBNISSE ─────────────────────────────────────── -->
     <div id="gpo-results" class="gpo-results-hidden">
+    <div class="gpo-layout">
 
-      <nav class="gpo-page-nav" id="gpo-page-nav">
-        <a href="#gpo-dashboard-section" class="gpo-page-nav-link">Dashboard</a>
-        <a href="#gpo-overview-section" class="gpo-page-nav-link">Übersicht</a>
-        <a href="#gpo-conflict-section" class="gpo-page-nav-link">Konflikte</a>
-        <a href="#gpo-redundant-section" class="gpo-page-nav-link">Mehrfachdefinitionen</a>
-        <a href="#gpo-hygiene-section" class="gpo-page-nav-link">Hygiene</a>
+      <!-- V3.7: 6 Hauptbereiche statt vorher 8 Einzelanker (Konflikte/
+           Mehrfachdefinitionen/Hygiene sind jetzt unter "Findings"
+           zusammengefasst, "Datenbasis" ist neu als eigener, zentraler
+           Anker) - dieselben bestehenden Sektionen, nur uebersichtlicher
+           gruppiert. Aktive Hervorhebung per IntersectionObserver, siehe
+           initActiveNavHighlight() in gpo-renderer.js (reine Darstellung,
+           keine neue fachliche Berechnung). -->
+      <nav class="gpo-page-nav" id="gpo-page-nav" aria-label="Bereichsnavigation">
+        <div class="gpo-page-nav-title">GPO Analyzer</div>
+        <a href="#gpo-dashboard-section" class="gpo-page-nav-link">Übersicht</a>
         <a href="#gpo-explorer-section" class="gpo-page-nav-link">GPOs</a>
+        <a href="#gpo-findings-section" class="gpo-page-nav-link">Findings</a>
         <a href="#gpo-tree-section" class="gpo-page-nav-link">Struktur</a>
         <a href="#gpo-bsi-section" class="gpo-page-nav-link">BSI-Coverage</a>
+        <a href="#gpo-databasis-section" class="gpo-page-nav-link">Datenbasis</a>
       </nav>
 
+      <div class="gpo-main-content">
+
+      <!-- V3.8: Informationshierarchie Ebene 1 (GPO-Bestand/Findings/
+           Computerpopulation/BSI-Coverage-Einstieg sofort sichtbar) ->
+           Ebene 2 (aktiv/deaktiviert, Finding-Typen, Computer-Kategorien,
+           bereits Teil derselben Kacheln) -> Ebene 3 (Weiterfuehrende
+           Analyse, reine Links zu bestehenden Sektionen). Reihenfolge
+           GPO-Bestand -> Findings -> BSI-Coverage -> Computerpopulation
+           wie im Auftrag vorgegeben. Keine der Zahlen wird hier neu
+           berechnet, siehe gpo-renderer.js. -->
       <section class="gpo-section" id="gpo-dashboard-section">
         <h2 class="section-title">📊 Executive Dashboard</h2>
 
@@ -100,13 +201,26 @@
         </div>
 
         <div class="gpo-dash-tier">
-          <div class="gpo-finding-sub-title">Computer-Population</div>
-          <div class="gpo-num-grid" id="gpo-kpi-computer-grid"></div>
-          <div class="gpo-empty" id="gpo-kpi-computer-missing" hidden></div>
+          <div class="gpo-finding-sub-title">BSI-Coverage</div>
+          <div class="gpo-dashboard-bsi-card" id="gpo-dashboard-bsi-card"></div>
         </div>
 
         <div class="gpo-dash-tier">
-          <a href="#gpo-bsi-section" class="gpo-kpi-bsi-link" id="gpo-kpi-bsi-link"></a>
+          <div class="gpo-finding-sub-title">Computerpopulation</div>
+          <div class="gpo-num-grid" id="gpo-kpi-computer-grid"></div>
+          <div class="gpo-empty" id="gpo-kpi-computer-missing" hidden></div>
+          <a href="#gpo-bsi-section" class="gpo-kpi-bsi-link" id="gpo-kpi-computer-link"></a>
+        </div>
+
+        <div class="gpo-dash-tier">
+          <div class="gpo-finding-sub-title">Weiterführende Analyse</div>
+          <div class="gpo-dashboard-quicklinks">
+            <a href="#gpo-explorer-section" class="gpo-kpi-bsi-link">GPOs durchsuchen →</a>
+            <a href="#gpo-findings-section" class="gpo-kpi-bsi-link">Findings analysieren →</a>
+            <a href="#gpo-bsi-section" class="gpo-kpi-bsi-link">BSI-Coverage ansehen →</a>
+            <a href="#gpo-tree-section" class="gpo-kpi-bsi-link">Struktur anzeigen →</a>
+            <a href="#gpo-databasis-section" class="gpo-kpi-bsi-link">Datenbasis prüfen →</a>
+          </div>
         </div>
       </section>
 
@@ -127,48 +241,6 @@
         <div class="gpo-priority-list" id="gpo-priority-list"></div>
       </section>
 
-      <div class="gpo-filter-bar" id="gpo-filter-bar">
-        <div class="gpo-filter-group">
-          <div class="gpo-filter-group-label">Finding-Typ</div>
-          <div class="gpo-filter-row" id="gpo-filter-type-row"></div>
-        </div>
-
-        <div class="gpo-filter-group gpo-filter-group--secondary" id="gpo-filter-secondary-group" hidden>
-          <div class="gpo-filter-group-label">Optionen</div>
-          <div class="gpo-filter-row gpo-filter-row--secondary" id="gpo-filter-secondary-row"></div>
-        </div>
-
-        <div class="gpo-filter-group gpo-filter-group--result">
-          <div class="gpo-filter-group-label">Ergebnis</div>
-          <div class="gpo-filter-result-count" id="gpo-filter-result-count"></div>
-        </div>
-      </div>
-      <div class="gpo-empty" id="gpo-filter-empty-state" hidden>Keine Findings für diese Auswahl.</div>
-
-      <section class="gpo-section" id="gpo-conflict-section">
-        <div class="gpo-list-header">
-          <h2 class="section-title">🔴 Konflikte <span class="gpo-section-count" id="gpo-conflict-count">0</span></h2>
-          <input type="text" id="gpo-conflict-search" class="gpo-search-input" placeholder="Setting-Name durchsuchen …">
-        </div>
-        <div id="gpo-conflict-list"></div>
-        <div class="gpo-empty" id="gpo-conflict-empty" hidden>✅ Keine Konflikte erkannt.</div>
-      </section>
-
-      <section class="gpo-section" id="gpo-redundant-section">
-        <div class="gpo-list-header">
-          <h2 class="section-title">🔵 Mehrfach definierte Einstellungen <span class="gpo-section-count" id="gpo-redundant-count">0</span></h2>
-          <input type="text" id="gpo-redundant-search" class="gpo-search-input" placeholder="Setting-Name durchsuchen …">
-        </div>
-        <div id="gpo-redundant-list"></div>
-        <div class="gpo-empty" id="gpo-redundant-empty" hidden>Keine mehrfach definierten Einstellungen erkannt.</div>
-      </section>
-
-      <section class="gpo-section" id="gpo-hygiene-section">
-        <h2 class="section-title">⚠ GPO-Hygiene <span class="gpo-section-count" id="gpo-hygiene-count">0</span></h2>
-        <div id="gpo-hygiene-list"></div>
-        <div class="gpo-empty" id="gpo-hygiene-empty" hidden>✅ Keine Auffälligkeiten erkannt.</div>
-      </section>
-
       <section class="gpo-section" id="gpo-explorer-section">
         <div class="gpo-list-header">
           <h2 class="section-title">🗂️ GPOs <span class="gpo-section-count" id="gpo-explorer-count">0</span></h2>
@@ -183,6 +255,60 @@
         </div>
         <div id="gpo-explorer-list"></div>
         <div class="gpo-empty" id="gpo-explorer-empty" hidden>Keine GPOs gefunden.</div>
+      </section>
+
+      <!-- V3.7: "Findings" fasst Konflikte/Mehrfachdefinitionen/Hygiene als
+           einen Hauptbereich zusammen (ein Nav-Anker statt drei) - reine
+           Huelle, die drei bestehenden Sektionen darunter sind inhaltlich
+           unveraendert. Kompakte Zusammenfassung (gpo-findings-summary-grid,
+           reine Darstellung bestehender countByType()-Zahlen, siehe
+           renderFindingsSummaryTiles()) steht vor der bestehenden Filter-
+           Leiste, damit der Gesamtueberblick vor der Detailliste steht. -->
+      <section class="gpo-section" id="gpo-findings-section">
+        <h2 class="section-title">🔍 Findings</h2>
+        <div class="gpo-num-grid" id="gpo-findings-summary-grid"></div>
+
+        <div class="gpo-filter-bar" id="gpo-filter-bar">
+          <div class="gpo-filter-group">
+            <div class="gpo-filter-group-label">Finding-Typ</div>
+            <div class="gpo-filter-row" id="gpo-filter-type-row"></div>
+          </div>
+
+          <div class="gpo-filter-group gpo-filter-group--secondary" id="gpo-filter-secondary-group" hidden>
+            <div class="gpo-filter-group-label">Optionen</div>
+            <div class="gpo-filter-row gpo-filter-row--secondary" id="gpo-filter-secondary-row"></div>
+          </div>
+
+          <div class="gpo-filter-group gpo-filter-group--result">
+            <div class="gpo-filter-group-label">Ergebnis</div>
+            <div class="gpo-filter-result-count" id="gpo-filter-result-count"></div>
+          </div>
+        </div>
+        <div class="gpo-empty" id="gpo-filter-empty-state" hidden>Keine Findings für diese Auswahl.</div>
+
+        <section class="gpo-section" id="gpo-conflict-section">
+          <div class="gpo-list-header">
+            <h2 class="section-title">🔴 Konflikte <span class="gpo-section-count" id="gpo-conflict-count">0</span></h2>
+            <input type="text" id="gpo-conflict-search" class="gpo-search-input" placeholder="Setting-Name durchsuchen …">
+          </div>
+          <div id="gpo-conflict-list"></div>
+          <div class="gpo-empty" id="gpo-conflict-empty" hidden>✅ Keine Konflikte erkannt.</div>
+        </section>
+
+        <section class="gpo-section" id="gpo-redundant-section">
+          <div class="gpo-list-header">
+            <h2 class="section-title">🔵 Mehrfach definierte Einstellungen <span class="gpo-section-count" id="gpo-redundant-count">0</span></h2>
+            <input type="text" id="gpo-redundant-search" class="gpo-search-input" placeholder="Setting-Name durchsuchen …">
+          </div>
+          <div id="gpo-redundant-list"></div>
+          <div class="gpo-empty" id="gpo-redundant-empty" hidden>Keine mehrfach definierten Einstellungen erkannt.</div>
+        </section>
+
+        <section class="gpo-section" id="gpo-hygiene-section">
+          <h2 class="section-title">⚠ GPO-Hygiene <span class="gpo-section-count" id="gpo-hygiene-count">0</span></h2>
+          <div id="gpo-hygiene-list"></div>
+          <div class="gpo-empty" id="gpo-hygiene-empty" hidden>✅ Keine Auffälligkeiten erkannt.</div>
+        </section>
       </section>
 
       <section class="gpo-section" id="gpo-tree-section">
@@ -204,6 +330,19 @@
         <div id="gpo-bsi-container"></div>
       </section>
 
+      <!-- V3.7: zentraler, eigenstaendiger "Datenbasis"-Anker - zeigt
+           dieselbe, bereits vorhandene Datei-Verfuegbarkeit wie die
+           bestehende, unveraendert gebliebene Datenbasis innerhalb von
+           BSI-Coverage (siehe renderDataBasisSection()/buildDataBasisList()
+           in gpo-renderer.js) - keine zweite, abweichende Logik, nur eine
+           zweite, leichter auffindbare Darstellungsstelle. -->
+      <section class="gpo-section" id="gpo-databasis-section">
+        <h2 class="section-title">🗃️ Datenbasis</h2>
+        <div id="gpo-databasis-container"></div>
+      </section>
+
+      </div>
+    </div>
     </div>
 
   </main>

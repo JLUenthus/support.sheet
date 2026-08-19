@@ -192,6 +192,7 @@ window.GpoRenderer = (function() {
     renderNumGrid();
     renderAmpelRow();
     renderMaintenancePanel();
+    renderFindingsSummaryTiles();
     renderFilterBar();
     updateSectionVisibility();
     renderConflictList();
@@ -201,6 +202,7 @@ window.GpoRenderer = (function() {
     renderExplorerList();
     renderOuTree();
     renderBsiCoverage();
+    renderDataBasisSection();
     closeGpoDetail();
     document.getElementById('gpo-results').className = 'gpo-results-visible';
   }
@@ -347,6 +349,7 @@ window.GpoRenderer = (function() {
   function renderDashboardComputerTiles() {
     const grid = document.getElementById('gpo-kpi-computer-grid');
     const missingHint = document.getElementById('gpo-kpi-computer-missing');
+    const link = document.getElementById('gpo-kpi-computer-link');
     if (!grid || !missingHint) return;
     grid.replaceChildren();
 
@@ -355,16 +358,22 @@ window.GpoRenderer = (function() {
       grid.hidden = true;
       missingHint.hidden = false;
       missingHint.textContent = 'Keine computers.json im Snapshot vorhanden. Computer-Population kann für diesen Snapshot nicht ausgewertet werden.';
+      // V3.8: bei fehlender computers.json fuehrt der Link zur Datenbasis
+      // (dort steht bereits, welche Dateien vorhanden sind) statt zur
+      // dann leeren BSI-Computer-Ansicht.
+      if (link) { link.href = '#gpo-databasis-section'; link.textContent = 'Datenbasis prüfen →'; }
       return;
     }
     if (!window.GpoBsiMapping || typeof window.GpoBsiMapping.evaluateComputerCoverage !== 'function') {
       grid.hidden = true;
       missingHint.hidden = false;
       missingHint.textContent = 'BSI-Coverage-Modul nicht verfügbar.';
+      if (link) { link.href = '#gpo-databasis-section'; link.textContent = 'Datenbasis prüfen →'; }
       return;
     }
     grid.hidden = false;
     missingHint.hidden = true;
+    if (link) { link.href = '#gpo-bsi-section'; link.textContent = 'BSI-Coverage ansehen →'; }
 
     const coverage = window.GpoBsiMapping.evaluateComputerCoverage(_model);
     const ntlmId = window.GpoBsiMapping.REQUIREMENT_IDS.NTLM_LM_LEVEL;
@@ -377,14 +386,37 @@ window.GpoRenderer = (function() {
     grid.appendChild(buildKpiTile('Unknown', reference.unknown, '#gpo-bsi-section'));
   }
 
-  // Neutraler Verweis auf die bestehende, detaillierte BSI-Coverage-Ansicht -
-  // bewusst keine eigene Verdichtungszahl/kein Prozentwert, nur die Anzahl
-  // der bereits bestehenden Requirements (BSI_REQUIREMENT_ORDER, s.u.), die
-  // strukturell unabhaengig von computers.json feststeht.
+  // V3.8: BSI-Coverage-Einstieg als kompakte Karte statt Einzeiler - zeigt
+  // ausschliesslich die Anzahl (BSI_REQUIREMENT_ORDER.length) und Namen
+  // (BSI_REQUIREMENT_LABELS) der bereits bestehenden Requirement-
+  // Konstanten, keine eigene Verdichtungszahl/kein Prozentwert, kein neuer
+  // Coverage-/Compliance-Wert. "Covered" wird hier bewusst nicht erwaehnt -
+  // die massgebliche Coverage/Compliance-Unterscheidung bleibt
+  // ausschliesslich in der verlinkten BSI-Coverage-Ansicht selbst.
   function renderDashboardBsiLink() {
-    const link = document.getElementById('gpo-kpi-bsi-link');
-    if (!link) return;
-    link.textContent = '🛡️ BSI-Coverage verfügbar für ' + BSI_REQUIREMENT_ORDER.length + ' Requirements →';
+    const container = document.getElementById('gpo-dashboard-bsi-card');
+    if (!container) return;
+    container.replaceChildren();
+
+    const count = document.createElement('div');
+    count.className = 'gpo-dashboard-bsi-count';
+    count.textContent = BSI_REQUIREMENT_ORDER.length + ' Requirements analysiert';
+    container.appendChild(count);
+
+    const list = document.createElement('ul');
+    list.className = 'gpo-dashboard-bsi-list';
+    BSI_REQUIREMENT_ORDER.forEach(requirementId => {
+      const li = document.createElement('li');
+      li.textContent = BSI_REQUIREMENT_LABELS[requirementId] || requirementId;
+      list.appendChild(li);
+    });
+    container.appendChild(list);
+
+    const link = document.createElement('a');
+    link.className = 'gpo-kpi-bsi-link';
+    link.href = '#gpo-bsi-section';
+    link.textContent = 'BSI-Coverage ansehen →';
+    container.appendChild(link);
   }
 
   function renderExecutiveDashboard() {
@@ -392,6 +424,22 @@ window.GpoRenderer = (function() {
     renderDashboardFindingsTiles();
     renderDashboardComputerTiles();
     renderDashboardBsiLink();
+  }
+
+  // V3.7: kompakte Zusammenfassung am Kopf des neuen "Findings"-
+  // Hauptbereichs (Auftrag Punkt 6) - wiederverwendet buildKpiTile()/
+  // countByType() 1:1 wie die Dashboard-Findings-Kacheln oben, keine neue
+  // Zaehlung, nur eine zweite Anzeige-Stelle naeher an den Detaillisten.
+  function renderFindingsSummaryTiles() {
+    const grid = document.getElementById('gpo-findings-summary-grid');
+    if (!grid) return;
+    grid.replaceChildren();
+
+    grid.appendChild(buildKpiTile('Konflikte', countByType('conflict'), '#gpo-conflict-section'));
+    grid.appendChild(buildKpiTile('Mehrfachdefinitionen', countByType('redundant'), '#gpo-redundant-section'));
+    grid.appendChild(buildKpiTile('Hygiene', countByType('hygiene'), '#gpo-hygiene-section'));
+    grid.appendChild(buildKpiTile('Security-Filter', countByType('security-filter'), '#gpo-hygiene-section'));
+    grid.appendChild(buildKpiTile('WMI-Filter', countByType('wmi-filter'), '#gpo-hygiene-section'));
   }
 
   // ── Snapshot-Integritaet ────────────────────────────────────
@@ -2718,6 +2766,397 @@ window.GpoRenderer = (function() {
   const BSI_CATEGORY_ORDER = ['domain_controllers', 'member_servers', 'clients'];
   const BSI_REQUIREMENT_ORDER = ['BSI-SYS.2.2.3-NTLM-LM-LEVEL', 'BSI-APP.2.2-SECURE-CHANNEL', 'BSI-SYS.2.2.3-SMB-SIGNING'];
 
+  // V3.5.3: kurze, eigenstaendig formulierte Zusammenfassung je Requirement
+  // + Link auf die zugrunde liegende offizielle BSI-Quelle (IT-Grundschutz-
+  // Kompendium, Edition 2023, PDF direkt beim BSI). Jede Quelle wurde vor
+  // Einbau per Volltext-Abgleich der PDFs verifiziert (siehe Bericht) - kein
+  // Requirement bekommt eine geratene/nicht gegengeprüfte URL.
+  //
+  // Wichtiger Befund aus der Verifikation: die interne Requirement-ID
+  // 'BSI-SYS.2.2.3-SMB-SIGNING' (bsi-mapping.js, hier NICHT geaendert)
+  // traegt historisch das Praefix "SYS.2.2.3" - die tatsaechliche, per
+  // Volltextsuche verifizierte SMB-Signierungspflicht ("Der SMB-
+  // Datenverkehr MUSS signiert sein.") steht aber in APP.2.2.A9, nicht in
+  // SYS.2.2.3 (dort 0 Treffer fuer "SMB"/"signier"). Die hier hinterlegte
+  // Quelle verlinkt deshalb bewusst auf APP.2.2 statt auf SYS.2.2.3 - siehe
+  // Bericht fuer die vollstaendige Einordnung dieser Diskrepanz.
+  const BSI_REQUIREMENT_INFO = {
+    'BSI-SYS.2.2.3-NTLM-LM-LEVEL': {
+      anforderung: 'BSI IT-Grundschutz-Kompendium, SYS.2.2.3.A9 "Sichere zentrale Authentisierung in Windows-Netzen": Für die zentrale Authentisierung soll bevorzugt Kerberos eingesetzt werden. Ist das nicht möglich, muss mindestens NTLMv2 verwendet werden - die Authentisierung über LAN-Manager und NTLMv1 darf weder innerhalb der Institution noch in einer produktiven Umgebung erlaubt sein.',
+      empfehlung: 'Das BSI empfiehlt, veraltete LAN-Manager-/NTLMv1-Authentisierung zu unterbinden und mindestens NTLMv2 zu erzwingen, idealerweise aber durchgängig Kerberos einzusetzen.',
+      sourceUrl: 'https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Grundschutz/IT-GS-Kompendium_Einzel_PDFs_2023/07_SYS_IT_Systeme/SYS_2_2_3_Clients_unter_Windows_Edition_2023.pdf?__blob=publicationFile&v=5',
+      sourceLabel: 'BSI IT-Grundschutz-Kompendium – SYS.2.2.3 „Clients unter Windows" (PDF, Anforderung A9)',
+      // V3.6 Einstiegsbereich ("BSI-Grundlage"): dieselben, hier bereits
+      // verifizierten Angaben nur zusaetzlich strukturiert (Baustein +
+      // Anforderungsnummer) - keine neue Quelle, keine neue Aussage.
+      bausteinLabel: 'SYS.2.2.3 – Clients unter Windows',
+      anforderungNr: 'A9',
+      grundlageLabel: 'Grundlage für die NTLM-Bewertung',
+    },
+    'BSI-APP.2.2-SECURE-CHANNEL': {
+      anforderung: 'BSI IT-Grundschutz-Kompendium, APP.2.2.A8 "Absicherung des Sicheren Kanals": Der Sichere Kanal zwischen Domänenmitglied und Domänencontroller soll so konfiguriert sein, dass alle übertragenen Daten immer verschlüsselt und signiert werden.',
+      empfehlung: 'Das BSI empfiehlt, den Secure-Channel-Datenverkehr zwischen Domänenmitgliedern und Domänencontrollern durchgängig zu verschlüsseln und zu signieren.',
+      sourceUrl: 'https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Grundschutz/IT-GS-Kompendium_Einzel_PDFs_2023/06_APP_Anwendungen/APP_2_2_Active_Directory_Domain_Services_Edition_2023.pdf?__blob=publicationFile&v=4',
+      sourceLabel: 'BSI IT-Grundschutz-Kompendium – APP.2.2 „Active Directory Domain Services" (PDF, Anforderung A8)',
+      bausteinLabel: 'APP.2.2 – Active Directory Domain Services',
+      anforderungNr: 'A8',
+      grundlageLabel: 'Grundlage für die Secure-Channel-Bewertung',
+    },
+    'BSI-SYS.2.2.3-SMB-SIGNING': {
+      anforderung: 'BSI IT-Grundschutz-Kompendium, APP.2.2.A9 "Schutz der Authentisierung beim Einsatz von AD DS": der SMB-Datenverkehr muss signiert sein, SMBv1 muss deaktiviert sein.',
+      empfehlung: 'Das BSI schreibt signierten SMB-Datenverkehr verpflichtend vor und fordert die Deaktivierung von SMBv1.',
+      sourceUrl: 'https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Grundschutz/IT-GS-Kompendium_Einzel_PDFs_2023/06_APP_Anwendungen/APP_2_2_Active_Directory_Domain_Services_Edition_2023.pdf?__blob=publicationFile&v=4',
+      sourceLabel: 'BSI IT-Grundschutz-Kompendium – APP.2.2 „Active Directory Domain Services" (PDF, Anforderung A9)',
+      // Siehe Kopf-Kommentar oben: Requirement-ID traegt "SYS.2.2.3"-Praefix,
+      // die tatsaechlich verifizierte Quelle ist aber APP.2.2.A9 - diese
+      // Diskrepanz wird hier bewusst NICHT stillschweigend korrigiert,
+      // sondern die UI zeigt ausschliesslich die verifizierte Quelle.
+      bausteinLabel: 'APP.2.2 – Active Directory Domain Services',
+      anforderungNr: 'A9',
+      grundlageLabel: 'Grundlage für die SMB-Signierungsbewertung',
+    },
+  };
+
+  // ── Einstiegsbereich "BSI-Grundlage" (V3.6) ──────────────────
+  // Rein statisch (kein Modell noetig) - baut ausschliesslich auf
+  // BSI_REQUIREMENT_INFO/-LABELS/-ORDER auf (dieselbe, bereits in der BSI-
+  // Coverage-Sektion verifizierte Quelle), damit es keine zweite,
+  // abweichende BSI-Quellenliste gibt. Laeuft einmalig beim Laden der
+  // Seite, unabhaengig davon, ob bereits ein Snapshot hochgeladen wurde.
+  function renderBsiFoundationOnboarding() {
+    const grid = document.getElementById('gpo-onboarding-bsi-grid');
+    if (!grid) return;
+    grid.replaceChildren();
+
+    BSI_REQUIREMENT_ORDER.forEach(requirementId => {
+      const info = BSI_REQUIREMENT_INFO[requirementId];
+      if (!info) return;
+
+      const card = document.createElement('div');
+      card.className = 'gpo-bsi-requirement-card';
+
+      const baustein = document.createElement('div');
+      baustein.className = 'gpo-finding-sub-title';
+      baustein.textContent = info.bausteinLabel || '';
+      card.appendChild(baustein);
+
+      const reqLine = document.createElement('div');
+      reqLine.className = 'gpo-onboarding-bsi-req';
+      reqLine.textContent = (info.anforderungNr ? info.anforderungNr + ' · ' : '') + (BSI_REQUIREMENT_LABELS[requirementId] || requirementId);
+      card.appendChild(reqLine);
+
+      const desc = document.createElement('div');
+      desc.className = 'gpo-onboarding-bsi-desc';
+      desc.textContent = info.grundlageLabel || ('Grundlage für die ' + (BSI_REQUIREMENT_LABELS[requirementId] || requirementId) + '-Bewertung');
+      card.appendChild(desc);
+
+      if (info.sourceUrl) {
+        const link = document.createElement('a');
+        link.className = 'gpo-kpi-bsi-link';
+        link.href = info.sourceUrl;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = 'BSI-Dokument öffnen →';
+        card.appendChild(link);
+      } else {
+        const missing = document.createElement('div');
+        missing.className = 'gpo-bsi-source-missing';
+        missing.textContent = 'Offizielle BSI-Quelle derzeit nicht hinterlegt.';
+        card.appendChild(missing);
+      }
+
+      grid.appendChild(card);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', renderBsiFoundationOnboarding);
+
+  const BSI_COMPLIANCE_LABELS = { erfuellt: 'Erfüllt', nicht_erfuellt: 'Nicht erfüllt', pruefen: 'Prüfen' };
+
+  // Reine 1:1-Anzeige-Zuordnung bereits vorhandener Enum-Werte (coverage/
+  // status aus evaluateComputerRequirement()) auf Symbol+Text+aria-label -
+  // keine neue Bewertung, keine Ableitung. Coverage-Symbol bleibt immer
+  // neutral eingefaerbt; nur der Compliance-Zusatz traegt Farbe (Auftrag
+  // Punkt 4/18: Coverage und Compliance duerfen farblich nicht vermischt
+  // werden).
+  function buildComputerStatusBadge(entry) {
+    const wrap = document.createElement('span');
+    wrap.className = 'gpo-bsi-badge';
+
+    if (entry.coverage === 'covered') {
+      wrap.classList.add('gpo-bsi-badge--covered');
+      const cov = document.createElement('span');
+      cov.className = 'gpo-bsi-badge-coverage';
+      cov.textContent = '✓ Covered';
+      wrap.appendChild(cov);
+
+      if (BSI_COMPLIANCE_LABELS[entry.status]) {
+        const compl = document.createElement('span');
+        compl.className = 'gpo-bsi-badge-compliance gpo-bsi-badge-compliance--' + entry.status.replace(/_/g, '-');
+        const symbol = entry.status === 'nicht_erfuellt' ? '⚠ ' : (entry.status === 'pruefen' ? '? ' : '');
+        compl.textContent = '· ' + symbol + BSI_COMPLIANCE_LABELS[entry.status];
+        wrap.appendChild(compl);
+        wrap.setAttribute('aria-label', 'Covered – Anforderung ' + BSI_COMPLIANCE_LABELS[entry.status].toLowerCase());
+      } else {
+        wrap.setAttribute('aria-label', 'Covered');
+      }
+    } else if (entry.coverage === 'not_covered') {
+      wrap.classList.add('gpo-bsi-badge--not-covered');
+      wrap.textContent = '✕ Nicht abgedeckt';
+      wrap.setAttribute('aria-label', 'Nicht abgedeckt');
+    } else if (entry.coverage === 'not_determinable') {
+      wrap.classList.add('gpo-bsi-badge--not-determinable');
+      wrap.textContent = '? Nicht bestimmbar';
+      wrap.setAttribute('aria-label', 'Nicht bestimmbar');
+    } else {
+      wrap.textContent = String(entry.coverage);
+    }
+
+    return wrap;
+  }
+
+  // GPO-ID -> GPO-Name ausschliesslich ueber das bereits geladene Modell
+  // (_model.gpos, dieselbe Datenquelle wie openGpoDetail()) - kein Raten,
+  // keine neue Lookup-Struktur. Ohne Treffer bleibt die GUID sichtbar.
+  function gpoRefLabel(gpoId) {
+    const gpo = (_model.gpos || []).find(g => g.id === gpoId);
+    return gpo && gpo.name ? gpo.name : ('GPO-ID: ' + gpoId);
+  }
+
+  function buildBsiDetailBlock(title, text) {
+    const wrap = document.createElement('div');
+    const t = document.createElement('div');
+    t.className = 'gpo-finding-sub-title';
+    t.textContent = title;
+    const p = document.createElement('div');
+    p.className = 'gpo-bsi-computer-detail-text';
+    p.textContent = text;
+    wrap.append(t, p);
+    return wrap;
+  }
+
+  function buildBsiGpoListBlock(title, gpoIds) {
+    const wrap = document.createElement('div');
+    const t = document.createElement('div');
+    t.className = 'gpo-finding-sub-title';
+    t.textContent = title;
+    wrap.appendChild(t);
+
+    if (!gpoIds || gpoIds.length === 0) {
+      const none = document.createElement('div');
+      none.className = 'gpo-bsi-computer-detail-text';
+      none.textContent = 'Keine.';
+      wrap.appendChild(none);
+      return wrap;
+    }
+
+    const list = document.createElement('ul');
+    list.className = 'gpo-bsi-gpo-list';
+    gpoIds.forEach(id => {
+      const li = document.createElement('li');
+      li.textContent = gpoRefLabel(id);
+      list.appendChild(li);
+    });
+    wrap.appendChild(list);
+    return wrap;
+  }
+
+  // values kommt 1:1 aus evaluateComputerRequirement() (Setting-Key ->
+  // erkannter Wert) - reine Schluessel/Wert-Anzeige, keine fachliche
+  // Interpretation. Ein leeres Objekt bedeutet nur "keine konfigurierte
+  // Einstellung erkannt", NICHT automatisch "nicht erfuellt" (Auftrag
+  // Punkt 8).
+  function buildBsiValuesBlock(values) {
+    const wrap = document.createElement('div');
+    const t = document.createElement('div');
+    t.className = 'gpo-finding-sub-title';
+    t.textContent = 'Erkannte Werte';
+    wrap.appendChild(t);
+
+    const entries = values ? Object.entries(values) : [];
+    if (entries.length === 0) {
+      const none = document.createElement('div');
+      none.className = 'gpo-bsi-computer-detail-text';
+      none.textContent = 'Keine konfigurierte Einstellung erkannt.';
+      wrap.appendChild(none);
+      return wrap;
+    }
+
+    const list = document.createElement('ul');
+    list.className = 'gpo-bsi-values-list';
+    entries.forEach(([key, value]) => {
+      const li = document.createElement('li');
+      li.textContent = key + ': ' + (value === undefined ? '(kein Wert)' : value);
+      list.appendChild(li);
+    });
+    wrap.appendChild(list);
+    return wrap;
+  }
+
+  // Ein Computer-Eintrag aus evaluateComputerCoverage()'s result.computers[]
+  // (V3.5.1) - zeigt ausschliesslich bereits vorhandene Felder
+  // (computer.*, coverage, status, reason, reachingGpoIds,
+  // configuringGpoIds, values). Keine neue fachliche Interpretation, keine
+  // Gewinner-GPO. Standardmaessig zugeklappt (natives <details>).
+  function buildBsiComputerRow(entry) {
+    const c = entry.computer || {};
+    const details = document.createElement('details');
+    details.className = 'gpo-bsi-computer';
+
+    const summary = document.createElement('summary');
+    summary.className = 'gpo-bsi-computer-summary';
+    summary.setAttribute('aria-label', 'Details fuer ' + (c.distinguishedName || 'Computer ohne distinguishedName') + ' ein-/ausklappen');
+    summary.appendChild(buildComputerStatusBadge(entry));
+
+    const dn = document.createElement('span');
+    dn.className = 'gpo-bsi-computer-dn';
+    dn.textContent = c.distinguishedName || '(kein distinguishedName)';
+    summary.appendChild(dn);
+
+    const metaParts = [];
+    metaParts.push(c.operatingSystem ? c.operatingSystem : 'OS unbekannt');
+    if (c.enabled === false) metaParts.push('Deaktiviert');
+    if (c.isReadOnlyDomainController) metaParts.push('RODC');
+    const meta = document.createElement('span');
+    meta.className = 'gpo-bsi-computer-meta';
+    meta.textContent = metaParts.join(' · ');
+    summary.appendChild(meta);
+
+    details.appendChild(summary);
+
+    const body = document.createElement('div');
+    body.className = 'gpo-bsi-computer-details';
+    if (entry.reason) body.appendChild(buildBsiDetailBlock('Warum dieses Ergebnis?', entry.reason));
+    body.appendChild(buildBsiGpoListBlock('Erreichende GPOs', entry.reachingGpoIds));
+    body.appendChild(buildBsiGpoListBlock('Konfigurierende GPOs', entry.configuringGpoIds));
+    body.appendChild(buildBsiValuesBlock(entry.values));
+    details.appendChild(body);
+
+    return details;
+  }
+
+  function buildBsiComputerListDetails(computers) {
+    const details = document.createElement('details');
+    details.className = 'gpo-bsi-category-details';
+    const summary = document.createElement('summary');
+    summary.className = 'gpo-bsi-category-details-summary';
+    summary.textContent = '▼ Details';
+    summary.setAttribute('aria-label', 'Computerliste ein-/ausklappen (' + computers.length + ' Computer)');
+    details.appendChild(summary);
+
+    const list = document.createElement('div');
+    list.className = 'gpo-bsi-computer-list';
+    computers.forEach(entry => list.appendChild(buildBsiComputerRow(entry)));
+    details.appendChild(list);
+
+    return details;
+  }
+
+  // BSI-Anforderung/Empfehlung + Quelle - rein informativ, unabhaengig von
+  // computers.json (deshalb auch sichtbar, wenn Computer-Coverage fuer
+  // diesen Snapshot nicht auswertbar ist). Quelle nur verlinkt, wenn vorab
+  // per Volltextabgleich verifiziert (siehe BSI_REQUIREMENT_INFO-Kommentar
+  // und Bericht) - sonst expliziter "nicht hinterlegt"-Hinweis statt einer
+  // geratenen URL.
+  function buildBsiRequirementInfo(requirementId) {
+    const info = BSI_REQUIREMENT_INFO[requirementId];
+    const details = document.createElement('details');
+    details.className = 'gpo-bsi-req-info';
+    const summary = document.createElement('summary');
+    summary.className = 'gpo-bsi-req-info-summary';
+    summary.textContent = 'BSI-Anforderung / Empfehlung';
+    details.appendChild(summary);
+
+    const body = document.createElement('div');
+    body.className = 'gpo-bsi-req-info-body';
+
+    if (info) {
+      body.appendChild(buildBsiDetailBlock('BSI-Anforderung', info.anforderung));
+      body.appendChild(buildBsiDetailBlock('Was empfiehlt das BSI?', info.empfehlung));
+    }
+
+    if (info && info.sourceUrl) {
+      const link = document.createElement('a');
+      link.className = 'gpo-kpi-bsi-link';
+      link.href = info.sourceUrl;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.textContent = (info.sourceLabel || 'BSI-Quelle') + ' öffnen →';
+      body.appendChild(link);
+    } else {
+      const missing = document.createElement('div');
+      missing.className = 'gpo-bsi-source-missing';
+      missing.textContent = 'Offizielle BSI-Quelle derzeit nicht hinterlegt.';
+      body.appendChild(missing);
+    }
+
+    details.appendChild(body);
+    return details;
+  }
+
+  // Welche der fuenf fachlich relevanten Snapshot-Dateien wurden tatsaechlich
+  // geladen? Ausschliesslich bereits vorhandene Datenquellen: _missingFiles
+  // (identische Liste, die auch renderMissingHint() zeigt) sowie die beiden
+  // bestehenden dataQuality-Flags. Keine neue Datenherkunftslogik.
+  const BSI_DATA_SOURCE_FILES = [
+    { label: 'Computer', filename: 'computers.json' },
+    { label: 'GPO-Konfiguration', filename: 'gpos.json' },
+    { label: 'GPO-Verknüpfungen', filename: 'links.json' },
+    { label: 'Security-Filter', filename: 'filters.json' },
+    { label: 'WMI-Filter', filename: 'wmi-filters.json' },
+  ];
+
+  function isBsiDataSourceMissing(filename) {
+    const dq = _model.dataQuality || {};
+    if (filename === 'computers.json') return !!dq.computersFileMissing;
+    if (filename === 'links.json') return !!dq.linksFileMissing;
+    return (_missingFiles || []).indexOf(filename) !== -1;
+  }
+
+  // Reine Anzeige-Liste, von zwei Stellen wiederverwendet (bestehende
+  // Datenbasis innerhalb von BSI-Coverage UND der neue zentrale
+  // "Datenbasis"-Hauptbereich, V3.7 Punkt 11) - keine zweite, abweichende
+  // Pruef-Logik, dieselbe isBsiDataSourceMissing()/BSI_DATA_SOURCE_FILES.
+  function buildDataBasisList() {
+    const list = document.createElement('ul');
+    list.className = 'gpo-bsi-databasis-list';
+    BSI_DATA_SOURCE_FILES.forEach(({ label, filename }) => {
+      const missing = isBsiDataSourceMissing(filename);
+      const li = document.createElement('li');
+      li.className = 'gpo-bsi-databasis-item' + (missing ? ' gpo-bsi-databasis-item--missing' : '');
+      li.textContent = (missing ? '✕ ' : '✓ ') + label + ': ' + filename + (missing ? ' (nicht im Snapshot vorhanden)' : ' (geladen)');
+      list.appendChild(li);
+    });
+    return list;
+  }
+
+  function buildBsiDataBasisSection() {
+    const details = document.createElement('details');
+    details.className = 'gpo-bsi-databasis';
+    const summary = document.createElement('summary');
+    summary.className = 'gpo-bsi-databasis-summary';
+    summary.textContent = 'Datenbasis';
+    details.appendChild(summary);
+    details.appendChild(buildDataBasisList());
+    return details;
+  }
+
+  // Zentraler, eigenstaendiger "Datenbasis"-Hauptbereich (V3.7 Punkt 11) -
+  // zeigt dieselbe Datei-Verfuegbarkeit wie buildBsiDataBasisSection()
+  // oben, nur an einer zweiten, ueber die Seiten-Navigation direkt
+  // erreichbaren Stelle. Keine neue Datenherkunftslogik.
+  function renderDataBasisSection() {
+    const container = document.getElementById('gpo-databasis-container');
+    if (!container) return;
+    container.replaceChildren();
+
+    const intro = document.createElement('div');
+    intro.className = 'gpo-bsi-intro';
+    intro.textContent = 'Zeigt ausschließlich, welche der vom Analyzer erwarteten Snapshot-Dateien im aktuell geladenen ZIP tatsächlich vorhanden waren – computers.json fehlend und computers.json vorhanden-aber-leer bleiben dabei unterscheidbar.';
+    container.appendChild(intro);
+    container.appendChild(buildDataBasisList());
+  }
+
   function renderBsiCoverage() {
     const container = document.getElementById('gpo-bsi-container');
     if (!container) return;
@@ -2725,7 +3164,7 @@ window.GpoRenderer = (function() {
 
     const intro = document.createElement('div');
     intro.className = 'gpo-bsi-intro';
-    intro.textContent = 'Coverage zeigt nur, ob für einen Computer-Bereich eine eindeutig auswertbare GPO-Konfiguration vorliegt – nicht, ob die Anforderung erfüllt ist. Diese Ansicht zeigt ausschließlich die Computer-Kategorie-Aggregation für die drei bestehenden BSI-Requirements, kein Drill-down auf einzelne GPOs oder Computer.';
+    intro.textContent = 'Coverage zeigt nur, ob für einen Computer-Bereich eine eindeutig auswertbare GPO-Konfiguration vorliegt – nicht, ob die Anforderung erfüllt ist. Über "▼ Details" lässt sich je Kategorie die zugrunde liegende Computer-/GPO-Evidenz nachvollziehen.';
     container.appendChild(intro);
 
     if (!window.GpoBsiMapping || typeof window.GpoBsiMapping.evaluateComputerCoverage !== 'function') {
@@ -2736,45 +3175,42 @@ window.GpoRenderer = (function() {
       return;
     }
 
+    // Expliziter Trennungshinweis (Auftrag Punkt 17) - oberhalb der
+    // Detailansicht, damit ein gruenes Coverage-Symbol nie allein als
+    // BSI-Konformitaet gelesen wird.
+    const complianceHint = document.createElement('div');
+    complianceHint.className = 'gpo-bsi-intro';
+    complianceHint.textContent = 'Coverage und Compliance sind getrennte Aussagen: „Covered" bedeutet, dass eine auswertbare GPO-Konfiguration gefunden wurde. „Erfüllt", „Nicht erfüllt" oder „Prüfen" beschreibt die fachliche Bewertung. Aus einem Covered-Symbol allein lässt sich keine BSI-Konformität ableiten.';
+    container.appendChild(complianceHint);
+
     const dataQuality = _model.dataQuality || {};
-    if (dataQuality.computersFileMissing) {
-      const empty = document.createElement('div');
-      empty.className = 'gpo-empty';
-      empty.textContent = 'Keine computers.json im Snapshot vorhanden. Computer-basierte Coverage kann für diesen Snapshot nicht ausgewertet werden.';
-      container.appendChild(empty);
-      return;
-    }
+    const computersMissing = !!dataQuality.computersFileMissing;
 
-    const coverage = window.GpoBsiMapping.evaluateComputerCoverage(_model);
-
-    // Zeilenbezogener Covered-vs-Compliance-Hinweis: ausschliesslich aus den
-    // bereits vorhandenen, GPO-zentrierten evaluate()-Ergebnissen abgeleitet
-    // (dort liegen scopeCategory + coverage + status bereits gemeinsam pro
-    // Eintrag vor - keine neue Berechnung, kein erneutes Auswerten von GPO-
-    // Settings/Links/Filtern). evaluateComputerCoverage()'s eigene, neuere
-    // Computer-Instanz-Aggregation verwirft den pro-Computer ermittelten
-    // Status dagegen vollstaendig (siehe aggregateComputerCoverage() -
-    // "result.status" wird dort nirgends gelesen) - deshalb ist dieser
-    // Hinweis nur fuer "domain_controllers" moeglich, wo evaluate() ueber
-    // addScopeCoverage() weiterhin echte scopeCategory-Eintraege mit Status
-    // liefert. Fuer member_servers/clients gibt es aktuell keine
-    // vorhandene Datenquelle dafuer (siehe Bericht) - der Hinweis bleibt
-    // dort bewusst immer aus, statt etwas Neues zu berechnen oder zu raten.
+    // Zeilenbezogener Covered-vs-Compliance-Hinweis (Info-Icon, siehe
+    // bsiCoveredNonCompliantEntries() unten) bleibt unveraendert bestehen -
+    // der neue Computer-Drill-down unten liefert dieselbe Unterscheidung
+    // jetzt zusaetzlich fuer alle drei Kategorien direkt pro Computer.
     const gpoCentricByRequirement = (typeof window.GpoBsiMapping.evaluate === 'function')
       ? window.GpoBsiMapping.evaluate(_model, _findings)
       : {};
+    const coverage = computersMissing ? null : window.GpoBsiMapping.evaluateComputerCoverage(_model);
 
     const grid = document.createElement('div');
     grid.className = 'gpo-bsi-grid';
     BSI_REQUIREMENT_ORDER.forEach(requirementId => {
-      if (coverage[requirementId]) {
-        grid.appendChild(buildBsiRequirementCard(requirementId, coverage[requirementId], gpoCentricByRequirement[requirementId] || []));
-      }
+      const req = coverage ? coverage[requirementId] : null;
+      grid.appendChild(buildBsiRequirementCard(requirementId, req, gpoCentricByRequirement[requirementId] || [], computersMissing));
     });
     container.appendChild(grid);
+
+    container.appendChild(buildBsiDataBasisSection());
   }
 
-  function buildBsiRequirementCard(requirementId, req, gpoCentricEntries) {
+  // V3.7: Reihenfolge bewusst "Ergebnis zuerst" (Auftrag Punkt 8/10) -
+  // Titel -> kompakte Kategorie-Zusammenfassung -> Anforderung/BSI-
+  // Empfehlung erst ganz unten, aufklappbar. Rein die Anzeige-Reihenfolge
+  // geaendert, keine der darunterliegenden Werte/Berechnungen angefasst.
+  function buildBsiRequirementCard(requirementId, req, gpoCentricEntries, computersMissing) {
     const card = document.createElement('div');
     card.className = 'gpo-bsi-requirement-card';
 
@@ -2783,15 +3219,36 @@ window.GpoRenderer = (function() {
     title.textContent = BSI_REQUIREMENT_LABELS[requirementId] || requirementId;
     card.appendChild(title);
 
+    // computers.json fehlt (oder Coverage konnte aus anderem Grund nicht
+    // berechnet werden) -> keine Computerlisten darstellen, bestehenden
+    // Hinweis zeigen statt "0 Computer" (Auftrag Punkt 14). Die
+    // Anforderung/Empfehlung bleibt trotzdem sichtbar (braucht keine
+    // Computerdaten).
+    if (computersMissing || !req) {
+      const empty = document.createElement('div');
+      empty.className = 'gpo-empty';
+      empty.textContent = 'Keine computers.json im Snapshot vorhanden. Computer-basierte Coverage kann für diesen Snapshot nicht ausgewertet werden.';
+      card.appendChild(empty);
+      card.appendChild(buildBsiRequirementInfo(requirementId));
+      return card;
+    }
+
     BSI_CATEGORY_ORDER.forEach(catKey => {
       const cat = req.categories[catKey];
-      if (cat) card.appendChild(buildBsiCategoryRow(BSI_CATEGORY_LABELS[catKey], cat, catKey, gpoCentricEntries));
+      if (cat) card.appendChild(buildBsiCategoryRow(BSI_CATEGORY_LABELS[catKey], cat, catKey, gpoCentricEntries, req.computers));
     });
 
     const unknownLine = document.createElement('div');
     unknownLine.className = 'gpo-bsi-unknown-line';
     unknownLine.textContent = 'Unknown: ' + req.unknown + ' – Computer ohne eindeutige Kategorie, nicht in Domain Controllers/Member Server/Clients eingerechnet.';
     card.appendChild(unknownLine);
+
+    if (req.unknown > 0) {
+      const unknownComputers = (req.computers || []).filter(c => c.computer && c.computer.category === 'unknown');
+      if (unknownComputers.length > 0) card.appendChild(buildBsiComputerListDetails(unknownComputers));
+    }
+
+    card.appendChild(buildBsiRequirementInfo(requirementId));
 
     return card;
   }
@@ -2804,7 +3261,7 @@ window.GpoRenderer = (function() {
     return gpoCentricEntries.filter(e => e.scopeCategory === catKey && e.coverage === 'covered' && e.status && e.status !== 'erfuellt');
   }
 
-  function buildBsiCategoryRow(label, cat, catKey, gpoCentricEntries) {
+  function buildBsiCategoryRow(label, cat, catKey, gpoCentricEntries, computers) {
     const row = document.createElement('div');
     row.className = 'gpo-bsi-category-row';
 
@@ -2841,6 +3298,11 @@ window.GpoRenderer = (function() {
       stats.appendChild(stat);
     });
     row.appendChild(stats);
+
+    if (cat.total > 0) {
+      const categoryComputers = (computers || []).filter(c => c.computer && c.computer.category === catKey);
+      if (categoryComputers.length > 0) row.appendChild(buildBsiComputerListDetails(categoryComputers));
+    }
 
     return row;
   }
@@ -2881,6 +3343,68 @@ window.GpoRenderer = (function() {
   }
 
   document.addEventListener('DOMContentLoaded', initSearchInputs);
+
+  // ── Aktive Seiten-Navigation (V3.7) ──────────────────────────
+  // Reine Darstellung: hebt in der Sidebar-Navigation hervor, welcher der
+  // 6 Hauptbereiche gerade im Sichtbereich liegt. Nutzt ausschliesslich
+  // IntersectionObserver (Auftrag Punkt 3) - keine eigene Scroll-Berechnung,
+  // keine fachliche Logik. Ist aktuell kein Bereich eindeutig sichtbar
+  // (z.B. zwischen zwei Sektionen), bleibt die zuletzt gesetzte
+  // Hervorhebung bestehen, statt sie zu loeschen.
+  const NAV_SECTION_IDS = [
+    'gpo-dashboard-section',
+    'gpo-explorer-section',
+    'gpo-findings-section',
+    'gpo-tree-section',
+    'gpo-bsi-section',
+    'gpo-databasis-section',
+  ];
+
+  function initActiveNavHighlight() {
+    if (typeof IntersectionObserver !== 'function') return;
+
+    const linksById = {};
+    document.querySelectorAll('.gpo-page-nav-link').forEach(a => {
+      const id = (a.getAttribute('href') || '').replace('#', '');
+      if (id) linksById[id] = a;
+    });
+
+    const sections = NAV_SECTION_IDS.map(id => document.getElementById(id)).filter(Boolean);
+    if (!sections.length) return;
+
+    let activeId = null;
+    function setActive(id) {
+      if (id === activeId) return;
+      activeId = id;
+      Object.keys(linksById).forEach(linkId => {
+        linksById[linkId].classList.toggle('gpo-page-nav-link--active', linkId === id);
+      });
+    }
+
+    const ratioById = new Map();
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        ratioById.set(entry.target.id, entry.isIntersecting ? entry.intersectionRatio : 0);
+      });
+      let bestId = null;
+      let bestRatio = 0;
+      ratioById.forEach((ratio, id) => {
+        if (ratio > bestRatio) { bestRatio = ratio; bestId = id; }
+      });
+      // Nur wechseln, wenn tatsaechlich ein Bereich eindeutig sichtbar ist -
+      // sonst bleibt die zuletzt bekannte Hervorhebung stehen (Auftrag
+      // Punkt 3, letzter Satz).
+      if (bestId) setActive(bestId);
+    }, {
+      root: null,
+      rootMargin: '-96px 0px -55% 0px',
+      threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
+    });
+
+    sections.forEach(sec => observer.observe(sec));
+  }
+
+  document.addEventListener('DOMContentLoaded', initActiveNavHighlight);
 
   return { renderOverview };
 })();
