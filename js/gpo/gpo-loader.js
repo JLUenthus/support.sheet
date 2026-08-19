@@ -1,10 +1,11 @@
 // ============================================================
 // gpo-loader.js – Upload-Zone (Drag & Drop + Klick), entpackt die
-// ZIP mit js/jszip.min.js und liest die 5 erwarteten JSON-Dateien
-// aus. Fehlt eine Datei, laeuft der Analyzer trotzdem weiter -
-// gpo-renderer.js zeigt dann sichtbar, welche Auswertung dadurch
-// eingeschraenkt ist. Reicht die rohen JSON-Objekte an
-// gpo-parser.js weiter.
+// ZIP mit js/jszip.min.js und liest die erwarteten JSON-Dateien aus
+// (5 Kern-Dateien + optional computers.json, siehe
+// SILENT_OPTIONAL_FILES). Fehlt eine Kern-Datei, laeuft der Analyzer
+// trotzdem weiter - gpo-renderer.js zeigt dann sichtbar, welche
+// Auswertung dadurch eingeschraenkt ist. Reicht die rohen JSON-Objekte
+// an gpo-parser.js weiter.
 // ============================================================
 window.GpoLoader = (function() {
 
@@ -14,7 +15,17 @@ window.GpoLoader = (function() {
     'filters.json': 'filters',
     'wmi-filters.json': 'wmiFilters',
     'metadata.json': 'metadata',
+    'computers.json': 'computers',
   };
+
+  // computers.json wird zwar wie jede andere Datei eingelesen (siehe Schleife
+  // unten), erscheint aber bewusst NICHT in der "fehlende Datei(en)"-Warnung:
+  // sie ist eine optionale, aktuell noch von keiner Funktion konsumierte
+  // Datenquelle (keine BSI-Coverage implementiert) - eine Warnung "Analyzer
+  // läuft eingeschränkt weiter" waere hier irrefuehrend, da tatsaechlich
+  // nichts eingeschraenkt ist. Sobald eine Funktion computers.json
+  // tatsaechlich auswertet, gehoert sie hier wieder heraus.
+  const SILENT_OPTIONAL_FILES = ['computers.json'];
 
   function init() {
     const zone = document.getElementById('gpo-upload-zone');
@@ -46,14 +57,18 @@ window.GpoLoader = (function() {
       for (const filename of Object.keys(FILE_TO_KEY)) {
         const entry = zip.file(filename);
         if (!entry) {
-          missingFiles.push(filename);
+          if (SILENT_OPTIONAL_FILES.indexOf(filename) === -1) missingFiles.push(filename);
           continue;
         }
         const text = await entry.async('string');
         raw[FILE_TO_KEY[filename]] = JSON.parse(text);
       }
 
-      if (missingFiles.length === Object.keys(FILE_TO_KEY).length) {
+      // Nur gegen die Kern-Dateien pruefen (ohne SILENT_OPTIONAL_FILES) -
+      // sonst wuerde ein ZIP, das ausschliesslich computers.json enthaelt,
+      // faelschlich als "gueltiger" Snapshot durchgehen.
+      const coreFileCount = Object.keys(FILE_TO_KEY).length - SILENT_OPTIONAL_FILES.length;
+      if (missingFiles.length === coreFileCount) {
         throw new Error('Keine der erwarteten Dateien (gpos.json, links.json, filters.json, wmi-filters.json, metadata.json) im ZIP gefunden.');
       }
 

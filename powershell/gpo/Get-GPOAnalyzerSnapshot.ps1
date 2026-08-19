@@ -5,16 +5,18 @@
 .DESCRIPTION
     Erzeugt einen moeglichst vollstaendigen Snapshot aller GPOs der aktuellen
     Domaene (Inventar, Einstellungen, Links, Security Filtering, WMI-Filter,
-    Block Inheritance) und verpackt ihn als ZIP zum Hochladen auf gpo.html.
+    Block Inheritance) sowie eine reine Rohdaten-/DC-Evidenz-Sammlung der
+    Computerobjekte (computers.json, fuer kuenftige BSI-Scope-Coverage) und
+    verpackt alles als ZIP zum Hochladen auf gpo.html.
 .NOTES
-    Autor: support.sheet | Version: 1.0
+    Autor: support.sheet | Version: 1.1
     Benoetigt: PowerShell 5.1+, RSAT-Module GroupPolicy und ActiveDirectory
     Ausfuehrung: auf einem Domain Controller oder einem domaenen-verbundenen
     Client mit installierten RSAT-Tools. Keine Admin-Rechte noetig, nur
     Leserechte auf GPOs/AD.
 #>
 
-$ScriptVersion = '1.0'
+$ScriptVersion = '1.1'
 
 Write-Host ""
 Write-Host "======================================================" -ForegroundColor Cyan
@@ -279,22 +281,65 @@ function ConvertFrom-GpoReportXml {
     return $settings
 }
 
-# WMI-Filter-Query steckt kodiert in msWMI-Parm2:
-# "<Anzahl>;<len_ns>;<len_query>;<namespace>;<query>;..." pro Klausel.
-# Best effort - bei mehreren ANDed Klauseln werden die Query-Texte verkettet.
+# WMI-Filter-Query steckt kodiert in msWMI-Parm2, pro Klausel im Format
+# <len(lang)>;<len(namespace)>;<len(query)>;<lang>;<namespace>;<query>;
+# vorangestellt durch <Anzahl Klauseln>;. Bestaetigt an echten AD-Rohdaten
+# (Domaene norddeutsche-wohnbau.local, Filter "Win 10", msWMI-ID
+# {832DF30F-0379-4277-8EE6-E440B8DE1945}):
+#   1;3;10;84;WQL;root\CIMv2;select * from Win32_OperatingSystem where
+#   Version like "10.0.2%" and ProductType="1";
+# Die vorherige Version dieser Funktion nahm faelschlich einen festen
+# 4-Feld-Versatz pro Klausel an und extrahierte dadurch Index 4 ("WQL",
+# die Sprachkennung) statt der eigentlichen Query ab Index 6 - alle vier
+# WMI-Filter im echten 82-GPO-Snapshot zeigten dadurch identisch "WQL"
+# statt eines echten Query-Texts.
+# Die Laengenfelder sind die einzig verlaessliche Grenze fuer <query> - ein
+# reines Split-by-";" wuerde eine Query mit eingebetteten Semikolons an der
+# falschen Stelle abschneiden. Deshalb wird ab der ersten Klausel
+# zeichenweise anhand der Laengenangaben durchlaufen statt blind zu
+# splitten; nur der fuehrende "<Anzahl>;" wird per einzelnem IndexOf
+# gelesen. Best effort - bei mehreren ANDed Klauseln werden die
+# Query-Texte weiterhin verkettet.
 function Get-WmiFilterQueryText {
     param([string]$Raw)
     if (-not $Raw) { return $null }
     try {
-        $parts = $Raw -split ';'
-        $count = [int]$parts[0]
+        $firstSemi = $Raw.IndexOf(';')
+        if ($firstSemi -lt 0) { return $null }
+        $count = [int]$Raw.Substring(0, $firstSemi)
+        $pos = $firstSemi + 1
         $queries = New-Object System.Collections.Generic.List[string]
-        $idx = 1
+
         for ($i = 0; $i -lt $count; $i++) {
-            $query = $parts[$idx + 3]
+            $langSemi = $Raw.IndexOf(';', $pos)
+            if ($langSemi -lt 0) { break }
+            $langLen = [int]$Raw.Substring($pos, $langSemi - $pos)
+            $pos = $langSemi + 1
+
+            $nsSemi = $Raw.IndexOf(';', $pos)
+            if ($nsSemi -lt 0) { break }
+            $nsLen = [int]$Raw.Substring($pos, $nsSemi - $pos)
+            $pos = $nsSemi + 1
+
+            $querySemi = $Raw.IndexOf(';', $pos)
+            if ($querySemi -lt 0) { break }
+            $queryLen = [int]$Raw.Substring($pos, $querySemi - $pos)
+            $pos = $querySemi + 1
+
+            # <lang> und <namespace> ueberspringen (je Laenge + trennendes ";")
+            $pos += $langLen + 1
+            $pos += $nsLen + 1
+
+            if ($pos + $queryLen -gt $Raw.Length) { break }
+            $query = $Raw.Substring($pos, $queryLen)
+            $pos += $queryLen
+            if ($pos -lt $Raw.Length -and $Raw[$pos] -eq ';') {
+                $query += ';'
+                $pos += 1
+            }
             if ($query) { $queries.Add($query) }
-            $idx += 4
         }
+
         if ($queries.Count -eq 0) { return $null }
         return ($queries -join ' AND ')
     } catch {
@@ -486,7 +531,71 @@ try {
     Write-Host "  Site-Verknuepfungen konnten nicht gelesen werden: $($_.Exception.Message)" -ForegroundColor Yellow
 }
 
-# ── 5) Metadaten ─────────────────────────────────────────────
+# ── 5) Computerobjekte (Rohdaten + Domain-Controller-Evidenz) ──
+# Reine Rohdaten- und Struktur-Evidenz-Sammlung fuer eine kuenftige BSI-
+# Scope-Coverage (Domain Controller/Member Server/Client/Unknown, siehe
+# V3.2.1/V3.2.1.1/V3.2.2-Analysen) - KEINE semantische Rollen-
+# klassifikation hier. isDomainController/isReadOnlyDomainController sind
+# reine Struktursignale (Get-ADDomainController-Cross-Reference ueber
+# ComputerObjectDN, keine Namens-/OU-Heuristik) und deshalb bereits jetzt
+# sicher bestimmbar. Die OS-string-basierte Member-Server-/Client-/
+# Unknown-Unterscheidung braucht dagegen eine konservative, Unknown-
+# tolerante Bewertungslogik mit echtem Beurteilungsspielraum - das ist
+# keine reine Datentransformation mehr und gehoert deshalb bewusst NICHT
+# in dieses rein rohdatenerfassende Collector-Skript (separater,
+# nachgelagerter Schritt).
+Write-Host "[5] Computerobjekte sammeln ..." -ForegroundColor Yellow
+$computerRecords = @()
+$SERVER_TRUST_ACCOUNT = 0x2000
+try {
+    $adComputers = @(Get-ADComputer -Filter * -Properties DistinguishedName, OperatingSystem, OperatingSystemVersion, Enabled, userAccountControl -ErrorAction Stop)
+
+    # Get-ADDomainController ist fuer die DC-Rollenzuordnung massgeblich
+    # (siehe Auftrag) - ComputerObjectDN verknuepft das DC-Objekt direkt und
+    # eindeutig mit dem zugehoerigen Computerobjekt, ganz ohne Namensabgleich.
+    $dcInfoByDn = @{}
+    try {
+        $dcRecords = @(Get-ADDomainController -Filter * -ErrorAction Stop)
+        foreach ($dc in $dcRecords) {
+            if ($dc.ComputerObjectDN) {
+                $dcInfoByDn[$dc.ComputerObjectDN.ToLowerInvariant()] = [bool]$dc.IsReadOnly
+            }
+        }
+    } catch {
+        Write-Host "  Domain-Controller-Evidenz (Get-ADDomainController) konnte nicht gelesen werden: $($_.Exception.Message)" -ForegroundColor Yellow
+        Write-Host "  isDomainController bleibt fuer alle Computerobjekte 'false' - keine Namens-/OU-Ersatzheuristik." -ForegroundColor Yellow
+    }
+
+    foreach ($comp in $adComputers) {
+        $dn = $comp.DistinguishedName
+        $dnKey = if ($dn) { $dn.ToLowerInvariant() } else { $null }
+        $isDc = [bool]($dnKey -and $dcInfoByDn.ContainsKey($dnKey))
+        $isRodc = [bool]($isDc -and $dcInfoByDn[$dnKey])
+
+        # userAccountControl (SERVER_TRUST_ACCOUNT) ist nur eine
+        # Gegenprobe, niemals massgeblich. Eine Abweichung wird transparent
+        # gemeldet statt stillschweigend aufgeloest oder ignoriert zu
+        # werden (Datenqualitaets-/Evidenzproblem, kein Rateergebnis).
+        $hasServerTrustBit = (([int64]$comp.userAccountControl) -band $SERVER_TRUST_ACCOUNT) -ne 0
+        if ($hasServerTrustBit -ne $isDc) {
+            Write-Host "  Datenqualitaets-Hinweis: userAccountControl (SERVER_TRUST_ACCOUNT) und Get-ADDomainController stimmen fuer '$dn' nicht ueberein - Get-ADDomainController bleibt massgeblich." -ForegroundColor Yellow
+        }
+
+        $computerRecords += [ordered]@{
+            distinguishedName          = $dn
+            operatingSystem            = $comp.OperatingSystem
+            operatingSystemVersion     = $comp.OperatingSystemVersion
+            enabled                    = [bool]$comp.Enabled
+            isDomainController         = $isDc
+            isReadOnlyDomainController = $isRodc
+        }
+    }
+} catch {
+    Write-Host "  Computerobjekte konnten nicht gelesen werden (fehlende Berechtigung oder Fehler): $($_.Exception.Message)" -ForegroundColor Yellow
+    Write-Host "  computers.json wird als leeres Array geschrieben - Computer-basierte Scope-Klassifikation ist fuer diesen Snapshot nicht verfuegbar." -ForegroundColor Yellow
+}
+
+# ── 6) Metadaten ─────────────────────────────────────────────
 $metadata = [ordered]@{
     domain           = $domain.DNSRoot
     collectedAt      = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ss')
@@ -500,7 +609,7 @@ $metadata = [ordered]@{
 
 # ── Verpacken ────────────────────────────────────────────────
 Write-Host ""
-Write-Host "[5] Snapshot verpacken ..." -ForegroundColor Yellow
+Write-Host "[6] Snapshot verpacken ..." -ForegroundColor Yellow
 
 $dateStamp = Get-Date -Format 'yyyy-MM-dd'
 $outputRoot = 'C:\Temp'
@@ -516,6 +625,7 @@ Write-JsonArray -Items $gpoRecords -Path (Join-Path $workDir 'gpos.json')
 Write-JsonArray -Items $linkRecords -Path (Join-Path $workDir 'links.json')
 Write-JsonArray -Items $filterRecords -Path (Join-Path $workDir 'filters.json')
 Write-JsonArray -Items $wmiFilterRecords -Path (Join-Path $workDir 'wmi-filters.json')
+Write-JsonArray -Items $computerRecords -Path (Join-Path $workDir 'computers.json')
 Write-JsonObject -Data $metadata -Path (Join-Path $workDir 'metadata.json')
 
 $zipPath = Join-Path $outputRoot "gpo-snapshot-$dateStamp.zip"
@@ -532,6 +642,7 @@ Write-Host "  OUs:                $($ous.Count)" -ForegroundColor White
 Write-Host "  Links (Ziele):      $($linkRecords.Count)" -ForegroundColor White
 Write-Host "  Security Filter:    $($filterRecords.Count)" -ForegroundColor White
 Write-Host "  WMI-Filter:         $($wmiFilterRecords.Count)" -ForegroundColor White
+Write-Host "  Computerobjekte:    $($computerRecords.Count)" -ForegroundColor White
 if ($skippedGpos.Count -gt 0) {
     Write-Host ""
     Write-Host "  Uebersprungene GPOs (Report nicht lesbar):" -ForegroundColor Yellow

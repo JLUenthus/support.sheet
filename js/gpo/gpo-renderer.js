@@ -858,6 +858,10 @@ window.GpoRenderer = (function() {
       gpoDetail.appendChild(gpoTitle);
 
       gpoDetail.appendChild(buildLinkList(entry.gpoId, finding.type));
+      // V3.0 Effective Scope: GPO-Name steht bereits in gpoTitle direkt
+      // darueber, deshalb ohne labelPrefix.
+      const detailGpo = gpoById(entry.gpoId);
+      if (detailGpo) appendScopeConstraintNote(gpoDetail, detailGpo);
 
       wrap.appendChild(gpoDetail);
     });
@@ -930,6 +934,78 @@ window.GpoRenderer = (function() {
       linkList.appendChild(li);
     });
     return linkList;
+  }
+
+  // ── Effective Scope (V3.0, Option A) ─────────────────────────
+  // Reine Anzeige-Ergaenzung auf Basis bereits vorhandener Felder
+  // (gpo.securityFilter/gpo.wmiFilter) - KEINE Aenderung an
+  // determineScopeOverlap()/aggregateOverlapResults()/computeGroupOverlap()/
+  // groupSettingsByKeyAndScope()/analyzeSettingConflicts(), kein neuer
+  // Finding-Typ, kein Eintrag in _findings (siehe V3-Architektur-Review:
+  // "Effective Scope" = bestehender OU-Scope + sichtbarer, NICHT
+  // auflösbarer Einschraenkungshinweis).
+  //
+  // Standard-Trustee-Erkennung: nutzt hasNonDefaultSecurityFilter()/
+  // isDefaultSecurityFilterTrustee() (weiter unten, OU-Baum-Badge) als
+  // einzige Quelle - kein zweiter, eigener Abgleich hier. Ursprünglich
+  // (V3.0) prüfte diese Funktion nur die englische Bezeichnung
+  // ("authenticated users$") und erkannte die deutsche Standard-Bezeichnung
+  // "Authentifizierte Benutzer" nicht, wodurch der Hinweis faelschlich bei
+  // allen 82/82 echten GPOs erschien. Seit dem Locale-Fix vergleicht sie
+  // zuerst sprachunabhaengig gegen die SID S-1-5-11, nur ohne SID gegen eine
+  // feste, kurze Namensliste - der Hinweis erscheint jetzt nur noch, wenn
+  // tatsaechlich ein vom Standard abweichender Trustee vorhanden ist, und
+  // nennt auch nur diese abweichenden Trustees (harmlose Standard-Eintraege
+  // wie "Authentifizierte Benutzer" werden aus der Auflistung entfernt,
+  // damit sie neben einer echten Einschraenkung nicht mit aufgelistet
+  // werden). looksLikeComputerTrustee() (gpo-analyzer.js) beantwortet eine
+  // andere Frage (Computer- vs. Benutzer-Zielgruppe fuer die Server-/RDS-
+  // Hygiene-Regel) und wird hier weiterhin NICHT herangezogen.
+  function buildSecurityFilterConstraintNote(gpo) {
+    const filters = gpo.securityFilter || [];
+    if (!filters.length) return null;
+    if (!hasNonDefaultSecurityFilter(gpo)) return null;
+    const trustees = filters.filter(f => !isDefaultSecurityFilterTrustee(f)).map(f => f.trustee).filter(Boolean).join(', ') || 'unbekannt';
+    return 'Zusätzlich eingeschränkt durch Security-Filter „' + trustees + '“ – welche Computer/Benutzer '
+      + 'das konkret betrifft, ist aus dem Snapshot nicht bestimmbar.';
+  }
+
+  function buildWmiFilterConstraintNote(gpo) {
+    if (!gpo.wmiFilter) return null;
+    const wmiName = gpo.wmiFilter.name || gpo.wmiFilter.id || 'unbekannt';
+    return 'Zusätzlich eingeschränkt durch WMI-Filter „' + wmiName + '“ – nicht auflösbar.';
+  }
+
+  // Gemeinsam genutzte Hilfsfunktion (siehe buildSecurityFilterConstraintNote()/
+  // buildWmiFilterConstraintNote() oben fuer die einzelnen Texte) - liefert
+  // null, wenn keine Einschraenkung vorliegt, sonst ein Array aus einer oder
+  // zwei Zeilen. Verwendet an drei Stellen (buildScopeVisualization(),
+  // buildEntryRowList()/buildDetailSection(), openGpoDetail()) statt die
+  // Pruef-Logik zu duplizieren.
+  function buildScopeConstraintNote(gpo) {
+    const notes = [buildSecurityFilterConstraintNote(gpo), buildWmiFilterConstraintNote(gpo)].filter(Boolean);
+    return notes.length ? notes : null;
+  }
+
+  // DOM-Hilfsfunktion fuer die zwei Stellen, an denen Security- UND WMI-
+  // Filter-Hinweis gemeinsam relevant sind (Scope-Visualisierung, "Beteiligte
+  // GPOs"). Selbe Optik wie der bestehende LINKS_FILE_MISSING_NOTE-Hinweis
+  // (.gpo-detail-no-link: klein, gedaempft, kursiv) - bewusst KEIN gruenes/
+  // neutrales Styling, das nach "geprueft und in Ordnung" aussehen koennte.
+  // labelPrefix ist optional: in der Scope-Visualisierung stehen mehrere GPOs
+  // nebeneinander ohne eigene Namens-Ueberschrift (analog zum bestehenden
+  // "⛔ {Name}: ..."-Muster bei missingLinkGpos direkt darueber) - an den
+  // anderen beiden Stellen steht der GPO-Name bereits daneben/darueber und
+  // labelPrefix bleibt leer.
+  function appendScopeConstraintNote(container, gpo, labelPrefix) {
+    const notes = buildScopeConstraintNote(gpo);
+    if (!notes) return;
+    notes.forEach(text => {
+      const row = document.createElement('div');
+      row.className = 'gpo-detail-no-link';
+      row.textContent = (labelPrefix ? labelPrefix + ': ' : '') + text;
+      container.appendChild(row);
+    });
   }
 
   // ── Scope-Visualisierung (V2.5) ─────────────────────────────
@@ -1085,6 +1161,17 @@ window.GpoRenderer = (function() {
       container.appendChild(missingWrap);
     }
 
+    // V3.0 Effective Scope: pro beteiligter GPO ein sichtbarer, nicht
+    // aufloesbarer Einschraenkungshinweis (Security-/WMI-Filter) - zusaetzlich
+    // zur bestehenden generischen Caveat-Zeile unten, die unveraendert bleibt.
+    const constraintWrap = document.createElement('div');
+    constraintWrap.className = 'gpo-scope-viz-site-note';
+    gpoIds.forEach(gpoId => {
+      const gpo = gpoById(gpoId);
+      if (gpo) appendScopeConstraintNote(constraintWrap, gpo, gpoNameById.get(gpoId));
+    });
+    if (constraintWrap.children.length) container.appendChild(constraintWrap);
+
     const caveat = document.createElement('div');
     caveat.className = 'gpo-scope-viz-caveat';
     caveat.textContent = 'Security- und WMI-Filter werden in dieser Darstellung nicht berücksichtigt.';
@@ -1164,6 +1251,10 @@ window.GpoRenderer = (function() {
       group.appendChild(row);
 
       group.appendChild(buildLinkList(entry.gpoId, finding.type));
+      // V3.0 Effective Scope: GPO-Name steht bereits in gpoLabel ("GPO: ...")
+      // direkt darueber, deshalb ohne labelPrefix.
+      const entryGpo = gpoById(entry.gpoId);
+      if (entryGpo) appendScopeConstraintNote(group, entryGpo);
       wrap.appendChild(group);
     });
     return wrap;
@@ -1884,10 +1975,32 @@ window.GpoRenderer = (function() {
 
   // "Standard" = ausschliesslich Authenticated Users - alles darueber
   // hinaus ist ein vom Standard abweichender Filter und wird markiert.
+  //
+  // Locale-Fix: der vorherige Abgleich prüfte nur die englische Bezeichnung
+  // ("authenticated users$") und erkannte die deutsche Standard-Bezeichnung
+  // "Authentifizierte Benutzer" nicht - dadurch wurde in der echten
+  // (deutschsprachigen) 82-GPO-Domäne bei 82/82 GPOs bzw. allen 236 OU-
+  // Baum-Zeilen fälschlich "vom Standard abweichend" erkannt, seit dieses
+  // Badge existiert (vor V3.0). Kein neuer Typvergleich, sondern derselbe
+  // exakte Abgleich, jetzt sprachunabhängig: zuerst gegen die wohlbekannte,
+  // feste Windows-SID S-1-5-11 (Authenticated Users) - kein Namensvergleich,
+  // kein Raten. Nur wenn trusteeSid fehlt, faellt der Vergleich auf eine
+  // feste, kurze Liste bekannter Standardnamen zurueck (exakter Vergleich,
+  // keine Teilstring-/Musteranerkennung). "Domain Users"/"Domänen-Benutzer"
+  // (RID 513) und andere Gruppen bleiben bewusst NICHT Teil dieser Liste -
+  // nur die eine bekannte "Authenticated Users"-Konstante gilt als Standard.
+  const AUTHENTICATED_USERS_SID = 'S-1-5-11';
+  const AUTHENTICATED_USERS_NAMES = ['authenticated users', 'authentifizierte benutzer'];
+
+  function isDefaultSecurityFilterTrustee(filter) {
+    if (filter.trusteeSid) return filter.trusteeSid.trim().toUpperCase() === AUTHENTICATED_USERS_SID;
+    return AUTHENTICATED_USERS_NAMES.includes((filter.trustee || '').trim().toLowerCase());
+  }
+
   function hasNonDefaultSecurityFilter(gpo) {
     const filters = gpo.securityFilter || [];
     if (!filters.length) return false;
-    return !filters.every(f => /authenticated users$/i.test((f.trustee || '').trim()));
+    return !filters.every(isDefaultSecurityFilterTrustee);
   }
 
   // ── GPO-Detailansicht (Klick auf eine GPO im Baum) ──────────
@@ -2033,6 +2146,17 @@ window.GpoRenderer = (function() {
       details.appendChild(row);
     });
 
+    // V3.0 Effective Scope: nur der Security-Filter-Teil des Hinweises (nicht
+    // die kombinierte buildScopeConstraintNote()), da dieser Abschnitt
+    // ausschliesslich Security Filtering betrifft.
+    const secNote = buildSecurityFilterConstraintNote(gpo);
+    if (secNote) {
+      const noteRow = document.createElement('div');
+      noteRow.className = 'gpo-detail-no-link';
+      noteRow.textContent = secNote;
+      details.appendChild(noteRow);
+    }
+
     return details;
   }
 
@@ -2047,6 +2171,17 @@ window.GpoRenderer = (function() {
     summary.textContent = 'WMI Filter';
     details.appendChild(summary);
     appendBodyContent(details, buildWmiFilterFacts(gpo.wmiFilter));
+
+    // V3.0 Effective Scope: nur der WMI-Teil des Hinweises, siehe Kommentar
+    // an buildGpoDetailSecurityFilter().
+    const wmiNote = buildWmiFilterConstraintNote(gpo);
+    if (wmiNote) {
+      const noteRow = document.createElement('div');
+      noteRow.className = 'gpo-detail-no-link';
+      noteRow.textContent = wmiNote;
+      details.appendChild(noteRow);
+    }
+
     return details;
   }
 

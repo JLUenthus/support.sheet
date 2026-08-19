@@ -175,6 +175,10 @@ window.GpoAnalyzer = (function() {
   // AD-Distinguished-Names listen vom Blatt zur Wurzel - die DN einer
   // Eltern-OU ist deshalb immer ein exaktes Komma-getrenntes Suffix der DN
   // jeder Kind-OU darunter. Case-insensitiv, wie in AD ueblich.
+  //
+  // Bewusste 1:1-Kopie fuer die BSI-Schicht.
+  // Siehe auch bsi-mapping.js:isAncestorOrEqualOu().
+  // Bei Aenderungen beide Stellen synchron halten.
   function isAncestorOrEqualOu(ancestorDn, dn) {
     const a = (ancestorDn || '').toLowerCase();
     const d = (dn || '').toLowerCase();
