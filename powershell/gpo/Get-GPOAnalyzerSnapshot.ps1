@@ -109,6 +109,19 @@ function Normalize-Guid {
 # Kategorie-Verschachtelung ist je nach GPMC-Version leicht unterschiedlich
 # (verschachtelte <Category><Name>.../Category> oder ein flaches
 # <Category>Text</Category>). Beide Formen werden abgedeckt.
+#
+# Bugfix (real-data-verifiziert an echter Get-GPOReport-XML, siehe
+# edge-base-report.xml/edge-chromium-report.xml): der urspruengliche
+# Flach-Text-Check "$current.ChildNodes.Count -eq 0" war falsch - ein
+# Element mit reinem Textinhalt (z.B. <Category>Microsoft Edge-Update/
+# Anwendungen/Microsoft Edge</Category>) hat trotzdem genau 1 Kind-Knoten
+# (den Text-Knoten selbst), ChildNodes.Count ist dort also 1, nicht 0. Die
+# Bedingung griff dadurch nie, jede flache Category wurde stillschweigend
+# zu $null - mit der Folge, dass mehrere fachlich unterschiedliche
+# Policies mit gleichem Namen (z.B. "Installation zulassen" fuer
+# verschiedene Microsoft-Edge-Kanaele) im normalisierten Modell identisch
+# aussahen. Korrigiert: prueft auf Abwesenheit von Kind-ELEMENTEN
+# (SelectSingleNode("*")), nicht auf Abwesenheit jeglicher Kind-Knoten.
 function Get-CategoryPath {
     param([System.Xml.XmlNode]$PolicyNode)
     $current = $PolicyNode.SelectSingleNode("*[local-name()='Category']")
@@ -119,7 +132,7 @@ function Get-CategoryPath {
         $nameNode = $current.SelectSingleNode("*[local-name()='Name']")
         if ($nameNode -and $nameNode.InnerText) {
             $names.Add($nameNode.InnerText)
-        } elseif ($current.InnerText -and $current.ChildNodes.Count -eq 0) {
+        } elseif ($current.InnerText -and -not $current.SelectSingleNode("*")) {
             $names.Add($current.InnerText)
         }
         $current = $current.SelectSingleNode("*[local-name()='Category']")
@@ -203,6 +216,41 @@ function Get-AccountPolicySettings {
     return $results
 }
 
+# Verifizierte SystemAccessPolicyName -> deutscher Anzeigename-Zuordnung.
+# <SecurityOptions>-Knoten ohne <Display>/<KeyName> (System-Access-Policy-
+# Knoten, z.B. Kontosperr-/Anmeldezeit-bezogene Einstellungen) trugen
+# vorher immer den generischen Namen "Unbekannte Security Option", obwohl
+# ihr <SystemAccessPolicyName> ein fester, dokumentierter Schema-Bezeichner
+# ist (real-data-verifiziert an default-domain-policy-ndwb-report.xml).
+# Nur EXPLIZIT gegen oeffentliche Microsoft-Quellen verifizierte Eintraege
+# hier aufnehmen (siehe Quellenangaben je Eintrag) - keine geratenen
+# Uebersetzungen. Fachliche Bedeutung bestaetigt durch [MS-GPSB] (offizielle
+# Protokoll-/Schema-Dokumentation der System-Access-Policy-Schluessel),
+# exakter deutscher Anzeigename bestaetigt durch die deutschsprachige
+# LocalPoliciesSecurityOptions-Policy-CSP-Dokumentation von Microsoft.
+$SystemAccessPolicyDisplayNames = @{
+    # Quelle 1 (fachliche Bedeutung): [MS-GPSB] "Account Lockout Policies" -
+    # https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-gpsb/2cd39c97-97cd-4859-a7b4-1229dad5f53d
+    # "This setting controls whether SMB client sessions with the SMB
+    # server will be forcibly disconnected when the client's logon hours
+    # expire."
+    # Quelle 2 (exakter deutscher Anzeigename): Microsoft Learn,
+    # LocalPoliciesSecurityOptions-Richtlinien-CSP (de-de) -
+    # https://learn.microsoft.com/de-de/windows/client-management/mdm/policy-csp-localpoliciessecurityoptions
+    # "MicrosoftNetworkServer_DisconnectClientsWhenLogonHoursExpire" ->
+    # "Clients nach Ablauf der Anmeldezeiten trennen"
+    'ForceLogoffWhenHourExpire' = 'Microsoft-Netzwerkserver: Clients nach Ablauf der Anmeldezeiten trennen'
+    # Quelle 1 (fachliche Bedeutung): [MS-GPSB] "Local Account Policies" -
+    # https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-gpsb/d6eaa54a-f609-48e9-8461-b32738d77a47
+    # "When enabled, this setting allows an anonymous user to query the
+    # local LSA policy."
+    # Quelle 2 (exakter deutscher Anzeigename): Microsoft Learn,
+    # LocalPoliciesSecurityOptions-Richtlinien-CSP (de-de),
+    # "NetworkAccess_AllowAnonymousSIDOrNameTranslation" ->
+    # "Netzwerkzugriff: Anonyme SID-/Namensübersetzung zulassen"
+    'LSAAnonymousNameLookup' = 'Netzwerkzugriff: Anonyme SID-/Namensübersetzung zulassen'
+}
+
 function Get-SecurityOptionsSettings {
     param([System.Xml.XmlNode]$ComputerNode)
     $results = @()
@@ -210,7 +258,21 @@ function Get-SecurityOptionsSettings {
     foreach ($opt in $optionNodes) {
         $displayNameNode = $opt.SelectSingleNode("*[local-name()='Display']/*[local-name()='Name']")
         $keyNameNode = $opt.SelectSingleNode("*[local-name()='KeyName']")
-        $name = if ($displayNameNode) { $displayNameNode.InnerText } elseif ($keyNameNode) { $keyNameNode.InnerText } else { 'Unbekannte Security Option' }
+        $sysAccessNode = $opt.SelectSingleNode("*[local-name()='SystemAccessPolicyName']")
+        $name = if ($displayNameNode) {
+            $displayNameNode.InnerText
+        } elseif ($keyNameNode) {
+            $keyNameNode.InnerText
+        } elseif ($sysAccessNode) {
+            # Rohschluessel darf nie verloren gehen: bei fehlender
+            # verifizierter Zuordnung faellt der Rohschluessel selbst in
+            # den generischen Namen, statt stillschweigend zu "Unbekannte
+            # Security Option" ohne jede Spur zu werden.
+            $rawKey = $sysAccessNode.InnerText
+            if ($SystemAccessPolicyDisplayNames.Contains($rawKey)) { $SystemAccessPolicyDisplayNames[$rawKey] } else { "Unbekannte Security Option ($rawKey)" }
+        } else {
+            'Unbekannte Security Option'
+        }
 
         $valueNode = $opt.SelectSingleNode("*[local-name()='SettingNumber']")
         if (-not $valueNode) { $valueNode = $opt.SelectSingleNode("*[local-name()='SettingBoolean']") }

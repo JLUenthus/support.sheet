@@ -79,6 +79,37 @@ window.GpoBsiMapping = (function() {
     return gpo.settings.filter(s => s.key === key);
   }
 
+  // Manche fachlichen Sub-Aspekte lassen sich in echten GPOs auf mehr als
+  // eine Weise konfigurieren - z.B. SMB-Server-Signierung ueber die
+  // getrennte "(wenn Client zustimmt)"-Variante ODER die staerkere
+  // "(immer)"-Variante, oder Secure Channel ueber die beiden getrennten
+  // "(wenn möglich)"-Settings ODER die kombinierte, staerkere "(immer)"-
+  // Einstellung. sub.keys traegt deshalb eine Liste gleichwertiger realer
+  // Setting-Namen statt eines einzelnen Keys (V3.3-Real-Data-Validierung,
+  // Mapping-Luecken-Befund). Liefert alle tatsaechlich konfigurierten
+  // Rohwerte ueber alle Alternativen hinweg - reine Erkennung, keine
+  // Bewertung (siehe resolveSubSettingValue() fuer die Wert-Verdichtung).
+  function settingsForAnyKey(gpo, keys) {
+    const results = [];
+    keys.forEach(k => settingsForKey(gpo, k).forEach(s => results.push(s)));
+    return results;
+  }
+
+  // Verdichtet die (ggf. mehreren) Rohwerte eines Sub-Aspekts einer GPO zu
+  // einem einzigen Ergebnis: 'missing' (keine Alternative konfiguriert),
+  // 'ambiguous' (mehrere konfigurierte Alternativen mit UNTERSCHIEDLICHEM
+  // Wert - bewusst konservativ wie beim bestehenden Grenzfall-Prinzip:
+  // im Zweifel nicht raten, welche Variante gilt) oder 'value' (eindeutig,
+  // eine oder mehrere Alternativen mit demselben Wert). Reine Erkennungs-
+  // Ebene - berechnet nicht, wie daraus Coverage/Status wird.
+  function resolveSubSettingValue(gpo, sub) {
+    const entries = settingsForAnyKey(gpo, sub.keys);
+    if (entries.length === 0) return { status: 'missing', entries: [] };
+    const values = new Set(entries.map(e => e.value));
+    if (values.size > 1) return { status: 'ambiguous', entries };
+    return { status: 'value', value: entries[0].value, entries };
+  }
+
   function findConflictFinding(findings, settingKey) {
     return (findings || []).find(f => f.type === 'conflict' && f.settingKey === settingKey) || null;
   }
@@ -333,7 +364,7 @@ window.GpoBsiMapping = (function() {
   }
 
   function evaluatePairedBooleanRequirement(model, findings, requirementId, subSettings) {
-    const gposInvolved = model.gpos.filter(g => subSettings.some(s => settingsForKey(g, s.key).length > 0));
+    const gposInvolved = model.gpos.filter(g => subSettings.some(s => settingsForAnyKey(g, s.keys).length > 0));
 
     if (gposInvolved.length === 0) {
       return [{
@@ -355,22 +386,27 @@ window.GpoBsiMapping = (function() {
       let anyAmbiguous = false;
 
       subSettings.forEach(sub => {
-        const entries = settingsForKey(gpo, sub.key);
-        if (entries.length === 0) {
+        const resolved = resolveSubSettingValue(gpo, sub);
+        if (resolved.status === 'missing') {
           anyMissing = true;
-          evidence.push({ gpoName: gpo.name, settingKey: sub.key, label: sub.label, value: null, scope: null, note: 'nicht konfiguriert' });
+          evidence.push({ gpoName: gpo.name, settingKey: sub.keys[0], label: sub.label, value: null, scope: null, note: 'nicht konfiguriert' });
           return;
         }
-        entries.forEach(entry => {
-          evidence.push({ gpoName: gpo.name, settingKey: sub.key, label: sub.label, value: entry.value, scope: entry.scope });
-          if (entry.value === '1') {
-            // aktiviert - kein Hinweis noetig
-          } else if (entry.value === '0') {
-            anyDisabled = true;
-          } else {
-            anyAmbiguous = true;
-          }
+        resolved.entries.forEach(entry => {
+          evidence.push({ gpoName: gpo.name, settingKey: entry.key, label: sub.label, value: entry.value, scope: entry.scope });
         });
+        if (resolved.status === 'ambiguous') {
+          // Mehrere alternative Settings fuer denselben Sub-Aspekt mit
+          // unterschiedlichem Wert - Grenzfall, bewusst konservativ: nicht
+          // raten, welche Variante gilt.
+          anyAmbiguous = true;
+        } else if (resolved.value === '1') {
+          // aktiviert - kein Hinweis noetig
+        } else if (resolved.value === '0') {
+          anyDisabled = true;
+        } else {
+          anyAmbiguous = true;
+        }
       });
 
       let status, reason;
@@ -398,16 +434,33 @@ window.GpoBsiMapping = (function() {
     });
   }
 
+  // "... verschluesseln oder signieren (immer)" ist eine einzelne, staerkere
+  // Einstellung (immer statt bedingt), die inhaltlich BEIDE getrennten
+  // "(wenn möglich)"-Aspekte gleichzeitig abdeckt (V3.3-Real-Data-
+  // Validierung, norddeutsche-wohnbau.local) - deshalb bei BEIDEN Sub-
+  // Aspekten als gleichwertige Alternative eingetragen, nicht als
+  // eigenstaendiger dritter Sub-Aspekt.
+  const SECURE_CHANNEL_ENCRYPT_OR_SIGN_ALWAYS_KEY = SECURITY_OPTIONS_PREFIX + 'Domänenmitglied: Daten des sicheren Kanals digital verschlüsseln oder signieren (immer)';
+
   const SECURE_CHANNEL_REQUIREMENT_ID = 'BSI-APP.2.2-SECURE-CHANNEL';
   const SECURE_CHANNEL_SUB_SETTINGS = [
-    { label: 'Secure Channel verschluesseln', key: SECURITY_OPTIONS_PREFIX + 'Domänenmitglied: Daten des sicheren Kanals digital verschlüsseln (wenn möglich)' },
-    { label: 'Secure Channel signieren', key: SECURITY_OPTIONS_PREFIX + 'Domänenmitglied: Daten des sicheren Kanals digital signieren (wenn möglich)' },
+    { label: 'Secure Channel verschluesseln', keys: [
+        SECURITY_OPTIONS_PREFIX + 'Domänenmitglied: Daten des sicheren Kanals digital verschlüsseln (wenn möglich)',
+        SECURE_CHANNEL_ENCRYPT_OR_SIGN_ALWAYS_KEY,
+      ] },
+    { label: 'Secure Channel signieren', keys: [
+        SECURITY_OPTIONS_PREFIX + 'Domänenmitglied: Daten des sicheren Kanals digital signieren (wenn möglich)',
+        SECURE_CHANNEL_ENCRYPT_OR_SIGN_ALWAYS_KEY,
+      ] },
   ];
 
   const SMB_SIGNING_REQUIREMENT_ID = 'BSI-SYS.2.2.3-SMB-SIGNING';
   const SMB_SIGNING_SUB_SETTINGS = [
-    { label: 'SMB-Signierung Server', key: SECURITY_OPTIONS_PREFIX + 'Microsoft-Netzwerk (Server): Kommunikation digital signieren (wenn Client zustimmt)' },
-    { label: 'SMB-Signierung Client', key: SECURITY_OPTIONS_PREFIX + 'Microsoft-Netzwerk (Client): Kommunikation digital signieren (wenn Server zustimmt)' },
+    { label: 'SMB-Signierung Server', keys: [
+        SECURITY_OPTIONS_PREFIX + 'Microsoft-Netzwerk (Server): Kommunikation digital signieren (wenn Client zustimmt)',
+        SECURITY_OPTIONS_PREFIX + 'Microsoft-Netzwerk (Server): Kommunikation digital signieren (immer)',
+      ] },
+    { label: 'SMB-Signierung Client', keys: [SECURITY_OPTIONS_PREFIX + 'Microsoft-Netzwerk (Client): Kommunikation digital signieren (wenn Server zustimmt)'] },
   ];
 
   // ---- Computerbasierte Coverage (V3.3) -----------------------------------
@@ -475,8 +528,19 @@ window.GpoBsiMapping = (function() {
     return function(valuesByKey) {
       let anyMissing = false, anyAmbiguous = false, anyDisabled = false;
       subSettings.forEach(sub => {
-        const v = valuesByKey[sub.key];
-        if (v === undefined) { anyMissing = true; return; }
+        // Mehrere alternative reale Settings koennen denselben Sub-Aspekt
+        // abdecken (siehe resolveSubSettingValue()) - hier werden die
+        // bereits pro Key ueber die erreichenden GPOs abgeglichenen Werte
+        // (valuesByKey, von evaluateComputerRequirement befuellt) je
+        // Sub-Aspekt zusammengefuehrt: fehlt jede Alternative, ist der
+        // Aspekt "missing"; haben mehrere konfigurierte Alternativen
+        // unterschiedliche Werte, ist er "ambiguous" (konservativ, keine
+        // Alternative wird bevorzugt).
+        const presentValues = sub.keys.map(k => valuesByKey[k]).filter(v => v !== undefined);
+        if (presentValues.length === 0) { anyMissing = true; return; }
+        const distinct = new Set(presentValues);
+        if (distinct.size > 1) { anyAmbiguous = true; return; }
+        const v = presentValues[0];
         if (v === '1') {
           // aktiviert - kein Hinweis noetig
         } else if (v === '0') {
@@ -576,6 +640,14 @@ window.GpoBsiMapping = (function() {
   // BSI-Foundation-v1/V3.2-Ergebnisse) gehalten - unterschiedliche
   // Ergebnisform (Kategorie-Aggregation statt Pro-GPO-Evidenzliste), keine
   // Vermischung der beiden Sichten.
+  // Flacht die (ggf. je Sub-Aspekt mehreren, teils gemeinsam genutzten)
+  // Alternativ-Keys zu einer eindeutigen Liste ab - z.B. traegt die
+  // "(immer)"-Secure-Channel-Einstellung zu beiden Sub-Aspekten bei und
+  // soll trotzdem nur einmal in settingKeys erscheinen.
+  function flattenSubSettingKeys(subSettings) {
+    return Array.from(new Set(subSettings.reduce((acc, s) => acc.concat(s.keys), [])));
+  }
+
   function evaluateComputerCoverage(model) {
     return {
       [NTLM_REQUIREMENT_ID]: aggregateComputerCoverage(
@@ -583,11 +655,11 @@ window.GpoBsiMapping = (function() {
         values => classifyNtlmLevelValue(values[NTLM_SETTING_KEY])
       ),
       [SECURE_CHANNEL_REQUIREMENT_ID]: aggregateComputerCoverage(
-        model, SECURE_CHANNEL_REQUIREMENT_ID, SECURE_CHANNEL_SUB_SETTINGS.map(s => s.key),
+        model, SECURE_CHANNEL_REQUIREMENT_ID, flattenSubSettingKeys(SECURE_CHANNEL_SUB_SETTINGS),
         classifyPairedValuesForSubSettings(SECURE_CHANNEL_SUB_SETTINGS)
       ),
       [SMB_SIGNING_REQUIREMENT_ID]: aggregateComputerCoverage(
-        model, SMB_SIGNING_REQUIREMENT_ID, SMB_SIGNING_SUB_SETTINGS.map(s => s.key),
+        model, SMB_SIGNING_REQUIREMENT_ID, flattenSubSettingKeys(SMB_SIGNING_SUB_SETTINGS),
         classifyPairedValuesForSubSettings(SMB_SIGNING_SUB_SETTINGS)
       ),
     };

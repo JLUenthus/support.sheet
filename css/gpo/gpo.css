@@ -109,6 +109,17 @@
   border-bottom: 1px solid var(--border);
 }
 
+/* ── Executive Dashboard (V3.4) – reiner Verweis-Link auf die
+   bestehende BSI-Coverage-Ansicht, keine eigene Verdichtungszahl. */
+.gpo-kpi-bsi-link {
+  display: inline-block;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+.gpo-kpi-bsi-link:hover { text-decoration: underline; }
+
 /* ── Zahlen-Grid ─────────────────────────────────────────────
    V2.7.1: bewusst zurueckhaltend/kompakt (reine Bestandszahlen des
    Snapshots, keine Probleme) - deutlich leiser als .gpo-ampel-pill
@@ -381,6 +392,26 @@
   transition: border-color .15s;
 }
 .gpo-search-input:focus { border-color: var(--accent); }
+
+.gpo-explorer-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.gpo-explorer-status-select {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 12px;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: .78rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.gpo-explorer-status-select:focus { border-color: var(--accent); }
 
 .gpo-empty { text-align: center; padding: 32px; color: var(--muted); font-size: .85rem; }
 
@@ -800,3 +831,65 @@
   margin-top: 6px;
 }
 .gpo-diagnose-grid .command-card { margin-bottom: 0; }
+
+/* ── BSI-Coverage (Computer-Kategorie-Aggregation) ──────────
+   Bewusst neutrale Farbgebung (kein Gruen/Rot) fuer covered/not_covered/
+   not_determinable - "covered" ist keine Erfuellt-Aussage, siehe Kommentar
+   in gpo-renderer.js. Wiederverwendet bestehende Panel-/Border-/Text-
+   Variablen, kein neues Farbschema. */
+.gpo-bsi-intro {
+  font-size: .82rem;
+  color: var(--muted);
+  margin-bottom: 16px;
+  max-width: 780px;
+}
+.gpo-bsi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+.gpo-bsi-requirement-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+}
+.gpo-bsi-category-row {
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+.gpo-bsi-category-row:first-of-type { border-top: none; margin-top: 4px; }
+.gpo-bsi-category-name {
+  font-size: .84rem;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.gpo-bsi-category-total { font-size: .74rem; color: var(--dim); font-weight: 400; }
+.gpo-bsi-info-icon {
+  cursor: help;
+  color: var(--amber);
+  font-size: .78rem;
+  border-bottom: 1px dotted currentColor;
+}
+.gpo-bsi-category-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+.gpo-bsi-stat {
+  font-size: .74rem;
+  font-family: var(--font-mono);
+  color: var(--muted);
+}
+.gpo-bsi-stat--covered { color: var(--accent); }
+.gpo-bsi-unknown-line {
+  font-size: .72rem;
+  color: var(--dim);
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}

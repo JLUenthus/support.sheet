@@ -144,6 +144,11 @@ window.GpoRenderer = (function() {
     // GPO-Explorer-Sortierung (V2.6.1) - Standard: auffaelligste/aelteste
     // GPOs zuerst (siehe sortExplorerGpos()).
     explorerSort: { column: 'findings', direction: 'desc' },
+    // GPO-Status-Filter: 'all' | 'active' | 'disabled' - reiner
+    // Darstellungs-Filter wie explorerQuery, wirkt NACH der Namenssuche und
+    // VOR der bestehenden Sortierung (siehe renderExplorerList()). 'all' ist
+    // Standard und muss die Liste unveraendert lassen.
+    explorerStatusFilter: 'all',
   };
 
   // Finding -> bereits gerenderte Karte (Konflikt-/Redundanz-/Hygiene-Liste).
@@ -177,10 +182,12 @@ window.GpoRenderer = (function() {
     _state.conflictStatusFilter = 'all';
     _state.bucketFilter = 'all';
     _state.explorerSort = { column: 'findings', direction: 'desc' };
+    _state.explorerStatusFilter = 'all';
     _findingCardMap.clear();
     resetSearchInputs();
 
     renderMissingHint(_missingFiles);
+    renderExecutiveDashboard();
     renderIntegrityPanel();
     renderNumGrid();
     renderAmpelRow();
@@ -193,6 +200,7 @@ window.GpoRenderer = (function() {
     renderPriorityList();
     renderExplorerList();
     renderOuTree();
+    renderBsiCoverage();
     closeGpoDetail();
     document.getElementById('gpo-results').className = 'gpo-results-visible';
   }
@@ -232,6 +240,8 @@ window.GpoRenderer = (function() {
     if (redundantSearch) redundantSearch.value = '';
     const explorerSearch = document.getElementById('gpo-explorer-search');
     if (explorerSearch) explorerSearch.value = '';
+    const explorerStatusFilter = document.getElementById('gpo-explorer-status-filter');
+    if (explorerStatusFilter) explorerStatusFilter.value = 'all';
   }
 
   // ── Fehlende-Datei-Hinweis ─────────────────────────────────
@@ -262,6 +272,126 @@ window.GpoRenderer = (function() {
       list.appendChild(li);
     });
     hint.appendChild(list);
+  }
+
+  // ── Executive Dashboard (V3.4) ──────────────────────────────
+  // Reine Zusammenfuehrung bereits vorhandener Zahlen (GPO-Status,
+  // Findings-Typen, Computer-Population) in einer kompakten Kopfsektion -
+  // keine neue fachliche Berechnung, keine Prozent-/Score-Verdichtung
+  // (siehe Auftrag: ausdrueklich nur absolute Zahlen, kein "X von Y").
+  // Alle Zahlen kommen aus bereits vorhandenen Funktionen/Feldern
+  // (countByType(), gpoExplorerStatusCategory(), evaluateComputerCoverage())
+  // - dieser Block fuegt nur Anzeige hinzu, keine neue Zaehl-/Bewertungslogik.
+  function buildKpiTile(label, value, anchor) {
+    const item = document.createElement('a');
+    item.className = 'gpo-num-item';
+    item.href = anchor;
+    const val = document.createElement('div');
+    val.className = 'gpo-num-value';
+    val.textContent = value;
+    const lbl = document.createElement('div');
+    lbl.className = 'gpo-num-label';
+    lbl.textContent = label;
+    item.append(val, lbl);
+    return item;
+  }
+
+  // Nutzt dieselbe Klassifizierung wie der GPO-Explorer-Statusfilter
+  // (gpoExplorerStatusCategory(), s.u.) - keine zweite Interpretation von
+  // gpo.status. "Unbekannt" erscheint nur, wenn es tatsaechlich GPOs ohne
+  // eindeutigen Status gibt, sonst staende dauerhaft eine bedeutungslose
+  // Null-Kachel da.
+  function renderDashboardGpoTiles() {
+    const grid = document.getElementById('gpo-kpi-gpo-grid');
+    if (!grid) return;
+    grid.replaceChildren();
+
+    const gpos = _model.gpos || [];
+    let active = 0, disabled = 0, unknown = 0;
+    gpos.forEach(g => {
+      const cat = gpoExplorerStatusCategory(g);
+      if (cat === 'active') active++;
+      else if (cat === 'disabled') disabled++;
+      else unknown++;
+    });
+
+    grid.appendChild(buildKpiTile('GPOs gesamt', gpos.length, '#gpo-explorer-section'));
+    grid.appendChild(buildKpiTile('Aktiv', active, '#gpo-explorer-section'));
+    grid.appendChild(buildKpiTile('Deaktiviert', disabled, '#gpo-explorer-section'));
+    if (unknown > 0) grid.appendChild(buildKpiTile('Unbekannter Status', unknown, '#gpo-explorer-section'));
+  }
+
+  // Ausschliesslich die bereits vorhandenen countByType()-Zahlen (dieselbe
+  // Quelle wie renderFilterBar()/renderAmpelRow()) - keine neue Aggregation.
+  function renderDashboardFindingsTiles() {
+    const grid = document.getElementById('gpo-kpi-findings-grid');
+    if (!grid) return;
+    grid.replaceChildren();
+
+    grid.appendChild(buildKpiTile('Findings gesamt', _findings.length, '#gpo-overview-section'));
+    grid.appendChild(buildKpiTile('Konflikte', countByType('conflict'), '#gpo-conflict-section'));
+    grid.appendChild(buildKpiTile('Mehrfachdefinitionen', countByType('redundant'), '#gpo-redundant-section'));
+    grid.appendChild(buildKpiTile('Hygiene', countByType('hygiene'), '#gpo-hygiene-section'));
+    grid.appendChild(buildKpiTile('Security-Filter', countByType('security-filter'), '#gpo-hygiene-section'));
+    grid.appendChild(buildKpiTile('WMI-Filter', countByType('wmi-filter'), '#gpo-hygiene-section'));
+  }
+
+  // Computer-Population: greift ausschliesslich auf die bereits fuer die
+  // BSI-Coverage berechneten Kategorie-Totale zurueck (evaluateComputerCoverage(),
+  // bsi-mapping.js) statt eine eigene Zaehllogik ueber model.computers zu
+  // bauen - die Kategorie-Totale sind je Requirement identisch (dieselbe
+  // Computer-Population), ein beliebiges Requirement (hier NTLM) reicht
+  // deshalb als Quelle. computersFileMissing wird exakt wie in
+  // renderBsiCoverage() behandelt (dieselbe _model.dataQuality-Quelle,
+  // dieselbe Fallback-Aussage) statt eine zweite Pruefung zu erfinden.
+  function renderDashboardComputerTiles() {
+    const grid = document.getElementById('gpo-kpi-computer-grid');
+    const missingHint = document.getElementById('gpo-kpi-computer-missing');
+    if (!grid || !missingHint) return;
+    grid.replaceChildren();
+
+    const dataQuality = _model.dataQuality || {};
+    if (dataQuality.computersFileMissing) {
+      grid.hidden = true;
+      missingHint.hidden = false;
+      missingHint.textContent = 'Keine computers.json im Snapshot vorhanden. Computer-Population kann für diesen Snapshot nicht ausgewertet werden.';
+      return;
+    }
+    if (!window.GpoBsiMapping || typeof window.GpoBsiMapping.evaluateComputerCoverage !== 'function') {
+      grid.hidden = true;
+      missingHint.hidden = false;
+      missingHint.textContent = 'BSI-Coverage-Modul nicht verfügbar.';
+      return;
+    }
+    grid.hidden = false;
+    missingHint.hidden = true;
+
+    const coverage = window.GpoBsiMapping.evaluateComputerCoverage(_model);
+    const ntlmId = window.GpoBsiMapping.REQUIREMENT_IDS.NTLM_LM_LEVEL;
+    const reference = coverage[ntlmId];
+    if (!reference) return;
+
+    grid.appendChild(buildKpiTile('Domain Controllers', reference.categories.domain_controllers.total, '#gpo-bsi-section'));
+    grid.appendChild(buildKpiTile('Member Server', reference.categories.member_servers.total, '#gpo-bsi-section'));
+    grid.appendChild(buildKpiTile('Clients', reference.categories.clients.total, '#gpo-bsi-section'));
+    grid.appendChild(buildKpiTile('Unknown', reference.unknown, '#gpo-bsi-section'));
+  }
+
+  // Neutraler Verweis auf die bestehende, detaillierte BSI-Coverage-Ansicht -
+  // bewusst keine eigene Verdichtungszahl/kein Prozentwert, nur die Anzahl
+  // der bereits bestehenden Requirements (BSI_REQUIREMENT_ORDER, s.u.), die
+  // strukturell unabhaengig von computers.json feststeht.
+  function renderDashboardBsiLink() {
+    const link = document.getElementById('gpo-kpi-bsi-link');
+    if (!link) return;
+    link.textContent = '🛡️ BSI-Coverage verfügbar für ' + BSI_REQUIREMENT_ORDER.length + ' Requirements →';
+  }
+
+  function renderExecutiveDashboard() {
+    renderDashboardGpoTiles();
+    renderDashboardFindingsTiles();
+    renderDashboardComputerTiles();
+    renderDashboardBsiLink();
   }
 
   // ── Snapshot-Integritaet ────────────────────────────────────
@@ -2488,6 +2618,29 @@ window.GpoRenderer = (function() {
     return row;
   }
 
+  // Klassifiziert eine GPO fuer den Status-Filter anhand von gpo.status
+  // (bereits vorhandenes Feld, 1:1 aus dem Collector/gpo-parser.js - keine
+  // neue Statuslogik). gpo.status ist der GpoStatus-Enum-Wert aus dem
+  // GroupPolicy-PowerShell-Modul und kennt genau 4 Werte:
+  // 'AllSettingsEnabled' (aktiv) sowie 'AllSettingsDisabled'/
+  // 'UserSettingsDisabled'/'ComputerSettingsDisabled' (jeweils
+  // deaktiviert). Die bestehende Status-TEXT-Anzeige pro Zeile
+  // (statusCell.textContent, siehe buildExplorerRow()) bleibt bewusst
+  // unveraendert (weiterhin binaer "aktiv"/"deaktiviert") - dieser Helper
+  // ist ausschliesslich fuer die Filter-Menge zustaendig und unterscheidet
+  // zusaetzlich 'unknown' fuer den (in den echten Snapshots nicht
+  // vorkommenden, aber nicht auszuschliessenden) Fall eines fehlenden/
+  // nicht erkannten status-Werts - eine solche GPO darf nicht
+  // stillschweigend "aktiv" oder "deaktiviert" zugeordnet werden und
+  // erscheint deshalb ausschliesslich unter "Alle", nie unter "Aktiv"
+  // oder "Deaktiviert".
+  const GPO_DISABLED_STATUS_VALUES = ['AllSettingsDisabled', 'UserSettingsDisabled', 'ComputerSettingsDisabled'];
+  function gpoExplorerStatusCategory(gpo) {
+    if (gpo.status === 'AllSettingsEnabled') return 'active';
+    if (GPO_DISABLED_STATUS_VALUES.indexOf(gpo.status) !== -1) return 'disabled';
+    return 'unknown';
+  }
+
   function renderExplorerList() {
     const list = document.getElementById('gpo-explorer-list');
     const empty = document.getElementById('gpo-explorer-empty');
@@ -2505,7 +2658,15 @@ window.GpoRenderer = (function() {
     empty.hidden = true;
 
     const q = _state.explorerQuery.toLowerCase();
-    const filtered = q ? gpos.filter(g => (g.name || '').toLowerCase().includes(q)) : gpos;
+    let filtered = q ? gpos.filter(g => (g.name || '').toLowerCase().includes(q)) : gpos;
+
+    // Statusfilter (nach der Namenssuche, vor der bestehenden Sortierung -
+    // reine Mengen-Einschraenkung, AND-verknuepft mit der Suche). 'all'
+    // laesst die Menge unveraendert, damit der Ausgangszustand exakt
+    // erhalten bleibt.
+    if (_state.explorerStatusFilter !== 'all') {
+      filtered = filtered.filter(g => gpoExplorerStatusCategory(g) === _state.explorerStatusFilter);
+    }
 
     if (!filtered.length) {
       const noMatch = document.createElement('div');
@@ -2524,6 +2685,164 @@ window.GpoRenderer = (function() {
     sorted.forEach(gpo => tbody.appendChild(buildExplorerRow(gpo)));
     table.appendChild(tbody);
     list.appendChild(table);
+  }
+
+  // ── BSI-Coverage (Computer-Kategorie-Aggregation) ───────────
+  // Reine Darstellung von window.GpoBsiMapping.evaluateComputerCoverage() -
+  // keine neue Berechnung, keine neue Klassifikation hier. Bewusste Scope-
+  // Grenze dieses Schritts: kein Drill-down auf einzelne GPOs/Computer,
+  // obwohl die Daten dafuer in evidence vorlaegen - das ist eine spaetere
+  // Erweiterung, keine hier offene Luecke. Es gibt aktuell KEINEN GPO-
+  // zentrierten BSI-Bereich in der UI (die BSI-Foundation-v1-Ergebnisse aus
+  // evaluate() waren bisher nur in Testberichten sichtbar) - dieser
+  // Abschnitt zeigt ausschliesslich die Computer-Kategorie-Sicht.
+  //
+  // Coverage != Compliance: "covered" heisst nur "fuer diesen Computer-
+  // Bereich existiert eine eindeutig auswertbare GPO-Konfiguration" - NICHT
+  // "die Anforderung ist erfuellt" (ein Computer kann covered UND
+  // nicht_erfuellt gleichzeitig sein, siehe echter 82-GPO-Fall NTLM/Domain
+  // Controllers). Der tatsaechliche BSI-Status wird in dieser Ansicht nicht
+  // dargestellt (kein Drill-down), deshalb bewusst neutrale statt gruen/rote
+  // Farbgebung fuer "covered" - eine gruene Zahl neben "covered" wuerde
+  // sonst wie eine Erfuellt-Aussage wirken, obwohl sie das nicht ist.
+  const BSI_REQUIREMENT_LABELS = {
+    'BSI-SYS.2.2.3-NTLM-LM-LEVEL': 'NTLM',
+    'BSI-APP.2.2-SECURE-CHANNEL': 'Secure Channel',
+    'BSI-SYS.2.2.3-SMB-SIGNING': 'SMB-Signierung',
+  };
+  const BSI_CATEGORY_LABELS = {
+    domain_controllers: 'Domain Controllers',
+    member_servers: 'Member Server',
+    clients: 'Clients',
+  };
+  const BSI_CATEGORY_ORDER = ['domain_controllers', 'member_servers', 'clients'];
+  const BSI_REQUIREMENT_ORDER = ['BSI-SYS.2.2.3-NTLM-LM-LEVEL', 'BSI-APP.2.2-SECURE-CHANNEL', 'BSI-SYS.2.2.3-SMB-SIGNING'];
+
+  function renderBsiCoverage() {
+    const container = document.getElementById('gpo-bsi-container');
+    if (!container) return;
+    container.replaceChildren();
+
+    const intro = document.createElement('div');
+    intro.className = 'gpo-bsi-intro';
+    intro.textContent = 'Coverage zeigt nur, ob für einen Computer-Bereich eine eindeutig auswertbare GPO-Konfiguration vorliegt – nicht, ob die Anforderung erfüllt ist. Diese Ansicht zeigt ausschließlich die Computer-Kategorie-Aggregation für die drei bestehenden BSI-Requirements, kein Drill-down auf einzelne GPOs oder Computer.';
+    container.appendChild(intro);
+
+    if (!window.GpoBsiMapping || typeof window.GpoBsiMapping.evaluateComputerCoverage !== 'function') {
+      const empty = document.createElement('div');
+      empty.className = 'gpo-empty';
+      empty.textContent = 'BSI-Coverage-Modul nicht verfügbar.';
+      container.appendChild(empty);
+      return;
+    }
+
+    const dataQuality = _model.dataQuality || {};
+    if (dataQuality.computersFileMissing) {
+      const empty = document.createElement('div');
+      empty.className = 'gpo-empty';
+      empty.textContent = 'Keine computers.json im Snapshot vorhanden. Computer-basierte Coverage kann für diesen Snapshot nicht ausgewertet werden.';
+      container.appendChild(empty);
+      return;
+    }
+
+    const coverage = window.GpoBsiMapping.evaluateComputerCoverage(_model);
+
+    // Zeilenbezogener Covered-vs-Compliance-Hinweis: ausschliesslich aus den
+    // bereits vorhandenen, GPO-zentrierten evaluate()-Ergebnissen abgeleitet
+    // (dort liegen scopeCategory + coverage + status bereits gemeinsam pro
+    // Eintrag vor - keine neue Berechnung, kein erneutes Auswerten von GPO-
+    // Settings/Links/Filtern). evaluateComputerCoverage()'s eigene, neuere
+    // Computer-Instanz-Aggregation verwirft den pro-Computer ermittelten
+    // Status dagegen vollstaendig (siehe aggregateComputerCoverage() -
+    // "result.status" wird dort nirgends gelesen) - deshalb ist dieser
+    // Hinweis nur fuer "domain_controllers" moeglich, wo evaluate() ueber
+    // addScopeCoverage() weiterhin echte scopeCategory-Eintraege mit Status
+    // liefert. Fuer member_servers/clients gibt es aktuell keine
+    // vorhandene Datenquelle dafuer (siehe Bericht) - der Hinweis bleibt
+    // dort bewusst immer aus, statt etwas Neues zu berechnen oder zu raten.
+    const gpoCentricByRequirement = (typeof window.GpoBsiMapping.evaluate === 'function')
+      ? window.GpoBsiMapping.evaluate(_model, _findings)
+      : {};
+
+    const grid = document.createElement('div');
+    grid.className = 'gpo-bsi-grid';
+    BSI_REQUIREMENT_ORDER.forEach(requirementId => {
+      if (coverage[requirementId]) {
+        grid.appendChild(buildBsiRequirementCard(requirementId, coverage[requirementId], gpoCentricByRequirement[requirementId] || []));
+      }
+    });
+    container.appendChild(grid);
+  }
+
+  function buildBsiRequirementCard(requirementId, req, gpoCentricEntries) {
+    const card = document.createElement('div');
+    card.className = 'gpo-bsi-requirement-card';
+
+    const title = document.createElement('div');
+    title.className = 'gpo-finding-sub-title';
+    title.textContent = BSI_REQUIREMENT_LABELS[requirementId] || requirementId;
+    card.appendChild(title);
+
+    BSI_CATEGORY_ORDER.forEach(catKey => {
+      const cat = req.categories[catKey];
+      if (cat) card.appendChild(buildBsiCategoryRow(BSI_CATEGORY_LABELS[catKey], cat, catKey, gpoCentricEntries));
+    });
+
+    const unknownLine = document.createElement('div');
+    unknownLine.className = 'gpo-bsi-unknown-line';
+    unknownLine.textContent = 'Unknown: ' + req.unknown + ' – Computer ohne eindeutige Kategorie, nicht in Domain Controllers/Member Server/Clients eingerechnet.';
+    card.appendChild(unknownLine);
+
+    return card;
+  }
+
+  // "Covered" bei mindestens einem vorhandenen Eintrag dieser Kategorie,
+  // dessen bereits vorhandener status != 'erfuellt' ist ("mindestens
+  // einer reicht" - Test G: keine Aussage ueber ALLE covered-Faelle der
+  // Zeile). Absichtlich .some(), nicht .every() oder eine Mehrheitsregel.
+  function bsiCoveredNonCompliantEntries(gpoCentricEntries, catKey) {
+    return gpoCentricEntries.filter(e => e.scopeCategory === catKey && e.coverage === 'covered' && e.status && e.status !== 'erfuellt');
+  }
+
+  function buildBsiCategoryRow(label, cat, catKey, gpoCentricEntries) {
+    const row = document.createElement('div');
+    row.className = 'gpo-bsi-category-row';
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'gpo-bsi-category-name';
+    nameEl.textContent = label;
+    const totalEl = document.createElement('span');
+    totalEl.className = 'gpo-bsi-category-total';
+    totalEl.textContent = cat.total + ' Computer';
+    nameEl.appendChild(totalEl);
+
+    const nonCompliantCovered = bsiCoveredNonCompliantEntries(gpoCentricEntries, catKey);
+    if (nonCompliantCovered.length > 0) {
+      const infoIcon = document.createElement('span');
+      infoIcon.className = 'gpo-bsi-info-icon';
+      infoIcon.textContent = 'ⓘ';
+      infoIcon.tabIndex = 0;
+      infoIcon.title = 'Covered bedeutet hier nur, dass die GPO-Coverage eindeutig auswertbar ist. Der zugrunde liegende BSI-Status ist für mindestens einen erfassten Fall „prüfen“ oder „nicht erfüllt“, nicht automatisch „erfüllt“.';
+      infoIcon.setAttribute('aria-label', infoIcon.title);
+      nameEl.appendChild(infoIcon);
+    }
+    row.appendChild(nameEl);
+
+    const stats = document.createElement('div');
+    stats.className = 'gpo-bsi-category-stats';
+    [
+      ['covered', 'Covered', cat.covered],
+      ['not_covered', 'Not covered', cat.not_covered],
+      ['not_determinable', 'Not determinable', cat.not_determinable],
+    ].forEach(([key, statLabel, value]) => {
+      const stat = document.createElement('span');
+      stat.className = 'gpo-bsi-stat gpo-bsi-stat--' + key;
+      stat.textContent = statLabel + ': ' + value;
+      stats.appendChild(stat);
+    });
+    row.appendChild(stats);
+
+    return row;
   }
 
   // ── Suchfelder + Detail-Panel (einmalig verdrahtet, nicht bei jedem
@@ -2547,6 +2866,13 @@ window.GpoRenderer = (function() {
     if (explorerSearch) {
       explorerSearch.addEventListener('input', (e) => {
         _state.explorerQuery = e.target.value.trim();
+        renderExplorerList();
+      });
+    }
+    const explorerStatusFilter = document.getElementById('gpo-explorer-status-filter');
+    if (explorerStatusFilter) {
+      explorerStatusFilter.addEventListener('change', (e) => {
+        _state.explorerStatusFilter = e.target.value;
         renderExplorerList();
       });
     }

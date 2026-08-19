@@ -47,8 +47,17 @@ window.GpoAnalyzer = (function() {
       // Nur 1 GPO definiert diese Einstellung: weder Konflikt noch
       // Redundanz - alle anderen GPOs sind hier "Not Configured", was per
       // Abwesenheit aus dem Snapshot bereits korrekt abgebildet ist
-      // (Konzept Abschnitt 7) und keine eigene Bewertung braucht.
-      if (entries.length <= 1) return;
+      // (Konzept Abschnitt 7) und keine eigene Bewertung braucht. Zaehlt
+      // bewusst DISTINKTE GPOs, nicht rohe Eintraege: bei generischen
+      // Fallback-Setting-Namen (z.B. "Unbekannte Security Option") kann
+      // EINE GPO mehrere Eintraege mit demselben generischen Namen haben,
+      // ohne dass eine zweite GPO beteiligt ist - reine Entry-Anzahl wuerde
+      // das faelschlich als Mehrfachdefinition/Konflikt werten (Selbst-
+      // vergleich, V3.3-Real-Data-Validierung, siehe auch der ergaenzende
+      // Guard in computeGroupOverlap() unten fuer gemischte Gruppen mit
+      // sowohl Mehrfach- als auch Einzel-Eintraegen pro GPO).
+      const distinctGpoCount = new Set(entries.map(e => e.gpoId)).size;
+      if (distinctGpoCount <= 1) return;
 
       const distinctValues = new Set(entries.map(e => e.value));
       const settingKey = entries[0].settingKey;
@@ -234,6 +243,14 @@ window.GpoAnalyzer = (function() {
     const comparisons = [];
     for (let i = 0; i < entries.length; i++) {
       for (let j = i + 1; j < entries.length; j++) {
+        // Eine GPO kann per Definition nicht mit sich selbst in Konflikt/
+        // Redundanz stehen. Bricht ohne diesen Guard bei generischen
+        // Fallback-Setting-Namen (z.B. "Unbekannte Security Option"), die
+        // innerhalb EINER GPO mehrfach auftreten koennen, wenn der
+        // Collector mehrere unterschiedliche, ihm unbekannte Security
+        // Options nicht unterscheiden kann (V3.3-Real-Data-Validierung,
+        // echter Fund in "Default Domain Policy").
+        if (entries[i].gpoId === entries[j].gpoId) continue;
         if (shouldCompare && !shouldCompare(entries[i], entries[j])) continue;
         const gpoA = gpoById(model, entries[i].gpoId);
         const gpoB = gpoById(model, entries[j].gpoId);

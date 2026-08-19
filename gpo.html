@@ -76,13 +76,39 @@
     <div id="gpo-results" class="gpo-results-hidden">
 
       <nav class="gpo-page-nav" id="gpo-page-nav">
+        <a href="#gpo-dashboard-section" class="gpo-page-nav-link">Dashboard</a>
         <a href="#gpo-overview-section" class="gpo-page-nav-link">Übersicht</a>
         <a href="#gpo-conflict-section" class="gpo-page-nav-link">Konflikte</a>
         <a href="#gpo-redundant-section" class="gpo-page-nav-link">Mehrfachdefinitionen</a>
         <a href="#gpo-hygiene-section" class="gpo-page-nav-link">Hygiene</a>
         <a href="#gpo-explorer-section" class="gpo-page-nav-link">GPOs</a>
         <a href="#gpo-tree-section" class="gpo-page-nav-link">Struktur</a>
+        <a href="#gpo-bsi-section" class="gpo-page-nav-link">BSI-Coverage</a>
       </nav>
+
+      <section class="gpo-section" id="gpo-dashboard-section">
+        <h2 class="section-title">📊 Executive Dashboard</h2>
+
+        <div class="gpo-dash-tier">
+          <div class="gpo-finding-sub-title">GPO-Bestand</div>
+          <div class="gpo-num-grid" id="gpo-kpi-gpo-grid"></div>
+        </div>
+
+        <div class="gpo-dash-tier">
+          <div class="gpo-finding-sub-title">Findings</div>
+          <div class="gpo-num-grid" id="gpo-kpi-findings-grid"></div>
+        </div>
+
+        <div class="gpo-dash-tier">
+          <div class="gpo-finding-sub-title">Computer-Population</div>
+          <div class="gpo-num-grid" id="gpo-kpi-computer-grid"></div>
+          <div class="gpo-empty" id="gpo-kpi-computer-missing" hidden></div>
+        </div>
+
+        <div class="gpo-dash-tier">
+          <a href="#gpo-bsi-section" class="gpo-kpi-bsi-link" id="gpo-kpi-bsi-link"></a>
+        </div>
+      </section>
 
       <section class="gpo-section" id="gpo-overview-section">
         <h2 class="section-title">GPO Analyzer</h2>
@@ -146,7 +172,14 @@
       <section class="gpo-section" id="gpo-explorer-section">
         <div class="gpo-list-header">
           <h2 class="section-title">🗂️ GPOs <span class="gpo-section-count" id="gpo-explorer-count">0</span></h2>
-          <input type="text" id="gpo-explorer-search" class="gpo-search-input" placeholder="GPO-Name durchsuchen …">
+          <div class="gpo-explorer-filters">
+            <select id="gpo-explorer-status-filter" class="gpo-explorer-status-select" aria-label="GPO-Status">
+              <option value="all">GPO-Status: Alle</option>
+              <option value="active">GPO-Status: Aktiv</option>
+              <option value="disabled">GPO-Status: Deaktiviert</option>
+            </select>
+            <input type="text" id="gpo-explorer-search" class="gpo-search-input" placeholder="GPO-Name durchsuchen …">
+          </div>
         </div>
         <div id="gpo-explorer-list"></div>
         <div class="gpo-empty" id="gpo-explorer-empty" hidden>Keine GPOs gefunden.</div>
@@ -164,6 +197,11 @@
           </div>
           <div id="gpo-detail-panel-body"></div>
         </div>
+      </section>
+
+      <section class="gpo-section" id="gpo-bsi-section">
+        <h2 class="section-title">🛡️ BSI-Coverage</h2>
+        <div id="gpo-bsi-container"></div>
       </section>
 
     </div>
