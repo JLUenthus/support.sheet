@@ -553,43 +553,82 @@ window.GpoBsiMapping = (function() {
     };
   }
 
+  // Reine Durchreichung der bereits im Modell vorhandenen Computer-
+  // Rohfelder (V3.5.1) - keine neue Ableitung, kein Anzeigename aus dem
+  // DN, kein DNSHostName/SamAccountName (im Collector/Modell nicht
+  // vorhanden, siehe V3.5.0-Architektur-Check).
+  function computerCoverageIdentity(computer) {
+    return {
+      distinguishedName: computer.distinguishedName,
+      category: computer.category,
+      operatingSystem: computer.operatingSystem,
+      operatingSystemVersion: computer.operatingSystemVersion,
+      enabled: computer.enabled,
+      isDomainController: computer.isDomainController,
+      isReadOnlyDomainController: computer.isReadOnlyDomainController,
+    };
+  }
+
   // Baustein 3: Coverage-Ermittlung fuer einen einzelnen Computer. Gibt
   // niemals eine Gewinner-GPO zurueck - bei abweichenden Werten unter den
   // erreichenden, konfigurierenden GPOs ist das Ergebnis IMMER
   // not_determinable, unabhaengig von Link-Reihenfolge/enforced/
   // blockInheritance/OU-Tiefe.
+  //
+  // V3.5.1: die Rueckgabe traegt zusaetzlich computer/reachingGpoIds/
+  // configuringGpoIds/values - ausschliesslich bereits innerhalb dieser
+  // Funktion berechnete Zwischenwerte, die vorher nur lokal existierten
+  // und beim Verlassen der Funktion verworfen wurden (siehe V3.5.0-
+  // Architektur-Check, Abschnitt 4). coverage/status/reason bleiben
+  // wertmaessig unveraendert - keine neue Reachability-/Scope-/
+  // Klassifikationslogik, keine Gewinner-GPO.
   function evaluateComputerRequirement(computer, model, settingKeys, classifyValues) {
+    const identity = computerCoverageIdentity(computer);
+
     if (!computer.distinguishedName) {
-      return { coverage: 'not_determinable', reason: 'Computerobjekt ohne distinguishedName - Scope nicht bestimmbar.' };
+      return {
+        computer: identity, coverage: 'not_determinable',
+        reason: 'Computerobjekt ohne distinguishedName - Scope nicht bestimmbar.',
+        reachingGpoIds: [], configuringGpoIds: [], values: {},
+      };
     }
     if (model.dataQuality.linksFileMissing) {
-      return { coverage: 'not_determinable', reason: 'links.json fehlt im Snapshot komplett - Scope nicht bestimmbar.' };
+      return {
+        computer: identity, coverage: 'not_determinable',
+        reason: 'links.json fehlt im Snapshot komplett - Scope nicht bestimmbar.',
+        reachingGpoIds: [], configuringGpoIds: [], values: {},
+      };
     }
 
     const reachingGpos = model.gpos.filter(g => computerReachesGpo(g, computer, model));
+    const reachingGpoIds = reachingGpos.map(g => g.id);
     const configuringReaching = reachingGpos.filter(g => settingKeys.some(k => settingsForKey(g, k).length > 0));
+    const configuringGpoIds = configuringReaching.map(g => g.id);
 
     if (configuringReaching.length === 0) {
       const unreadableReaching = reachingGpos.filter(g => g.parseStatus !== 'complete');
       if (unreadableReaching.length > 0) {
         return {
-          coverage: 'not_determinable',
+          computer: identity, coverage: 'not_determinable',
           reason: unreadableReaching.length + ' von ' + reachingGpos.length + ' diesen Computer erreichenden GPO(s) konnten nicht vollstaendig gelesen werden - Abwesenheit des Settings kann nicht positiv bestaetigt werden.',
+          reachingGpoIds, configuringGpoIds, values: {},
         };
       }
       return {
-        coverage: 'not_covered',
+        computer: identity, coverage: 'not_covered',
         reason: reachingGpos.length === 0
           ? 'Keine GPO erreicht diesen Computer (weder direkt noch ueber einen nicht blockierten Vorfahren-Link).'
           : 'Keine der ' + reachingGpos.length + ' diesen Computer erreichenden GPO(s) konfiguriert dieses Setting - bestaetigte Luecke.',
+        reachingGpoIds, configuringGpoIds, values: {},
       };
     }
 
     const scopes = configuringReaching.map(g => resolveGpoScope(g, model));
     if (scopes.some(s => s.scopeStatus !== 'eindeutig')) {
       return {
-        coverage: 'not_determinable',
+        computer: identity, coverage: 'not_determinable',
         reason: 'Mindestens eine konfigurierende, erreichende GPO hat einen nicht eindeutigen Scope (Non-Default Security Filter, WMI-Filter oder unvollstaendige Daten) - der tatsaechlich betroffene Kreis ist nicht auflösbar.',
+        reachingGpoIds, configuringGpoIds, values: {},
       };
     }
 
@@ -600,15 +639,19 @@ window.GpoBsiMapping = (function() {
       configuringReaching.forEach(g => settingsForKey(g, key).forEach(s => values.add(s.value)));
       if (values.size > 1) {
         return {
-          coverage: 'not_determinable',
+          computer: identity, coverage: 'not_determinable',
           reason: 'Erreichende GPOs setzen "' + key + '" mit unterschiedlichen Werten - keine Gewinner-GPO wird ermittelt, effektive Einstellung ueber RSoP/gpresult pruefen.',
+          reachingGpoIds, configuringGpoIds, values: Object.assign({}, valuesByKey),
         };
       }
       valuesByKey[key] = values.size === 1 ? Array.from(values)[0] : undefined;
     }
 
     const classification = classifyValues(valuesByKey);
-    return { coverage: 'covered', status: classification.status, reason: classification.reason };
+    return {
+      computer: identity, coverage: 'covered', status: classification.status, reason: classification.reason,
+      reachingGpoIds, configuringGpoIds, values: valuesByKey,
+    };
   }
 
   const COMPUTER_COVERAGE_CATEGORIES = ['domain_controllers', 'member_servers', 'clients'];
@@ -617,22 +660,36 @@ window.GpoBsiMapping = (function() {
   // Computer fliessen niemals in total/covered/not_covered/
   // not_determinable einer Kategorie ein, sondern ausschliesslich in das
   // separate unknown-Feld - siehe geklaerte Grundlage im Auftrag.
+  //
+  // V3.5.1: zusaetzlich zu den bereits bestehenden Summen wird jetzt eine
+  // Pro-Computer-Liste (computers) zurueckgegeben - ein Eintrag pro
+  // ausgewertetem Computer (inkl. "unknown", der dort zwar erscheinen
+  // darf, aber weiterhin nicht in categories/unknown-Zaehlung als eigener
+  // Coverage-Zustand einfliesst). Die bestehende Summen-Aggregation
+  // (categories[...]total/[coverage]++, unknown++) ist unveraendert -
+  // "computers" wird nur zusaetzlich befuellt, aendert keinen bestehenden
+  // Zaehlwert.
   function aggregateComputerCoverage(model, requirementId, settingKeys, classifyValues) {
     const categories = {};
     COMPUTER_COVERAGE_CATEGORIES.forEach(cat => {
       categories[cat] = { total: 0, covered: 0, not_covered: 0, not_determinable: 0 };
     });
     let unknown = 0;
+    const computers = [];
 
     (model.computers || []).forEach(computer => {
-      if (computer.category === 'unknown') { unknown++; return; }
-      if (COMPUTER_COVERAGE_CATEGORIES.indexOf(computer.category) === -1) return;
+      const isKnownCategory = COMPUTER_COVERAGE_CATEGORIES.indexOf(computer.category) !== -1;
+      if (!isKnownCategory && computer.category !== 'unknown') return;
+
       const result = evaluateComputerRequirement(computer, model, settingKeys, classifyValues);
+      computers.push(result);
+
+      if (computer.category === 'unknown') { unknown++; return; }
       categories[computer.category].total++;
       categories[computer.category][result.coverage]++;
     });
 
-    return { requirementId, categories, unknown };
+    return { requirementId, categories, unknown, computers };
   }
 
   // Oeffentlicher Einstiegspunkt fuer die computerbasierte Coverage aller
