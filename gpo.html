@@ -15,6 +15,29 @@
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
   <link rel="stylesheet" href="css/gpo/gpo.css">
+<style id="gpo-v501-visual-overrides">
+/* V5.0.1 – ruhigere Hierarchie mit gezielten Kontrasten. */
+.gpo-page-nav-subnav{margin:2px 0 10px 10px;padding:4px 0 4px 11px;border-left:1px solid rgba(139,124,246,.28);display:flex;flex-direction:column;gap:1px}
+.gpo-page-nav-sublink{display:flex;align-items:center;gap:8px;min-height:25px;padding:4px 8px;color:rgba(210,214,226,.62);text-decoration:none;font-size:11px;line-height:1.25;border-radius:4px;transition:background .15s ease,color .15s ease}
+.gpo-page-nav-sublink span{font:600 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:rgba(139,124,246,.72);min-width:17px}
+.gpo-page-nav-sublink:hover,.gpo-page-nav-sublink:focus-visible{background:rgba(139,124,246,.08);color:#eef0f6}
+.gpo-page-nav-link--overview{font-weight:700}
+.gpo-dash-tier--highlight{border-top:2px solid rgba(139,124,246,.78);background:linear-gradient(90deg,rgba(139,124,246,.055),transparent 70%);box-shadow:inset 3px 0 0 rgba(139,124,246,.62)}
+.gpo-dash-tier--important{box-shadow:inset 3px 0 0 rgba(255,255,255,.10)}
+.gpo-dash-tier--important .gpo-dash-label strong{color:#f3f4f8}
+.gpo-20sec-tier .gpo-dash-label strong{font-size:15px;letter-spacing:-.01em}
+.gpo-20sec-panel{border:1px solid rgba(139,124,246,.22);background:rgba(20,23,32,.72);box-shadow:0 10px 28px rgba(0,0,0,.12)}
+.gpo-20sec-kicker{text-transform:uppercase;letter-spacing:.11em;font-size:10px;color:#a99df7;font-weight:700}
+.gpo-20sec-intro h3{font-size:20px;line-height:1.15;margin:5px 0 6px;color:#f4f5f8}
+.gpo-20sec-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08)}
+.gpo-20sec-facts > *{padding:14px 16px;border-right:1px solid rgba(255,255,255,.07)}
+.gpo-20sec-facts > *:last-child{border-right:0}
+.gpo-20sec-next{border-left:3px solid rgba(139,124,246,.65);background:rgba(139,124,246,.055)}
+.gpo-dash-tier--quicklinks .gpo-dashboard-quicklinks a{border-color:rgba(255,255,255,.10);background:rgba(255,255,255,.018)}
+.gpo-dash-tier--quicklinks .gpo-dashboard-quicklinks a:hover{border-color:rgba(139,124,246,.42);background:rgba(139,124,246,.07)}
+@media (max-width:900px){.gpo-page-nav-subnav{margin-left:4px}.gpo-20sec-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.gpo-20sec-facts > *:nth-child(2){border-right:0}.gpo-20sec-facts > *:nth-child(-n+2){border-bottom:1px solid rgba(255,255,255,.07)}}
+@media (max-width:640px){.gpo-page-nav-subnav{display:none}.gpo-20sec-facts{grid-template-columns:1fr}.gpo-20sec-facts > *{border-right:0!important;border-bottom:1px solid rgba(255,255,255,.07)}.gpo-20sec-facts > *:last-child{border-bottom:0}}
+</style>
 </head>
 <body>
 
@@ -171,7 +194,19 @@
         <div class="gpo-page-nav-title">GPO Analyzer</div>
         <div class="gpo-page-nav-group">
           <div class="gpo-page-nav-group-title">Analyse</div>
-          <a href="#gpo-dashboard-section" class="gpo-page-nav-link">Übersicht</a>
+          <a href="#gpo-dashboard-section" class="gpo-page-nav-link gpo-page-nav-link--overview">Übersicht</a>
+          <div class="gpo-page-nav-subnav" aria-label="Übersicht Unterbereiche">
+            <a href="#gpo-dash-00" class="gpo-page-nav-sublink"><span>00</span>Schnellübersicht</a>
+            <a href="#gpo-dash-01" class="gpo-page-nav-sublink"><span>01</span>GPO-Bestand</a>
+            <a href="#gpo-dash-02" class="gpo-page-nav-sublink"><span>02</span>Findings</a>
+            <a href="#gpo-dash-03" class="gpo-page-nav-sublink"><span>03</span>Schnellzugriff</a>
+            <a href="#gpo-dash-04" class="gpo-page-nav-sublink"><span>04</span>BSI-Coverage</a>
+            <a href="#gpo-dash-05" class="gpo-page-nav-sublink"><span>05</span>Computerpopulation</a>
+            <a href="#gpo-dash-06" class="gpo-page-nav-sublink"><span>06</span>Kurzüberblick</a>
+            <a href="#gpo-dash-07" class="gpo-page-nav-sublink"><span>07</span>Als nächstes prüfen</a>
+            <a href="#gpo-dash-08" class="gpo-page-nav-sublink"><span>08</span>Prüfen &amp; Aufräumen</a>
+            <a href="#gpo-dash-09" class="gpo-page-nav-sublink"><span>09</span>Effektive Richtlinie</a>
+          </div>
           <a href="#gpo-explorer-section" class="gpo-page-nav-link">GPOs</a>
           <a href="#gpo-findings-section" class="gpo-page-nav-link">Findings</a>
           <a href="#gpo-tree-section" class="gpo-page-nav-link">Struktur</a>
@@ -180,7 +215,7 @@
         <div class="gpo-page-nav-divider" aria-hidden="true"></div>
         <div class="gpo-page-nav-group">
           <div class="gpo-page-nav-group-title">Vergleich &amp; Prüfung</div>
-          <a href="#gpo-rsop-section" class="gpo-page-nav-link gpo-page-nav-link--new">RSoP-Vergleich <span class="gpo-page-nav-badge">NEU</span></a>
+          <a href="#gpo-rsop-section" class="gpo-page-nav-link">RSoP-Vergleich</a>
           <a href="#gpo-reference-section" class="gpo-page-nav-link">Referenz-Standards</a>
           <a href="#gpo-databasis-section" class="gpo-page-nav-link">Datenbasis</a>
         </div>
@@ -206,11 +241,11 @@
           <div class="gpo-dashboard-mark" aria-hidden="true"><span>GPO</span><strong>01</strong></div>
         </div>
 
-        <div class="gpo-dash-tier gpo-20sec-tier">
-          <div class="gpo-dash-label"><span>00</span><strong>20-Sekunden-Überblick</strong><em>Die wichtigsten Fakten zuerst</em></div>
+        <div class="gpo-dash-tier gpo-20sec-tier gpo-dash-tier--highlight" id="gpo-dash-00">
+          <div class="gpo-dash-label"><span>00</span><strong>Schnellübersicht</strong><em>Die wichtigsten Fakten zuerst</em></div>
           <div class="gpo-20sec-panel" id="gpo-20sec-overview">
             <div class="gpo-20sec-intro">
-              <div class="gpo-20sec-kicker">Wenn du nur kurz Zeit hast</div>
+              <div class="gpo-20sec-kicker">Auf einen Blick</div>
               <h3>Was ist hier gerade los?</h3>
               <p>Bestand, Befunde und Prüfwege auf einen Blick. Keine Bewertung in einer Zahl – nur die vorhandenen Fakten.</p>
             </div>
@@ -224,34 +259,34 @@
           </div>
         </div>
 
-        <div class="gpo-dash-tier">
+        <div class="gpo-dash-tier gpo-dash-tier--important" id="gpo-dash-01">
           <div class="gpo-dash-label"><span>01</span><strong>GPO-Bestand</strong><em>Snapshot</em></div>
           <div class="gpo-num-grid" id="gpo-kpi-gpo-grid"></div>
         </div>
 
-        <div class="gpo-dash-tier">
+        <div class="gpo-dash-tier gpo-dash-tier--important" id="gpo-dash-02">
           <div class="gpo-dash-label"><span>02</span><strong>Findings</strong><em>Analyse</em></div>
           <div class="gpo-num-grid" id="gpo-kpi-findings-grid"></div>
         </div>
 
         <div class="gpo-dash-section-divider" aria-hidden="true"></div>
-        <div class="gpo-dash-tier gpo-dash-tier--quicklinks">
+        <div class="gpo-dash-tier gpo-dash-tier--quicklinks" id="gpo-dash-03">
           <div class="gpo-dash-label"><span>03</span><strong>Schnellzugriff</strong><em>Werkzeuge</em></div>
           <div class="gpo-dashboard-quicklinks">
             <a href="#gpo-explorer-section" class="gpo-kpi-bsi-link">GPOs durchsuchen →</a>
             <a href="#gpo-findings-section" class="gpo-kpi-bsi-link">Findings analysieren →</a>
-            <a href="#gpo-rsop-section" class="gpo-kpi-bsi-link gpo-kpi-bsi-link--new">RSoP-Vergleich starten → <span class="gpo-page-nav-badge">NEU</span></a>
+            <a href="#gpo-rsop-section" class="gpo-kpi-bsi-link">RSoP-Vergleich starten →</a>
             <a href="#gpo-reference-section" class="gpo-kpi-bsi-link">Referenz-Standards ansehen →</a>
             <a href="#gpo-bsi-section" class="gpo-kpi-bsi-link">BSI-Coverage ansehen →</a>
           </div>
         </div>
 
-        <div class="gpo-dash-tier">
+        <div class="gpo-dash-tier" id="gpo-dash-04">
           <div class="gpo-dash-label"><span>04</span><strong>BSI-Coverage</strong><em>Referenz</em></div>
           <div class="gpo-dashboard-bsi-card" id="gpo-dashboard-bsi-card"></div>
         </div>
 
-        <div class="gpo-dash-tier">
+        <div class="gpo-dash-tier" id="gpo-dash-05">
           <div class="gpo-dash-label"><span>05</span><strong>Computerpopulation</strong><em>Bestand</em></div>
           <div class="gpo-num-grid" id="gpo-kpi-computer-grid"></div>
           <div class="gpo-empty" id="gpo-kpi-computer-missing" hidden></div>
@@ -262,13 +297,13 @@
              den Zahlen-Kacheln und der ausfuehrlicheren Handlungssicht -
              ausschliesslich bereits vorhandene absolute Zahlen, keine
              Prozentwerte, keine Gesamtbewertung. -->
-        <div class="gpo-dash-tier">
+        <div class="gpo-dash-tier" id="gpo-dash-06">
           <div class="gpo-dash-label"><span>06</span><strong>Kurzüberblick</strong><em>Einordnung</em></div>
           <ul class="gpo-summary-list" id="gpo-overview-summary"></ul>
         </div>
 
         <div class="gpo-dash-section-divider" aria-hidden="true"></div>
-        <div class="gpo-dash-tier gpo-dash-tier--section-intro">
+        <div class="gpo-dash-tier gpo-dash-tier--section-intro" id="gpo-dash-07">
           <div class="gpo-section-banner"><span class="gpo-section-banner-index">02</span><div><strong>Handlung &amp; Prüfung</strong><span>Vom Befund zur konkreten Nachprüfung</span></div></div>
           <p class="gpo-action-intro">Hier beginnt die vertiefte Prüfung: zuerst die wichtigsten Befunde, danach GPO-bezogene Aufräumarbeiten und die effektive Richtlinie.</p>
         </div>
@@ -279,7 +314,7 @@
           <div id="gpo-action-view"></div>
         </div>
 
-        <div class="gpo-dash-tier">
+        <div class="gpo-dash-tier" id="gpo-dash-08">
           <div class="gpo-dash-label"><span>08</span><strong>Prüfen &amp; Aufräumen</strong><em>GPO-zentriert</em></div>
           <p class="gpo-action-intro">Diese Übersicht zeigt GPOs und Konfigurationen, die aufgrund vorhandener Analyseinformationen für eine nähere Prüfung interessant sein können. Sie ersetzt keine Prüfung der effektiven Richtlinie und entscheidet nicht, ob eine GPO tatsächlich benötigt wird.</p>
 
@@ -316,7 +351,7 @@
           <div id="gpo-cleanup-view"></div>
         </div>
 
-        <div class="gpo-dash-tier">
+        <div class="gpo-dash-tier" id="gpo-dash-09">
           <div class="gpo-dash-label"><span>09</span><strong>Effektive Richtlinie prüfen</strong><em>Vorstufe zur RSoP-Prüfung</em></div>
           <p class="gpo-action-intro">Der Snapshot zeigt, welche GPOs und Einstellungen vorhanden und auf welche Computer sie potenziell angewendet werden können. Die tatsächlich wirksame Richtlinie kann durch Vererbung, Filter, Prioritäten und weitere Windows-GPO-Regeln abweichen. Für die endgültige Prüfung auf einem betroffenen System sollte deshalb <code>gpresult</code> oder RSOP verwendet werden.</p>
           <div id="gpo-effective-view"></div>
