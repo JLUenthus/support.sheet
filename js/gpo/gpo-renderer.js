@@ -195,6 +195,7 @@ window.GpoRenderer = (function() {
 
     renderMissingHint(_missingFiles);
     renderExecutiveDashboard();
+    renderOverviewSummary();
     renderIntegrityPanel();
     renderNumGrid();
     renderAmpelRow();
@@ -206,6 +207,9 @@ window.GpoRenderer = (function() {
     renderRedundantList();
     renderHygieneList();
     renderPriorityList();
+    renderActionView();
+    renderGpoCleanupView();
+    renderEffectivePolicyView();
     renderExplorerList();
     renderOuTree();
     renderBsiCoverage();
@@ -340,7 +344,7 @@ window.GpoRenderer = (function() {
     if (!grid) return;
     grid.replaceChildren();
 
-    grid.appendChild(buildKpiTile('Findings gesamt', _findings.length, '#gpo-overview-section', 'gpo-num-item--total'));
+    grid.appendChild(buildKpiTile('Findings gesamt', _findings.length, '#gpo-findings-section', 'gpo-num-item--total'));
     grid.appendChild(buildKpiTile('Konflikte', countByType('conflict'), '#gpo-conflict-section'));
     grid.appendChild(buildKpiTile('Mehrfachdefinitionen', countByType('redundant'), '#gpo-redundant-section'));
     grid.appendChild(buildKpiTile('Hygiene', countByType('hygiene'), '#gpo-hygiene-section'));
@@ -434,6 +438,41 @@ window.GpoRenderer = (function() {
     renderDashboardFindingsTiles();
     renderDashboardComputerTiles();
     renderDashboardBsiLink();
+  }
+
+  // V4.7: kompakte Textzusammenfassung ("Kurzueberblick") zwischen den
+  // Zahlen-Kacheln und der Handlungssicht - ausschliesslich bereits
+  // vorhandene absolute Zahlen (GPO-/Findings-Anzahl, BSI_REQUIREMENT_ORDER)
+  // sowie die bereits in V4.4 etablierte resolveActionCategory()-Einstufung
+  // (hier nur gezaehlt, nicht neu berechnet). Keine Prozentwerte, keine
+  // Gesamtbewertung - reine Umformulierung bereits angezeigter Zahlen in
+  // Fliesstext.
+  function renderOverviewSummary() {
+    const list = document.getElementById('gpo-overview-summary');
+    if (!list) return;
+    list.replaceChildren();
+
+    let actionCount = 0, reviewCount = 0;
+    _findings.forEach(f => {
+      const cat = resolveActionCategory(f);
+      if (cat === 'action') actionCount++;
+      else if (cat === 'review') reviewCount++;
+    });
+
+    const gpoCount = (_model.gpos || []).length;
+    const items = [
+      gpoCount + ' ' + (gpoCount === 1 ? 'GPO wurde' : 'GPOs wurden') + ' analysiert.',
+      _findings.length + ' ' + (_findings.length === 1 ? 'Befund wurde' : 'Befunde wurden') + ' gefunden.',
+      actionCount + ' ' + (actionCount === 1 ? 'Befund ist' : 'Befunde sind') + ' als Handlungsbedarf eingeordnet.',
+      reviewCount + ' weitere ' + (reviewCount === 1 ? 'Befund erfordert' : 'Befunde erfordern') + ' eine Prüfung.',
+      'BSI-Coverage ist für ' + BSI_REQUIREMENT_ORDER.length + ' Requirements verfügbar.',
+    ];
+
+    items.forEach(text => {
+      const li = document.createElement('li');
+      li.textContent = text;
+      list.appendChild(li);
+    });
   }
 
   // V3.7: kompakte Zusammenfassung am Kopf des neuen "Findings"-
@@ -1003,6 +1042,852 @@ window.GpoRenderer = (function() {
     }
 
     items.forEach(f => container.appendChild(buildPriorityItem(f)));
+  }
+
+  // ── Handlungsbedarf-Ansicht (V4.4 Executive Dashboard) ──────
+  // Gruppiert ALLE Findings (nicht nur Top-5 wie die Prioritaeten-Liste
+  // oben) in drei feste, immer sichtbare Kategorien - ausschliesslich ueber
+  // bereits vorhandene Felder (finding.conflictLevel, rule.bucket aus
+  // rules.json). Keine neue Risikoberechnung, kein Scoring, keine
+  // "Gewinner-GPO"-Logik. Bewusst eine EIGENSTAENDIGE Klassifizierung statt
+  // Wiederverwendung von priorityIcon()/collectPriorityFindings() weiter
+  // oben: jene Funktion behandelt den Bucket "pruefen" (aktuell nur
+  // SECURITY_FILTER_SERVER_OU_USER_FILTER) nicht gesondert (faellt auf
+  // HYGIENE_SEVERITY_ICONS[severity] zurueck, aktuell 'info' -> ℹ️), waehrend
+  // diese Ansicht "pruefen" explizit als 🟡 einordnet - passend zum eigenen
+  // Namen des Buckets und den Beispielen im Auftrag. Die bestehende
+  // Prioritaeten-Liste bleibt davon unveraendert (Auftrag: bestehendes
+  // Dashboard nicht antasten).
+  function resolveActionCategory(finding) {
+    if (finding.type === 'conflict') {
+      return finding.conflictLevel === 'real' ? 'action' : 'review';
+    }
+    if (finding.rule) {
+      if (finding.rule.bucket === 'kritisch') return 'action';
+      if (finding.rule.bucket === 'pruefen') return 'review';
+    }
+    // Konservativer Standardfall: Mehrfachdefinitionen (identische Werte,
+    // keine Mehrdeutigkeit), WMI-Filter-Hinweise sowie Hygiene-/Security-
+    // Filter-Findings in den Buckets wartung/struktur/information - alles,
+    // was ohne eine neue fachliche Einstufung nicht eindeutig hoeher
+    // eingeordnet werden kann.
+    return 'info';
+  }
+
+  const ACTION_CATEGORY_META = {
+    action: { icon: '🔴', title: 'Handlungsbedarf', severityClass: 'critical' },
+    review: { icon: '🟡', title: 'Prüfung erforderlich', severityClass: 'warning' },
+    info: { icon: 'ℹ️', title: 'Hinweise', severityClass: 'info' },
+  };
+  const ACTION_CATEGORY_ORDER = ['action', 'review', 'info'];
+  const ACTION_TYPE_LABELS = {
+    conflict: 'Konflikt',
+    redundant: 'Mehrfachdefinition',
+    hygiene: 'Hygiene',
+    'security-filter': 'Security-Filter',
+    'wmi-filter': 'WMI-Filter',
+  };
+  // Kompakte Auswahl je Kategorie - dieselbe Obergrenze (5), die bereits die
+  // bestehende Prioritaeten-Liste verwendet (collectPriorityFindings()),
+  // keine neue Zahl erfunden. Keine Umsortierung: die Findings erscheinen in
+  // derselben Reihenfolge wie in _findings (Auftrag Abschnitt 8: keine
+  // kuenstliche Priorisierung, wenn keine belastbare Rangfolge existiert).
+  const ACTION_VIEW_MAX_PER_CATEGORY = 5;
+
+  function collectActionBuckets() {
+    const buckets = { action: [], review: [], info: [] };
+    _findings.forEach(f => buckets[resolveActionCategory(f)].push(f));
+    return buckets;
+  }
+
+  // Kurzbeschreibung je Finding-Typ - dieselben Konstanten/Funktionen, die
+  // resolveFindingSections() bereits fuer "Was"/"Bewertung" verwendet
+  // (CONFLICT_DESC/REDUNDANT_DESC/resolveRuleText/rule.description), keine
+  // zweite Textformulierung.
+  function actionShortDescription(finding) {
+    if (finding.type === 'conflict') return CONFLICT_DESC;
+    if (finding.type === 'redundant') return REDUNDANT_DESC;
+    const rule = finding.rule || {};
+    if (finding.type === 'hygiene') return resolveRuleText(rule.description, finding.detail) || '';
+    return rule.description || '';
+  }
+
+  function actionTitle(finding) {
+    if (finding.type === 'conflict' || finding.type === 'redundant') {
+      return splitSettingKey(finding.settingKey).name;
+    }
+    const rule = finding.rule || {};
+    return resolveRuleText(rule.name, finding.detail) || finding.gpoName || '';
+  }
+
+  function actionScopeLabel(finding) {
+    const count = finding.entries.length;
+    return count + (count === 1 ? ' GPO betroffen' : ' GPOs betroffen');
+  }
+
+  function actionAnchor(finding) {
+    if (finding.type === 'conflict') return '#gpo-conflict-section';
+    if (finding.type === 'redundant') return '#gpo-redundant-section';
+    return '#gpo-hygiene-section';
+  }
+
+  // Kompakte BSI-Bezug-Zeile - dieselbe, bereits in getBsiSettingKeyIndex()/
+  // BSI_REQUIREMENT_INFO (V4.1/V3.5.3) hinterlegte, verifizierte Zuordnung,
+  // nur kuerzer dargestellt als das ausfuehrliche buildFindingBsiContext().
+  // Kein neuer BSI-Abgleich, keine neue Empfehlung. Ohne Treffer wird
+  // bewusst nichts angezeigt (kein "Kein BSI-Bezug" pro Eintrag - das wuerde
+  // die kompakte Ansicht bei ueberwiegend nicht gemappten Findings ueberladen;
+  // die vollstaendige Karte zeigt diesen Fall bereits explizit an).
+  function actionBsiRefLine(finding) {
+    const requirementId = finding.settingKey ? getBsiSettingKeyIndex().get(finding.settingKey) : undefined;
+    const info = requirementId ? BSI_REQUIREMENT_INFO[requirementId] : null;
+    if (!requirementId || !info) return null;
+
+    const bausteinCode = (info.bausteinLabel || '').split(' – ')[0] || info.bausteinLabel || '';
+    const label = BSI_REQUIREMENT_LABELS[requirementId] || requirementId;
+
+    const link = document.createElement('a');
+    link.className = 'gpo-kpi-bsi-link gpo-action-bsi-ref';
+    link.href = '#gpo-bsi-section';
+    link.textContent = '🛡️ BSI-Bezug: ' + label + (bausteinCode ? ' – ' + bausteinCode : '')
+      + (info.anforderungNr ? ' ' + info.anforderungNr : '');
+    return link;
+  }
+
+  // Gemeinsamer Sprung-zu-Karte-Helfer - dieselbe Logik wie zuvor inline in
+  // buildPriorityItem() (V2.1), nur einmal extrahiert, damit die neue
+  // Handlungsbedarf-Ansicht keine zweite Kopie desselben Ablaufs bekommt.
+  function jumpToFindingCard(finding, anchorHref) {
+    if (!passesFilters(finding)) {
+      ensureFindingPassesFilter(finding);
+      applyFilters();
+    }
+    const card = _findingCardMap.get(finding);
+    if (card && card.isConnected) {
+      const body = card.querySelector('.gpo-finding-body');
+      const expand = card.querySelector('.gpo-finding-expand');
+      if (body) body.classList.add('open');
+      if (expand) expand.classList.add('open');
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      const target = document.querySelector(anchorHref);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function buildActionEntry(finding) {
+    const category = resolveActionCategory(finding);
+    const meta = ACTION_CATEGORY_META[category];
+    const anchor = actionAnchor(finding);
+
+    const card = document.createElement('div');
+    card.className = 'gpo-action-entry gpo-action-entry--' + meta.severityClass;
+
+    const typeLine = document.createElement('div');
+    typeLine.className = 'gpo-action-entry-type';
+    typeLine.textContent = meta.icon + ' ' + (ACTION_TYPE_LABELS[finding.type] || finding.type);
+    card.appendChild(typeLine);
+
+    const title = document.createElement('div');
+    title.className = 'gpo-action-entry-title';
+    title.textContent = actionTitle(finding);
+    card.appendChild(title);
+
+    if (finding.type === 'conflict' || finding.type === 'redundant') {
+      const scopeLine = document.createElement('div');
+      scopeLine.className = 'gpo-action-entry-scope';
+      scopeLine.textContent = actionScopeLabel(finding);
+      card.appendChild(scopeLine);
+    } else {
+      const gpoRow = buildGpoRefRow(finding.gpoId, finding.gpoName);
+      gpoRow.classList.add('gpo-action-entry-scope');
+      card.appendChild(gpoRow);
+    }
+
+    const shortDesc = actionShortDescription(finding);
+    if (shortDesc) {
+      const descEl = document.createElement('div');
+      descEl.className = 'gpo-action-entry-desc';
+      descEl.textContent = shortDesc;
+      card.appendChild(descEl);
+    }
+
+    const sections = resolveFindingSections(finding);
+    if (sections.naechsterSchritt) {
+      const nextWrap = document.createElement('div');
+      nextWrap.className = 'gpo-action-entry-next';
+      const label = document.createElement('strong');
+      label.textContent = 'Nächster Schritt: ';
+      nextWrap.appendChild(label);
+      appendBodyContent(nextWrap, sections.naechsterSchritt);
+      card.appendChild(nextWrap);
+    }
+
+    const bsiLine = actionBsiRefLine(finding);
+    if (bsiLine) card.appendChild(bsiLine);
+
+    const detailsLink = document.createElement('a');
+    detailsLink.href = anchor;
+    detailsLink.className = 'gpo-kpi-bsi-link gpo-action-entry-details-link';
+    detailsLink.textContent = 'Details anzeigen →';
+    detailsLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      jumpToFindingCard(finding, anchor);
+    });
+    card.appendChild(detailsLink);
+
+    return card;
+  }
+
+  function buildActionCategorySection(categoryKey, findings) {
+    const meta = ACTION_CATEGORY_META[categoryKey];
+    const section = document.createElement('div');
+    section.className = 'gpo-action-category';
+
+    const heading = document.createElement('div');
+    heading.className = 'gpo-action-category-title';
+    heading.textContent = meta.icon + ' ' + meta.title;
+    section.appendChild(heading);
+
+    if (!findings.length) {
+      const empty = document.createElement('div');
+      empty.className = 'gpo-action-entry-empty';
+      empty.textContent = 'Keine Befunde in dieser Kategorie.';
+      section.appendChild(empty);
+      return section;
+    }
+
+    const shown = findings.slice(0, ACTION_VIEW_MAX_PER_CATEGORY);
+    shown.forEach(f => section.appendChild(buildActionEntry(f)));
+
+    if (findings.length > shown.length) {
+      const more = document.createElement('div');
+      more.className = 'gpo-action-more-hint';
+      more.textContent = '+ ' + (findings.length - shown.length) + ' weitere in dieser Kategorie – siehe „Alle Findings anzeigen“.';
+      section.appendChild(more);
+    }
+
+    return section;
+  }
+
+  // V4.4: "Was sollte ich mir zuerst anschauen?" im Executive Dashboard -
+  // wird bewusst NICHT aus renderExecutiveDashboard() heraus aufgerufen,
+  // sondern erst danach in renderOverview() (wie renderPriorityList()), weil
+  // "Details anzeigen" ueber _findingCardMap auf die bereits gerenderten
+  // Finding-Karten aus renderConflictList()/renderRedundantList()/
+  // renderHygieneList() zugreift - diese muessen zuerst existieren.
+  function renderActionView() {
+    const container = document.getElementById('gpo-action-view');
+    if (!container) return;
+    container.replaceChildren();
+
+    const buckets = collectActionBuckets();
+    const grid = document.createElement('div');
+    grid.className = 'gpo-action-grid';
+    ACTION_CATEGORY_ORDER.forEach(key => {
+      grid.appendChild(buildActionCategorySection(key, buckets[key]));
+    });
+    container.appendChild(grid);
+
+    const allLink = document.createElement('a');
+    allLink.href = '#gpo-findings-section';
+    allLink.className = 'gpo-kpi-bsi-link gpo-action-all-link';
+    allLink.textContent = 'Alle Findings anzeigen →';
+    container.appendChild(allLink);
+
+    const disclaimer = document.createElement('div');
+    disclaimer.className = 'gpo-action-disclaimer';
+    disclaimer.textContent = 'Grundlage ist ausschließlich der hochgeladene Snapshot. Die tatsächliche effektive Richtlinie kann insbesondere bei komplexen GPO-Verknüpfungen erst mit gpresult /h bzw. rsop.msc sicher beurteilt werden.';
+    container.appendChild(disclaimer);
+  }
+
+  // ── GPO-zentrierte Pruef-/Aufraeumsicht (V4.5 Executive Dashboard) ──
+  // Im Unterschied zu renderActionView() (V4.4, Finding-zentriert) wird hier
+  // je GPO gebuendelt, welche bereits vorhandenen Findings sie betreffen -
+  // ueber relatedFindingsForGpo()/findingInvolvesGpo() (bestehend, V2.3
+  // GPO-Detailpanel), keine neue Zuordnungslogik. Eine GPO landet in genau
+  // einer der vier Gruppen (hoechste Prioritaet gewinnt):
+  //  - 'flagged' (🔴 Auffaellige GPOs): mind. ein Konflikt-Finding ODER ein
+  //    Hygiene-/Security-Filter-Finding mit rule.bucket 'kritisch' ODER
+  //    "mehrere relevante Findings" (Volumen-Schwelle, siehe
+  //    GPO_FLAGGED_FINDING_THRESHOLD - reine Anzeige-Schwelle, keine neue
+  //    Risikoberechnung).
+  //  - 'redundant' (🟡 Mehrfachdefinitionen): mind. ein Redundant-Finding,
+  //    sofern nicht bereits 'flagged'.
+  //  - 'hygiene' (🧹 GPO-Hygiene): mind. ein Hygiene-/Security-Filter-/WMI-
+  //    Filter-Finding (jeder verbleibende Bucket) - Security-/WMI-Filter
+  //    werden hier bewusst NICHT automatisch 'flagged' (siehe Bericht:
+  //    rule.bucket ist bei beiden aktuell 'pruefen'/'information', nie
+  //    'kritisch' - konsistent mit der bereits in V4.4 etablierten
+  //    Einstufung und der bestehenden gemeinsamen Rendering-Sektion
+  //    #gpo-hygiene-section).
+  //  - 'hint' (ℹ️ Prüfhinweis): Auffangbecken fuer nicht eindeutig
+  //    zuordenbare Faelle (z.B. fehlendes rule/type), verhindert
+  //    Informationsverlust statt eine neue Einstufung zu erfinden.
+  const GPO_FLAGGED_FINDING_THRESHOLD = 3;
+
+  function resolveGpoActionCategory(findings) {
+    const hasConflict = findings.some(f => f.type === 'conflict');
+    const hasCriticalHygiene = findings.some(f =>
+      (f.type === 'hygiene' || f.type === 'security-filter') && f.rule && f.rule.bucket === 'kritisch');
+    if (hasConflict || hasCriticalHygiene || findings.length >= GPO_FLAGGED_FINDING_THRESHOLD) return 'flagged';
+    if (findings.some(f => f.type === 'redundant')) return 'redundant';
+    if (findings.some(f => ['hygiene', 'security-filter', 'wmi-filter'].includes(f.type))) return 'hygiene';
+    return 'hint';
+  }
+
+  const GPO_CLEANUP_CATEGORY_META = {
+    flagged:   { icon: '🔴', title: 'Auffällige GPOs' },
+    redundant: { icon: '🟡', title: 'Mehrfach / redundant definierte Einstellungen' },
+    hygiene:   { icon: '🧹', title: 'GPO-Hygiene' },
+    hint:      { icon: 'ℹ️', title: 'GPOs mit Prüfhinweis' },
+  };
+  const GPO_CLEANUP_CATEGORY_ORDER = ['flagged', 'redundant', 'hygiene', 'hint'];
+  const GPO_CLEANUP_MAX_VISIBLE = 5;
+
+  // Reine Anzeige-Sortierung (Abschnitt 12: Anzahl Findings > Name als
+  // stabiler letzter Tie-Breaker) - keine neue Risikoberechnung, siehe
+  // GPO_CLEANUP_SORT_NOTE-Text im Intro der Ansicht.
+  function collectGpoCleanupGroups() {
+    const groups = { flagged: [], redundant: [], hygiene: [], hint: [] };
+    (_model.gpos || []).forEach(gpo => {
+      const related = relatedFindingsForGpo(gpo);
+      if (!related.length) return;
+      const category = resolveGpoActionCategory(related);
+      groups[category].push({ gpo, findings: related });
+    });
+    GPO_CLEANUP_CATEGORY_ORDER.forEach(key => {
+      groups[key].sort((a, b) => b.findings.length - a.findings.length || a.gpo.name.localeCompare(b.gpo.name));
+    });
+    return groups;
+  }
+
+  // "Auffaellig" bewusst nicht als Aussage ueber die GPO selbst formuliert
+  // (Auftrag Abschnitt 2: nicht "Diese GPO ist fehlerhaft" behaupten).
+  function gpoCleanupSummaryLine(count) {
+    return count + (count === 1 ? ' relevanter Befund' : ' relevante Befunde');
+  }
+
+  // Bestehende Status-Kategorie (gpoExplorerStatusCategory(), V2.7) wird nur
+  // angezeigt, nicht neu bewertet - 'unknown' bleibt bewusst unsichtbar
+  // (siehe Kommentar dort: darf nicht stillschweigend aktiv/deaktiviert
+  // zugeordnet werden). "Deaktiviert" bekommt ausschliesslich den im
+  // Auftrag vorgegebenen neutralen Text, keine Loeschempfehlung.
+  function gpoCleanupStatusLine(gpo) {
+    const category = gpoExplorerStatusCategory(gpo);
+    if (category === 'active') return 'Aktiv';
+    if (category === 'disabled') return 'Deaktiviert – prüfen, ob die GPO noch benötigt wird.';
+    return null;
+  }
+
+  // Eine Zeile pro Finding innerhalb der GPO-Karte - reine Wiederverwendung
+  // der V4.4-Textbausteine (ACTION_TYPE_LABELS/actionShortDescription()/
+  // actionAnchor()/jumpToFindingCard()), keine zweite Textformulierung.
+  // Redundant-Findings bekommen zusaetzlich Wert + Anzahl betroffener GPOs
+  // (Auftrag Abschnitt 2, Gruppe 2), aus finding.entries - bereits
+  // vorhandenes Feld.
+  function buildGpoCleanupFindingRow(finding) {
+    const row = document.createElement('div');
+    row.className = 'gpo-cleanup-finding-row';
+
+    const label = document.createElement('span');
+    label.className = 'gpo-cleanup-finding-label';
+    let text = (ACTION_TYPE_LABELS[finding.type] || finding.type) + ': ' + actionTitle(finding);
+    if (finding.type === 'redundant') {
+      const value = finding.entries[0] ? finding.entries[0].value : '';
+      text += ' (Wert: ' + (value || '(leer)') + ', ' + finding.entries.length + ' GPOs betroffen)';
+    } else if (finding.type === 'conflict') {
+      text += ' (' + finding.entries.length + ' GPOs betroffen)';
+    }
+    label.textContent = text;
+    row.appendChild(label);
+
+    const desc = actionShortDescription(finding);
+    if (desc) {
+      const descEl = document.createElement('span');
+      descEl.className = 'gpo-cleanup-finding-desc';
+      descEl.textContent = ' – ' + desc;
+      row.appendChild(descEl);
+    }
+
+    const link = document.createElement('a');
+    link.href = actionAnchor(finding);
+    link.className = 'gpo-kpi-bsi-link gpo-cleanup-finding-link';
+    link.textContent = 'Details anzeigen →';
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      jumpToFindingCard(finding, actionAnchor(finding));
+    });
+    row.appendChild(link);
+
+    const bsiLine = actionBsiRefLine(finding);
+    if (bsiLine) {
+      bsiLine.classList.add('gpo-cleanup-bsi-ref');
+      row.appendChild(bsiLine);
+    }
+
+    return row;
+  }
+
+  function buildGpoCleanupCard(entry) {
+    const { gpo, findings } = entry;
+    const card = document.createElement('div');
+    card.className = 'gpo-cleanup-card';
+
+    const header = document.createElement('div');
+    header.className = 'gpo-cleanup-card-header';
+    header.appendChild(buildGpoRefElement(gpo.id, gpo.name));
+    card.appendChild(header);
+
+    const statusLine = gpoCleanupStatusLine(gpo);
+    if (statusLine) {
+      const statusEl = document.createElement('div');
+      statusEl.className = 'gpo-cleanup-status';
+      statusEl.textContent = statusLine;
+      card.appendChild(statusEl);
+    }
+
+    const summary = document.createElement('div');
+    summary.className = 'gpo-cleanup-summary';
+    summary.textContent = gpoCleanupSummaryLine(findings.length);
+    card.appendChild(summary);
+
+    const list = document.createElement('div');
+    list.className = 'gpo-cleanup-finding-list';
+    findings.forEach(f => list.appendChild(buildGpoCleanupFindingRow(f)));
+    card.appendChild(list);
+
+    const openLink = document.createElement('a');
+    openLink.href = '#gpo-tree-section';
+    openLink.className = 'gpo-kpi-bsi-link gpo-cleanup-open-link';
+    openLink.textContent = 'GPO öffnen →';
+    openLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      openGpoDetail(gpo.id);
+    });
+    card.appendChild(openLink);
+
+    return card;
+  }
+
+  // Aufklappbarer "Weitere X GPOs anzeigen" statt Link zu einer neuen Seite
+  // (Auftrag Abschnitt 11/8: keine neue Detailansicht) - blendet einfach die
+  // bereits gebauten, restlichen Karten in derselben Gruppe ein.
+  function buildGpoCleanupCategorySection(categoryKey, items) {
+    const meta = GPO_CLEANUP_CATEGORY_META[categoryKey];
+    const section = document.createElement('div');
+    section.className = 'gpo-cleanup-category';
+
+    const heading = document.createElement('div');
+    heading.className = 'gpo-action-category-title';
+    heading.textContent = meta.icon + ' ' + meta.title;
+    section.appendChild(heading);
+
+    if (!items.length) {
+      const empty = document.createElement('div');
+      empty.className = 'gpo-action-entry-empty';
+      empty.textContent = 'Keine GPOs in dieser Kategorie.';
+      section.appendChild(empty);
+      return section;
+    }
+
+    const shown = items.slice(0, GPO_CLEANUP_MAX_VISIBLE);
+    const rest = items.slice(GPO_CLEANUP_MAX_VISIBLE);
+
+    shown.forEach(item => section.appendChild(buildGpoCleanupCard(item)));
+
+    if (rest.length) {
+      const restWrap = document.createElement('div');
+      restWrap.hidden = true;
+      rest.forEach(item => restWrap.appendChild(buildGpoCleanupCard(item)));
+      section.appendChild(restWrap);
+
+      const moreBtn = document.createElement('button');
+      moreBtn.type = 'button';
+      moreBtn.className = 'gpo-kpi-bsi-link gpo-cleanup-more-btn';
+      moreBtn.textContent = 'Weitere ' + rest.length + ' GPOs anzeigen →';
+      moreBtn.addEventListener('click', () => {
+        restWrap.hidden = false;
+        moreBtn.remove();
+      });
+      section.appendChild(moreBtn);
+    }
+
+    return section;
+  }
+
+  function renderGpoCleanupView() {
+    const container = document.getElementById('gpo-cleanup-view');
+    if (!container) return;
+    container.replaceChildren();
+
+    const groups = collectGpoCleanupGroups();
+    const grid = document.createElement('div');
+    grid.className = 'gpo-action-grid gpo-cleanup-grid';
+    GPO_CLEANUP_CATEGORY_ORDER.forEach(key => {
+      grid.appendChild(buildGpoCleanupCategorySection(key, groups[key]));
+    });
+    container.appendChild(grid);
+
+    const sortNote = document.createElement('div');
+    sortNote.className = 'gpo-action-disclaimer';
+    sortNote.textContent = 'Sortiert nach Anzahl der vorhandenen Befunde.';
+    container.appendChild(sortNote);
+
+    const allLink = document.createElement('a');
+    allLink.href = '#gpo-findings-section';
+    allLink.className = 'gpo-kpi-bsi-link gpo-action-all-link';
+    allLink.textContent = 'Alle relevanten Findings anzeigen →';
+    container.appendChild(allLink);
+  }
+
+  // ── Pruefvorstufe fuer die effektive Richtlinie (V4.6 Executive
+  // Dashboard) ─────────────────────────────────────────────────
+  // Baut KEINE Effective-Policy-Engine - unterscheidet ausschliesslich
+  // zwischen drei bereits aus bestehenden Feldern ableitbaren Zustaenden
+  // (Auftrag Abschnitt 3):
+  //  - 'derivable' (✓ Aus Snapshot ableitbar): reine Konfigurationstatsache,
+  //    z.B. "identischer Wert, kein Widerspruch im Snapshot" oder
+  //    "eindeutiger Wert erkannt" (bsi-mapping.js coverage==='covered').
+  //  - 'undeterminable' (? Effektive Richtlinie nicht abschliessend
+  //    bestimmbar): jeder Konflikt (der Analyzer ermittelt nie eine
+  //    Gewinner-GPO, siehe RSOP_HINT-Kommentar in gpo-analyzer.js) sowie
+  //    jeder Computer-Coverage-Eintrag mit coverage==='not_determinable'.
+  //  - 'external' (🔎 Effektive Richtlinie pruefen): zusaetzlicher, immer
+  //    berechtigter Hinweis, dass selbst eine erkannte Konfiguration ohne
+  //    gpresult/RSOP nicht als effektiv wirksam gilt (Auftrag Abschnitt 1/13).
+  // Ein Eintrag kann mehrere Zustaende gleichzeitig zeigen (Auftrag
+  // Abschnitt 17, Secure-Channel-Beispiel: ✓ UND ? zusammen).
+  const EFFECTIVE_STATE_META = {
+    derivable:      { icon: '✓', label: 'Aus Snapshot ableitbar' },
+    undeterminable: { icon: '?', label: 'Effektive Richtlinie nicht abschließend bestimmbar' },
+    external:       { icon: '🔎', label: 'Effektive Richtlinie prüfen' },
+  };
+  const EFFECTIVE_VIEW_MAX_VISIBLE = 5;
+
+  function buildEffectiveStateBadge(stateKey) {
+    const meta = EFFECTIVE_STATE_META[stateKey];
+    const badge = document.createElement('span');
+    badge.className = 'gpo-effective-badge gpo-effective-badge--' + stateKey;
+    badge.textContent = meta.icon + ' ' + meta.label;
+    return badge;
+  }
+
+  // Konflikt/Redundanz: dieselben Kurzbeschreibungs-/Naechster-Schritt-/BSI-
+  // Textbausteine wie in renderActionView() (V4.4), hier zusaetzlich mit
+  // Konfigurierende-GPOs-/Erkannte-Werte-Listen aus finding.entries
+  // (bestehendes Feld, keine neue Berechnung) und explizitem
+  // Zustands-Badge statt der V4.4-Kategorie-Einordnung.
+  function buildEffectiveEntriesGpoList(finding) {
+    const wrap = document.createElement('div');
+    const title = document.createElement('div');
+    title.className = 'gpo-finding-sub-title';
+    title.textContent = 'Konfigurierende GPOs';
+    wrap.appendChild(title);
+    const list = document.createElement('ul');
+    list.className = 'gpo-effective-list';
+    finding.entries.forEach(e => {
+      const li = document.createElement('li');
+      li.appendChild(buildGpoRefElement(e.gpoId, e.gpoName));
+      list.appendChild(li);
+    });
+    wrap.appendChild(list);
+    return wrap;
+  }
+
+  function buildEffectiveValuesList(finding) {
+    const wrap = document.createElement('div');
+    const title = document.createElement('div');
+    title.className = 'gpo-finding-sub-title';
+    title.textContent = 'Erkannte Werte';
+    wrap.appendChild(title);
+    const list = document.createElement('ul');
+    list.className = 'gpo-effective-list';
+    const values = Array.from(new Set(finding.entries.map(e => e.value)));
+    values.forEach(v => {
+      const li = document.createElement('li');
+      li.textContent = v || '(leer)';
+      list.appendChild(li);
+    });
+    wrap.appendChild(list);
+    return wrap;
+  }
+
+  function buildEffectiveFindingEntry(finding) {
+    const card = document.createElement('div');
+    card.className = 'gpo-effective-entry';
+
+    const title = document.createElement('div');
+    title.className = 'gpo-effective-entry-title';
+    title.textContent = (ACTION_TYPE_LABELS[finding.type] || finding.type) + ': ' + actionTitle(finding);
+    card.appendChild(title);
+
+    const badges = document.createElement('div');
+    badges.className = 'gpo-effective-badges';
+    if (finding.type === 'conflict') {
+      badges.appendChild(buildEffectiveStateBadge('undeterminable'));
+    } else if (finding.type === 'redundant') {
+      badges.appendChild(buildEffectiveStateBadge('derivable'));
+      badges.appendChild(buildEffectiveStateBadge('external'));
+    } else {
+      badges.appendChild(buildEffectiveStateBadge('external'));
+    }
+    card.appendChild(badges);
+
+    const desc = actionShortDescription(finding);
+    if (desc) {
+      const descEl = document.createElement('div');
+      descEl.className = 'gpo-action-entry-desc';
+      descEl.textContent = desc;
+      card.appendChild(descEl);
+    }
+    if (finding.type === 'redundant') {
+      const noConflictNote = document.createElement('div');
+      noConflictNote.className = 'gpo-action-entry-desc';
+      noConflictNote.textContent = 'Kein widersprüchlicher Wert im Snapshot festgestellt.';
+      card.appendChild(noConflictNote);
+    }
+
+    if (finding.scopeExplanation) {
+      const scopeEl = document.createElement('div');
+      scopeEl.className = 'gpo-action-entry-desc';
+      scopeEl.textContent = finding.scopeExplanation;
+      card.appendChild(scopeEl);
+    }
+
+    if (finding.type === 'conflict' || finding.type === 'redundant') {
+      card.appendChild(buildEffectiveEntriesGpoList(finding));
+      card.appendChild(buildEffectiveValuesList(finding));
+    } else {
+      const gpoRow = buildGpoRefRow(finding.gpoId, finding.gpoName);
+      gpoRow.classList.add('gpo-action-entry-scope');
+      card.appendChild(gpoRow);
+    }
+
+    const sections = resolveFindingSections(finding);
+    if (sections.naechsterSchritt) {
+      const nextWrap = document.createElement('div');
+      nextWrap.className = 'gpo-action-entry-next';
+      const label = document.createElement('strong');
+      label.textContent = 'Nächster Schritt: ';
+      nextWrap.appendChild(label);
+      appendBodyContent(nextWrap, sections.naechsterSchritt);
+      card.appendChild(nextWrap);
+    }
+
+    const bsiLine = actionBsiRefLine(finding);
+    if (bsiLine) card.appendChild(bsiLine);
+
+    const detailsLink = document.createElement('a');
+    detailsLink.href = actionAnchor(finding);
+    detailsLink.className = 'gpo-kpi-bsi-link gpo-action-entry-details-link';
+    detailsLink.textContent = 'Finding öffnen →';
+    detailsLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      jumpToFindingCard(finding, actionAnchor(finding));
+    });
+    card.appendChild(detailsLink);
+
+    return card;
+  }
+
+  // Reihenfolge Konflikt -> Redundant -> Security-Filter -> WMI-Filter,
+  // jeweils in bestehender _findings-Reihenfolge - keine neue Priorisierung
+  // (Auftrag Abschnitt 16, Punkt "wenn eine belastbare Priorisierung nicht
+  // moeglich ist, nicht kuenstlich priorisieren").
+  function collectEffectiveFindings() {
+    const conflicts = _findings.filter(f => f.type === 'conflict');
+    const redundants = _findings.filter(f => f.type === 'redundant');
+    const securityFilters = _findings.filter(f => f.type === 'security-filter');
+    const wmiFilters = _findings.filter(f => f.type === 'wmi-filter');
+    return conflicts.concat(redundants, securityFilters, wmiFilters);
+  }
+
+  // Computer-Coverage-Eintraege (bestehend, evaluateComputerCoverage() V3.5.1)
+  // - not_covered wird bewusst ausgeblendet (dort existiert keine
+  // konfigurierende, erreichende GPO - fuer eine "effektive Richtlinie
+  // pruefen"-Ansicht nichts zu pruefen). not_determinable zuerst (staerkster
+  // Bezug zum Seitenzweck), dann covered - keine neue Risikoberechnung, nur
+  // Sortierung bereits vorhandener Zustaende.
+  function collectEffectiveComputerEntries() {
+    if (!window.GpoBsiMapping || typeof window.GpoBsiMapping.evaluateComputerCoverage !== 'function') return [];
+    if (_model.dataQuality && _model.dataQuality.computersFileMissing) return [];
+
+    const coverage = window.GpoBsiMapping.evaluateComputerCoverage(_model);
+    const items = [];
+    BSI_REQUIREMENT_ORDER.forEach(requirementId => {
+      const req = coverage[requirementId];
+      if (!req) return;
+      (req.computers || []).forEach(entry => {
+        if (entry.coverage === 'not_covered') return;
+        items.push({ requirementId, entry });
+      });
+    });
+    items.sort((a, b) => {
+      if (a.entry.coverage === b.entry.coverage) return 0;
+      return a.entry.coverage === 'not_determinable' ? -1 : 1;
+    });
+    return items;
+  }
+
+  // Wiederverwendet buildBsiComputerRow() (V3.5.3, bestehendes aufklappbares
+  // <details>-Element mit DN/Kategorie/OS/reason/reachingGpoIds/
+  // configuringGpoIds/values) unveraendert - keine zweite Detailansicht,
+  // nur ein Requirement-Label + BSI-Grundlage-Link zusaetzlich davor.
+  function buildEffectiveComputerEntry(item) {
+    const wrap = document.createElement('div');
+    wrap.className = 'gpo-effective-computer-entry';
+
+    const label = document.createElement('div');
+    label.className = 'gpo-effective-entry-title';
+    label.textContent = BSI_REQUIREMENT_LABELS[item.requirementId] || item.requirementId;
+    wrap.appendChild(label);
+
+    const badges = document.createElement('div');
+    badges.className = 'gpo-effective-badges';
+    badges.appendChild(buildEffectiveStateBadge(item.entry.coverage === 'not_determinable' ? 'undeterminable' : 'derivable'));
+    if (item.entry.coverage === 'covered') badges.appendChild(buildEffectiveStateBadge('external'));
+    wrap.appendChild(badges);
+
+    wrap.appendChild(buildBsiComputerRow(item.entry));
+
+    const info = BSI_REQUIREMENT_INFO[item.requirementId];
+    if (info) {
+      const bsiLink = document.createElement('a');
+      bsiLink.className = 'gpo-kpi-bsi-link gpo-action-bsi-ref';
+      bsiLink.href = '#gpo-bsi-section';
+      const bausteinCode = (info.bausteinLabel || '').split(' – ')[0] || info.bausteinLabel || '';
+      bsiLink.textContent = '🛡️ BSI-Grundlage: ' + (BSI_REQUIREMENT_LABELS[item.requirementId] || item.requirementId)
+        + (bausteinCode ? ' – ' + bausteinCode : '') + (info.anforderungNr ? ' ' + info.anforderungNr : '');
+      wrap.appendChild(bsiLink);
+    }
+
+    return wrap;
+  }
+
+  // Generischer "max N sichtbar, danach aufklappbar" Baustein - dieselbe
+  // Mechanik wie buildGpoCleanupCategorySection() (V4.5), hier fuer eine
+  // einzelne, flache Liste statt vier Kategorien.
+  function buildEffectiveSubList(items, buildEntry, emptyText, moreLabelSingular, moreLabelPlural) {
+    const wrap = document.createElement('div');
+    if (!items.length) {
+      const empty = document.createElement('div');
+      empty.className = 'gpo-action-entry-empty';
+      empty.textContent = emptyText;
+      wrap.appendChild(empty);
+      return wrap;
+    }
+
+    const shown = items.slice(0, EFFECTIVE_VIEW_MAX_VISIBLE);
+    const rest = items.slice(EFFECTIVE_VIEW_MAX_VISIBLE);
+    shown.forEach(item => wrap.appendChild(buildEntry(item)));
+
+    if (rest.length) {
+      const restWrap = document.createElement('div');
+      restWrap.hidden = true;
+      rest.forEach(item => restWrap.appendChild(buildEntry(item)));
+      wrap.appendChild(restWrap);
+
+      const moreBtn = document.createElement('button');
+      moreBtn.type = 'button';
+      moreBtn.className = 'gpo-kpi-bsi-link gpo-cleanup-more-btn';
+      moreBtn.textContent = 'Weitere ' + rest.length + ' ' + (rest.length === 1 ? moreLabelSingular : moreLabelPlural) + ' anzeigen →';
+      moreBtn.addEventListener('click', () => {
+        restWrap.hidden = false;
+        moreBtn.remove();
+      });
+      wrap.appendChild(moreBtn);
+    }
+
+    return wrap;
+  }
+
+  function renderEffectivePolicyView() {
+    const container = document.getElementById('gpo-effective-view');
+    if (!container) return;
+    container.replaceChildren();
+
+    // Auftrag Abschnitt 13: deutlich sichtbarer, nicht versteckbarer Hinweis.
+    const warning = document.createElement('div');
+    warning.className = 'gpo-effective-warning';
+    warning.textContent = 'Wichtig: GPO-Coverage bedeutet nicht automatisch, dass eine Einstellung auf dem Zielsystem tatsächlich wirksam ist. Die effektive Richtlinie kann erst unter Berücksichtigung der tatsächlichen GPO-Anwendung eindeutig beurteilt werden.';
+    container.appendChild(warning);
+
+    const findingsTitle = document.createElement('div');
+    findingsTitle.className = 'gpo-finding-sub-title';
+    findingsTitle.textContent = 'Findings';
+    container.appendChild(findingsTitle);
+    container.appendChild(buildEffectiveSubList(
+      collectEffectiveFindings(), buildEffectiveFindingEntry,
+      'Keine relevanten Findings vorhanden.', 'Finding', 'Findings'
+    ));
+
+    const computerTitle = document.createElement('div');
+    computerTitle.className = 'gpo-finding-sub-title';
+    computerTitle.textContent = 'Computer';
+    container.appendChild(computerTitle);
+    container.appendChild(buildEffectiveSubList(
+      collectEffectiveComputerEntries(), buildEffectiveComputerEntry,
+      _model.dataQuality && _model.dataQuality.computersFileMissing
+        ? 'Keine Computerdaten im Snapshot vorhanden (computers.json fehlt).'
+        : 'Keine relevanten Computer-Einträge vorhanden.',
+      'Computer', 'Computer'
+    ));
+
+    // Auftrag Abschnitt 10: praktischer gpresult/RSOP-Hinweis - stellt
+    // ausdruecklich klar, dass der Analyzer diese Information nicht selbst
+    // besitzt.
+    const gpresultBlock = document.createElement('div');
+    gpresultBlock.className = 'gpo-effective-gpresult';
+    const gpresultTitle = document.createElement('div');
+    gpresultTitle.className = 'gpo-finding-sub-title';
+    gpresultTitle.textContent = 'Für die endgültige Prüfung';
+    gpresultBlock.appendChild(gpresultTitle);
+    const gpresultIntro = document.createElement('div');
+    gpresultIntro.className = 'gpo-action-entry-desc';
+    gpresultIntro.textContent = 'Verwende auf dem betroffenen Windows-System beispielsweise:';
+    gpresultBlock.appendChild(gpresultIntro);
+    const gpresultList = document.createElement('ul');
+    gpresultList.className = 'gpo-effective-list';
+    [['gpresult /h gpresult.html'], ['rsop.msc']].forEach(cmd => {
+      const li = document.createElement('li');
+      const code = document.createElement('code');
+      code.textContent = cmd[0];
+      li.appendChild(code);
+      gpresultList.appendChild(li);
+    });
+    gpresultBlock.appendChild(gpresultList);
+    const gpresultChecklistIntro = document.createElement('div');
+    gpresultChecklistIntro.className = 'gpo-action-entry-desc';
+    gpresultChecklistIntro.textContent = 'Danach sollte der Administrator insbesondere prüfen:';
+    gpresultBlock.appendChild(gpresultChecklistIntro);
+    const checklist = document.createElement('ul');
+    checklist.className = 'gpo-effective-list';
+    [
+      'welche GPOs tatsächlich angewendet wurden',
+      'welche GPOs herausgefiltert wurden',
+      'welcher Wert effektiv gilt',
+      'welche Vererbung / Priorität wirksam war',
+    ].forEach(text => {
+      const li = document.createElement('li');
+      li.textContent = text;
+      checklist.appendChild(li);
+    });
+    gpresultBlock.appendChild(checklist);
+    container.appendChild(gpresultBlock);
+
+    const links = document.createElement('div');
+    links.className = 'gpo-action-all-link';
+    const allFindingsLink = document.createElement('a');
+    allFindingsLink.href = '#gpo-findings-section';
+    allFindingsLink.className = 'gpo-kpi-bsi-link';
+    allFindingsLink.textContent = 'Alle Findings anzeigen →';
+    const allBsiLink = document.createElement('a');
+    allBsiLink.href = '#gpo-bsi-section';
+    allBsiLink.className = 'gpo-kpi-bsi-link gpo-effective-second-link';
+    allBsiLink.textContent = 'BSI-Coverage ansehen →';
+    links.append(allFindingsLink, allBsiLink);
+    container.appendChild(links);
   }
 
   // ── Gemeinsame Helfer fuer Konflikt-/Redundanz-Karten ──────
@@ -1590,10 +2475,9 @@ window.GpoRenderer = (function() {
   // als "warum relevant" sowie zwei getrennte Links (offizielles PDF vs.
   // bestehende BSI-Coverage-Ansicht). Keine neue BSI-Zuordnung, keine neue
   // Quelle - nur eine ausfuehrlichere Darstellung derselben, schon
-  // vorhandenen Daten. Die bekannte SMB-Requirement-ID/Quellen-Diskrepanz
-  // (BSI_REQUIREMENT_INFO-Kommentar) bleibt unangetastet: BSI_REQUIREMENT_INFO
-  // liefert bereits die tatsaechlich verifizierte Quelle (APP.2.2.A9), nicht
-  // das SYS.2.2.3-Praefix der internen ID.
+  // vorhandenen Daten. Die frueher hier dokumentierte SMB-Requirement-ID/
+  // Quellen-Diskrepanz wurde in V4.3.1 bereinigt (ID lautet jetzt
+  // 'BSI-APP.2.2-SMB-SIGNING', siehe BSI_REQUIREMENT_INFO-Kommentar).
   function buildFindingBsiContext(finding) {
     const requirementId = finding.settingKey ? getBsiSettingKeyIndex().get(finding.settingKey) : undefined;
     const info = requirementId ? BSI_REQUIREMENT_INFO[requirementId] : null;
@@ -2930,7 +3814,7 @@ window.GpoRenderer = (function() {
   const BSI_REQUIREMENT_LABELS = {
     'BSI-SYS.2.2.3-NTLM-LM-LEVEL': 'NTLM',
     'BSI-APP.2.2-SECURE-CHANNEL': 'Secure Channel',
-    'BSI-SYS.2.2.3-SMB-SIGNING': 'SMB-Signierung',
+    'BSI-APP.2.2-SMB-SIGNING': 'SMB-Signierung',
   };
   const BSI_CATEGORY_LABELS = {
     domain_controllers: 'Domain Controllers',
@@ -2938,7 +3822,7 @@ window.GpoRenderer = (function() {
     clients: 'Clients',
   };
   const BSI_CATEGORY_ORDER = ['domain_controllers', 'member_servers', 'clients'];
-  const BSI_REQUIREMENT_ORDER = ['BSI-SYS.2.2.3-NTLM-LM-LEVEL', 'BSI-APP.2.2-SECURE-CHANNEL', 'BSI-SYS.2.2.3-SMB-SIGNING'];
+  const BSI_REQUIREMENT_ORDER = ['BSI-SYS.2.2.3-NTLM-LM-LEVEL', 'BSI-APP.2.2-SECURE-CHANNEL', 'BSI-APP.2.2-SMB-SIGNING'];
 
   // V3.5.3: kurze, eigenstaendig formulierte Zusammenfassung je Requirement
   // + Link auf die zugrunde liegende offizielle BSI-Quelle (IT-Grundschutz-
@@ -2946,14 +3830,15 @@ window.GpoRenderer = (function() {
   // Einbau per Volltext-Abgleich der PDFs verifiziert (siehe Bericht) - kein
   // Requirement bekommt eine geratene/nicht gegengeprüfte URL.
   //
-  // Wichtiger Befund aus der Verifikation: die interne Requirement-ID
-  // 'BSI-SYS.2.2.3-SMB-SIGNING' (bsi-mapping.js, hier NICHT geaendert)
-  // traegt historisch das Praefix "SYS.2.2.3" - die tatsaechliche, per
-  // Volltextsuche verifizierte SMB-Signierungspflicht ("Der SMB-
-  // Datenverkehr MUSS signiert sein.") steht aber in APP.2.2.A9, nicht in
-  // SYS.2.2.3 (dort 0 Treffer fuer "SMB"/"signier"). Die hier hinterlegte
-  // Quelle verlinkt deshalb bewusst auf APP.2.2 statt auf SYS.2.2.3 - siehe
-  // Bericht fuer die vollstaendige Einordnung dieser Diskrepanz.
+  // V4.3.1: die interne Requirement-ID fuer SMB-Signierung wurde von
+  // 'BSI-SYS.2.2.3-SMB-SIGNING' auf 'BSI-APP.2.2-SMB-SIGNING' korrigiert
+  // (siehe bsi-mapping.js, SMB_SIGNING_REQUIREMENT_ID). Historischer
+  // Befund, der zu dieser Korrektur fuehrte: die alte ID trug das Praefix
+  // "SYS.2.2.3", die tatsaechliche, per Volltextsuche verifizierte SMB-
+  // Signierungspflicht ("Der SMB-Datenverkehr MUSS signiert sein.") stand
+  // aber schon immer in APP.2.2.A9, nicht in SYS.2.2.3 (dort 0 Treffer fuer
+  // "SMB"/"signier"). Quelle/Text/Label/Berechnung unveraendert - nur der
+  // ID-String wurde konsistent auf den tatsaechlichen Baustein umgestellt.
   const BSI_REQUIREMENT_INFO = {
     'BSI-SYS.2.2.3-NTLM-LM-LEVEL': {
       anforderung: 'BSI IT-Grundschutz-Kompendium, SYS.2.2.3.A9 "Sichere zentrale Authentisierung in Windows-Netzen": Für die zentrale Authentisierung soll bevorzugt Kerberos eingesetzt werden. Ist das nicht möglich, muss mindestens NTLMv2 verwendet werden - die Authentisierung über LAN-Manager und NTLMv1 darf weder innerhalb der Institution noch in einer produktiven Umgebung erlaubt sein.',
@@ -2976,15 +3861,14 @@ window.GpoRenderer = (function() {
       anforderungNr: 'A8',
       grundlageLabel: 'Grundlage für die Secure-Channel-Bewertung',
     },
-    'BSI-SYS.2.2.3-SMB-SIGNING': {
+    'BSI-APP.2.2-SMB-SIGNING': {
       anforderung: 'BSI IT-Grundschutz-Kompendium, APP.2.2.A9 "Schutz der Authentisierung beim Einsatz von AD DS": der SMB-Datenverkehr muss signiert sein, SMBv1 muss deaktiviert sein.',
       empfehlung: 'Das BSI schreibt signierten SMB-Datenverkehr verpflichtend vor und fordert die Deaktivierung von SMBv1.',
       sourceUrl: 'https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Grundschutz/IT-GS-Kompendium_Einzel_PDFs_2023/06_APP_Anwendungen/APP_2_2_Active_Directory_Domain_Services_Edition_2023.pdf?__blob=publicationFile&v=4',
       sourceLabel: 'BSI IT-Grundschutz-Kompendium – APP.2.2 „Active Directory Domain Services" (PDF, Anforderung A9)',
-      // Siehe Kopf-Kommentar oben: Requirement-ID traegt "SYS.2.2.3"-Praefix,
-      // die tatsaechlich verifizierte Quelle ist aber APP.2.2.A9 - diese
-      // Diskrepanz wird hier bewusst NICHT stillschweigend korrigiert,
-      // sondern die UI zeigt ausschliesslich die verifizierte Quelle.
+      // V4.3.1: Requirement-ID wurde konsistent auf APP.2.2 korrigiert
+      // (siehe Kopf-Kommentar oben) - die Quelle war bereits vorher korrekt
+      // (APP.2.2.A9), nur die interne ID hinkte hinterher.
       bausteinLabel: 'APP.2.2 – Active Directory Domain Services',
       anforderungNr: 'A9',
       grundlageLabel: 'Grundlage für die SMB-Signierungsbewertung',

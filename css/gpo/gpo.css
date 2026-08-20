@@ -412,6 +412,143 @@
    Farbe (--green, siehe .gpo-integrity-panel--ok/.gpo-ampel-pill--zero). */
 .gpo-priority-ok { font-size: .82rem; font-weight: 600; color: var(--green); padding: 6px 12px; }
 
+/* ── Handlungsbedarf-Ansicht (V4.4 Executive Dashboard) ──────
+   Drei feste Kategorie-Spalten (Handlungsbedarf/Pruefung erforderlich/
+   Hinweise), jede mit kompakten Finding-Karten - reine Wiederverwendung
+   bestehender Kartenoptik (Rahmen/Panel wie .gpo-priority-item/
+   .gpo-dashboard-bsi-card), keine neue Farbskala. */
+.gpo-action-intro { font-size: .82rem; color: var(--muted); margin: 4px 0 12px; max-width: 720px; }
+
+/* ── Kurzueberblick (V4.7) ─────────────────────────────────────
+   Reine Textzusammenfassung bereits vorhandener Zahlen (siehe
+   renderOverviewSummary()) - keine Kachel-/Grid-Optik, damit sie sich
+   klar als Fliesstext-Zusammenfassung von den Zahlen-Kacheln oben
+   abhebt. */
+.gpo-summary-list {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: .84rem;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 720px;
+}
+.gpo-action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+.gpo-action-category-title { font-size: .82rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.gpo-action-entry-empty { font-size: .78rem; color: var(--dim); font-style: italic; }
+.gpo-action-entry {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: var(--r);
+  background: var(--panel);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  font-size: .78rem;
+}
+.gpo-action-entry--critical { border-left-color: var(--red); }
+.gpo-action-entry--warning  { border-left-color: var(--amber); }
+.gpo-action-entry--info     { border-left-color: var(--teal); }
+.gpo-action-entry-type { font-size: .72rem; font-weight: 700; color: var(--muted); margin-bottom: 2px; }
+.gpo-action-entry-title { font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.gpo-action-entry-scope { font-size: .74rem; color: var(--muted); margin-bottom: 6px; }
+.gpo-action-entry-desc { color: var(--muted); margin-bottom: 6px; }
+.gpo-action-entry-next { margin-bottom: 6px; }
+.gpo-action-entry-next .gpo-finding-desc { display: inline; margin: 0; }
+.gpo-action-bsi-ref, .gpo-action-entry-details-link { display: block; margin-top: 4px; font-size: .76rem; }
+.gpo-action-more-hint { font-size: .74rem; color: var(--dim); font-style: italic; margin-top: 2px; }
+.gpo-action-all-link { display: inline-block; margin-top: 10px; }
+.gpo-action-disclaimer { font-size: .72rem; color: var(--dim); margin-top: 10px; max-width: 720px; }
+
+/* ── GPO-Pruef-/Aufraeumsicht (V4.5 Executive Dashboard) ──────
+   GPO-zentrierte Karten (Gegenstueck zur Finding-zentrierten
+   .gpo-action-entry aus V4.4) - eine Karte pro betroffener GPO, buendelt
+   deren Findings als Zeilen darunter. Vier Kategorie-Spalten wie
+   .gpo-action-grid, hier per eigener Klasse leicht breiter (mehr Inhalt
+   pro Karte als bei den kompakten Finding-Eintraegen). */
+.gpo-cleanup-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.gpo-cleanup-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--panel);
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  font-size: .78rem;
+}
+.gpo-cleanup-card-header { font-weight: 600; margin-bottom: 2px; }
+.gpo-cleanup-status { font-size: .74rem; color: var(--muted); margin-bottom: 4px; }
+.gpo-cleanup-summary { font-size: .74rem; color: var(--muted); margin-bottom: 6px; }
+.gpo-cleanup-finding-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.gpo-cleanup-finding-row {
+  border-left: 2px solid var(--border);
+  padding-left: 8px;
+  font-size: .74rem;
+}
+.gpo-cleanup-finding-label { font-weight: 600; color: var(--text); }
+.gpo-cleanup-finding-desc { color: var(--muted); }
+.gpo-cleanup-finding-link, .gpo-cleanup-bsi-ref { display: block; margin-top: 2px; font-size: .74rem; }
+.gpo-cleanup-open-link { display: inline-block; }
+.gpo-cleanup-more-btn {
+  display: inline-block;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* ── Pruefvorstufe effektive Richtlinie (V4.6 Executive Dashboard) ──
+   Eigene Zustands-Badges (✓/?/🔎), bewusst getrennt von den bestehenden
+   BSI-Coverage-Badges (.gpo-bsi-badge) - unterschiedliche Aussagen
+   (Konfigurationsgewissheit vs. Effektiv-Wirksamkeit), keine Vermischung. */
+.gpo-effective-warning {
+  border: 1px solid var(--amber);
+  border-radius: var(--r);
+  background: rgba(245, 158, 11, .08);
+  padding: 10px 14px;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+.gpo-effective-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.gpo-effective-badge {
+  display: inline-block;
+  font-size: .72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+.gpo-effective-badge--derivable { border-color: var(--green); color: var(--green); }
+.gpo-effective-badge--undeterminable { border-color: var(--amber); color: var(--amber); }
+.gpo-effective-badge--external { border-color: var(--teal); color: var(--teal); }
+.gpo-effective-entry, .gpo-effective-computer-entry {
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--panel);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  font-size: .78rem;
+}
+.gpo-effective-entry-title { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.gpo-effective-list { margin: 0 0 6px; padding-left: 18px; font-size: .74rem; color: var(--muted); }
+.gpo-effective-computer-entry .gpo-bsi-computer { border: none; padding: 0; margin: 6px 0; }
+.gpo-effective-gpresult {
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--panel);
+  padding: 10px 12px;
+  margin: 10px 0;
+}
+.gpo-effective-gpresult .gpo-effective-list code { background: var(--panel2); padding: 1px 6px; border-radius: 4px; }
+.gpo-effective-second-link { margin-left: 16px; }
+
 /* ── Filter-Leiste (V2.2, V2.7.4 gruppierte Darstellung) ────────
    Reine Darstellungs-Filterung ueber bereits vorhandene Findings, keine
    erneute Analyse. Drei sichtbar getrennte Gruppen: Finding-Typ

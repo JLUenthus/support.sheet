@@ -212,6 +212,33 @@
           <a href="#gpo-bsi-section" class="gpo-kpi-bsi-link" id="gpo-kpi-computer-link"></a>
         </div>
 
+        <!-- V4.7: Kurzueberblick als kompakte Textzusammenfassung zwischen
+             den Zahlen-Kacheln und der ausfuehrlicheren Handlungssicht -
+             ausschliesslich bereits vorhandene absolute Zahlen, keine
+             Prozentwerte, keine Gesamtbewertung. -->
+        <div class="gpo-dash-tier">
+          <div class="gpo-finding-sub-title">Kurzüberblick</div>
+          <ul class="gpo-summary-list" id="gpo-overview-summary"></ul>
+        </div>
+
+        <div class="gpo-dash-tier">
+          <div class="gpo-finding-sub-title">Als nächstes prüfen</div>
+          <p class="gpo-action-intro">Was sollte ich mir zuerst anschauen? Die folgenden Gruppen buendeln bereits vorhandene Findings nach ihrer unmittelbaren Pruefrelevanz. Dies ist keine automatische Risikobewertung und ersetzt keine Pruefung der effektiven Richtlinie.</p>
+          <div id="gpo-action-view"></div>
+        </div>
+
+        <div class="gpo-dash-tier">
+          <div class="gpo-finding-sub-title">Prüfen &amp; Aufräumen</div>
+          <p class="gpo-action-intro">Diese Übersicht zeigt GPOs und Konfigurationen, die aufgrund vorhandener Analyseinformationen für eine nähere Prüfung interessant sein können. Sie ersetzt keine Prüfung der effektiven Richtlinie und entscheidet nicht, ob eine GPO tatsächlich benötigt wird.</p>
+          <div id="gpo-cleanup-view"></div>
+        </div>
+
+        <div class="gpo-dash-tier">
+          <div class="gpo-finding-sub-title">Effektive Richtlinie prüfen</div>
+          <p class="gpo-action-intro">Der Snapshot zeigt, welche GPOs und Einstellungen vorhanden und auf welche Computer sie potenziell angewendet werden können. Die tatsächlich wirksame Richtlinie kann durch Vererbung, Filter, Prioritäten und weitere Windows-GPO-Regeln abweichen. Für die endgültige Prüfung auf einem betroffenen System sollte deshalb <code>gpresult</code> oder RSOP verwendet werden.</p>
+          <div id="gpo-effective-view"></div>
+        </div>
+
         <div class="gpo-dash-tier">
           <div class="gpo-finding-sub-title">Weiterführende Analyse</div>
           <div class="gpo-dashboard-quicklinks">
@@ -224,8 +251,14 @@
         </div>
       </section>
 
-      <section class="gpo-section" id="gpo-overview-section">
-        <h2 class="section-title">GPO Analyzer</h2>
+      <!-- V4.7: bleibt inhaltlich unveraendert (dieselben Funktionen/Daten,
+           renderNumGrid()/renderAmpelRow()/renderMaintenancePanel()/
+           renderPriorityList() in gpo-renderer.js), wird aber standardmaessig
+           eingeklappt dargestellt - reine Informationshierarchie
+           (Executive Dashboard + "Als naechstes pruefen" oben decken dieselbe
+           Kernfrage bereits kompakter ab), keine Information wird entfernt. -->
+      <details class="gpo-section gpo-onboarding-collapsible" id="gpo-overview-section">
+        <summary class="gpo-onboarding-collapsible-summary">🔧 Zusätzliche Kennzahlen (technische Ansicht)</summary>
 
         <div class="gpo-dash-tier gpo-dash-tier--status">
           <div class="gpo-integrity-panel" id="gpo-integrity-panel"></div>
@@ -239,7 +272,7 @@
 
         <div class="gpo-maintenance-panel" id="gpo-maintenance-panel"></div>
         <div class="gpo-priority-list" id="gpo-priority-list"></div>
-      </section>
+      </details>
 
       <section class="gpo-section" id="gpo-explorer-section">
         <div class="gpo-list-header">

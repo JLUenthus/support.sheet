@@ -454,7 +454,16 @@ window.GpoBsiMapping = (function() {
       ] },
   ];
 
-  const SMB_SIGNING_REQUIREMENT_ID = 'BSI-SYS.2.2.3-SMB-SIGNING';
+  // V4.3.1: ID korrigiert von 'BSI-SYS.2.2.3-SMB-SIGNING' auf
+  // 'BSI-APP.2.2-SMB-SIGNING' - die bereits verifizierte fachliche Quelle
+  // fuer die SMB-Signierungspflicht ist APP.2.2.A9 (siehe
+  // BSI_REQUIREMENT_INFO in gpo-renderer.js), nicht SYS.2.2.3. Nur die
+  // Bezeichner-ID wurde korrigiert, exakt derselbe Baustein-Praefix-Stil
+  // wie bei SECURE_CHANNEL_REQUIREMENT_ID direkt darueber ("BSI-<Baustein>-
+  // <Kurzbezeichnung>", ohne Anforderungsnummer im ID-String selbst - die
+  // Anforderungsnummer steht bereits separat in BSI_REQUIREMENT_INFO). Wert,
+  // Berechnung, Setting-Mapping, Coverage-/Compliance-Logik unveraendert.
+  const SMB_SIGNING_REQUIREMENT_ID = 'BSI-APP.2.2-SMB-SIGNING';
   const SMB_SIGNING_SUB_SETTINGS = [
     { label: 'SMB-Signierung Server', keys: [
         SECURITY_OPTIONS_PREFIX + 'Microsoft-Netzwerk (Server): Kommunikation digital signieren (wenn Client zustimmt)',
