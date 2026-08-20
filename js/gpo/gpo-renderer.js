@@ -215,6 +215,7 @@ window.GpoRenderer = (function() {
     renderExecutiveDashboard();
     renderTwentySecondOverview();
     renderReferenceEngine();
+    renderMicrosoftBaselineComparison();
     renderOverviewSummary();
     renderIntegrityPanel();
     renderNumGrid();
@@ -467,6 +468,38 @@ window.GpoRenderer = (function() {
     renderDashboardBsiLink();
   }
 
+  function renderMicrosoftBaselineStatus() {
+    const container = document.getElementById('gpo-microsoft-baseline-status');
+    const zone = document.getElementById('gpo-baseline-upload-zone');
+    if (!container || !window.GpoBaselineImporter) return;
+    const state = window.GpoBaselineImporter.getState();
+    container.replaceChildren();
+    if (zone) zone.classList.toggle('gpo-baseline-upload-zone--done', state.status === 'loaded');
+    if (state.status === 'empty') return;
+    if (state.status === 'loading') {
+      const text = document.createElement('div'); text.className = 'gpo-baseline-status-message'; text.textContent = 'Baseline wird eingelesen …'; container.appendChild(text); return;
+    }
+    if (state.status === 'error') {
+      const err = document.createElement('div'); err.className = 'gpo-baseline-status-message gpo-baseline-status-message--error'; err.textContent = state.error || 'Microsoft-Baseline konnte nicht verarbeitet werden.'; container.appendChild(err); return;
+    }
+    const heading = document.createElement('div'); heading.className = 'gpo-baseline-status-heading';
+    const strong = document.createElement('strong'); strong.textContent = 'Baseline importiert';
+    const version = document.createElement('span'); version.textContent = state.baselineVersion || state.fileName || '';
+    heading.append(strong, version); container.appendChild(heading);
+    const facts = document.createElement('div'); facts.className = 'gpo-baseline-facts';
+    [['GPOs', state.gpoCount], ['Settings importiert', state.settings.length], ['eindeutig vergleichbar', state.settings.filter(s => s.comparability === 'comparable').length], ['nicht eindeutig vergleichbar', state.notComparable.length]].forEach(([label, value]) => {
+      const row = document.createElement('div'); const l = document.createElement('span'); l.textContent = label; const v = document.createElement('strong'); v.textContent = String(value); row.append(l, v); facts.appendChild(row);
+    });
+    container.appendChild(facts);
+    const source = document.createElement('div'); source.className = 'gpo-baseline-source'; source.textContent = 'Quelle: ' + (state.fileName || 'Baseline-ZIP') + (state.sha256 ? ' · SHA-256: ' + state.sha256 : ''); container.appendChild(source);
+    if (state.notComparable.length) {
+      const details = document.createElement('details'); const summary = document.createElement('summary'); summary.textContent = 'Nicht eindeutig vergleichbare Inhalte anzeigen (' + state.notComparable.length + ')'; details.appendChild(summary);
+      const list = document.createElement('ul'); list.className = 'gpo-baseline-unmapped-list';
+      state.notComparable.slice(0, 25).forEach(item => { const li = document.createElement('li'); li.textContent = (item.gpoName || item.gpoId || '') + ' · ' + (item.type || 'Extension') + ' · ' + (item.reason || 'nicht eindeutig abbildbar'); list.appendChild(li); });
+      details.appendChild(list); container.appendChild(details);
+    }
+  }
+
   // V5.0: Gemeinsame Referenzstruktur als reine technische Adapter-Schicht.
   // BSI wird ausschliesslich aus den bereits verifizierten BSI-Konstanten und
   // dem bestehenden Evidence-Index gespeist. Microsoft/CIS sind hier bewusst
@@ -577,6 +610,153 @@ window.GpoRenderer = (function() {
 
       grid.appendChild(card);
     });
+    renderMicrosoftBaselineStatus();
+  }
+
+  // V5.1-D: Microsoft-Baseline gegen den bereits geladenen Snapshot vergleichen.
+  // Reine Setting-Ebene: keine Gewinner-GPO, kein Score, keine Prozentwerte.
+  function baselineComparableValue(value) {
+    if (value === null || value === undefined) return null;
+    if (Array.isArray(value)) return JSON.stringify(value);
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value).trim();
+  }
+
+  function collectMicrosoftBaselineComparison() {
+    const baseline = window.GpoReferenceEngine && window.GpoReferenceEngine.getBaseline
+      ? window.GpoReferenceEngine.getBaseline() : null;
+    if (!baseline) return null;
+
+    const baselineGroups = new Map();
+    (baseline.settings || []).forEach(setting => {
+      if (setting.comparability !== 'comparable') return;
+      const key = (setting.scope || '') + '::' + setting.settingKey;
+      if (!baselineGroups.has(key)) baselineGroups.set(key, []);
+      baselineGroups.get(key).push(setting);
+    });
+
+    const snapshotGroups = new Map();
+    (_model.gpos || []).forEach(gpo => {
+      (gpo.settings || []).forEach(setting => {
+        const key = (setting.scope || '') + '::' + setting.key;
+        if (!snapshotGroups.has(key)) snapshotGroups.set(key, []);
+        snapshotGroups.get(key).push({
+          gpoId: gpo.id,
+          gpoName: gpo.name,
+          value: setting.value,
+        });
+      });
+    });
+
+    const results = [];
+    baselineGroups.forEach((baselineEntries, key) => {
+      const first = baselineEntries[0];
+      const baselineValues = Array.from(new Set(baselineEntries.map(s => baselineComparableValue(s.value)).filter(v => v !== null)));
+      const snapshotEntries = snapshotGroups.get(key) || [];
+      const snapshotValues = Array.from(new Set(snapshotEntries.map(s => baselineComparableValue(s.value)).filter(v => v !== null)));
+      let status;
+      if (baselineValues.length !== 1) status = 'not_comparable';
+      else if (snapshotEntries.length === 0) status = 'missing';
+      else if (snapshotValues.length !== 1) status = 'not_comparable';
+      else status = snapshotValues[0] === baselineValues[0] ? 'match' : 'deviation';
+
+      results.push({
+        status,
+        scope: first.scope,
+        settingKey: first.settingKey,
+        name: first.name,
+        category: first.category,
+        baselineValue: baselineValues.length === 1 ? baselineValues[0] : null,
+        baselineGpos: Array.from(new Set(baselineEntries.map(s => s.gpoName).filter(Boolean))),
+        snapshotValues,
+        snapshotGpos: Array.from(new Set(snapshotEntries.map(s => s.gpoName).filter(Boolean))),
+      });
+    });
+
+    results.sort((a, b) => {
+      const order = { deviation: 0, not_comparable: 1, missing: 2, match: 3 };
+      return (order[a.status] - order[b.status]) || a.settingKey.localeCompare(b.settingKey);
+    });
+
+    const summary = { total: results.length, match: 0, deviation: 0, missing: 0, not_comparable: 0, baselineNotComparable: Number(baseline.notComparableCount || 0) };
+    results.forEach(r => { summary[r.status]++; });
+    return { results, summary, baseline };
+  }
+
+  function renderMicrosoftBaselineComparison() {
+    const empty = document.getElementById('gpo-microsoft-baseline-compare-empty');
+    const content = document.getElementById('gpo-microsoft-baseline-compare-content');
+    const summaryEl = document.getElementById('gpo-microsoft-baseline-compare-summary');
+    const listEl = document.getElementById('gpo-microsoft-baseline-compare-list');
+    const filterEl = document.getElementById('gpo-microsoft-baseline-compare-filter');
+    const searchEl = document.getElementById('gpo-microsoft-baseline-compare-search');
+    const countEl = document.getElementById('gpo-microsoft-baseline-compare-result-count');
+    if (!empty || !content || !summaryEl || !listEl) return;
+
+    const comparison = collectMicrosoftBaselineComparison();
+    if (!comparison) {
+      empty.hidden = false;
+      content.hidden = true;
+      return;
+    }
+    empty.hidden = true;
+    content.hidden = false;
+
+    const s = comparison.summary;
+    summaryEl.replaceChildren();
+    const oldNote = summaryEl.parentElement.querySelector('.gpo-baseline-compare-note');
+    if (oldNote) oldNote.remove();
+    [
+      ['Importiert', comparison.baseline.settings.length, 'total'],
+      ['Vergleichsgruppen', s.total, 'total'],
+      ['✓ Übereinstimmung', s.match, 'match'],
+      ['⚠ Abweichung', s.deviation, 'deviation'],
+      ['ℹ Nicht vorhanden', s.missing, 'missing'],
+      ['? Nicht vergleichbar', s.not_comparable, 'not_comparable'],
+    ].forEach(([label, value, kind]) => {
+      const item = document.createElement('div');
+      item.className = 'gpo-baseline-compare-stat gpo-baseline-compare-stat--' + kind;
+      const valueEl = document.createElement('strong'); valueEl.textContent = String(value);
+      const labelEl = document.createElement('span'); labelEl.textContent = label;
+      item.append(valueEl, labelEl); summaryEl.appendChild(item);
+    });
+    const baselineNote = document.createElement('div');
+    baselineNote.className = 'gpo-baseline-compare-note';
+    baselineNote.textContent = String(s.baselineNotComparable) + ' Baseline-Inhalte sind bereits beim Import als nicht eindeutig vergleichbar gekennzeichnet und werden nicht in die Vergleichsgruppen einbezogen.';
+    summaryEl.parentElement.insertBefore(baselineNote, summaryEl.nextSibling);
+
+    const renderList = () => {
+      const filter = filterEl ? filterEl.value : 'all';
+      const query = searchEl ? searchEl.value.trim().toLowerCase() : '';
+      const filtered = comparison.results.filter(r => {
+        if (filter !== 'all' && r.status !== filter) return false;
+        if (!query) return true;
+        return [r.settingKey, r.name, r.category, r.scope, ...r.baselineGpos, ...r.snapshotGpos].filter(Boolean).join(' ').toLowerCase().includes(query);
+      });
+      listEl.replaceChildren();
+      const cap = 20;
+      filtered.slice(0, cap).forEach(r => {
+        const article = document.createElement('article'); article.className = 'gpo-baseline-compare-row gpo-baseline-compare-row--' + r.status;
+        const top = document.createElement('div'); top.className = 'gpo-baseline-compare-row-top';
+        const status = document.createElement('span'); status.className = 'gpo-baseline-compare-badge gpo-baseline-compare-badge--' + r.status;
+        status.textContent = ({match:'✓ Übereinstimmung', deviation:'⚠ Abweichung', missing:'ℹ Nicht vorhanden', not_comparable:'? Nicht vergleichbar'})[r.status];
+        const scope = document.createElement('span'); scope.className = 'gpo-reference-meta'; scope.textContent = r.scope || 'Scope unbekannt';
+        top.append(status, scope); article.appendChild(top);
+        const title = document.createElement('div'); title.className = 'gpo-baseline-compare-setting'; title.textContent = r.settingKey; article.appendChild(title);
+        const values = document.createElement('div'); values.className = 'gpo-baseline-compare-values';
+        const base = document.createElement('div'); base.innerHTML = '<span>Microsoft</span><strong></strong>'; base.querySelector('strong').textContent = r.baselineValue === null ? 'nicht eindeutig' : r.baselineValue;
+        const snap = document.createElement('div'); snap.innerHTML = '<span>Snapshot</span><strong></strong>'; snap.querySelector('strong').textContent = r.snapshotValues.length ? r.snapshotValues.join(' · ') : 'nicht vorhanden';
+        values.append(base, snap); article.appendChild(values);
+        const source = document.createElement('div'); source.className = 'gpo-baseline-compare-meta'; source.textContent = 'Microsoft-GPO: ' + (r.baselineGpos.length ? r.baselineGpos.join(', ') : 'unbekannt') + ' · Snapshot-GPO: ' + (r.snapshotGpos.length ? r.snapshotGpos.join(', ') : 'keine'); article.appendChild(source);
+        listEl.appendChild(article);
+      });
+      if (filtered.length > cap) { const more = document.createElement('div'); more.className = 'gpo-baseline-compare-more'; more.textContent = 'Weitere ' + (filtered.length - cap) + ' Einträge über Filter/Suche eingrenzen.'; listEl.appendChild(more); }
+      if (!filtered.length) { const none = document.createElement('div'); none.className = 'gpo-baseline-compare-empty'; none.textContent = 'Keine Einträge für diese Auswahl.'; listEl.appendChild(none); }
+      if (countEl) countEl.textContent = filtered.length + ' von ' + comparison.results.length + ' Einträgen';
+    };
+    renderList();
+    if (filterEl && !filterEl.dataset.bound) { filterEl.dataset.bound = '1'; filterEl.addEventListener('change', renderList); }
+    if (searchEl && !searchEl.dataset.bound) { searchEl.dataset.bound = '1'; searchEl.addEventListener('input', renderList); }
   }
 
   // V4.7: kompakte Textzusammenfassung ("Kurzueberblick") zwischen den
@@ -4648,6 +4828,10 @@ window.GpoRenderer = (function() {
   }
 
   document.addEventListener('DOMContentLoaded', renderBsiFoundationOnboarding);
+  document.addEventListener('gpo-baseline-loaded', () => {
+    renderMicrosoftBaselineStatus();
+    renderMicrosoftBaselineComparison();
+  });
 
   const BSI_COMPLIANCE_LABELS = { erfuellt: 'Erfüllt', nicht_erfuellt: 'Nicht erfüllt', pruefen: 'Prüfen' };
 

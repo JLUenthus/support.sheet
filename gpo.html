@@ -217,6 +217,9 @@
           <div class="gpo-page-nav-group-title">Vergleich &amp; Prüfung</div>
           <a href="#gpo-rsop-section" class="gpo-page-nav-link">RSoP-Vergleich</a>
           <a href="#gpo-reference-section" class="gpo-page-nav-link">Referenz-Standards</a>
+          <div class="gpo-page-nav-subnav gpo-page-nav-subnav--secondary" aria-label="Referenz-Standards Unterbereiche">
+            <a href="#gpo-microsoft-baseline-compare" class="gpo-page-nav-sublink"><span>01</span>Microsoft-Baseline</a>
+          </div>
           <a href="#gpo-databasis-section" class="gpo-page-nav-link">Datenbasis</a>
         </div>
       </nav>
@@ -372,6 +375,51 @@
               <div><strong>Setting-Mapping</strong><span>nur bei eindeutig hinterlegter Zuordnung</span></div>
             </div>
           </div>
+          <div class="gpo-reference-baseline-import" id="gpo-microsoft-baseline-import">
+            <div class="gpo-reference-baseline-heading">
+              <div>
+                <div class="gpo-finding-sub-title">Microsoft Security Baseline</div>
+                <p class="gpo-action-intro">Importiere ein offizielles Microsoft-Baseline-Paket als getrennte Referenzdaten. Der Import verändert den geladenen Kunden-Snapshot nicht und führt in diesem Schritt noch keinen Vergleich durch.</p>
+              </div>
+            </div>
+            <div class="gpo-baseline-upload-zone" id="gpo-baseline-upload-zone">
+              <div class="gpo-baseline-upload-text">Microsoft-Baseline-ZIP hier ablegen oder klicken</div>
+              <div class="gpo-baseline-upload-sub">Erwartet ein Security-Compliance-Toolkit-Paket mit GPOs/&lt;GUID&gt;/gpreport.xml.</div>
+              <input type="file" id="gpo-baseline-file-input" accept=".zip" style="display:none">
+            </div>
+            <div class="gpo-baseline-status" id="gpo-microsoft-baseline-status"></div>
+          </div>
+          <section class="gpo-baseline-compare" id="gpo-microsoft-baseline-compare" aria-labelledby="gpo-microsoft-baseline-compare-title">
+            <div class="gpo-baseline-compare-heading">
+              <div>
+                <div class="gpo-section-kicker">V5.1-D / Setting-Vergleich</div>
+                <h3 class="gpo-baseline-compare-title" id="gpo-microsoft-baseline-compare-title">Microsoft-Baseline gegen Snapshot</h3>
+                <p class="gpo-reference-intro">Verglichen werden nur eindeutig importierte Baseline-Settings. Mehrdeutige Werte im Snapshot werden nicht aufgelöst. Es gibt keine Gesamtbewertung und keinen Score.</p>
+              </div>
+            </div>
+            <div id="gpo-microsoft-baseline-compare-empty" class="gpo-baseline-compare-empty">Noch keine Microsoft-Baseline importiert.</div>
+            <div id="gpo-microsoft-baseline-compare-content" hidden>
+              <div id="gpo-microsoft-baseline-compare-summary" class="gpo-baseline-compare-summary"></div>
+              <div class="gpo-baseline-compare-toolbar">
+                <label>
+                  <span>Filter</span>
+                  <select id="gpo-microsoft-baseline-compare-filter">
+                    <option value="all">Alle</option>
+                    <option value="deviation">⚠ Abweichung</option>
+                    <option value="missing">ℹ Nicht vorhanden</option>
+                    <option value="match">✓ Übereinstimmung</option>
+                    <option value="not_comparable">? Nicht vergleichbar</option>
+                  </select>
+                </label>
+                <label class="gpo-baseline-compare-search-label">
+                  <span>Setting suchen</span>
+                  <input id="gpo-microsoft-baseline-compare-search" type="search" placeholder="Setting-Key oder GPO-Name">
+                </label>
+                <span id="gpo-microsoft-baseline-compare-result-count" class="gpo-filter-result-count"></span>
+              </div>
+              <div id="gpo-microsoft-baseline-compare-list" class="gpo-baseline-compare-list"></div>
+            </div>
+          </section>
           <div class="gpo-reference-grid" id="gpo-reference-grid"></div>
         </section>
 
@@ -563,8 +611,10 @@
   <script src="js/gpo/gpo-rules.js"></script>
   <script src="js/gpo/gpo-analyzer.js"></script>
   <script src="js/gpo/bsi-mapping.js"></script>
+  <script src="js/gpo/gpo-xml-utils.js"></script>
   <script src="js/gpo/gpo-rsop.js"></script>
   <script src="js/gpo/gpo-reference-engine.js"></script>
+  <script src="js/gpo/gpo-baseline-import.js"></script>
   <script src="js/gpo/gpo-renderer.js"></script>
   <script src="js/gpo/gpo-loader.js"></script>
   <script>

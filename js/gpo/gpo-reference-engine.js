@@ -20,7 +20,7 @@ window.GpoReferenceEngine = (function() {
       id: 'microsoft',
       label: 'Microsoft Security Baselines',
       shortLabel: 'Microsoft',
-      description: 'Gemeinsame Referenzstruktur vorbereitet; Baseline-Regeln werden in V5.1 ergänzt.',
+      description: 'Microsoft-Baselines können als getrennte Referenzdaten importiert werden; der Import erzeugt noch keinen Kundenvergleich.',
       state: 'prepared',
     },
     cis: {
@@ -33,7 +33,7 @@ window.GpoReferenceEngine = (function() {
   };
 
   const registry = new Map();
-  Object.values(STANDARD_META).forEach(meta => registry.set(meta.id, { ...meta, requirements: [] }));
+  Object.values(STANDARD_META).forEach(meta => registry.set(meta.id, { ...meta, requirements: [], baseline: null }));
 
   function normalizeSettingKeys(keys) {
     return Array.from(new Set((Array.isArray(keys) ? keys : []).filter(Boolean).map(String)));
@@ -63,11 +63,48 @@ window.GpoReferenceEngine = (function() {
     standard.requirements = (requirements || []).map(item => normalizeRequirement(standardId, item));
   }
 
+
+  function normalizeBaselineSetting(item) {
+    if (!item || !item.id || !item.settingKey) throw new Error('Baseline-Setting benötigt ID und settingKey.');
+    return {
+      id: String(item.id),
+      standardId: 'microsoft',
+      baselineVersion: item.baselineVersion || null,
+      gpoId: item.gpoId || null,
+      gpoName: item.gpoName || null,
+      settingKey: String(item.settingKey),
+      name: item.name || item.settingKey,
+      category: item.category || null,
+      scope: item.scope || null,
+      value: item.value === undefined ? null : item.value,
+      state: item.state || null,
+      supported: item.supported || null,
+      comparability: item.comparability === 'not_comparable' ? 'not_comparable' : 'comparable',
+      sourceFile: item.sourceFile || null,
+    };
+  }
+
+  function registerBaselineSettings(settings, meta) {
+    const standard = registry.get('microsoft');
+    standard.baseline = {
+      ...(meta || {}),
+      settings: (settings || []).map(normalizeBaselineSetting),
+    };
+    standard.state = 'active';
+    return getBaseline();
+  }
+
+  function getBaseline() {
+    const standard = registry.get('microsoft');
+    if (!standard || !standard.baseline) return null;
+    return { ...standard.baseline, settings: standard.baseline.settings.map(s => ({ ...s })) };
+  }
   function getStandard(standardId) {
     const standard = registry.get(standardId);
     if (!standard) return null;
     return {
       ...standard,
+      baseline: standard.baseline ? { ...standard.baseline, settings: standard.baseline.settings.map(s => ({ ...s })) } : null,
       requirements: standard.requirements.map(r => ({ ...r, settingKeys: r.settingKeys.slice() })),
     };
   }
@@ -88,5 +125,7 @@ window.GpoReferenceEngine = (function() {
     getStandard,
     getCatalog,
     findRequirement,
+    registerBaselineSettings,
+    getBaseline,
   };
 })();

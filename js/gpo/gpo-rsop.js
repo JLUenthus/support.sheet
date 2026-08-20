@@ -25,53 +25,17 @@
 // ============================================================
 window.GpoRsop = (function() {
 
-  // ── GUID-Normalisierung ──────────────────────────────────
-  // Snapshot-GPO-IDs sind kleingeschrieben, ohne Klammern (siehe
-  // gpo-parser.js/echte gpos.json). RSoP-XML/HTML liefern
-  // "{GUID}" grossgeschrieben. Reine Normalisierung eines Bezeichners,
-  // keine fachliche Interpretation.
-  function normalizeGuid(raw) {
-    if (!raw) return null;
-    const cleaned = String(raw).replace(/[{}]/g, '').trim().toLowerCase();
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(cleaned) ? cleaned : null;
-  }
-
-  // ── XML-Hilfsfunktionen (local-name-basiert, namespace-unabhaengig -
-  // dieselbe Robustheit wie die local-name()-XPath-Abfragen im
-  // PowerShell-Collector, kein Raten anhand von Praefixen). ──────
-  function byLocalName(root, name) {
-    const out = [];
-    const all = root.getElementsByTagName('*');
-    for (let i = 0; i < all.length; i++) {
-      if (all[i].localName === name) out.push(all[i]);
-    }
-    return out;
-  }
-  function directChildrenByLocalName(el, name) {
-    const out = [];
-    for (let i = 0; i < el.children.length; i++) {
-      if (el.children[i].localName === name) out.push(el.children[i]);
-    }
-    return out;
-  }
-  function directChildByLocalName(el, name) {
-    const found = directChildrenByLocalName(el, name);
-    return found.length ? found[0] : null;
-  }
-  function textOf(el) {
-    return el ? el.textContent.trim() : null;
-  }
-  function textOfChild(el, name) {
-    return textOf(directChildByLocalName(el, name));
-  }
-
-  // Portiert 1:1 aus Get-GPOAnalyzerSnapshot.ps1 ($SystemAccessPolicyDisplayNames)
-  // - dieselbe, dort bereits gegen offizielle Microsoft-Quellen verifizierte
-  // Zuordnung. Keine neue Uebersetzung, keine zusaetzlichen Eintraege.
-  const SYSTEM_ACCESS_POLICY_DISPLAY_NAMES = {
-    'ForceLogoffWhenHourExpire': 'Microsoft-Netzwerkserver: Clients nach Ablauf der Anmeldezeiten trennen',
-    'LSAAnonymousNameLookup': 'Netzwerkzugriff: Anonyme SID-/Namensübersetzung zulassen',
-  };
+  // Gemeinsame XML-Helfer werden aus gpo-xml-utils.js wiederverwendet.
+  // Dadurch gibt es fuer RSoP und Microsoft-gpreport nur eine Parser-Basis.
+  const Xml = window.GpoXmlUtils;
+  if (!Xml) throw new Error('GpoXmlUtils muss vor gpo-rsop.js geladen werden.');
+  const normalizeGuid = Xml.normalizeGuid;
+  const byLocalName = Xml.byLocalName;
+  const directChildrenByLocalName = Xml.directChildrenByLocalName;
+  const directChildByLocalName = Xml.directChildByLocalName;
+  const textOf = Xml.textOf;
+  const textOfChild = Xml.textOfChild;
+  const SYSTEM_ACCESS_POLICY_DISPLAY_NAMES = Xml.SYSTEM_ACCESS_POLICY_DISPLAY_NAMES;
 
   function pushSetting(settings, settingEl, key, value) {
     if (!key || value === null || value === undefined) return;
@@ -324,24 +288,8 @@ window.GpoRsop = (function() {
   // einem Nullbyte gefolgt) - deshalb wird hier bewusst ueber ArrayBuffer +
   // TextDecoder anhand der echten BOM decodiert, mit UTF-8 als Fallback
   // fuer Dateien ohne BOM.
-  function decodeReportBuffer(buffer) {
-    const bytes = new Uint8Array(buffer);
-    if (bytes.length >= 2 && bytes[0] === 0xFF && bytes[1] === 0xFE) {
-      return new TextDecoder('utf-16le').decode(bytes.subarray(2));
-    }
-    if (bytes.length >= 2 && bytes[0] === 0xFE && bytes[1] === 0xFF) {
-      return new TextDecoder('utf-16be').decode(bytes.subarray(2));
-    }
-    if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
-      return new TextDecoder('utf-8').decode(bytes.subarray(3));
-    }
-    return new TextDecoder('utf-8').decode(bytes);
-  }
+  const decodeReportBuffer = Xml.decodeReportBuffer;
 
-  // ── Öffentlicher Einstiegspunkt ──────────────────────────
-  // Erkennt XML vs. HTML anhand des tatsaechlichen Inhalts (nicht nur der
-  // Dateiendung) - eine .html-Datei mit XML-Inhalt bzw. umgekehrt wird
-  // trotzdem korrekt gelesen.
   function parseReport(text, filename) {
     const trimmed = (text || '').replace(/^﻿/, '').trimStart();
     const looksLikeXml = trimmed.indexOf('<?xml') === 0 || /^<Rsop[\s>]/.test(trimmed);

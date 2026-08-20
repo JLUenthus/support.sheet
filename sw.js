@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260820-5523';
+const CACHE_VERSION = '20260820-5526';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -114,8 +114,10 @@ const ASSETS = [
   './js/gpo/gpo-parser.js',
   './js/gpo/gpo-analyzer.js',
   './js/gpo/bsi-mapping.js',
+  './js/gpo/gpo-xml-utils.js',
   './js/gpo/gpo-rsop.js',
   './js/gpo/gpo-reference-engine.js',
+  './js/gpo/gpo-baseline-import.js',
   './js/gpo/gpo-rules.js',
   './js/gpo/gpo-renderer.js',
   './data/gpo/rules.json',
