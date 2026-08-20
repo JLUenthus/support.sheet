@@ -582,6 +582,63 @@
 .gpo-effective-gpresult .gpo-effective-list code { background: var(--panel2); padding: 1px 6px; border-radius: 4px; }
 .gpo-effective-second-link { margin-left: 16px; }
 
+/* ── RSoP-/gpresult-Vergleich (V4.9) ─────────────────────────
+   Upload-Zone wiederverwendet dieselbe Optik wie .gpo-upload-zone
+   (Snapshot-Upload), eigene Klassen nur damit ein RSoP-Upload den
+   Snapshot-Upload niemals versehentlich beeinflussen kann. */
+.gpo-rsop-block { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+.gpo-rsop-upload-zone {
+  border: 2px dashed var(--border2);
+  border-radius: var(--r-lg);
+  padding: 24px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  margin: 10px 0;
+}
+.gpo-rsop-upload-zone:hover,
+.gpo-rsop-upload-zone.drag { border-color: var(--accent); background: var(--accent-bg); }
+.gpo-rsop-upload-zone--done { border-color: var(--green); background: rgba(74, 222, 128, .04); }
+.gpo-rsop-upload-text { font-size: .88rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.gpo-rsop-upload-sub { font-size: .74rem; color: var(--muted); }
+.gpo-rsop-error {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: rgba(248, 113, 113, .06);
+  border: 1px solid rgba(248, 113, 113, .3);
+  border-left: 3px solid var(--red);
+  border-radius: var(--r);
+  font-size: .8rem;
+  color: var(--text);
+}
+
+.gpo-rsop-computer-title { font-size: .9rem; font-weight: 700; color: var(--text); margin: 10px 0 6px; }
+.gpo-rsop-computer-warning { font-size: .8rem; color: var(--amber); margin-bottom: 10px; }
+.gpo-rsop-summary { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; font-size: .8rem; }
+.gpo-rsop-summary-row { display: flex; gap: 8px; }
+.gpo-rsop-summary-label { color: var(--muted); min-width: 90px; }
+.gpo-rsop-transparency { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: .76rem; color: var(--muted); margin-bottom: 12px; }
+
+.gpo-rsop-gpo-summary { font-size: .82rem; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+.gpo-rsop-gpo-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.gpo-rsop-gpo-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--panel);
+  font-size: .78rem;
+}
+.gpo-rsop-gpo-detail { font-size: .72rem; color: var(--muted); flex-basis: 100%; }
+
+.gpo-rsop-badge--match { border-color: var(--green); color: var(--green); }
+.gpo-rsop-badge--mismatch { border-color: var(--red); color: var(--red); }
+.gpo-rsop-badge--unclear { border-color: var(--amber); color: var(--amber); }
+.gpo-rsop-badge--missing { border-color: var(--border2); color: var(--dim); }
+
 /* ── Filter-Leiste (V2.2, V2.7.4 gruppierte Darstellung) ────────
    Reine Darstellungs-Filterung ueber bereits vorhandene Findings, keine
    erneute Analyse. Drei sichtbar getrennte Gruppen: Finding-Typ

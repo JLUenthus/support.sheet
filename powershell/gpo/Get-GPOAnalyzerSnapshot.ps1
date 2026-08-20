@@ -221,7 +221,8 @@ function Get-AccountPolicySettings {
 # Knoten, z.B. Kontosperr-/Anmeldezeit-bezogene Einstellungen) trugen
 # vorher immer den generischen Namen "Unbekannte Security Option", obwohl
 # ihr <SystemAccessPolicyName> ein fester, dokumentierter Schema-Bezeichner
-# ist (real-data-verifiziert an default-domain-policy-ndwb-report.xml).
+# ist (real-data-verifiziert an einem echten Default-Domain-Policy-Report
+# einer Kundenumgebung).
 # Nur EXPLIZIT gegen oeffentliche Microsoft-Quellen verifizierte Eintraege
 # hier aufnehmen (siehe Quellenangaben je Eintrag) - keine geratenen
 # Uebersetzungen. Fachliche Bedeutung bestaetigt durch [MS-GPSB] (offizielle
@@ -346,8 +347,7 @@ function ConvertFrom-GpoReportXml {
 # WMI-Filter-Query steckt kodiert in msWMI-Parm2, pro Klausel im Format
 # <len(lang)>;<len(namespace)>;<len(query)>;<lang>;<namespace>;<query>;
 # vorangestellt durch <Anzahl Klauseln>;. Bestaetigt an echten AD-Rohdaten
-# (Domaene norddeutsche-wohnbau.local, Filter "Win 10", msWMI-ID
-# {832DF30F-0379-4277-8EE6-E440B8DE1945}):
+# einer Kundenumgebung (Filter "Win 10"):
 #   1;3;10;84;WQL;root\CIMv2;select * from Win32_OperatingSystem where
 #   Version like "10.0.2%" and ProductType="1";
 # Die vorherige Version dieser Funktion nahm faelschlich einen festen

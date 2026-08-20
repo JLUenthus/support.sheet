@@ -268,6 +268,23 @@
           <div class="gpo-finding-sub-title">Effektive Richtlinie prüfen</div>
           <p class="gpo-action-intro">Der Snapshot zeigt, welche GPOs und Einstellungen vorhanden und auf welche Computer sie potenziell angewendet werden können. Die tatsächlich wirksame Richtlinie kann durch Vererbung, Filter, Prioritäten und weitere Windows-GPO-Regeln abweichen. Für die endgültige Prüfung auf einem betroffenen System sollte deshalb <code>gpresult</code> oder RSOP verwendet werden.</p>
           <div id="gpo-effective-view"></div>
+
+          <!-- V4.9: RSoP-/gpresult-Vergleich - eigenstaendiger Bereich
+               innerhalb "Effektive Richtlinie pruefen" (Auftrag Abschnitt 3),
+               ergaenzt V4.6, ersetzt es nicht. -->
+          <div class="gpo-rsop-block" id="gpo-rsop-block">
+            <div class="gpo-finding-sub-title">RSoP / gpresult vergleichen</div>
+            <p class="gpo-action-intro">Lade einen RSoP- oder gpresult-Bericht eines konkreten Computers hoch, um die im Snapshot konfigurierte GPO-Struktur mit der auf diesem Computer tatsächlich ausgewiesenen Richtlinienanwendung zu vergleichen.</p>
+
+            <div class="gpo-rsop-upload-zone" id="gpo-rsop-upload-zone">
+              <div class="gpo-rsop-upload-text">RSoP-XML oder gpresult-HTML hier ablegen oder klicken</div>
+              <div class="gpo-rsop-upload-sub">XML wird für die strukturierte Auswertung empfohlen.</div>
+              <input type="file" id="gpo-rsop-file-input" accept=".xml,.html,.htm" style="display:none">
+            </div>
+            <div class="gpo-rsop-error" id="gpo-rsop-error" hidden></div>
+
+            <div id="gpo-rsop-result"></div>
+          </div>
         </div>
 
         <div class="gpo-dash-tier">
@@ -423,6 +440,7 @@
   <script src="js/gpo/gpo-rules.js"></script>
   <script src="js/gpo/gpo-analyzer.js"></script>
   <script src="js/gpo/bsi-mapping.js"></script>
+  <script src="js/gpo/gpo-rsop.js"></script>
   <script src="js/gpo/gpo-renderer.js"></script>
   <script src="js/gpo/gpo-loader.js"></script>
   <script>

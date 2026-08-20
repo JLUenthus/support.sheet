@@ -437,7 +437,7 @@ window.GpoBsiMapping = (function() {
   // "... verschluesseln oder signieren (immer)" ist eine einzelne, staerkere
   // Einstellung (immer statt bedingt), die inhaltlich BEIDE getrennten
   // "(wenn möglich)"-Aspekte gleichzeitig abdeckt (V3.3-Real-Data-
-  // Validierung, norddeutsche-wohnbau.local) - deshalb bei BEIDEN Sub-
+  // Validierung an einer echten Kundendomäne) - deshalb bei BEIDEN Sub-
   // Aspekten als gleichwertige Alternative eingetragen, nicht als
   // eigenstaendiger dritter Sub-Aspekt.
   const SECURE_CHANNEL_ENCRYPT_OR_SIGN_ALWAYS_KEY = SECURITY_OPTIONS_PREFIX + 'Domänenmitglied: Daten des sicheren Kanals digital verschlüsseln oder signieren (immer)';

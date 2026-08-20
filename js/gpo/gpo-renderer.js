@@ -131,6 +131,11 @@ window.GpoRenderer = (function() {
   let _findings = [];
   let _diagnoseCommands = [];
   let _missingFiles = [];
+  // V4.9: hoechstens ein aktiver RSoP-/gpresult-Bericht pro geladenem
+  // Snapshot (Auftrag Abschnitt 18) - wird bei jedem neuen Snapshot-Upload
+  // in renderOverview() zurueckgesetzt, ein neuer RSoP-Upload ersetzt einen
+  // vorherigen. Reine Anzeigedaten, keine Rueckwirkung auf _model/_findings.
+  let _rsopReport = null;
   const _state = {
     conflictQuery: '',
     redundantQuery: '',
@@ -201,6 +206,7 @@ window.GpoRenderer = (function() {
     _state.cleanupGroupFilter = 'all';
     _state.cleanupStatusFilter = 'all';
     _state.cleanupSort = 'findings';
+    _rsopReport = null;
     _bsiSettingKeyIndexCache = null;
     _findingCardMap.clear();
     resetSearchInputs();
@@ -222,6 +228,9 @@ window.GpoRenderer = (function() {
     renderActionView();
     renderGpoCleanupView();
     renderEffectivePolicyView();
+    resetRsopUploadZone();
+    renderRsopResult();
+    hideRsopError();
     renderExplorerList();
     renderOuTree();
     renderBsiCoverage();
@@ -2036,6 +2045,399 @@ window.GpoRenderer = (function() {
     links.append(allFindingsLink, allBsiLink);
     container.appendChild(links);
   }
+
+  // ── RSoP-/gpresult-Vergleich (V4.9) ─────────────────────────
+  // Liest ausschliesslich einen hochgeladenen Bericht ein (window.GpoRsop,
+  // eigenstaendiges Modul) und stellt ihn gegen das bereits geladene
+  // Snapshot-Modell dar - keine neue Effective-Policy-Berechnung, keine
+  // Gewinner-GPO ausserhalb dessen, was der RSoP-Bericht selbst als
+  // Precedence ausweist. Nur drei Kategorien gelten als zuverlaessig
+  // eindeutig zuordenbar (siehe Bericht): Account Policies, Security
+  // Options, User Rights Assignment (jeweils per Namensabgleich, identisch
+  // zur bereits im Collector verifizierten Namensauflösung) sowie
+  // Administrative-Template-Settings aus HTML-Berichten (gpmc_settingName/
+  // -Path, best effort - ein Nicht-Treffer fuehrt nie zu einer falschen
+  // "Abweichung"-Aussage, sondern bleibt schlicht unverglichen).
+  // Auftrag Abschnitt 18: "Beim erneuten Snapshot-Upload: RSoP-Zustand
+  // zurücksetzen, RSoP-Anzeige leeren" - dazu gehoert auch die
+  // Upload-Zone selbst (sonst zeigt sie nach einem neuen Snapshot-Upload
+  // weiterhin faelschlich den vorherigen "✅ Datei"-Erfolgszustand).
+  function resetRsopUploadZone() {
+    const zone = document.getElementById('gpo-rsop-upload-zone');
+    if (!zone) return;
+    zone.classList.remove('gpo-rsop-upload-zone--done');
+    const textEl = zone.querySelector('.gpo-rsop-upload-text');
+    if (textEl) textEl.textContent = 'RSoP-XML oder gpresult-HTML hier ablegen oder klicken';
+    const input = document.getElementById('gpo-rsop-file-input');
+    if (input) input.value = '';
+  }
+
+  function showRsopError(message) {
+    const el = document.getElementById('gpo-rsop-error');
+    if (!el) return;
+    el.hidden = false;
+    el.textContent = message;
+  }
+  function hideRsopError() {
+    const el = document.getElementById('gpo-rsop-error');
+    if (el) el.hidden = true;
+  }
+
+  function matchRsopGpoForSnapshotGpo(gpo) {
+    if (!_rsopReport) return null;
+    const targetId = window.GpoRsop.normalizeGuid(gpo.id);
+    if (targetId) {
+      const byId = _rsopReport.gpos.find(g => g.id === targetId);
+      if (byId) return byId;
+    }
+    // Name-Fallback nur bei eindeutigem Treffer (Auftrag Abschnitt 6: "Wenn
+    // eine GPO nur anhand eines Namens zugeordnet werden koennte und dabei
+    // Mehrdeutigkeit besteht: keine eindeutige Zuordnung, nicht raten").
+    const nameMatches = _rsopReport.gpos.filter(g => g.name && g.name.toLowerCase() === (gpo.name || '').toLowerCase());
+    return nameMatches.length === 1 ? nameMatches[0] : null;
+  }
+
+  const RSOP_GPO_STATE_META = {
+    match:   { icon: '✓', label: 'Übereinstimmung' },
+    unclear: { icon: '?', label: 'Nicht vergleichbar' },
+    missing: { icon: 'ℹ', label: 'Nicht im RSoP ausgewiesen' },
+  };
+
+  // Klassifizierung ausschliesslich aus bereits vorhandenen Feldern
+  // (Zuordnung per GUID/Name, RSoP-eigenes "applied") - keine neue
+  // Ursachenermittlung. "abweichend" (⚠) bleibt fuer echte Wert-Vergleiche
+  // reserviert (siehe resolveSettingComparisonState()), nicht fuer reine
+  // GPO-Praesenz - deckt sich mit dem woertlichen RSoP-Abschnitt-7-Beispiel
+  // ("? Im RSoP nicht als angewendet ausgewiesen").
+  function resolveRsopGpoState(rsopGpo) {
+    if (!rsopGpo) return 'missing';
+    return rsopGpo.applied ? 'match' : 'unclear';
+  }
+
+  function collectRsopGpoComparison() {
+    const items = (_model.gpos || []).map(gpo => {
+      const rsopGpo = matchRsopGpoForSnapshotGpo(gpo);
+      return { gpo, rsopGpo, state: resolveRsopGpoState(rsopGpo) };
+    });
+    items.sort((a, b) => a.gpo.name.localeCompare(b.gpo.name));
+    return items;
+  }
+
+  function buildRsopGpoRow(item) {
+    const row = document.createElement('div');
+    row.className = 'gpo-rsop-gpo-row';
+
+    const meta = RSOP_GPO_STATE_META[item.state];
+    const badge = document.createElement('span');
+    badge.className = 'gpo-effective-badge gpo-rsop-badge--' + item.state;
+    badge.textContent = meta.icon + ' ' + meta.label;
+    row.appendChild(badge);
+
+    row.appendChild(buildGpoRefElement(item.gpo.id, item.gpo.name));
+
+    if (item.rsopGpo && item.rsopGpo.securityFilters && item.rsopGpo.securityFilters.length) {
+      const sf = document.createElement('span');
+      sf.className = 'gpo-rsop-gpo-detail';
+      sf.textContent = 'RSoP-Sicherheitsfilter: ' + item.rsopGpo.securityFilters.join(', ');
+      row.appendChild(sf);
+    }
+    // Nur bereits vom RSoP selbst ausgewiesene Flags anzeigen (Auftrag
+    // Abschnitt 10/15) - keine konstruierte Grundaussage.
+    if (item.rsopGpo && item.state === 'unclear') {
+      const flags = [];
+      if (item.rsopGpo.filterAllowed === false) flags.push('FilterAllowed: false');
+      if (item.rsopGpo.accessDenied === true) flags.push('AccessDenied: true');
+      if (item.rsopGpo.isValid === false) flags.push('IsValid: false');
+      if (flags.length) {
+        const flagsEl = document.createElement('span');
+        flagsEl.className = 'gpo-rsop-gpo-detail';
+        flagsEl.textContent = 'RSoP-Information: ' + flags.join(', ') + '. Weitere Prüfung erforderlich.';
+        row.appendChild(flagsEl);
+      }
+    }
+
+    return row;
+  }
+
+  function renderRsopGpoComparison(container) {
+    const items = collectRsopGpoComparison();
+    const counts = { match: 0, unclear: 0, missing: 0 };
+    items.forEach(i => { counts[i.state]++; });
+
+    const summary = document.createElement('div');
+    summary.className = 'gpo-rsop-gpo-summary';
+    summary.textContent = 'GPOs  ✓ ' + counts.match + ' übereinstimmend  ⋅  ? ' + counts.unclear + ' nicht vergleichbar  ⋅  ℹ ' + counts.missing + ' nicht im RSoP ausgewiesen';
+    container.appendChild(summary);
+
+    const relevant = items.filter(i => i.state !== 'missing');
+    const list = document.createElement('div');
+    list.className = 'gpo-rsop-gpo-list';
+    if (!relevant.length) {
+      const empty = document.createElement('div');
+      empty.className = 'gpo-action-entry-empty';
+      empty.textContent = 'Keine der Snapshot-GPOs konnte im RSoP-Bericht eindeutig zugeordnet werden.';
+      list.appendChild(empty);
+    } else {
+      appendExpandable(list, relevant, buildRsopGpoRow, GPO_CLEANUP_MAX_VISIBLE, 'GPO', 'GPOs');
+    }
+    container.appendChild(list);
+
+    if (counts.missing) {
+      const allBtn = document.createElement('button');
+      allBtn.type = 'button';
+      allBtn.className = 'gpo-kpi-bsi-link gpo-cleanup-more-btn';
+      allBtn.textContent = 'Alle GPOs anzeigen (inkl. „nicht im RSoP ausgewiesen") →';
+      allBtn.addEventListener('click', () => {
+        list.replaceChildren();
+        appendExpandable(list, items, buildRsopGpoRow, GPO_CLEANUP_MAX_VISIBLE, 'GPO', 'GPOs');
+        allBtn.remove();
+      });
+      container.appendChild(allBtn);
+    }
+  }
+
+  // Findet passende RSoP-Settings zu einem Snapshot-settingKey - exakter
+  // Stringvergleich, sowohl auf dem vollen Key als auch (Fallback) auf dem
+  // reinen Namen nach dem letzten " > " (Auftrag/Bericht: manche echten
+  // Snapshots fuehren category=null, RSoP-HTML liefert dagegen immer einen
+  // Kategoriepfad - der Namens-Fallback erlaubt trotzdem einen Treffer,
+  // ohne dass ein Nicht-Treffer je als "Abweichung" fehlinterpretiert
+  // werden koennte).
+  function findRsopSettingsForKey(settingKey) {
+    if (!_rsopReport || !settingKey) return [];
+    const bareKey = settingKey.split(' > ').pop();
+    const matches = _rsopReport.settings.filter(s => {
+      const bareS = s.key.split(' > ').pop();
+      return s.key === settingKey || bareS === bareKey;
+    });
+    matches.sort((a, b) => (a.precedence || 1) - (b.precedence || 1));
+    return matches;
+  }
+
+  function resolveSettingComparisonState(snapshotValues, rsopEffectiveValue) {
+    if (rsopEffectiveValue === null || rsopEffectiveValue === undefined) return 'missing';
+    if (!snapshotValues.length) return 'missing';
+    // Redundant-Findings haben per Definition >=2 entries, aber (im
+    // identischen Fall) nur EINEN tatsaechlichen Wert - erst nach
+    // Deduplizierung laesst sich das feststellen. Bleiben nach Dedup
+    // mehrere unterschiedliche Werte (= Konflikt), waere ein einzelnes
+    // ✓/⚠ eine neue Bewertung ueber "welcher GPO-Wert galt" - deshalb
+    // dann neutral ("nicht vergleichbar"), keine Gewinner-Aussage.
+    const uniqueValues = Array.from(new Set(snapshotValues
+      .filter(v => v !== null && v !== undefined && String(v).trim() !== '')
+      .map(v => String(v).trim())));
+    if (uniqueValues.length === 1) {
+      return uniqueValues[0] === String(rsopEffectiveValue).trim() ? 'match' : 'mismatch';
+    }
+    return 'unclear';
+  }
+
+  const RSOP_SETTING_STATE_META = {
+    match:    { icon: '✓', label: 'Übereinstimmung' },
+    mismatch: { icon: '⚠', label: 'Abweichung' },
+    unclear:  { icon: '?', label: 'Nicht vergleichbar' },
+    missing:  { icon: 'ℹ', label: 'Nicht im RSoP ausgewiesen' },
+  };
+
+  function buildRsopSettingCard(finding) {
+    const card = document.createElement('div');
+    card.className = 'gpo-effective-entry';
+
+    const title = document.createElement('div');
+    title.className = 'gpo-effective-entry-title';
+    title.textContent = actionTitle(finding);
+    card.appendChild(title);
+
+    const rsopMatches = findRsopSettingsForKey(finding.settingKey);
+    const effective = rsopMatches[0] || null;
+    const snapshotValues = (finding.entries || []).map(e => e.value);
+    const state = resolveSettingComparisonState(snapshotValues, effective ? effective.value : null);
+    const meta = RSOP_SETTING_STATE_META[state];
+
+    const badge = document.createElement('span');
+    badge.className = 'gpo-effective-badge gpo-rsop-badge--' + state;
+    badge.textContent = meta.icon + ' ' + meta.label;
+    card.appendChild(badge);
+
+    const snapshotBlock = document.createElement('div');
+    snapshotBlock.className = 'gpo-action-entry-desc';
+    snapshotBlock.textContent = 'Snapshot-Evidenz: ' + (snapshotValues.length ? snapshotValues.join(', ') : '(kein Wert)');
+    card.appendChild(snapshotBlock);
+
+    const rsopBlock = document.createElement('div');
+    rsopBlock.className = 'gpo-action-entry-desc';
+    rsopBlock.textContent = effective
+      ? 'RSoP-Evidenz: ' + effective.value + (effective.precedence ? ' (RSoP-Precedence: ' + effective.precedence + ')' : '')
+      : 'RSoP enthält keine verwertbare Information zu diesem Setting.';
+    card.appendChild(rsopBlock);
+
+    if (rsopMatches.length > 1) {
+      const others = document.createElement('div');
+      others.className = 'gpo-action-entry-desc';
+      others.textContent = 'Weitere RSoP-Definitionen: ' + rsopMatches.slice(1).map(m => m.value + (m.precedence ? ' (Precedence ' + m.precedence + ')' : '')).join(', ');
+      card.appendChild(others);
+    }
+
+    const bsiLine = actionBsiRefLine(finding);
+    if (bsiLine) card.appendChild(bsiLine);
+
+    const detailsLink = document.createElement('a');
+    detailsLink.href = actionAnchor(finding);
+    detailsLink.className = 'gpo-kpi-bsi-link gpo-action-entry-details-link';
+    detailsLink.textContent = 'Finding öffnen →';
+    detailsLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      jumpToFindingCard(finding, actionAnchor(finding));
+    });
+    card.appendChild(detailsLink);
+
+    return card;
+  }
+
+  // Fokus bewusst auf bereits vorhandene Findings begrenzt (Konflikt/
+  // Mehrfachdefinition) statt eine vollstaendige Settings-Liste zu zeigen -
+  // deckt sich mit "Konkreter Fokus: vorhandene Findings" und der
+  // bestehenden V4.8-Kompaktdarstellung.
+  function collectRsopRelevantFindings() {
+    return _findings.filter(f => f.type === 'conflict' || f.type === 'redundant');
+  }
+
+  function renderRsopSettingComparison(container) {
+    const findings = collectRsopRelevantFindings();
+    const title = document.createElement('div');
+    title.className = 'gpo-finding-sub-title';
+    title.textContent = 'Setting-Vergleich (Konflikte & Mehrfachdefinitionen)';
+    container.appendChild(title);
+    container.appendChild(buildEffectiveSubList(
+      findings, buildRsopSettingCard,
+      'Keine Konflikte oder Mehrfachdefinitionen vorhanden.', 'Finding', 'Findings'
+    ));
+  }
+
+  function renderRsopSummary(container) {
+    const r = _rsopReport;
+    const notAvailable = 'Nicht im Bericht enthalten.';
+    const summary = document.createElement('div');
+    summary.className = 'gpo-rsop-summary';
+
+    const rows = [
+      ['Computer', r.computer || notAvailable],
+      ['Domäne', r.domain || notAvailable],
+      ['Benutzer', r.user || notAvailable],
+      ['Reporttyp', r.reportType === 'xml' ? 'RSoP-XML' : 'gpresult-HTML'],
+      ['Erstellt', r.generatedAt || notAvailable],
+    ];
+    rows.forEach(([label, value]) => {
+      const row = document.createElement('div');
+      row.className = 'gpo-rsop-summary-row';
+      const l = document.createElement('span');
+      l.className = 'gpo-rsop-summary-label';
+      l.textContent = label + ':';
+      const v = document.createElement('span');
+      v.textContent = value;
+      row.append(l, v);
+      summary.appendChild(row);
+    });
+    container.appendChild(summary);
+
+    if (!r.computer) {
+      const warn = document.createElement('div');
+      warn.className = 'gpo-rsop-computer-warning';
+      warn.textContent = 'Computer konnte aus dem RSoP-Bericht nicht eindeutig bestimmt werden.';
+      container.appendChild(warn);
+    } else {
+      const title = document.createElement('div');
+      title.className = 'gpo-rsop-computer-title';
+      title.textContent = 'RSoP für: ' + r.computer;
+      container.insertBefore(title, summary);
+    }
+  }
+
+  function renderRsopResult() {
+    const container = document.getElementById('gpo-rsop-result');
+    if (!container) return;
+    container.replaceChildren();
+    if (!_rsopReport) return;
+
+    renderRsopSummary(container);
+
+    // Auftrag Abschnitt 16: Transparenz-Kopfzeile Snapshot/RSoP/Computer/
+    // Vergleich - ausschliesslich bereits bekannte Zustaende, keine
+    // kuenstlichen Nullen.
+    const transparency = document.createElement('div');
+    transparency.className = 'gpo-rsop-transparency';
+    ['GPO-Snapshot: ✓ geladen', 'RSoP / gpresult: ✓ geladen', 'Vergleich: ✓ durchgeführt'].forEach(text => {
+      const span = document.createElement('span');
+      span.textContent = text;
+      transparency.appendChild(span);
+    });
+    container.appendChild(transparency);
+
+    renderRsopGpoComparison(container);
+    renderRsopSettingComparison(container);
+
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'gpo-kpi-bsi-link gpo-cleanup-more-btn';
+    clearBtn.textContent = 'RSoP-Bericht entfernen';
+    clearBtn.addEventListener('click', () => {
+      _rsopReport = null;
+      resetRsopUploadZone();
+      hideRsopError();
+      renderRsopResult();
+    });
+    container.appendChild(clearBtn);
+  }
+
+  async function processRsopFile(file) {
+    hideRsopError();
+    if (!window.GpoRsop) {
+      showRsopError('RSoP-Modul nicht verfügbar.');
+      return;
+    }
+    if (!_model || !Array.isArray(_model.gpos)) {
+      showRsopError('Bitte zuerst einen GPO-Snapshot laden, bevor ein RSoP-/gpresult-Bericht hochgeladen wird.');
+      return;
+    }
+    try {
+      const buffer = await file.arrayBuffer();
+      const text = window.GpoRsop.decodeReportBuffer(buffer);
+      const result = window.GpoRsop.parseReport(text, file.name);
+      if (!result.ok) {
+        showRsopError(result.error);
+        return;
+      }
+      _rsopReport = result.report;
+      const zone = document.getElementById('gpo-rsop-upload-zone');
+      if (zone) {
+        zone.classList.add('gpo-rsop-upload-zone--done');
+        const textEl = zone.querySelector('.gpo-rsop-upload-text');
+        if (textEl) textEl.textContent = '✅ ' + file.name;
+      }
+      renderRsopResult();
+    } catch (err) {
+      console.error('[GpoRenderer] Fehler beim Verarbeiten des RSoP-Berichts:', err);
+      showRsopError('RSoP-/gpresult-Bericht konnte nicht verarbeitet werden.');
+    }
+  }
+
+  function initRsopUpload() {
+    const zone = document.getElementById('gpo-rsop-upload-zone');
+    const input = document.getElementById('gpo-rsop-file-input');
+    if (!zone || !input) return;
+    zone.addEventListener('click', () => input.click());
+    zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      zone.classList.remove('drag');
+      if (e.dataTransfer.files[0]) processRsopFile(e.dataTransfer.files[0]);
+    });
+    input.addEventListener('change', (e) => {
+      if (e.target.files[0]) processRsopFile(e.target.files[0]);
+    });
+  }
+  document.addEventListener('DOMContentLoaded', initRsopUpload);
 
   // ── Gemeinsame Helfer fuer Konflikt-/Redundanz-Karten ──────
   function splitSettingKey(settingKey) {
