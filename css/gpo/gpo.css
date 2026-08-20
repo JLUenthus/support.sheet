@@ -1542,3 +1542,402 @@
   font-family: var(--font-mono);
 }
 .gpo-bsi-databasis-item--missing { color: var(--dim); font-style: italic; }
+
+/* ── V5.0 Referenz-Engine ───────────────────────────────────── */
+.gpo-reference-section { scroll-margin-top: 88px; }
+.gpo-reference-intro { max-width: 900px; margin: -2px 0 16px; color: var(--muted); line-height: 1.55; }
+.gpo-reference-model-note {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--panel2);
+}
+.gpo-reference-model-title { font-size: .78rem; font-weight: 800; color: var(--text); margin-bottom: 10px; }
+.gpo-reference-model-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.gpo-reference-model-grid > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.gpo-reference-model-grid strong { font-size: .72rem; color: var(--text); }
+.gpo-reference-model-grid span { font-size: .68rem; color: var(--muted); line-height: 1.45; }
+.gpo-reference-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.gpo-reference-card {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--panel);
+}
+.gpo-reference-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.gpo-reference-card-title { font-size: .92rem; font-weight: 800; color: var(--text); }
+.gpo-reference-state {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border: 1px solid var(--border2);
+  border-radius: 999px;
+  font-size: .6rem;
+  font-weight: 800;
+}
+.gpo-reference-state--active { color: var(--accent); border-color: rgba(45,212,191,.28); background: var(--accent-bg); }
+.gpo-reference-state--prepared { color: var(--muted); }
+.gpo-reference-card-desc { margin: 8px 0 12px; color: var(--muted); font-size: .72rem; line-height: 1.5; }
+.gpo-reference-count { margin-bottom: 10px; color: var(--text); font-size: .72rem; font-weight: 700; }
+.gpo-reference-empty { padding: 10px; border: 1px dashed var(--border2); border-radius: 8px; color: var(--dim); font-size: .7rem; line-height: 1.5; }
+.gpo-reference-requirements { display: flex; flex-direction: column; gap: 8px; }
+.gpo-reference-requirement { padding-top: 9px; border-top: 1px solid var(--border); }
+.gpo-reference-requirement-title { color: var(--text); font-size: .76rem; font-weight: 700; line-height: 1.4; }
+.gpo-reference-meta { margin-top: 4px; color: var(--muted); font-size: .66rem; line-height: 1.45; }
+.gpo-reference-requirement .gpo-kpi-bsi-link { display: inline-block; margin-top: 6px; font-size: .68rem; }
+
+@media (max-width: 900px) {
+  .gpo-reference-grid { grid-template-columns: 1fr; }
+  .gpo-reference-model-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .gpo-reference-model-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   V5.0 VISUAL REDESIGN – GPO WORKBENCH
+   Kein neues Fachverhalten. Reine Informationsarchitektur, Typografie
+   und Oberflaechenhierarchie. Bewusst flach, technisch und ruhig statt
+   Karten-/Gradienten-Optik.
+   ============================================================ */
+
+.gpo-section { margin-bottom: 48px; }
+
+/* Header / Dashboard ------------------------------------------------ */
+.gpo-dashboard { padding-top: 4px; }
+.gpo-dashboard-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 0 0 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.gpo-dashboard-heading .section-title {
+  margin: 0 0 7px;
+  font-size: clamp(1.35rem, 2vw, 1.8rem);
+  letter-spacing: -.025em;
+}
+.gpo-dashboard-lead {
+  max-width: 680px;
+  margin: 0;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.6;
+}
+.gpo-dashboard-mark {
+  min-width: 82px;
+  padding: 8px 10px 7px;
+  border-left: 1px solid var(--border2);
+  color: var(--dim);
+  font-family: var(--font-mono);
+  text-align: right;
+  line-height: 1;
+}
+.gpo-dashboard-mark span { display:block; font-size:.55rem; letter-spacing:.14em; margin-bottom:5px; }
+.gpo-dashboard-mark strong { font-size:1.55rem; color:var(--muted); font-weight:500; }
+
+.gpo-dash-tier {
+  position: relative;
+  margin-bottom: 34px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+}
+.gpo-dash-tier:last-child { border-bottom: 0; }
+.gpo-dash-label {
+  display: grid;
+  grid-template-columns: 28px auto 1fr;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 13px;
+}
+.gpo-dash-label > span {
+  font-family: var(--font-mono);
+  font-size: .62rem;
+  color: var(--accent);
+  letter-spacing: .05em;
+}
+.gpo-dash-label strong {
+  font-size: .77rem;
+  color: var(--text);
+  font-weight: 750;
+  letter-spacing: .01em;
+}
+.gpo-dash-label em {
+  justify-self: end;
+  color: var(--dim);
+  font-size: .61rem;
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+/* KPI tiles: more like a technical status board than cards */
+.gpo-num-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 0;
+  background: var(--border);
+  border: 1px solid var(--border);
+}
+.gpo-num-item {
+  min-height: 82px;
+  padding: 14px 15px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  background: var(--panel);
+  border: 0;
+}
+.gpo-num-item:hover { background: var(--panel2); }
+.gpo-num-value,
+.gpo-num-item--total .gpo-num-value {
+  font-size: 1.45rem;
+  line-height: 1;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+.gpo-num-label { font-size:.67rem; color:var(--dim); line-height:1.25; }
+
+.gpo-dashboard-quicklinks {
+  display:grid;
+  grid-template-columns: repeat(5, minmax(0,1fr));
+  gap:1px;
+  background:var(--border);
+  border:1px solid var(--border);
+}
+.gpo-dashboard-quicklinks .gpo-kpi-bsi-link {
+  display:flex;
+  align-items:flex-end;
+  min-height:62px;
+  padding:12px 13px;
+  background:var(--panel);
+  color:var(--muted);
+  font-size:.72rem;
+  text-decoration:none;
+}
+.gpo-dashboard-quicklinks .gpo-kpi-bsi-link:hover { background:var(--panel2); color:var(--accent); text-decoration:none; }
+.gpo-dashboard-quicklinks .gpo-kpi-bsi-link--new { display:flex; }
+.gpo-dashboard-quicklinks .gpo-page-nav-badge { margin-left:auto; }
+
+.gpo-dashboard-bsi-card {
+  max-width:none;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:18px;
+  padding:14px 16px;
+  border:1px solid var(--border);
+  border-radius:0;
+  background:var(--panel);
+}
+.gpo-dashboard-bsi-count { margin:0; white-space:nowrap; font-family:var(--font-mono); font-size:.82rem; color:var(--text); }
+.gpo-dashboard-bsi-list { margin:0; padding:0; display:flex; flex-wrap:wrap; gap:4px 18px; list-style:none; }
+.gpo-dashboard-bsi-list li { color:var(--muted); font-size:.69rem; }
+.gpo-dashboard-bsi-list li::before { content:'— '; color:var(--dim); }
+.gpo-dashboard-bsi-card .gpo-kpi-bsi-link { white-space:nowrap; }
+
+.gpo-summary-list {
+  margin:0;
+  padding:0;
+  list-style:none;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+.gpo-summary-list li { padding:11px 14px; color:var(--muted); font-size:.72rem; line-height:1.5; border-right:1px solid var(--border); }
+.gpo-summary-list li:last-child { border-right:0; }
+
+/* Section banners --------------------------------------------------- */
+.gpo-section-banner {
+  display:flex;
+  align-items:center;
+  gap:13px;
+  margin: 6px 0 28px;
+  padding: 13px 0;
+  border-top:1px solid var(--border2);
+  border-bottom:1px solid var(--border);
+}
+.gpo-section-banner-index { font-family:var(--font-mono); color:var(--accent); font-size:.68rem; }
+.gpo-section-banner strong { display:block; color:var(--text); font-size:.88rem; }
+.gpo-section-banner span:last-child { display:block; margin-top:2px; color:var(--dim); font-size:.68rem; }
+.gpo-dash-tier--section-intro { padding-bottom:0; border-bottom:0; }
+.gpo-action-intro { max-width:880px; font-size:.74rem; line-height:1.55; color:var(--muted); }
+
+/* Worklists --------------------------------------------------------- */
+.gpo-cleanup-toolbar {
+  padding:10px 0;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  background:transparent;
+}
+.gpo-cleanup-filter-btn { border-radius:4px; }
+.gpo-cleanup-search, .gpo-search-input { border-radius:4px; }
+
+/* Navigation: rail, not pill menu */
+.gpo-layout { grid-template-columns: 190px minmax(0, 1fr); gap: 34px; }
+.gpo-page-nav {
+  top:82px;
+  padding-right:18px;
+  border-right:1px solid var(--border);
+}
+.gpo-page-nav-title {
+  padding:4px 12px 14px;
+  font-family:var(--font-mono);
+  font-size:.58rem;
+  letter-spacing:.12em;
+}
+.gpo-page-nav-group-title { padding:14px 12px 6px; font-size:.58rem; }
+.gpo-page-nav-link {
+  position:relative;
+  padding:8px 12px;
+  border-radius:3px;
+  font-size:.74rem;
+  font-weight:600;
+}
+.gpo-page-nav-link:hover { background:transparent; color:var(--text); }
+.gpo-page-nav-link--active { background:transparent; border-color:transparent; color:var(--accent); }
+.gpo-page-nav-link--active::before {
+  content:'';
+  position:absolute;
+  left:-19px;
+  top:5px;
+  bottom:5px;
+  width:2px;
+  background:var(--accent);
+}
+.gpo-page-nav-divider { margin:12px 4px 0; background:var(--border2); }
+
+/* Reference Engine: registry / catalogue aesthetic ---------------- */
+.gpo-reference-section {
+  margin-top:18px;
+  padding-top:34px;
+  border-top:2px solid var(--border2);
+}
+.gpo-reference-section .section-title { font-size:1.3rem; margin-bottom:8px; }
+.gpo-reference-intro { max-width:760px; font-size:.77rem; line-height:1.65; }
+.gpo-reference-model-note {
+  margin:22px 0 24px;
+  padding:0;
+  border:0;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  border-radius:0;
+  background:transparent;
+}
+.gpo-reference-model-title { padding:11px 0 8px; font-family:var(--font-mono); font-size:.6rem; text-transform:uppercase; letter-spacing:.1em; color:var(--dim); }
+.gpo-reference-model-grid { gap:0; grid-template-columns:repeat(4,1fr); }
+.gpo-reference-model-grid > div { padding:12px 14px 13px 0; border-right:1px solid var(--border); }
+.gpo-reference-model-grid > div:not(:first-child) { padding-left:14px; }
+.gpo-reference-model-grid > div:last-child { border-right:0; }
+.gpo-reference-model-grid strong { font-size:.69rem; }
+.gpo-reference-model-grid span { font-size:.65rem; }
+.gpo-reference-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:1px; background:var(--border); border:1px solid var(--border); }
+.gpo-reference-card {
+  padding:18px;
+  border:0;
+  border-radius:0;
+  background:var(--panel);
+  min-height:220px;
+  display:flex;
+  flex-direction:column;
+}
+.gpo-reference-card:nth-child(1) { border-top:2px solid var(--accent); }
+.gpo-reference-card:nth-child(2) { border-top:2px solid var(--border2); }
+.gpo-reference-card:nth-child(3) { border-top:2px solid var(--border2); }
+.gpo-reference-card-header { align-items:baseline; }
+.gpo-reference-card-title { font-size:.9rem; letter-spacing:-.01em; }
+.gpo-reference-state { border-radius:3px; font-size:.56rem; padding:3px 6px; text-transform:uppercase; letter-spacing:.06em; }
+.gpo-reference-card-desc { min-height:44px; margin:10px 0 16px; font-size:.7rem; }
+.gpo-reference-count { font-family:var(--font-mono); font-size:.66rem; color:var(--muted); }
+.gpo-reference-empty { margin-top:auto; padding:11px 0; border:0; border-top:1px dashed var(--border2); border-radius:0; }
+.gpo-reference-requirements { gap:0; margin-top:auto; }
+.gpo-reference-requirement { padding:10px 0; border-top:1px solid var(--border); }
+.gpo-reference-requirement-title { font-size:.71rem; }
+.gpo-reference-meta { font-size:.62rem; }
+
+/* RSoP: split the explanatory area from the upload action ------------ */
+.gpo-rsop-section {
+  margin-top:18px;
+  padding-top:34px;
+  border-top:2px solid var(--border2);
+}
+.gpo-rsop-section .section-title { font-size:1.3rem; margin-bottom:8px; }
+.gpo-rsop-intro { max-width:760px; font-size:.77rem; line-height:1.65; }
+.gpo-rsop-howto {
+  display:grid;
+  grid-template-columns:150px 1fr;
+  gap:18px;
+  margin:22px 0 18px;
+  padding:15px 0;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  border-left:0;
+  border-radius:0;
+  background:transparent;
+}
+.gpo-rsop-howto-title { font-family:var(--font-mono); font-size:.61rem; text-transform:uppercase; letter-spacing:.09em; color:var(--dim); }
+.gpo-rsop-howto ol { padding-left:20px; font-size:.72rem; }
+.gpo-rsop-block { margin-top:22px; padding-top:0; border-top:0; }
+.gpo-rsop-block .gpo-finding-sub-title { font-size:.72rem; color:var(--text); }
+.gpo-rsop-upload-zone {
+  min-height:130px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  border:1px dashed var(--border2);
+  border-radius:4px;
+  background:var(--panel);
+}
+.gpo-rsop-upload-zone:hover, .gpo-rsop-upload-zone.drag { border-color:var(--accent); background:var(--panel2); }
+.gpo-rsop-upload-text { font-size:.78rem; }
+.gpo-rsop-upload-sub { font-size:.66rem; }
+
+/* Old rounded surfaces become restrained throughout the analysis area */
+.gpo-onboarding-card,
+.gpo-reference-card,
+.gpo-effective-entry,
+.gpo-effective-computer-entry,
+.gpo-effective-gpresult,
+.gpo-rsop-gpo-row { border-radius:4px; }
+
+@media (max-width: 900px) {
+  .gpo-layout { grid-template-columns:160px minmax(0,1fr); }
+  .gpo-num-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .gpo-dashboard-quicklinks { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .gpo-dashboard-bsi-card { grid-template-columns:1fr; gap:10px; }
+  .gpo-summary-list { grid-template-columns:1fr; }
+  .gpo-summary-list li { border-right:0; border-bottom:1px solid var(--border); }
+  .gpo-summary-list li:last-child { border-bottom:0; }
+  .gpo-reference-grid { grid-template-columns:1fr; }
+}
+@media (max-width: 640px) {
+  .gpo-dashboard-heading { align-items:flex-start; }
+  .gpo-dashboard-mark { display:none; }
+  .gpo-layout { grid-template-columns:1fr; }
+  .gpo-page-nav {
+    padding:7px 0;
+    border-right:0;
+    border-bottom:1px solid var(--border);
+  }
+  .gpo-page-nav-link--active::before { display:none; }
+  .gpo-page-nav-link--active { border-color:var(--border2); background:var(--panel2); }
+  .gpo-dashboard-quicklinks { grid-template-columns:1fr; }
+  .gpo-num-grid { grid-template-columns:1fr 1fr; }
+  .gpo-rsop-howto { grid-template-columns:1fr; gap:6px; }
+  .gpo-reference-model-grid { grid-template-columns:1fr; }
+  .gpo-reference-model-grid > div,
+  .gpo-reference-model-grid > div:not(:first-child) { padding:10px 0; border-right:0; border-bottom:1px solid var(--border); }
+  .gpo-reference-model-grid > div:last-child { border-bottom:0; }
+  .gpo-dash-label { grid-template-columns:24px 1fr; }
+  .gpo-dash-label em { grid-column:2; justify-self:start; margin-top:-4px; }
+}

@@ -213,6 +213,7 @@ window.GpoRenderer = (function() {
 
     renderMissingHint(_missingFiles);
     renderExecutiveDashboard();
+    renderReferenceEngine();
     renderOverviewSummary();
     renderIntegrityPanel();
     renderNumGrid();
@@ -463,6 +464,118 @@ window.GpoRenderer = (function() {
     renderDashboardFindingsTiles();
     renderDashboardComputerTiles();
     renderDashboardBsiLink();
+  }
+
+  // V5.0: Gemeinsame Referenzstruktur als reine technische Adapter-Schicht.
+  // BSI wird ausschliesslich aus den bereits verifizierten BSI-Konstanten und
+  // dem bestehenden Evidence-Index gespeist. Microsoft/CIS sind hier bewusst
+  // nur als vorbereitete Standards registriert; ihre Regeln werden erst in
+  // V5.1/V5.2 ergänzt. Keine neue Compliance-Berechnung, kein Score.
+  function renderReferenceEngine() {
+    const grid = document.getElementById('gpo-reference-grid');
+    if (!grid || !window.GpoReferenceEngine) return;
+
+    const bsiSettingIndex = getBsiSettingKeyIndex();
+    const settingKeysByRequirement = {};
+    Object.keys(bsiSettingIndex).forEach(settingKey => {
+      const requirementId = bsiSettingIndex[settingKey];
+      if (!settingKeysByRequirement[requirementId]) settingKeysByRequirement[requirementId] = [];
+      settingKeysByRequirement[requirementId].push(settingKey);
+    });
+
+    const bsiRequirements = BSI_REQUIREMENT_ORDER.map(requirementId => {
+      const info = BSI_REQUIREMENT_INFO[requirementId] || {};
+      return {
+        id: requirementId,
+        label: BSI_REQUIREMENT_LABELS[requirementId] || requirementId,
+        title: BSI_REQUIREMENT_LABELS[requirementId] || requirementId,
+        buildingBlock: info.bausteinLabel || null,
+        requirementNumber: info.anforderungNr || null,
+        description: info.anforderung || null,
+        recommendation: info.empfehlung || null,
+        sourceLabel: info.sourceLabel || null,
+        sourceUrl: info.sourceUrl || null,
+        settingKeys: settingKeysByRequirement[requirementId] || [],
+      };
+    });
+
+    window.GpoReferenceEngine.registerRequirements('bsi', bsiRequirements);
+    const catalog = window.GpoReferenceEngine.getCatalog();
+    grid.replaceChildren();
+
+    catalog.forEach(standard => {
+      const card = document.createElement('article');
+      card.className = 'gpo-reference-card';
+
+      const header = document.createElement('div');
+      header.className = 'gpo-reference-card-header';
+      const title = document.createElement('div');
+      title.className = 'gpo-reference-card-title';
+      title.textContent = standard.label;
+      const state = document.createElement('span');
+      state.className = 'gpo-reference-state gpo-reference-state--' + standard.state;
+      state.textContent = standard.state === 'active' ? 'Hinterlegt' : 'Vorbereitet';
+      header.append(title, state);
+      card.appendChild(header);
+
+      const desc = document.createElement('p');
+      desc.className = 'gpo-reference-card-desc';
+      desc.textContent = standard.description;
+      card.appendChild(desc);
+
+      if (standard.requirements.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'gpo-reference-empty';
+        empty.textContent = 'Noch keine Anforderungen / Controls hinterlegt. Die gemeinsame Struktur ist vorbereitet; die fachliche Einbindung erfolgt in einem eigenen Schritt.';
+        card.appendChild(empty);
+      } else {
+        const count = document.createElement('div');
+        count.className = 'gpo-reference-count';
+        count.textContent = standard.requirements.length + ' ' + (standard.requirements.length === 1 ? 'Anforderung' : 'Anforderungen') + ' hinterlegt';
+        card.appendChild(count);
+
+        const list = document.createElement('div');
+        list.className = 'gpo-reference-requirements';
+        standard.requirements.forEach(requirement => {
+          const item = document.createElement('div');
+          item.className = 'gpo-reference-requirement';
+
+          const itemTitle = document.createElement('div');
+          itemTitle.className = 'gpo-reference-requirement-title';
+          itemTitle.textContent = (requirement.requirementNumber ? requirement.requirementNumber + ' · ' : '') + requirement.label;
+          item.appendChild(itemTitle);
+
+          if (requirement.buildingBlock) {
+            const block = document.createElement('div');
+            block.className = 'gpo-reference-meta';
+            block.textContent = requirement.buildingBlock;
+            item.appendChild(block);
+          }
+
+          if (requirement.sourceUrl) {
+            const source = document.createElement('a');
+            source.className = 'gpo-kpi-bsi-link';
+            source.href = requirement.sourceUrl;
+            source.target = '_blank';
+            source.rel = 'noopener noreferrer';
+            source.textContent = 'Offizielle Quelle öffnen →';
+            item.appendChild(source);
+          }
+
+          const mapping = document.createElement('div');
+          mapping.className = 'gpo-reference-meta';
+          mapping.textContent = requirement.settingKeys.length > 0
+            ? requirement.settingKeys.length + ' eindeutige Setting-Zuordnung' + (requirement.settingKeys.length === 1 ? '' : 'en') + ' aus bestehender BSI-Evidenz'
+            : 'Keine eindeutige Setting-Zuordnung aus der bestehenden Evidenz hinterlegt';
+          item.appendChild(mapping);
+
+          list.appendChild(item);
+        });
+        card.appendChild(list);
+      }
+
+      grid.appendChild(card);
+    });
   }
 
   // V4.7: kompakte Textzusammenfassung ("Kurzueberblick") zwischen den
@@ -5011,6 +5124,7 @@ window.GpoRenderer = (function() {
     'gpo-findings-section',
     'gpo-tree-section',
     'gpo-bsi-section',
+    'gpo-reference-section',
     'gpo-rsop-section',
     'gpo-databasis-section',
   ];

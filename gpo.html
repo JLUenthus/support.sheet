@@ -181,6 +181,7 @@
         <div class="gpo-page-nav-group">
           <div class="gpo-page-nav-group-title">Vergleich &amp; Prüfung</div>
           <a href="#gpo-rsop-section" class="gpo-page-nav-link gpo-page-nav-link--new">RSoP-Vergleich <span class="gpo-page-nav-badge">NEU</span></a>
+          <a href="#gpo-reference-section" class="gpo-page-nav-link">Referenz-Standards</a>
           <a href="#gpo-databasis-section" class="gpo-page-nav-link">Datenbasis</a>
         </div>
       </nav>
@@ -195,37 +196,45 @@
            GPO-Bestand -> Findings -> BSI-Coverage -> Computerpopulation
            wie im Auftrag vorgegeben. Keine der Zahlen wird hier neu
            berechnet, siehe gpo-renderer.js. -->
-      <section class="gpo-section" id="gpo-dashboard-section">
-        <h2 class="section-title">📊 Executive Dashboard</h2>
+      <section class="gpo-section gpo-dashboard" id="gpo-dashboard-section">
+        <div class="gpo-dashboard-heading">
+          <div>
+            <div class="gpo-section-kicker">Snapshot-Auswertung</div>
+            <h2 class="section-title">Übersicht</h2>
+            <p class="gpo-dashboard-lead">Ein kompakter Einstieg in Bestand, Befunde und die nächsten Prüfwege. Detailinformationen bleiben in den jeweiligen Arbeitsbereichen.</p>
+          </div>
+          <div class="gpo-dashboard-mark" aria-hidden="true"><span>GPO</span><strong>01</strong></div>
+        </div>
 
         <div class="gpo-dash-tier">
-          <div class="gpo-finding-sub-title">GPO-Bestand</div>
+          <div class="gpo-dash-label"><span>01</span><strong>GPO-Bestand</strong><em>Snapshot</em></div>
           <div class="gpo-num-grid" id="gpo-kpi-gpo-grid"></div>
         </div>
 
         <div class="gpo-dash-tier">
-          <div class="gpo-finding-sub-title">Findings</div>
+          <div class="gpo-dash-label"><span>02</span><strong>Findings</strong><em>Analyse</em></div>
           <div class="gpo-num-grid" id="gpo-kpi-findings-grid"></div>
         </div>
 
         <div class="gpo-dash-section-divider" aria-hidden="true"></div>
         <div class="gpo-dash-tier gpo-dash-tier--quicklinks">
-          <div class="gpo-finding-sub-title">Schnellzugriff</div>
+          <div class="gpo-dash-label"><span>03</span><strong>Schnellzugriff</strong><em>Werkzeuge</em></div>
           <div class="gpo-dashboard-quicklinks">
             <a href="#gpo-explorer-section" class="gpo-kpi-bsi-link">GPOs durchsuchen →</a>
             <a href="#gpo-findings-section" class="gpo-kpi-bsi-link">Findings analysieren →</a>
             <a href="#gpo-rsop-section" class="gpo-kpi-bsi-link gpo-kpi-bsi-link--new">RSoP-Vergleich starten → <span class="gpo-page-nav-badge">NEU</span></a>
+            <a href="#gpo-reference-section" class="gpo-kpi-bsi-link">Referenz-Standards ansehen →</a>
             <a href="#gpo-bsi-section" class="gpo-kpi-bsi-link">BSI-Coverage ansehen →</a>
           </div>
         </div>
 
         <div class="gpo-dash-tier">
-          <div class="gpo-finding-sub-title">BSI-Coverage</div>
+          <div class="gpo-dash-label"><span>04</span><strong>BSI-Coverage</strong><em>Referenz</em></div>
           <div class="gpo-dashboard-bsi-card" id="gpo-dashboard-bsi-card"></div>
         </div>
 
         <div class="gpo-dash-tier">
-          <div class="gpo-finding-sub-title">Computerpopulation</div>
+          <div class="gpo-dash-label"><span>05</span><strong>Computerpopulation</strong><em>Bestand</em></div>
           <div class="gpo-num-grid" id="gpo-kpi-computer-grid"></div>
           <div class="gpo-empty" id="gpo-kpi-computer-missing" hidden></div>
           <a href="#gpo-bsi-section" class="gpo-kpi-bsi-link" id="gpo-kpi-computer-link"></a>
@@ -236,24 +245,24 @@
              ausschliesslich bereits vorhandene absolute Zahlen, keine
              Prozentwerte, keine Gesamtbewertung. -->
         <div class="gpo-dash-tier">
-          <div class="gpo-finding-sub-title">Kurzüberblick</div>
+          <div class="gpo-dash-label"><span>06</span><strong>Kurzüberblick</strong><em>Einordnung</em></div>
           <ul class="gpo-summary-list" id="gpo-overview-summary"></ul>
         </div>
 
         <div class="gpo-dash-section-divider" aria-hidden="true"></div>
         <div class="gpo-dash-tier gpo-dash-tier--section-intro">
-          <div class="gpo-finding-sub-title">Handlung &amp; Prüfung</div>
+          <div class="gpo-section-banner"><span class="gpo-section-banner-index">02</span><div><strong>Handlung &amp; Prüfung</strong><span>Vom Befund zur konkreten Nachprüfung</span></div></div>
           <p class="gpo-action-intro">Hier beginnt die vertiefte Prüfung: zuerst die wichtigsten Befunde, danach GPO-bezogene Aufräumarbeiten und die effektive Richtlinie.</p>
         </div>
 
         <div class="gpo-dash-tier">
-          <div class="gpo-finding-sub-title">Als nächstes prüfen</div>
+          <div class="gpo-dash-label"><span>07</span><strong>Als nächstes prüfen</strong><em>Priorisierte Arbeitsliste</em></div>
           <p class="gpo-action-intro">Was sollte ich mir zuerst anschauen? Die folgenden Gruppen buendeln bereits vorhandene Findings nach ihrer unmittelbaren Pruefrelevanz. Dies ist keine automatische Risikobewertung und ersetzt keine Pruefung der effektiven Richtlinie.</p>
           <div id="gpo-action-view"></div>
         </div>
 
         <div class="gpo-dash-tier">
-          <div class="gpo-finding-sub-title">Prüfen &amp; Aufräumen</div>
+          <div class="gpo-dash-label"><span>08</span><strong>Prüfen &amp; Aufräumen</strong><em>GPO-zentriert</em></div>
           <p class="gpo-action-intro">Diese Übersicht zeigt GPOs und Konfigurationen, die aufgrund vorhandener Analyseinformationen für eine nähere Prüfung interessant sein können. Sie ersetzt keine Prüfung der effektiven Richtlinie und entscheidet nicht, ob eine GPO tatsächlich benötigt wird.</p>
 
           <!-- V4.8: kompakte Arbeitsliste statt grosser Karten - Suche/
@@ -290,16 +299,32 @@
         </div>
 
         <div class="gpo-dash-tier">
-          <div class="gpo-finding-sub-title">Effektive Richtlinie prüfen</div>
+          <div class="gpo-dash-label"><span>09</span><strong>Effektive Richtlinie prüfen</strong><em>Vorstufe zur RSoP-Prüfung</em></div>
           <p class="gpo-action-intro">Der Snapshot zeigt, welche GPOs und Einstellungen vorhanden und auf welche Computer sie potenziell angewendet werden können. Die tatsächlich wirksame Richtlinie kann durch Vererbung, Filter, Prioritäten und weitere Windows-GPO-Regeln abweichen. Für die endgültige Prüfung auf einem betroffenen System sollte deshalb <code>gpresult</code> oder RSOP verwendet werden.</p>
           <div id="gpo-effective-view"></div>
 
         </div>
 
         <div class="gpo-dash-section-divider" aria-hidden="true"></div>
+        <section class="gpo-section gpo-reference-section" id="gpo-reference-section">
+          <div class="gpo-section-kicker">03 / Standards &amp; Referenzen</div>
+          <h2 class="section-title">Referenz-Standards</h2>
+          <p class="gpo-reference-intro">Die Referenz-Engine führt technische Anforderungen verschiedener Standards in einer gemeinsamen Struktur zusammen. Die Standards bleiben fachlich getrennt: Es gibt keine gemeinsame Punktzahl, keinen Gesamtscore und keine automatische Aussage, welcher Standard „besser“ ist.</p>
+          <div class="gpo-reference-model-note">
+            <div class="gpo-reference-model-title">Gemeinsame technische Struktur</div>
+            <div class="gpo-reference-model-grid">
+              <div><strong>Standard</strong><span>z. B. BSI, Microsoft, CIS</span></div>
+              <div><strong>Anforderung / Control</strong><span>eindeutige Referenz-ID und Bezeichnung</span></div>
+              <div><strong>Quelle</strong><span>Dokument, Abschnitt und verifizierter Link</span></div>
+              <div><strong>Setting-Mapping</strong><span>nur bei eindeutig hinterlegter Zuordnung</span></div>
+            </div>
+          </div>
+          <div class="gpo-reference-grid" id="gpo-reference-grid"></div>
+        </section>
+
         <section class="gpo-section gpo-rsop-section" id="gpo-rsop-section">
-          <div class="gpo-section-kicker">Vergleich &amp; Prüfung</div>
-          <h2 class="section-title">🖥️ RSoP-Vergleich</h2>
+          <div class="gpo-section-kicker">04 / Vergleich &amp; Prüfung</div>
+          <h2 class="section-title">RSoP-Vergleich</h2>
           <p class="gpo-rsop-intro">Prüfe einen konkreten Windows-Rechner gegen den geladenen GPO-Snapshot. Der Vergleich zeigt, welche GPOs und Einstellungen laut RSoP auf diesem Computer ausgewiesen werden und wo der Bericht vom Snapshot abweicht.</p>
           <div class="gpo-rsop-howto">
             <div class="gpo-rsop-howto-title">So gehst du vor</div>
@@ -486,6 +511,7 @@
   <script src="js/gpo/gpo-analyzer.js"></script>
   <script src="js/gpo/bsi-mapping.js"></script>
   <script src="js/gpo/gpo-rsop.js"></script>
+  <script src="js/gpo/gpo-reference-engine.js"></script>
   <script src="js/gpo/gpo-renderer.js"></script>
   <script src="js/gpo/gpo-loader.js"></script>
   <script>
