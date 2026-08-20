@@ -169,12 +169,20 @@
            keine neue fachliche Berechnung). -->
       <nav class="gpo-page-nav" id="gpo-page-nav" aria-label="Bereichsnavigation">
         <div class="gpo-page-nav-title">GPO Analyzer</div>
-        <a href="#gpo-dashboard-section" class="gpo-page-nav-link">Übersicht</a>
-        <a href="#gpo-explorer-section" class="gpo-page-nav-link">GPOs</a>
-        <a href="#gpo-findings-section" class="gpo-page-nav-link">Findings</a>
-        <a href="#gpo-tree-section" class="gpo-page-nav-link">Struktur</a>
-        <a href="#gpo-bsi-section" class="gpo-page-nav-link">BSI-Coverage</a>
-        <a href="#gpo-databasis-section" class="gpo-page-nav-link">Datenbasis</a>
+        <div class="gpo-page-nav-group">
+          <div class="gpo-page-nav-group-title">Analyse</div>
+          <a href="#gpo-dashboard-section" class="gpo-page-nav-link">Übersicht</a>
+          <a href="#gpo-explorer-section" class="gpo-page-nav-link">GPOs</a>
+          <a href="#gpo-findings-section" class="gpo-page-nav-link">Findings</a>
+          <a href="#gpo-tree-section" class="gpo-page-nav-link">Struktur</a>
+          <a href="#gpo-bsi-section" class="gpo-page-nav-link">BSI-Coverage</a>
+        </div>
+        <div class="gpo-page-nav-divider" aria-hidden="true"></div>
+        <div class="gpo-page-nav-group">
+          <div class="gpo-page-nav-group-title">Vergleich &amp; Prüfung</div>
+          <a href="#gpo-rsop-section" class="gpo-page-nav-link gpo-page-nav-link--new">RSoP-Vergleich <span class="gpo-page-nav-badge">NEU</span></a>
+          <a href="#gpo-databasis-section" class="gpo-page-nav-link">Datenbasis</a>
+        </div>
       </nav>
 
       <div class="gpo-main-content">
@@ -200,6 +208,17 @@
           <div class="gpo-num-grid" id="gpo-kpi-findings-grid"></div>
         </div>
 
+        <div class="gpo-dash-section-divider" aria-hidden="true"></div>
+        <div class="gpo-dash-tier gpo-dash-tier--quicklinks">
+          <div class="gpo-finding-sub-title">Schnellzugriff</div>
+          <div class="gpo-dashboard-quicklinks">
+            <a href="#gpo-explorer-section" class="gpo-kpi-bsi-link">GPOs durchsuchen →</a>
+            <a href="#gpo-findings-section" class="gpo-kpi-bsi-link">Findings analysieren →</a>
+            <a href="#gpo-rsop-section" class="gpo-kpi-bsi-link gpo-kpi-bsi-link--new">RSoP-Vergleich starten → <span class="gpo-page-nav-badge">NEU</span></a>
+            <a href="#gpo-bsi-section" class="gpo-kpi-bsi-link">BSI-Coverage ansehen →</a>
+          </div>
+        </div>
+
         <div class="gpo-dash-tier">
           <div class="gpo-finding-sub-title">BSI-Coverage</div>
           <div class="gpo-dashboard-bsi-card" id="gpo-dashboard-bsi-card"></div>
@@ -219,6 +238,12 @@
         <div class="gpo-dash-tier">
           <div class="gpo-finding-sub-title">Kurzüberblick</div>
           <ul class="gpo-summary-list" id="gpo-overview-summary"></ul>
+        </div>
+
+        <div class="gpo-dash-section-divider" aria-hidden="true"></div>
+        <div class="gpo-dash-tier gpo-dash-tier--section-intro">
+          <div class="gpo-finding-sub-title">Handlung &amp; Prüfung</div>
+          <p class="gpo-action-intro">Hier beginnt die vertiefte Prüfung: zuerst die wichtigsten Befunde, danach GPO-bezogene Aufräumarbeiten und die effektive Richtlinie.</p>
         </div>
 
         <div class="gpo-dash-tier">
@@ -269,23 +294,43 @@
           <p class="gpo-action-intro">Der Snapshot zeigt, welche GPOs und Einstellungen vorhanden und auf welche Computer sie potenziell angewendet werden können. Die tatsächlich wirksame Richtlinie kann durch Vererbung, Filter, Prioritäten und weitere Windows-GPO-Regeln abweichen. Für die endgültige Prüfung auf einem betroffenen System sollte deshalb <code>gpresult</code> oder RSOP verwendet werden.</p>
           <div id="gpo-effective-view"></div>
 
-          <!-- V4.9: RSoP-/gpresult-Vergleich - eigenstaendiger Bereich
-               innerhalb "Effektive Richtlinie pruefen" (Auftrag Abschnitt 3),
-               ergaenzt V4.6, ersetzt es nicht. -->
-          <div class="gpo-rsop-block" id="gpo-rsop-block">
-            <div class="gpo-finding-sub-title">RSoP / gpresult vergleichen</div>
-            <p class="gpo-action-intro">Lade einen RSoP- oder gpresult-Bericht eines konkreten Computers hoch, um die im Snapshot konfigurierte GPO-Struktur mit der auf diesem Computer tatsächlich ausgewiesenen Richtlinienanwendung zu vergleichen.</p>
+        </div>
 
+        <div class="gpo-dash-section-divider" aria-hidden="true"></div>
+        <section class="gpo-section gpo-rsop-section" id="gpo-rsop-section">
+          <div class="gpo-section-kicker">Vergleich &amp; Prüfung</div>
+          <h2 class="section-title">🖥️ RSoP-Vergleich</h2>
+          <p class="gpo-rsop-intro">Prüfe einen konkreten Windows-Rechner gegen den geladenen GPO-Snapshot. Der Vergleich zeigt, welche GPOs und Einstellungen laut RSoP auf diesem Computer ausgewiesen werden und wo der Bericht vom Snapshot abweicht.</p>
+          <div class="gpo-rsop-howto">
+            <div class="gpo-rsop-howto-title">So gehst du vor</div>
+            <ol>
+              <li>GPO-Snapshot laden.</li>
+              <li>Auf dem betroffenen Windows-System beispielsweise <code>gpresult /x "%USERPROFILE%\Desktop\gpresult.xml" /f</code> ausführen.</li>
+              <li>Die erzeugte XML- oder gpresult-HTML-Datei hier ablegen.</li>
+              <li>Die Abweichungen und RSoP-Informationen prüfen.</li>
+            </ol>
+          </div>
+          <div class="gpo-rsop-block" id="gpo-rsop-block">
+            <div class="gpo-finding-sub-title">RSoP / gpresult laden</div>
+            <p class="gpo-action-intro">Lade einen RSoP- oder gpresult-Bericht eines konkreten Computers hoch. XML wird für die strukturierte Auswertung empfohlen.</p>
             <div class="gpo-rsop-upload-zone" id="gpo-rsop-upload-zone">
               <div class="gpo-rsop-upload-text">RSoP-XML oder gpresult-HTML hier ablegen oder klicken</div>
               <div class="gpo-rsop-upload-sub">XML wird für die strukturierte Auswertung empfohlen.</div>
               <input type="file" id="gpo-rsop-file-input" accept=".xml,.html,.htm" style="display:none">
             </div>
             <div class="gpo-rsop-error" id="gpo-rsop-error" hidden></div>
-
             <div id="gpo-rsop-result"></div>
           </div>
-        </div>
+          <div class="gpo-rsop-checkpoints">
+            <div class="gpo-finding-sub-title">Was du danach prüfen kannst</div>
+            <div class="gpo-rsop-checkpoint-grid">
+              <div>✓ Welche GPOs wurden laut RSoP angewendet?</div>
+              <div>⚠ Wo weichen Settings oder Werte vom Snapshot ab?</div>
+              <div>? Wo ist der Vergleich nicht eindeutig?</div>
+              <div>ℹ Welche RSoP-Informationen liefert Windows dazu?</div>
+            </div>
+          </div>
+        </section>
 
         <div class="gpo-dash-tier">
           <div class="gpo-finding-sub-title">Weiterführende Analyse</div>

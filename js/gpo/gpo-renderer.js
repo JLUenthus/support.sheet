@@ -5011,6 +5011,7 @@ window.GpoRenderer = (function() {
     'gpo-findings-section',
     'gpo-tree-section',
     'gpo-bsi-section',
+    'gpo-rsop-section',
     'gpo-databasis-section',
   ];
 
