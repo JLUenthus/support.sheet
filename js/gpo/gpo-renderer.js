@@ -149,6 +149,14 @@ window.GpoRenderer = (function() {
     // VOR der bestehenden Sortierung (siehe renderExplorerList()). 'all' ist
     // Standard und muss die Liste unveraendert lassen.
     explorerStatusFilter: 'all',
+    // V4.8: reine Darstellungsfilter fuer die GPO-Arbeitsliste in "Pruefen &
+    // Aufraeumen" - dieselbe Rolle wie explorerQuery/explorerStatusFilter,
+    // veraendern nie _findings oder die bestehende Gruppierungslogik
+    // (resolveGpoActionCategory()).
+    cleanupQuery: '',
+    cleanupGroupFilter: 'all',
+    cleanupStatusFilter: 'all',
+    cleanupSort: 'findings',
   };
 
   // Finding -> bereits gerenderte Karte (Konflikt-/Redundanz-/Hygiene-Liste).
@@ -189,6 +197,10 @@ window.GpoRenderer = (function() {
     _state.bucketFilter = 'all';
     _state.explorerSort = { column: 'findings', direction: 'desc' };
     _state.explorerStatusFilter = 'all';
+    _state.cleanupQuery = '';
+    _state.cleanupGroupFilter = 'all';
+    _state.cleanupStatusFilter = 'all';
+    _state.cleanupSort = 'findings';
     _bsiSettingKeyIndexCache = null;
     _findingCardMap.clear();
     resetSearchInputs();
@@ -255,6 +267,10 @@ window.GpoRenderer = (function() {
     if (explorerSearch) explorerSearch.value = '';
     const explorerStatusFilter = document.getElementById('gpo-explorer-status-filter');
     if (explorerStatusFilter) explorerStatusFilter.value = 'all';
+    const cleanupSearch = document.getElementById('gpo-cleanup-search');
+    if (cleanupSearch) cleanupSearch.value = '';
+    const cleanupSortSelect = document.getElementById('gpo-cleanup-sort-select');
+    if (cleanupSortSelect) cleanupSortSelect.value = 'findings';
   }
 
   // ── Fehlende-Datei-Hinweis ─────────────────────────────────
@@ -1344,20 +1360,76 @@ window.GpoRenderer = (function() {
   };
   const GPO_CLEANUP_CATEGORY_ORDER = ['flagged', 'redundant', 'hygiene', 'hint'];
   const GPO_CLEANUP_MAX_VISIBLE = 5;
+  // V4.8: pro aufgeklappter GPO zusaetzlich begrenzt (grosse Einzel-GPOs mit
+  // vielen Findings duerfen keine riesige Karte mehr ergeben, Auftrag
+  // Abschnitt 13) - dieselbe "Weitere anzeigen"-Mechanik wie auf GPO-Ebene,
+  // hier fuer die Finding-Zeilen innerhalb einer Karte.
+  const GPO_CLEANUP_FINDINGS_MAX_VISIBLE = 10;
 
-  // Reine Anzeige-Sortierung (Abschnitt 12: Anzahl Findings > Name als
-  // stabiler letzter Tie-Breaker) - keine neue Risikoberechnung, siehe
-  // GPO_CLEANUP_SORT_NOTE-Text im Intro der Ansicht.
+  // Generischer "max N sichtbar, danach aufklappbar"-Baustein - dieselbe
+  // Mechanik, die vorher zweimal fast identisch fuer die GPO-Liste je
+  // Kategorie existierte; jetzt auch fuer die Finding-Liste innerhalb einer
+  // Karte wiederverwendet (Auftrag Abschnitt 19.6: keine parallele zweite
+  // Logik).
+  function appendExpandable(container, items, buildItem, maxVisible, labelSingular, labelPlural) {
+    const shown = items.slice(0, maxVisible);
+    const rest = items.slice(maxVisible);
+    shown.forEach(item => container.appendChild(buildItem(item)));
+    if (!rest.length) return;
+
+    const restWrap = document.createElement('div');
+    restWrap.hidden = true;
+    rest.forEach(item => restWrap.appendChild(buildItem(item)));
+    container.appendChild(restWrap);
+
+    const moreBtn = document.createElement('button');
+    moreBtn.type = 'button';
+    moreBtn.className = 'gpo-kpi-bsi-link gpo-cleanup-more-btn';
+    moreBtn.textContent = 'Weitere ' + rest.length + ' ' + (rest.length === 1 ? labelSingular : labelPlural) + ' anzeigen →';
+    moreBtn.addEventListener('click', () => {
+      restWrap.hidden = false;
+      moreBtn.remove();
+    });
+    container.appendChild(moreBtn);
+  }
+
+  // V4.8: dieselben drei bereits vorhandenen, fachlich neutralen
+  // Sortierschluessel wie im GPO-Explorer (Anzahl/Name/Status) - keine neue
+  // Risiko-/Scoreberechnung. 'findings' bleibt der bisherige Standard
+  // (Anzahl absteigend, Name als Tie-Breaker), unveraendert gegenueber V4.5.
+  const CLEANUP_STATUS_SORT_ORDER = { active: 0, disabled: 1, unknown: 2 };
+  function sortCleanupItems(items, sortKey) {
+    const sorted = items.slice();
+    sorted.sort((a, b) => {
+      if (sortKey === 'name') return a.gpo.name.localeCompare(b.gpo.name);
+      if (sortKey === 'status') {
+        const diff = CLEANUP_STATUS_SORT_ORDER[gpoExplorerStatusCategory(a.gpo)] - CLEANUP_STATUS_SORT_ORDER[gpoExplorerStatusCategory(b.gpo)];
+        return diff !== 0 ? diff : a.gpo.name.localeCompare(b.gpo.name);
+      }
+      return b.findings.length - a.findings.length || a.gpo.name.localeCompare(b.gpo.name);
+    });
+    return sorted;
+  }
+
+  // Suche (GPO-Name) und Statusfilter sind reine Darstellungsfilter -
+  // dieselbe Rolle wie explorerQuery/explorerStatusFilter im GPO-Explorer
+  // (Auftrag Abschnitt 7/8: "duerfen nicht die zugrunde liegenden Findings
+  // veraendern") - beide schraenken nur ein, WELCHE GPOs ueberhaupt in die
+  // Gruppierung einfliessen, resolveGpoActionCategory() selbst bleibt
+  // unveraendert.
   function collectGpoCleanupGroups() {
     const groups = { flagged: [], redundant: [], hygiene: [], hint: [] };
+    const q = _state.cleanupQuery.toLowerCase();
     (_model.gpos || []).forEach(gpo => {
+      if (q && !(gpo.name || '').toLowerCase().includes(q)) return;
+      if (_state.cleanupStatusFilter !== 'all' && gpoExplorerStatusCategory(gpo) !== _state.cleanupStatusFilter) return;
       const related = relatedFindingsForGpo(gpo);
       if (!related.length) return;
       const category = resolveGpoActionCategory(related);
       groups[category].push({ gpo, findings: related });
     });
     GPO_CLEANUP_CATEGORY_ORDER.forEach(key => {
-      groups[key].sort((a, b) => b.findings.length - a.findings.length || a.gpo.name.localeCompare(b.gpo.name));
+      groups[key] = sortCleanupItems(groups[key], _state.cleanupSort);
     });
     return groups;
   }
@@ -1429,6 +1501,44 @@ window.GpoRenderer = (function() {
     return row;
   }
 
+  // Kompakte Aufschluesselung der vorhandenen Finding-Typen je GPO (Auftrag
+  // Abschnitt 2/13, z.B. "Konflikte: 1 · Mehrfachdefinitionen: 11") - reine
+  // Zaehlung von finding.type innerhalb der bereits vorhandenen
+  // findings-Liste dieser GPO, analog zu countByType(), keine neue
+  // Fachlogik.
+  const CLEANUP_BREAKDOWN_TYPE_ORDER = ['conflict', 'redundant', 'hygiene', 'security-filter', 'wmi-filter'];
+  // Dieselben Zaehl-Bezeichnungen wie renderDashboardFindingsTiles() (Plural
+  // "Konflikte"/"Mehrfachdefinitionen" statt des Einzahl-Typlabels
+  // ACTION_TYPE_LABELS, das fuer einzelne Finding-Zeilen gedacht ist) -
+  // konsistentes Vokabular fuer Anzahlen im gesamten Dashboard.
+  const CLEANUP_BREAKDOWN_LABELS = {
+    conflict: 'Konflikte',
+    redundant: 'Mehrfachdefinitionen',
+    hygiene: 'Hygiene',
+    'security-filter': 'Security-Filter',
+    'wmi-filter': 'WMI-Filter',
+  };
+  function buildGpoTypeBreakdown(findings) {
+    const counts = {};
+    findings.forEach(f => { counts[f.type] = (counts[f.type] || 0) + 1; });
+    const wrap = document.createElement('div');
+    wrap.className = 'gpo-cleanup-breakdown';
+    CLEANUP_BREAKDOWN_TYPE_ORDER.forEach(type => {
+      if (!counts[type]) return;
+      const item = document.createElement('span');
+      item.className = 'gpo-cleanup-breakdown-item';
+      item.textContent = (CLEANUP_BREAKDOWN_LABELS[type] || type) + ': ' + counts[type];
+      wrap.appendChild(item);
+    });
+    return wrap;
+  }
+
+  // V4.8: GPO-Karte zeigt zunaechst nur Name/Status/Gesamtzahl/Typ-
+  // Aufschluesselung (immer sichtbar) - die einzelnen Finding-Zeilen
+  // (bestehend, buildGpoCleanupFindingRow() unveraendert) erscheinen erst
+  // nach Klick auf "Findings anzeigen" (Auftrag Abschnitt 1/2/13: GPO ->
+  // Anzahl/Arten -> aufklappen -> einzelne Findings). "GPO oeffnen" bleibt
+  // unabhaengig vom Aufklapp-Zustand immer erreichbar.
   function buildGpoCleanupCard(entry) {
     const { gpo, findings } = entry;
     const card = document.createElement('div');
@@ -1452,10 +1562,28 @@ window.GpoRenderer = (function() {
     summary.textContent = gpoCleanupSummaryLine(findings.length);
     card.appendChild(summary);
 
-    const list = document.createElement('div');
-    list.className = 'gpo-cleanup-finding-list';
-    findings.forEach(f => list.appendChild(buildGpoCleanupFindingRow(f)));
-    card.appendChild(list);
+    card.appendChild(buildGpoTypeBreakdown(findings));
+
+    const findingsBody = document.createElement('div');
+    findingsBody.className = 'gpo-cleanup-finding-list';
+    findingsBody.hidden = true;
+    appendExpandable(findingsBody, findings, buildGpoCleanupFindingRow, GPO_CLEANUP_FINDINGS_MAX_VISIBLE, 'Finding', 'Findings');
+
+    const actions = document.createElement('div');
+    actions.className = 'gpo-cleanup-card-actions';
+
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.className = 'gpo-kpi-bsi-link gpo-cleanup-toggle-btn';
+    toggleBtn.textContent = 'Findings anzeigen';
+    toggleBtn.setAttribute('aria-expanded', 'false');
+    toggleBtn.addEventListener('click', () => {
+      const willOpen = findingsBody.hidden;
+      findingsBody.hidden = !willOpen;
+      toggleBtn.textContent = willOpen ? 'Findings ausblenden' : 'Findings anzeigen';
+      toggleBtn.setAttribute('aria-expanded', String(willOpen));
+    });
+    actions.appendChild(toggleBtn);
 
     const openLink = document.createElement('a');
     openLink.href = '#gpo-tree-section';
@@ -1465,14 +1593,18 @@ window.GpoRenderer = (function() {
       e.preventDefault();
       openGpoDetail(gpo.id);
     });
-    card.appendChild(openLink);
+    actions.appendChild(openLink);
+
+    card.appendChild(actions);
+    card.appendChild(findingsBody);
 
     return card;
   }
 
-  // Aufklappbarer "Weitere X GPOs anzeigen" statt Link zu einer neuen Seite
-  // (Auftrag Abschnitt 11/8: keine neue Detailansicht) - blendet einfach die
-  // bereits gebauten, restlichen Karten in derselben Gruppe ein.
+  // "Weitere X GPOs anzeigen" statt Link zu einer neuen Seite (Auftrag
+  // Abschnitt 6/11: keine neue Detailansicht) - blendet einfach die bereits
+  // gebauten, restlichen Karten in derselben Gruppe ein. Anzahl je Gruppe
+  // (Auftrag Abschnitt 4) steht direkt in der Ueberschrift.
   function buildGpoCleanupCategorySection(categoryKey, items) {
     const meta = GPO_CLEANUP_CATEGORY_META[categoryKey];
     const section = document.createElement('div');
@@ -1480,7 +1612,7 @@ window.GpoRenderer = (function() {
 
     const heading = document.createElement('div');
     heading.className = 'gpo-action-category-title';
-    heading.textContent = meta.icon + ' ' + meta.title;
+    heading.textContent = meta.icon + ' ' + meta.title + ' · ' + items.length + (items.length === 1 ? ' GPO' : ' GPOs');
     section.appendChild(heading);
 
     if (!items.length) {
@@ -1491,47 +1623,62 @@ window.GpoRenderer = (function() {
       return section;
     }
 
-    const shown = items.slice(0, GPO_CLEANUP_MAX_VISIBLE);
-    const rest = items.slice(GPO_CLEANUP_MAX_VISIBLE);
-
-    shown.forEach(item => section.appendChild(buildGpoCleanupCard(item)));
-
-    if (rest.length) {
-      const restWrap = document.createElement('div');
-      restWrap.hidden = true;
-      rest.forEach(item => restWrap.appendChild(buildGpoCleanupCard(item)));
-      section.appendChild(restWrap);
-
-      const moreBtn = document.createElement('button');
-      moreBtn.type = 'button';
-      moreBtn.className = 'gpo-kpi-bsi-link gpo-cleanup-more-btn';
-      moreBtn.textContent = 'Weitere ' + rest.length + ' GPOs anzeigen →';
-      moreBtn.addEventListener('click', () => {
-        restWrap.hidden = false;
-        moreBtn.remove();
-      });
-      section.appendChild(moreBtn);
-    }
-
+    appendExpandable(section, items, buildGpoCleanupCard, GPO_CLEANUP_MAX_VISIBLE, 'GPO', 'GPOs');
     return section;
+  }
+
+  const CLEANUP_SORT_NOTE_LABELS = {
+    findings: 'Anzahl der vorhandenen Befunde',
+    name: 'GPO-Name',
+    status: 'Status (Aktiv vor Deaktiviert)',
+  };
+
+  // Markiert den jeweils aktiven Filter-/Sortier-Button optisch - reiner
+  // Anzeigezustand, spiegelt nur _state.cleanupGroupFilter/
+  // cleanupStatusFilter/cleanupSort wider (in initSearchInputs() gesetzt).
+  function updateCleanupToolbarState() {
+    document.querySelectorAll('#gpo-cleanup-group-filter [data-group]').forEach(btn => {
+      btn.classList.toggle('gpo-cleanup-filter-btn--active', btn.dataset.group === _state.cleanupGroupFilter);
+    });
+    document.querySelectorAll('#gpo-cleanup-status-filter [data-status]').forEach(btn => {
+      btn.classList.toggle('gpo-cleanup-filter-btn--active', btn.dataset.status === _state.cleanupStatusFilter);
+    });
+  }
+
+  // Auftrag Abschnitt 7: "wenn die Suche aktiv ist, muss klar erkennbar
+  // sein, dass eine Filterung stattfindet" - reine Anzeige der bereits
+  // berechneten Trefferzahl, dieselbe Rolle wie #gpo-filter-result-count
+  // bei der Findings-Filterleiste.
+  function renderCleanupResultCount(totalShown) {
+    const el = document.getElementById('gpo-cleanup-result-count');
+    if (!el) return;
+    const isFiltered = !!_state.cleanupQuery || _state.cleanupStatusFilter !== 'all' || _state.cleanupGroupFilter !== 'all';
+    el.textContent = isFiltered
+      ? totalShown + ' ' + (totalShown === 1 ? 'GPO gefunden (gefiltert)' : 'GPOs gefunden (gefiltert)')
+      : totalShown + ' ' + (totalShown === 1 ? 'GPO gesamt' : 'GPOs gesamt');
   }
 
   function renderGpoCleanupView() {
     const container = document.getElementById('gpo-cleanup-view');
     if (!container) return;
     container.replaceChildren();
+    updateCleanupToolbarState();
 
     const groups = collectGpoCleanupGroups();
+    const visibleKeys = _state.cleanupGroupFilter === 'all' ? GPO_CLEANUP_CATEGORY_ORDER : [_state.cleanupGroupFilter];
+    const totalShown = visibleKeys.reduce((sum, key) => sum + groups[key].length, 0);
+    renderCleanupResultCount(totalShown);
+
     const grid = document.createElement('div');
     grid.className = 'gpo-action-grid gpo-cleanup-grid';
-    GPO_CLEANUP_CATEGORY_ORDER.forEach(key => {
+    visibleKeys.forEach(key => {
       grid.appendChild(buildGpoCleanupCategorySection(key, groups[key]));
     });
     container.appendChild(grid);
 
     const sortNote = document.createElement('div');
     sortNote.className = 'gpo-action-disclaimer';
-    sortNote.textContent = 'Sortiert nach Anzahl der vorhandenen Befunde.';
+    sortNote.textContent = 'Sortiert nach ' + (CLEANUP_SORT_NOTE_LABELS[_state.cleanupSort] || CLEANUP_SORT_NOTE_LABELS.findings) + '.';
     container.appendChild(sortNote);
 
     const allLink = document.createElement('a');
@@ -4409,6 +4556,38 @@ window.GpoRenderer = (function() {
       explorerStatusFilter.addEventListener('change', (e) => {
         _state.explorerStatusFilter = e.target.value;
         renderExplorerList();
+      });
+    }
+    const cleanupSearch = document.getElementById('gpo-cleanup-search');
+    if (cleanupSearch) {
+      cleanupSearch.addEventListener('input', (e) => {
+        _state.cleanupQuery = e.target.value.trim();
+        renderGpoCleanupView();
+      });
+    }
+    const cleanupGroupFilter = document.getElementById('gpo-cleanup-group-filter');
+    if (cleanupGroupFilter) {
+      cleanupGroupFilter.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-group]');
+        if (!btn) return;
+        _state.cleanupGroupFilter = btn.dataset.group;
+        renderGpoCleanupView();
+      });
+    }
+    const cleanupStatusFilter = document.getElementById('gpo-cleanup-status-filter');
+    if (cleanupStatusFilter) {
+      cleanupStatusFilter.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-status]');
+        if (!btn) return;
+        _state.cleanupStatusFilter = btn.dataset.status;
+        renderGpoCleanupView();
+      });
+    }
+    const cleanupSortSelect = document.getElementById('gpo-cleanup-sort-select');
+    if (cleanupSortSelect) {
+      cleanupSortSelect.addEventListener('change', (e) => {
+        _state.cleanupSort = e.target.value;
+        renderGpoCleanupView();
       });
     }
     const detailClose = document.getElementById('gpo-detail-panel-close');

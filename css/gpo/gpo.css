@@ -502,6 +502,39 @@
   cursor: pointer;
 }
 
+/* ── GPO-Arbeitsliste: Toolbar + kompakte Karten (V4.8) ──────
+   Suche/Gruppenfilter/Statusfilter/Sortierung wiederverwenden dieselbe
+   Optik wie die bestehende Explorer-Filterleiste (.gpo-search-input/
+   .gpo-explorer-status-select) statt einer neuen Formsprache. */
+.gpo-cleanup-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin: 10px 0 14px;
+}
+.gpo-cleanup-filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.gpo-cleanup-toolbar-label { font-size: .74rem; color: var(--muted); }
+.gpo-cleanup-filter-btn {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: .74rem;
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.gpo-cleanup-filter-btn:hover { border-color: var(--border2); color: var(--text); }
+.gpo-cleanup-filter-btn--active { border-color: var(--accent); color: var(--text); font-weight: 600; }
+
+/* Kompakte Typ-Aufschluesselung je GPO-Karte */
+.gpo-cleanup-breakdown { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .74rem; color: var(--muted); margin-bottom: 8px; }
+
+.gpo-cleanup-card-actions { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.gpo-cleanup-toggle-btn { background: none; border: none; padding: 0; font: inherit; cursor: pointer; }
+
 /* ── Pruefvorstufe effektive Richtlinie (V4.6 Executive Dashboard) ──
    Eigene Zustands-Badges (✓/?/🔎), bewusst getrennt von den bestehenden
    BSI-Coverage-Badges (.gpo-bsi-badge) - unterschiedliche Aussagen

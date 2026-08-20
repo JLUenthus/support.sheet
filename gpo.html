@@ -230,6 +230,37 @@
         <div class="gpo-dash-tier">
           <div class="gpo-finding-sub-title">Prüfen &amp; Aufräumen</div>
           <p class="gpo-action-intro">Diese Übersicht zeigt GPOs und Konfigurationen, die aufgrund vorhandener Analyseinformationen für eine nähere Prüfung interessant sein können. Sie ersetzt keine Prüfung der effektiven Richtlinie und entscheidet nicht, ob eine GPO tatsächlich benötigt wird.</p>
+
+          <!-- V4.8: kompakte Arbeitsliste statt grosser Karten - Suche/
+               Gruppenfilter/Statusfilter/Sortierung sind reine
+               Darstellungsfilter (wie gpo-explorer-search/-status-filter),
+               veraendern nie _findings/relatedFindingsForGpo(). -->
+          <div class="gpo-cleanup-toolbar" id="gpo-cleanup-toolbar">
+            <input type="text" id="gpo-cleanup-search" class="gpo-search-input" placeholder="GPO suchen …">
+            <div class="gpo-cleanup-filter-row" id="gpo-cleanup-group-filter">
+              <button type="button" class="gpo-cleanup-filter-btn" data-group="all">Alle</button>
+              <button type="button" class="gpo-cleanup-filter-btn" data-group="flagged">🔴 Auffällig</button>
+              <button type="button" class="gpo-cleanup-filter-btn" data-group="redundant">🟡 Prüfung</button>
+              <button type="button" class="gpo-cleanup-filter-btn" data-group="hygiene">🧹 Hygiene</button>
+              <button type="button" class="gpo-cleanup-filter-btn" data-group="hint">ℹ Hinweise</button>
+            </div>
+            <div class="gpo-cleanup-filter-row" id="gpo-cleanup-status-filter">
+              <span class="gpo-cleanup-toolbar-label">Status:</span>
+              <button type="button" class="gpo-cleanup-filter-btn" data-status="all">Alle</button>
+              <button type="button" class="gpo-cleanup-filter-btn" data-status="active">Aktiv</button>
+              <button type="button" class="gpo-cleanup-filter-btn" data-status="disabled">Deaktiviert</button>
+            </div>
+            <div class="gpo-cleanup-filter-row">
+              <label for="gpo-cleanup-sort-select" class="gpo-cleanup-toolbar-label">Sortieren:</label>
+              <select id="gpo-cleanup-sort-select" class="gpo-explorer-status-select">
+                <option value="findings">Anzahl Befunde</option>
+                <option value="name">GPO-Name</option>
+                <option value="status">Status</option>
+              </select>
+            </div>
+            <div class="gpo-filter-result-count" id="gpo-cleanup-result-count"></div>
+          </div>
+
           <div id="gpo-cleanup-view"></div>
         </div>
 
