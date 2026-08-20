@@ -213,6 +213,7 @@ window.GpoRenderer = (function() {
 
     renderMissingHint(_missingFiles);
     renderExecutiveDashboard();
+    renderTwentySecondOverview();
     renderReferenceEngine();
     renderOverviewSummary();
     renderIntegrityPanel();
@@ -585,6 +586,63 @@ window.GpoRenderer = (function() {
   // (hier nur gezaehlt, nicht neu berechnet). Keine Prozentwerte, keine
   // Gesamtbewertung - reine Umformulierung bereits angezeigter Zahlen in
   // Fliesstext.
+  // V5.0.1: bewusst sehr kompakter 20-Sekunden-Einstieg.
+  // Ausschliesslich bereits vorhandene absolute Zahlen; keine Prozentwerte,
+  // Scores oder neue Bewertung. Die Links fuehren direkt in bestehende
+  // Arbeitsbereiche.
+  function renderTwentySecondOverview() {
+    const facts = document.getElementById('gpo-20sec-facts');
+    if (!facts) return;
+    facts.replaceChildren();
+
+    let actionCount = 0, reviewCount = 0;
+    _findings.forEach(f => {
+      const cat = resolveActionCategory(f);
+      if (cat === 'action') actionCount++;
+      else if (cat === 'review') reviewCount++;
+    });
+
+    const gpos = (_model.gpos || []).length;
+    const active = (_model.gpos || []).filter(g => gpoExplorerStatusCategory(g) === 'active').length;
+    const disabled = (_model.gpos || []).filter(g => gpoExplorerStatusCategory(g) === 'disabled').length;
+
+    const makeFact = (label, value, detail, href) => {
+      const item = document.createElement(href ? 'a' : 'div');
+      item.className = 'gpo-20sec-fact';
+      if (href) item.href = href;
+      const labelEl = document.createElement('span');
+      labelEl.className = 'gpo-20sec-fact-label';
+      labelEl.textContent = label;
+      const valueEl = document.createElement('strong');
+      valueEl.className = 'gpo-20sec-fact-value';
+      valueEl.textContent = value;
+      const detailEl = document.createElement('span');
+      detailEl.className = 'gpo-20sec-fact-detail';
+      detailEl.textContent = detail;
+      item.append(labelEl, valueEl, detailEl);
+      facts.appendChild(item);
+    };
+
+    makeFact('GPO-Bestand', String(gpos), active + ' aktiv · ' + disabled + ' deaktiviert', '#gpo-explorer-section');
+    makeFact('Findings', String(_findings.length), actionCount + ' Handlungsbedarf · ' + reviewCount + ' Prüfung', '#gpo-findings-section');
+    makeFact('BSI', String(BSI_REQUIREMENT_ORDER.length), 'Requirements analysiert', '#gpo-bsi-section');
+
+    const dataQuality = _model.dataQuality || {};
+    if (dataQuality.computersFileMissing) {
+      makeFact('Computer', '—', 'keine computers.json im Snapshot', '#gpo-databasis-section');
+    } else if (window.GpoBsiMapping && typeof window.GpoBsiMapping.evaluateComputerCoverage === 'function') {
+      const coverage = window.GpoBsiMapping.evaluateComputerCoverage(_model);
+      const ntlmId = window.GpoBsiMapping.REQUIREMENT_IDS.NTLM_LM_LEVEL;
+      const reference = coverage[ntlmId];
+      if (reference) {
+        const dc = reference.categories.domain_controllers.total;
+        const ms = reference.categories.member_servers.total;
+        const clients = reference.categories.clients.total;
+        makeFact('Computer', String(dc + ms + clients + reference.unknown), dc + ' DC · ' + ms + ' Server · ' + clients + ' Clients · ' + reference.unknown + ' Unknown', '#gpo-bsi-section');
+      }
+    }
+  }
+
   function renderOverviewSummary() {
     const list = document.getElementById('gpo-overview-summary');
     if (!list) return;
