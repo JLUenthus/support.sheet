@@ -159,6 +159,12 @@ window.GpoRenderer = (function() {
   // beim Bauen der jeweiligen Karten befuellt.
   const _findingCardMap = new Map();
 
+  // V4.1: Cache fuer den settingKey->requirementId-Index (siehe
+  // getBsiSettingKeyIndex() weiter unten) - pro Snapshot-Load einmal
+  // berechnet statt bei jeder einzelnen Finding-Karte erneut ueber alle
+  // GPOs zu laufen. Wird in renderOverview() geleert.
+  let _bsiSettingKeyIndexCache = null;
+
   let _diagnoseCommandsPromise = null;
   function loadDiagnoseCommands() {
     if (!_diagnoseCommandsPromise) {
@@ -183,6 +189,7 @@ window.GpoRenderer = (function() {
     _state.bucketFilter = 'all';
     _state.explorerSort = { column: 'findings', direction: 'desc' };
     _state.explorerStatusFilter = 'all';
+    _bsiSettingKeyIndexCache = null;
     _findingCardMap.clear();
     resetSearchInputs();
 
@@ -284,9 +291,12 @@ window.GpoRenderer = (function() {
   // Alle Zahlen kommen aus bereits vorhandenen Funktionen/Feldern
   // (countByType(), gpoExplorerStatusCategory(), evaluateComputerCoverage())
   // - dieser Block fuegt nur Anzeige hinzu, keine neue Zaehl-/Bewertungslogik.
-  function buildKpiTile(label, value, anchor) {
+  // V4.3: optionaler modifierClass-Parameter (z.B. fuer die staerker
+  // hervorgehobene Findings-Gesamtzahl) - rein optisch, bestehende Aufrufe
+  // ohne 4. Argument verhalten sich exakt wie zuvor.
+  function buildKpiTile(label, value, anchor, modifierClass) {
     const item = document.createElement('a');
-    item.className = 'gpo-num-item';
+    item.className = 'gpo-num-item' + (modifierClass ? ' ' + modifierClass : '');
     item.href = anchor;
     const val = document.createElement('div');
     val.className = 'gpo-num-value';
@@ -330,7 +340,7 @@ window.GpoRenderer = (function() {
     if (!grid) return;
     grid.replaceChildren();
 
-    grid.appendChild(buildKpiTile('Findings gesamt', _findings.length, '#gpo-overview-section'));
+    grid.appendChild(buildKpiTile('Findings gesamt', _findings.length, '#gpo-overview-section', 'gpo-num-item--total'));
     grid.appendChild(buildKpiTile('Konflikte', countByType('conflict'), '#gpo-conflict-section'));
     grid.appendChild(buildKpiTile('Mehrfachdefinitionen', countByType('redundant'), '#gpo-redundant-section'));
     grid.appendChild(buildKpiTile('Hygiene', countByType('hygiene'), '#gpo-hygiene-section'));
@@ -1010,6 +1020,60 @@ window.GpoRenderer = (function() {
     return (_model.gpos || []).find(g => g.id === gpoId);
   }
 
+  // V4.2: klickbarer GPO-Verweis innerhalb eines Finding-Kontexts - nutzt
+  // ausschliesslich das bereits vorhandene openGpoDetail() (GPO-Detailpanel,
+  // V2.3, inkl. dessen eigenem scrollIntoView()), keine neue Detailansicht,
+  // kein neuer Navigations-Mechanismus. Kann die GPO nicht aufgeloest
+  // werden (gpoById liefert nichts), bleibt es reiner Text - kein
+  // kuenstlicher Link auf eine nicht (mehr) vorhandene GPO.
+  function buildGpoRefElement(gpoId, gpoName) {
+    if (gpoId && gpoById(gpoId)) {
+      const link = document.createElement('a');
+      link.href = '#gpo-tree-section';
+      link.className = 'gpo-finding-gpo-ref';
+      link.textContent = gpoName || ('GPO-ID: ' + gpoId);
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        openGpoDetail(gpoId);
+      });
+      return link;
+    }
+    const span = document.createElement('span');
+    span.textContent = gpoName || (gpoId ? ('GPO-ID: ' + gpoId) : '(unbekannte GPO)');
+    return span;
+  }
+
+  // "GPO: <klickbarer Name>" als eigene Zeile - fuer Finding-Typen, die
+  // genau eine GPO betreffen (Hygiene/Security-Filter/WMI-Filter), damit
+  // die betroffene GPO auch dort explizit im "Gefunden"-Abschnitt steht,
+  // nicht nur in der Karten-Kopfzeile.
+  function buildGpoRefRow(gpoId, gpoName) {
+    const row = document.createElement('div');
+    row.append('GPO: ', buildGpoRefElement(gpoId, gpoName));
+    return row;
+  }
+
+  // V4.3: "N GPOs" direkt in der geschlossenen Kopfzeile (Konflikt/
+  // Mehrfachdefinition) - reine Anzeige von finding.entries.length, das
+  // bereits existierende Array wird nur gezaehlt, keine neue Berechnung.
+  // Macht "wie viele GPOs betroffen" scanbar, ohne die Karte aufzuklappen.
+  function buildGpoCountBadge(count) {
+    const badge = document.createElement('span');
+    badge.className = 'gpo-scope-badge';
+    badge.textContent = count + (count === 1 ? ' GPO' : ' GPOs');
+    return badge;
+  }
+
+  // V4.3: sichtbares "Details anzeigen" neben dem bestehenden Chevron -
+  // reine Textbeschriftung, die bestehende makeExpandable()-Klick-Mechanik
+  // und der Chevron selbst bleiben unveraendert.
+  function buildExpandLabel() {
+    const label = document.createElement('span');
+    label.className = 'gpo-finding-expand-label';
+    label.textContent = 'Details anzeigen';
+    return label;
+  }
+
   function buildDetailSection(finding, category) {
     const wrap = document.createElement('div');
     wrap.className = 'gpo-detail';
@@ -1418,7 +1482,7 @@ window.GpoRenderer = (function() {
       row.className = 'gpo-entry-row';
       const gpoLabel = document.createElement('span');
       gpoLabel.className = 'gpo-entry-gpo';
-      gpoLabel.textContent = 'GPO: ' + entry.gpoName;
+      gpoLabel.append('GPO: ', buildGpoRefElement(entry.gpoId, entry.gpoName));
       const arrow = document.createElement('span');
       arrow.className = 'gpo-entry-arrow';
       arrow.textContent = '→';
@@ -1469,7 +1533,10 @@ window.GpoRenderer = (function() {
     wrap.appendChild(label);
     const gpoNames = document.createElement('div');
     gpoNames.className = 'gpo-redundant-gpo-list';
-    gpoNames.textContent = finding.entries.map(e => e.gpoName).join(', ');
+    finding.entries.forEach((e, i) => {
+      if (i > 0) gpoNames.append(', ');
+      gpoNames.append(buildGpoRefElement(e.gpoId, e.gpoName));
+    });
     wrap.appendChild(gpoNames);
     return wrap;
   }
@@ -1486,6 +1553,108 @@ window.GpoRenderer = (function() {
     return pairList;
   }
 
+  // V4.1: settingKey -> requirementId, ausschliesslich aus dem bereits
+  // vorhandenen, GPO-zentrierten evaluate()-Ergebnis (bsi-mapping.js,
+  // hier nicht veraendert) abgeleitet. evaluate() traegt in jedem
+  // Ergebnis-Eintrag evidence[].settingKey - genau denselben String, den
+  // auch Konflikt-/Redundanz-Findings als finding.settingKey fuehren
+  // (beide stammen aus demselben gpo-parser.js-Settings-Key-Format). Kein
+  // neuer Abgleich/keine neue BSI-Zuordnung, nur ein Index ueber bereits
+  // vorhandene evidence-Eintraege, einmal pro Snapshot-Load berechnet.
+  function getBsiSettingKeyIndex() {
+    if (_bsiSettingKeyIndexCache) return _bsiSettingKeyIndexCache;
+    const index = new Map();
+    if (window.GpoBsiMapping && typeof window.GpoBsiMapping.evaluate === 'function') {
+      const byRequirement = window.GpoBsiMapping.evaluate(_model, _findings);
+      Object.keys(byRequirement).forEach(requirementId => {
+        (byRequirement[requirementId] || []).forEach(entry => {
+          (entry.evidence || []).forEach(ev => {
+            if (ev.settingKey) index.set(ev.settingKey, requirementId);
+          });
+        });
+      });
+    }
+    _bsiSettingKeyIndexCache = index;
+    return index;
+  }
+
+  // Nur Konflikt-/Redundanz-Findings tragen ueberhaupt ein settingKey-Feld
+  // (Hygiene/Security-Filter/WMI-Filter nicht) - fuer diese liefert die
+  // Map-Abfrage automatisch "kein Treffer", ohne eine Sonderbehandlung pro
+  // Typ noetig zu machen. Keine Ableitung aus dem Setting-NAMEN, nur aus
+  // dem exakten, bereits von bsi-mapping.js verwendeten Key.
+  //
+  // V4.2: zeigt bei Treffer dieselben, bereits in BSI_REQUIREMENT_INFO
+  // (V3.5.3/V3.6, hier nicht veraendert) hinterlegten, verifizierten
+  // Angaben - Baustein, Anforderungsnummer, die bestehende Kurzempfehlung
+  // als "warum relevant" sowie zwei getrennte Links (offizielles PDF vs.
+  // bestehende BSI-Coverage-Ansicht). Keine neue BSI-Zuordnung, keine neue
+  // Quelle - nur eine ausfuehrlichere Darstellung derselben, schon
+  // vorhandenen Daten. Die bekannte SMB-Requirement-ID/Quellen-Diskrepanz
+  // (BSI_REQUIREMENT_INFO-Kommentar) bleibt unangetastet: BSI_REQUIREMENT_INFO
+  // liefert bereits die tatsaechlich verifizierte Quelle (APP.2.2.A9), nicht
+  // das SYS.2.2.3-Praefix der internen ID.
+  function buildFindingBsiContext(finding) {
+    const requirementId = finding.settingKey ? getBsiSettingKeyIndex().get(finding.settingKey) : undefined;
+    const info = requirementId ? BSI_REQUIREMENT_INFO[requirementId] : null;
+
+    if (requirementId && info) {
+      const wrap = document.createElement('div');
+      wrap.className = 'gpo-finding-bsi-block';
+
+      const baustein = document.createElement('div');
+      baustein.className = 'gpo-finding-sub-title';
+      baustein.textContent = info.bausteinLabel || requirementId;
+      wrap.appendChild(baustein);
+
+      const reqLine = document.createElement('div');
+      reqLine.className = 'gpo-onboarding-bsi-req';
+      reqLine.textContent = 'Anforderung ' + (info.anforderungNr ? info.anforderungNr + ' – ' : '') + (BSI_REQUIREMENT_LABELS[requirementId] || requirementId);
+      wrap.appendChild(reqLine);
+
+      if (info.empfehlung) {
+        const why = document.createElement('div');
+        why.className = 'gpo-finding-desc';
+        why.textContent = 'Warum diese Grundlage relevant ist: ' + info.empfehlung;
+        wrap.appendChild(why);
+      }
+
+      if (info.sourceUrl) {
+        const docLink = document.createElement('a');
+        docLink.className = 'gpo-kpi-bsi-link';
+        docLink.href = info.sourceUrl;
+        docLink.target = '_blank';
+        docLink.rel = 'noopener';
+        docLink.textContent = '→ BSI-Dokument öffnen';
+        wrap.appendChild(docLink);
+      }
+
+      const coverageLink = document.createElement('a');
+      coverageLink.className = 'gpo-kpi-bsi-link';
+      coverageLink.href = '#gpo-bsi-section';
+      coverageLink.textContent = '→ BSI-Coverage für dieses Requirement ansehen';
+      wrap.appendChild(coverageLink);
+
+      return wrap;
+    }
+
+    // Defensiver Grenzfall: eine requirementId wurde erkannt, aber
+    // BSI_REQUIREMENT_INFO fuehrt (aktuell bei keinem der drei bestehenden
+    // Requirements der Fall) keine verifizierte Quelle dafuer - bewusst
+    // NICHT stillschweigend wie "kein Bezug" behandeln.
+    if (requirementId && !info) {
+      const unverified = document.createElement('div');
+      unverified.className = 'gpo-bsi-source-missing';
+      unverified.textContent = 'Keine verifizierte BSI-Grundlage für dieses Finding hinterlegt.';
+      return unverified;
+    }
+
+    const none = document.createElement('div');
+    none.className = 'gpo-bsi-source-missing';
+    none.textContent = 'Kein direkter BSI-Bezug hinterlegt.';
+    return none;
+  }
+
   // ── Vereinheitlichte Finding-Textstruktur (Roadmap Abschnitt 1.6) ──
   // Jede Karte bekommt exakt drei, immer in dieser Reihenfolge vorhandene
   // Abschnitte: "Was" (was wurde gefunden), "Bewertung" (warum relevant),
@@ -1493,6 +1662,9 @@ window.GpoRenderer = (function() {
   // Textstruktur und die Dispatch-Stelle hier - welche Daten je Typ in
   // welchen Abschnitt einfliessen, entscheidet resolveFindingSections()
   // pro finding.type, die Datenform selbst bleibt je Typ unterschiedlich.
+  // V4.1 ergaenzt einen vierten, immer vorhandenen Abschnitt "BSI-
+  // Grundlage" (buildFindingBsiContext()) - selbe Struktur, keine neue
+  // Fachlogik.
   function buildFindingBody(finding) {
     const sections = resolveFindingSections(finding);
 
@@ -1508,6 +1680,7 @@ window.GpoRenderer = (function() {
     body.appendChild(buildBodySection('Was', sections.was, 'was'));
     body.appendChild(buildBodySection('Bewertung', sections.bewertung, 'bewertung'));
     body.appendChild(buildBodySection('Nächster Schritt', sections.naechsterSchritt, 'next-step'));
+    body.appendChild(buildBodySection('BSI-Grundlage', buildFindingBsiContext(finding), 'bsi'));
 
     return body;
   }
@@ -1593,7 +1766,7 @@ window.GpoRenderer = (function() {
 
   function resolveHygieneSections(finding) {
     const rule = finding.rule || {};
-    const was = 'GPO: ' + finding.gpoName;
+    const was = buildGpoRefRow(finding.gpoId, finding.gpoName);
 
     const bewertung = [resolveRuleText(rule.description, finding.detail) || ''];
 
@@ -1624,6 +1797,7 @@ window.GpoRenderer = (function() {
   function resolveSecurityFilterSections(finding) {
     const rule = finding.rule || {};
     const was = [
+      buildGpoRefRow(finding.gpoId, finding.gpoName),
       'Verknüpft mit: [' + finding.targetType + '] ' + finding.target,
       'Security Filter: ' + (finding.securityFilter || []).map(f => f.trustee).join(', '),
     ];
@@ -1659,7 +1833,7 @@ window.GpoRenderer = (function() {
     const wmiFilter = finding.wmiFilter || {};
 
     return {
-      was: buildWmiFilterFacts(wmiFilter),
+      was: [buildGpoRefRow(finding.gpoId, finding.gpoName)].concat(buildWmiFilterFacts(wmiFilter)),
       bewertung: rule.description || '',
       naechsterSchritt: buildRecommendationRows(rule) || NO_ACTION_HINT,
     };
@@ -1724,7 +1898,7 @@ window.GpoRenderer = (function() {
     expand.className = 'gpo-finding-expand';
     expand.textContent = '▼';
 
-    header.append(badge, title, scopeBadge, expand);
+    header.append(badge, title, buildGpoCountBadge(finding.entries.length), scopeBadge, buildExpandLabel(), expand);
 
     const body = buildFindingBody(finding);
     body.appendChild(buildDetailSection(finding, category));
@@ -1803,7 +1977,7 @@ window.GpoRenderer = (function() {
     expand.className = 'gpo-finding-expand';
     expand.textContent = '▼';
 
-    header.append(badge, title, scopeBadge, expand);
+    header.append(badge, title, buildGpoCountBadge(finding.entries.length), scopeBadge, buildExpandLabel(), expand);
 
     const body = buildFindingBody(finding);
     body.appendChild(buildDetailSection(finding, category));
@@ -1884,7 +2058,7 @@ window.GpoRenderer = (function() {
     expand.className = 'gpo-finding-expand';
     expand.textContent = '▼';
 
-    header.append(badge, title, expand);
+    header.append(badge, title, buildExpandLabel(), expand);
 
     const body = buildFindingBody(finding);
 
@@ -1917,7 +2091,7 @@ window.GpoRenderer = (function() {
     expand.className = 'gpo-finding-expand';
     expand.textContent = '▼';
 
-    header.append(badge, title, expand);
+    header.append(badge, title, buildExpandLabel(), expand);
 
     const body = buildFindingBody(finding);
 
@@ -1947,7 +2121,7 @@ window.GpoRenderer = (function() {
     expand.className = 'gpo-finding-expand';
     expand.textContent = '▼';
 
-    header.append(badge, title, expand);
+    header.append(badge, title, buildExpandLabel(), expand);
 
     const body = buildFindingBody(finding);
 
@@ -3145,16 +3319,31 @@ window.GpoRenderer = (function() {
   // zeigt dieselbe Datei-Verfuegbarkeit wie buildBsiDataBasisSection()
   // oben, nur an einer zweiten, ueber die Seiten-Navigation direkt
   // erreichbaren Stelle. Keine neue Datenherkunftslogik.
+  // V4.3: Inhalt steht jetzt hinter einem <details> - dieselbe bereits
+  // vorhandene Information (buildDataBasisList()/dataQuality), nur nicht
+  // mehr dauerhaft vollstaendig ausgeklappt. "Technische Informationen /
+  // Datenbasis" statt nur "Datenbasis" als Sichtbeschreibung, damit klar
+  // ist, dass es sich um Hintergrund-/Herkunftsinformation handelt, nicht
+  // um ein Analyseergebnis.
   function renderDataBasisSection() {
     const container = document.getElementById('gpo-databasis-container');
     if (!container) return;
     container.replaceChildren();
 
+    const details = document.createElement('details');
+    details.className = 'gpo-databasis-details';
+    const summary = document.createElement('summary');
+    summary.className = 'gpo-onboarding-collapsible-summary';
+    summary.textContent = 'Technische Informationen / Datenbasis';
+    details.appendChild(summary);
+
     const intro = document.createElement('div');
     intro.className = 'gpo-bsi-intro';
     intro.textContent = 'Zeigt ausschließlich, welche der vom Analyzer erwarteten Snapshot-Dateien im aktuell geladenen ZIP tatsächlich vorhanden waren – computers.json fehlend und computers.json vorhanden-aber-leer bleiben dabei unterscheidbar.';
-    container.appendChild(intro);
-    container.appendChild(buildDataBasisList());
+    details.appendChild(intro);
+    details.appendChild(buildDataBasisList());
+
+    container.appendChild(details);
   }
 
   function renderBsiCoverage() {

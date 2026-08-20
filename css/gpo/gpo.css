@@ -246,6 +246,14 @@
 }
 .gpo-kpi-bsi-link:hover { text-decoration: underline; }
 
+/* ── Finding-BSI-Grundlage (V4.2) ─────────────────────────────
+   Baustein/Anforderung/"warum relevant"/Links stapeln sich untereinander
+   statt inline zu laufen - reine Wiederverwendung bestehender Klassen
+   (.gpo-finding-sub-title/.gpo-onboarding-bsi-req/.gpo-finding-desc/
+   .gpo-kpi-bsi-link), nur dieser Wrapper ist neu. */
+.gpo-finding-bsi-block > * { display: block; margin-bottom: 4px; }
+.gpo-finding-bsi-block > *:last-child { margin-bottom: 0; }
+
 /* ── Dashboard BSI-Coverage-Einstieg + Weiterfuehrende-Analyse (V3.8) ──
    Bewusst neutral (keine Ampel-/Score-Farben) - "Requirements analysiert"
    ist eine reine Bestandszahl (wie viele Requirements definiert sind),
@@ -303,6 +311,12 @@
   transition: color .15s;
 }
 .gpo-num-label { font-size: .74rem; color: var(--dim); }
+
+/* V4.3: staerkere Hervorhebung nur fuer die Gesamtzahl im Dashboard-
+   Findings-Block (Auftrag Abschnitt 3) - reine Schriftgroesse/-farbe,
+   keine neue Zahl, keine Farbe mit Bewertungsbedeutung (bleibt --text,
+   nicht rot/gruen). */
+.gpo-num-item--total .gpo-num-value { font-size: 1.3rem; color: var(--text); }
 
 /* ── Findings-Uebersicht (V2.1 Dashboard, V2.7.1 Kartenoptik) ───────
    Jede Pille ist jetzt eine kleine zweizeilige Karte (Icon+Zahl oben,
@@ -670,6 +684,7 @@
 .gpo-finding-header {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   padding: 12px 16px;
   cursor: pointer;
@@ -704,6 +719,7 @@
 }
 .gpo-finding-expand { color: var(--dim); font-size: .75rem; margin-left: 4px; transition: transform .2s; flex-shrink: 0; }
 .gpo-finding-expand.open { transform: rotate(180deg); }
+.gpo-finding-expand-label { color: var(--dim); font-size: .7rem; flex-shrink: 0; }
 
 .gpo-finding-body { display: none; padding: 0 16px 14px; border-top: 1px solid var(--border); }
 .gpo-finding-body.open { display: block; }
@@ -723,6 +739,12 @@
 .gpo-entry-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .gpo-entry-gpo { font-size: .82rem; color: var(--text); font-weight: 600; }
 .gpo-entry-arrow { color: var(--accent); font-size: .85rem; }
+
+/* ── Klickbarer GPO-Verweis in Finding-Kontexten (V4.2) ─────────
+   Nutzt openGpoDetail() - dasselbe bestehende GPO-Detailpanel wie GPO-
+   Explorer/Struktur, keine neue Detailansicht. */
+.gpo-finding-gpo-ref { color: var(--accent); text-decoration: none; cursor: pointer; }
+.gpo-finding-gpo-ref:hover { text-decoration: underline; }
 .gpo-entry-value {
   font-family: var(--font-mono);
   font-size: .78rem;
@@ -1102,8 +1124,20 @@
   font-size: .74rem;
   font-family: var(--font-mono);
   color: var(--muted);
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
 }
-.gpo-bsi-stat--covered { color: var(--accent); }
+/* V4.3: dieselben Farben wie die bestehenden Pro-Computer-Badges
+   (.gpo-bsi-badge--*) - covered bleibt bewusst neutral/accent statt gruen
+   (siehe Kopf-Kommentar oben: "covered" ist keine Erfuellt-Aussage), nur
+   not_covered/not_determinable bekommen zusaetzlich eine Farbe, damit die
+   drei Zahlen pro Kategorie schneller scanbar sind. Keine neue Aggregation -
+   es werden weiterhin alle drei Werte einzeln angezeigt. */
+.gpo-bsi-stat--covered { color: var(--accent); border-color: rgba(124, 140, 248, .3); background: var(--accent-bg); }
+.gpo-bsi-stat--not_covered { color: var(--red); border-color: rgba(248, 113, 113, .3); background: var(--red-bg); }
+.gpo-bsi-stat--not_determinable { color: var(--amber); border-color: rgba(251, 191, 36, .3); background: var(--amber-bg); }
 .gpo-bsi-unknown-line {
   font-size: .72rem;
   color: var(--dim);
