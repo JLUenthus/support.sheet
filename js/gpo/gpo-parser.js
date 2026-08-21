@@ -6,123 +6,12 @@
 // ============================================================
 window.GpoParser = (function() {
 
-  // Verteidigt gegen eine bekannte PowerShell-ConvertTo-Json-Eigenart:
-  // ein leeres oder einzelnes Ergebnis kann statt eines reinen Arrays
-  // [...] als {"value": [...], "Count": N}-Wrapper serialisiert werden
-  // (Get-GPOAnalyzerSnapshot.ps1's Write-JsonArray() ist dagegen bereits
-  // abgesichert - siehe deren eigener Kommentar zur selben, frueher schon
-  // einmal aufgetretenen Eigenart - aeltere oder anders erzeugte Snapshots
-  // im Feld koennen das Format trotzdem noch enthalten). Erkennt den
-  // bekannten Wrapper und entpackt ihn automatisch; laesst `undefined`
-  // unveraendert durch (unterscheidet weiterhin "Feld fehlt komplett" von
-  // "Feld ist leer", siehe linksFileMissing unten). Ein voellig
-  // unerwartetes, nicht-Array-Format erzeugt eine klare Fehlermeldung
-  // statt eines stillen Absturzes weiter unten (z.B. "X.forEach is not a
-  // function"). Zentral hier statt in gpo-loader.js, damit auch direkte
-  // GpoParser.normalize()-Aufrufe (z.B. Tests) abgesichert sind.
-  function coerceRawArray(value, fieldName) {
-    if (value === undefined) return undefined;
-    if (Array.isArray(value)) return value;
-    if (value && typeof value === 'object' && Array.isArray(value.value)) return value.value;
-    throw new Error('GPO Analyzer: ' + fieldName + ' hat ein unerwartetes Format (kein Array).');
-  }
-
-  // Get-GPOAnalyzerSnapshot.ps1's Get-AccountPolicySettings() liest jedes
-  // <Account>-XML-Element (Get-GPOReport, Kennwort-/Sperr-/Kerberos-
-  // Richtlinie) per ChildNodes-Schleife aus und haengt dabei JEDES Kind-
-  // Element als eigene Zeile an - nicht den eigentlichen Policy-Parameter.
-  // Ein einzelnes <Account>-Element hat aber immer genau 3 Kinder in fester
-  // Dokumentreihenfolge: <Name> (der eigentliche Parametername, z.B.
-  // "MinimumPasswordLength"), genau eines von <SettingNumber>/
-  // <SettingBoolean>/<SettingString> (der Wert) und <Type> (Kategorie:
-  // Password/Account Lockout/Kerberos). Ohne diese Rekonstruktion landen
-  // "Name"/"Type"/"SettingNumber" selbst als settingKey in der Analyse -
-  // inhaltlich unterschiedliche Parameter (z.B. MinimumPasswordLength vs.
-  // LockoutBadCount) werden dann faelschlich als "derselbe Setting-Key mit
-  // widerspruechlichen Werten" gemeldet (V3.1-BSI-Review, groesste bekannte
-  // Konfliktgruppe). Da der Collector jedes <Account>-Element vollstaendig
-  // abarbeitet bevor er zum naechsten wechselt (siehe dessen eigener
-  // foreach-Aufbau), sind die 3 Zeilen eines Elements im Ergebnis-Array
-  // immer garantiert zusammenhaengend und nie mit denen eines anderen
-  // <Account>-Elements vermischt - die 3er-Gruppierung ist damit kein
-  // Raten "welches Feld gehoert vermutlich zusammen", sondern folgt direkt
-  // aus dem Kontrollfluss des Collectors. Weicht eine Gruppe von diesem
-  // Muster ab (z.B. anderes Schema, unvollstaendige Daten), wird das nicht
-  // stillschweigend geraten, sondern als klarer Fehler gemeldet.
-  const ACCOUNT_POLICIES_CATEGORY = 'Security Settings > Account Policies';
-  const ACCOUNT_POLICY_VALUE_FIELDS = ['SettingNumber', 'SettingBoolean', 'SettingString'];
-
-  function reconstructAccountPolicyGroup(group) {
-    const nameEntry = group.find(s => s.name === 'Name');
-    const valueEntry = group.find(s => ACCOUNT_POLICY_VALUE_FIELDS.indexOf(s.name) !== -1);
-    if (group.length !== 3 || !nameEntry || !valueEntry) {
-      throw new Error('GPO Analyzer: ' + ACCOUNT_POLICIES_CATEGORY + ' hat ein unerwartetes Format (keine 3er-Gruppe Name/Wert/Type je Datensatz).');
-    }
-    return {
-      key: ACCOUNT_POLICIES_CATEGORY + ' > ' + nameEntry.value,
-      scope: nameEntry.scope,
-      value: valueEntry.value,
-    };
-  }
-
-  // Baut settings[] fuer eine GPO. Account-Policies-Rohzeilen werden zu
-  // echten Name->Wert-Eintraegen rekonstruiert (siehe oben), alle anderen
-  // Kategorien (Administrative Templates, Security Options, User Rights
-  // Assignment) bleiben unveraendert im bisherigen Format - deren Rohdaten
-  // sind bereits ein Eintrag pro tatsaechlichem Setting.
-  function buildSettings(rawSettings) {
-    const result = [];
-    let i = 0;
-    while (i < rawSettings.length) {
-      const s = rawSettings[i];
-      if (s.category === ACCOUNT_POLICIES_CATEGORY) {
-        result.push(reconstructAccountPolicyGroup(rawSettings.slice(i, i + 3)));
-        i += 3;
-      } else {
-        result.push({
-          key: s.category ? s.category + ' > ' + s.name : s.name,
-          scope: s.scope,
-          value: effectiveValue(s),
-        });
-        i += 1;
-      }
-    }
-    return result;
-  }
-
-  // Klassifiziert ein Computerobjekt in genau eine von vier Kategorien.
-  // Verwendet ausschliesslich isDomainController (strukturelles AD-Signal
-  // aus dem Collector, siehe computers.json) und operatingSystem - niemals
-  // distinguishedName, Computername oder GPO-/OU-Namen (das waere eine
-  // Namens-/Positionsheuristik, die hier explizit nicht erlaubt ist;
-  // distinguishedName bleibt ausschliesslich fuer eine spaetere Scope-
-  // Zuordnung reserviert). Domain Controller werden IMMER zuerst und
-  // unabhaengig vom OS-Wert erkannt (auch bei fehlendem/unerwartetem OS,
-  // z.B. ein RODC bleibt "domain_controllers", nie "unknown"). Ein
-  // "server"-Bestandteil im OS-Namen hat immer Vorrang vor einer Client-
-  // Regel. "unknown" ist ein gewollter First-Class-Zustand (leer/null,
-  // unbekannte oder nicht eindeutig zuordenbare Werte, IoT/Embedded-
-  // Varianten) - es wird bewusst NICHT versucht, moeglichst viele Werte in
-  // Server/Client zu pressen.
-  const SPECIALIZED_OS_MARKERS = ['iot', 'embedded'];
-  const CLIENT_OS_VERSION_MARKERS = ['windows 11', 'windows 10', 'windows 8.1', 'windows 8', 'windows 7'];
-
-  function classifyComputerCategory(operatingSystem, isDomainController) {
-    if (isDomainController) return 'domain_controllers';
-    const os = (operatingSystem || '').toLowerCase().trim();
-    if (!os) return 'unknown';
-    if (os.indexOf('server') !== -1) return 'member_servers';
-    if (SPECIALIZED_OS_MARKERS.some(m => os.indexOf(m) !== -1)) return 'unknown';
-    if (CLIENT_OS_VERSION_MARKERS.some(m => os.indexOf(m) !== -1)) return 'clients';
-    return 'unknown';
-  }
-
   function normalize(raw) {
-    const rawGpos       = coerceRawArray(raw.gpos, 'gpos.json')             || [];
-    const rawLinks      = coerceRawArray(raw.links, 'links.json')          || [];
-    const rawFilters    = coerceRawArray(raw.filters, 'filters.json')       || [];
-    const rawWmiFilters = coerceRawArray(raw.wmiFilters, 'wmi-filters.json') || [];
-    const rawComputers  = coerceRawArray(raw.computers, 'computers.json')    || [];
+    const rawGpos       = raw.gpos       || [];
+    const rawLinks      = raw.links      || [];
+    const rawFilters    = raw.filters    || [];
+    const rawWmiFilters = raw.wmiFilters || [];
+    const metadata = raw.metadata || null;
 
     // raw.links ist nur dann undefined, wenn links.json im ZIP komplett
     // fehlte (gpo-loader.js setzt den Key sonst immer, auch fuer eine
@@ -134,16 +23,6 @@ window.GpoParser = (function() {
     // Abschnitt 8: eine fehlende Links-Datei darf nicht als
     // "alle GPOs unverknuepft" interpretiert werden.
     const linksFileMissing = raw.links === undefined;
-
-    // Identisches Prinzip wie linksFileMissing: computers.json fehlt nur,
-    // wenn der Key im ZIP komplett nicht vorhanden war (aeltere Snapshots
-    // vor dieser Erweiterung) - eine vorhandene, aber leere Datei ([])
-    // bedeutet dagegen "Computerdaten erfasst, aber keine Objekte
-    // gefunden" und ist NICHT dasselbe wie "Computer-Daten wurden in
-    // diesem Snapshot nicht erfasst". model.computers darf im
-    // computersFileMissing-Fall nicht als "0 Computer" interpretiert
-    // werden.
-    const computersFileMissing = raw.computers === undefined;
 
     const links = flattenLinks(rawLinks);
 
@@ -169,7 +48,11 @@ window.GpoParser = (function() {
       modified: g.modified,
       computerEnabled: !!g.computerConfigEnabled,
       userEnabled: !!g.userConfigEnabled,
-      settings: buildSettings(g.settings || []),
+      settings: (g.settings || []).map(s => ({
+        key: s.category ? s.category + ' > ' + s.name : s.name,
+        scope: s.scope,
+        value: effectiveValue(s),
+      })),
       securityFilter: filtersByGpo[g.id] || [],
       wmiFilter: g.wmiFilterId
         ? (wmiFilterById[g.wmiFilterId] || { id: g.wmiFilterId, name: null, query: null })
@@ -197,24 +80,7 @@ window.GpoParser = (function() {
 
     const ouTree = buildOuTree(rawLinks, links);
 
-    // Rohdaten bleiben unveraendert (distinguishedName/operatingSystem/
-    // operatingSystemVersion/enabled/isDomainController/
-    // isReadOnlyDomainController) - category ist das einzige neu
-    // hinzugefuegte, abgeleitete Feld. Deaktivierte Computer bleiben im
-    // Modell (enabled=false wird nicht gefiltert) - eine etwaige spaetere
-    // Ausklammerung aus einer BSI-Coverage-Population ist bewusst nicht
-    // Teil dieser reinen Datennormalisierung.
-    const computers = rawComputers.map(c => ({
-      distinguishedName: c.distinguishedName,
-      operatingSystem: c.operatingSystem,
-      operatingSystemVersion: c.operatingSystemVersion,
-      enabled: !!c.enabled,
-      isDomainController: !!c.isDomainController,
-      isReadOnlyDomainController: !!c.isReadOnlyDomainController,
-      category: classifyComputerCategory(c.operatingSystem, !!c.isDomainController),
-    }));
-
-    return { gpos, links, ouTree, computers, dataQuality: { linksFileMissing, computersFileMissing } };
+    return { gpos, links, ouTree, metadata, dataQuality: { linksFileMissing } };
   }
 
   // Fuer reine Enabled/Disabled-Policies ohne zusaetzlichen Parameter ist
