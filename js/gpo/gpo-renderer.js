@@ -670,6 +670,7 @@ window.GpoRenderer = (function() {
         baselineGpos: Array.from(new Set(baselineEntries.map(s => s.gpoName).filter(Boolean))),
         snapshotValues,
         snapshotGpos: Array.from(new Set(snapshotEntries.map(s => s.gpoName).filter(Boolean))),
+        snapshotGpoIds: Array.from(new Set(snapshotEntries.map(s => s.gpoId).filter(Boolean))),
       });
     });
 
@@ -725,6 +726,20 @@ window.GpoRenderer = (function() {
     baselineNote.textContent = String(s.baselineNotComparable) + ' Baseline-Inhalte sind bereits beim Import als nicht eindeutig vergleichbar gekennzeichnet und werden nicht in die Vergleichsgruppen einbezogen.';
     summaryEl.parentElement.insertBefore(baselineNote, summaryEl.nextSibling);
 
+    const missingNote = document.createElement('div');
+    missingNote.className = 'gpo-baseline-compare-guidance';
+    missingNote.innerHTML = '<strong>ℹ „Nicht vorhanden“ ist kein Handlungsurteil.</strong> Es bedeutet nur, dass das entsprechende Setting im geladenen Snapshot nicht gefunden wurde. Die ' + String(s.missing) + ' Einträge sollten deshalb einzeln weiter geprüft werden; je nach Umgebung ist ein fehlendes Snapshot-Setting nicht automatisch problematisch. Die Zahlen oben sind bewusst <strong>keine Compliance-Quote und kein Score</strong>.';
+    summaryEl.parentElement.insertBefore(missingNote, summaryEl.nextSibling);
+
+    const findFindingForResult = (result) => {
+      const candidates = (_findings || []).filter(f => {
+        if (!f || f.settingKey !== result.settingKey) return false;
+        if (!result.snapshotGpoIds.length) return true;
+        return result.snapshotGpoIds.some(id => findingInvolvesGpo(f, id));
+      });
+      return candidates[0] || null;
+    };
+
     const renderList = () => {
       const filter = filterEl ? filterEl.value : 'all';
       const query = searchEl ? searchEl.value.trim().toLowerCase() : '';
@@ -747,7 +762,40 @@ window.GpoRenderer = (function() {
         const base = document.createElement('div'); base.innerHTML = '<span>Microsoft</span><strong></strong>'; base.querySelector('strong').textContent = r.baselineValue === null ? 'nicht eindeutig' : r.baselineValue;
         const snap = document.createElement('div'); snap.innerHTML = '<span>Snapshot</span><strong></strong>'; snap.querySelector('strong').textContent = r.snapshotValues.length ? r.snapshotValues.join(' · ') : 'nicht vorhanden';
         values.append(base, snap); article.appendChild(values);
-        const source = document.createElement('div'); source.className = 'gpo-baseline-compare-meta'; source.textContent = 'Microsoft-GPO: ' + (r.baselineGpos.length ? r.baselineGpos.join(', ') : 'unbekannt') + ' · Snapshot-GPO: ' + (r.snapshotGpos.length ? r.snapshotGpos.join(', ') : 'keine'); article.appendChild(source);
+        const source = document.createElement('div'); source.className = 'gpo-baseline-compare-meta';
+        const msLine = document.createElement('div');
+        msLine.append(document.createTextNode('Microsoft-GPO: ' + (r.baselineGpos.length ? r.baselineGpos.join(', ') : 'unbekannt')));
+        source.appendChild(msLine);
+        const snapLine = document.createElement('div');
+        snapLine.append(document.createTextNode('Snapshot-GPO: '));
+        if (r.snapshotGpoIds.length) {
+          r.snapshotGpoIds.forEach((id, index) => {
+            if (index) snapLine.appendChild(document.createTextNode(', '));
+            const gpo = gpoById(id);
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'gpo-baseline-compare-link';
+            button.textContent = gpo ? gpo.name : (r.snapshotGpos[index] || id);
+            button.addEventListener('click', () => openGpoDetail(id));
+            snapLine.appendChild(button);
+          });
+        } else {
+          snapLine.appendChild(document.createTextNode('keine'));
+        }
+        source.appendChild(snapLine);
+        const finding = findFindingForResult(r);
+        if (finding) {
+          const findingLine = document.createElement('div');
+          findingLine.className = 'gpo-baseline-compare-finding-link';
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'gpo-baseline-compare-link';
+          button.textContent = 'Finding öffnen →';
+          button.addEventListener('click', () => jumpToFindingCard(finding, '#gpo-findings-section'));
+          findingLine.appendChild(button);
+          source.appendChild(findingLine);
+        }
+        article.appendChild(source);
         listEl.appendChild(article);
       });
       if (filtered.length > cap) { const more = document.createElement('div'); more.className = 'gpo-baseline-compare-more'; more.textContent = 'Weitere ' + (filtered.length - cap) + ' Einträge über Filter/Suche eingrenzen.'; listEl.appendChild(more); }
