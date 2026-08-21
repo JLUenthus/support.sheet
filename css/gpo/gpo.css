@@ -2205,6 +2205,34 @@ a.gpo-20sec-fact:hover { background:var(--panel2); text-decoration:none; }
   border-top: 1px solid rgba(255,255,255,.12);
 }
 
+
+/* Snapshot / Umgebungsinformationen */
+.gpo-environment-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:22px;
+  margin:0 0 18px;
+  padding:14px 18px;
+  border:1px solid var(--border2);
+  border-left:3px solid var(--accent);
+  border-radius:var(--r);
+  background:linear-gradient(90deg,rgba(45,212,191,.075),rgba(45,212,191,.018));
+}
+.gpo-environment-header[hidden]{display:none}
+.gpo-environment-identity{min-width:0;display:flex;flex-direction:column;gap:3px}
+.gpo-environment-kicker{font-size:.64rem;text-transform:uppercase;letter-spacing:.09em;font-weight:700;color:var(--accent)}
+.gpo-environment-name{font-size:1rem;line-height:1.25;color:var(--text);overflow-wrap:anywhere}
+.gpo-environment-facts{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px 18px}
+.gpo-environment-fact{display:inline-flex;flex-direction:column;gap:2px;min-width:90px}
+.gpo-environment-fact-label{font-size:.62rem;color:var(--dim);text-transform:uppercase;letter-spacing:.055em}
+.gpo-environment-fact-value{font-size:.74rem;color:var(--muted);overflow-wrap:anywhere}
+@media (max-width:700px){
+  .gpo-environment-header{align-items:flex-start;flex-direction:column;gap:12px}
+  .gpo-environment-facts{width:100%;justify-content:flex-start}
+}
+
+
 /* Reference standard cards: current implementation status */
 .gpo-reference-summary {
   display:grid;
@@ -2255,3 +2283,4 @@ a.gpo-20sec-fact:hover { background:var(--panel2); text-decoration:none; }
 @media (max-width:700px) {
   .gpo-reference-summary { grid-template-columns:1fr 1fr; }
 }
+

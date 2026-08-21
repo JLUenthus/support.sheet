@@ -189,6 +189,82 @@ window.GpoRenderer = (function() {
     return _diagnoseCommandsPromise;
   }
 
+
+  function formatCollectedAt(value) {
+    if (!value) return null;
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value);
+    return new Intl.DateTimeFormat('de-DE', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }).format(d);
+  }
+
+  function renderEnvironmentHeader() {
+    const el = document.getElementById('gpo-environment-header');
+    if (!el) return;
+    el.replaceChildren();
+
+    const meta = _model && _model.metadata;
+    if (!meta) {
+      el.hidden = true;
+      return;
+    }
+
+    const environment = meta.environmentName || meta.domain || null;
+    const collected = formatCollectedAt(meta.collectedAt);
+    const forest = meta.forest || null;
+    const netbios = meta.domainNetBIOS || null;
+    const collector = meta.collectorVersion || null;
+
+    if (!environment && !collected && !forest && !netbios && !collector) {
+      el.hidden = true;
+      return;
+    }
+
+    el.hidden = false;
+
+    const identity = document.createElement('div');
+    identity.className = 'gpo-environment-identity';
+
+    const kicker = document.createElement('span');
+    kicker.className = 'gpo-environment-kicker';
+    kicker.textContent = 'Snapshot';
+
+    const name = document.createElement('strong');
+    name.className = 'gpo-environment-name';
+    name.textContent = environment || 'Umgebung nicht angegeben';
+
+    identity.append(kicker, name);
+
+    const facts = document.createElement('div');
+    facts.className = 'gpo-environment-facts';
+
+    const addFact = (labelText, value) => {
+      if (!value) return;
+      const item = document.createElement('span');
+      item.className = 'gpo-environment-fact';
+
+      const label = document.createElement('span');
+      label.className = 'gpo-environment-fact-label';
+      label.textContent = labelText;
+
+      const val = document.createElement('span');
+      val.className = 'gpo-environment-fact-value';
+      val.textContent = value;
+
+      item.append(label, val);
+      facts.appendChild(item);
+    };
+
+    addFact('Gesammelt', collected);
+    addFact('Forest', forest);
+    if (netbios && netbios !== environment) addFact('NetBIOS', netbios);
+    addFact('Collector', collector);
+
+    el.append(identity, facts);
+  }
+
   async function renderOverview(model, findings, missingFiles) {
     _model = model;
     _findings = findings || [];
@@ -220,6 +296,7 @@ window.GpoRenderer = (function() {
     renderMicrosoftBaselineComparison();
     renderOverviewSummary();
     renderIntegrityPanel();
+    renderEnvironmentHeader();
     renderNumGrid();
     renderAmpelRow();
     renderMaintenancePanel();
