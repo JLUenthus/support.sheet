@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260820-5527';
+const CACHE_VERSION = '20260821-cis-v52c5-win11cis';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -118,9 +118,12 @@ const ASSETS = [
   './js/gpo/gpo-rsop.js',
   './js/gpo/gpo-reference-engine.js',
   './js/gpo/gpo-baseline-import.js',
+  './js/gpo/gpo-cis-server.js',
+  './js/gpo/gpo-cis-windows11.js',
   './js/gpo/gpo-rules.js',
   './js/gpo/gpo-renderer.js',
   './data/gpo/rules.json',
+  './data/gpo/cis-server-baselines.json',
 ];
 
 // ── INSTALL: Cache alle eigenen Assets ───────────────────

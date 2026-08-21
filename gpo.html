@@ -394,7 +394,7 @@
               <div>
                 <div class="gpo-section-kicker">V5.1-D / Setting-Vergleich</div>
                 <h3 class="gpo-baseline-compare-title" id="gpo-microsoft-baseline-compare-title">Microsoft-Baseline gegen Snapshot</h3>
-                <p class="gpo-reference-intro">Verglichen werden nur eindeutig importierte Baseline-Settings. Mehrdeutige Werte im Snapshot werden nicht aufgelöst. „Nicht vorhanden“ bedeutet nur, dass das Setting im Snapshot nicht gefunden wurde – daraus folgt kein automatisches Handlungsurteil. Es gibt keine Gesamtbewertung, keine Compliance-Quote und keinen Score.</p>
+                <p class="gpo-reference-intro">Verglichen werden nur eindeutig importierte Baseline-Settings. Mehrdeutige Werte im Snapshot werden nicht aufgelöst. Es gibt keine Gesamtbewertung und keinen Score.</p>
               </div>
             </div>
             <div id="gpo-microsoft-baseline-compare-empty" class="gpo-baseline-compare-empty">Noch keine Microsoft-Baseline importiert.</div>
@@ -421,7 +421,51 @@
             </div>
           </section>
           <div class="gpo-reference-grid" id="gpo-reference-grid"></div>
+          <section class="gpo-cis-server-panel" id="gpo-cis-server-panel" aria-labelledby="gpo-cis-server-title">
+            <div class="gpo-section-kicker">V5.2 / Server-Benchmarks</div>
+            <h3 class="gpo-baseline-compare-title" id="gpo-cis-server-title">CIS Windows Server</h3>
+            <p class="gpo-reference-intro">Server-Benchmarks werden getrennt nach Windows Server 2019, 2022 und 2025 hinterlegt. Diese erste Einbindung ist bewusst ein verifizierter Katalog: Es wird noch keine CIS-Compliance berechnet und kein Score erzeugt.</p>
+            <div id="gpo-cis-server-status" class="gpo-cis-server-status"></div>
+            <div id="gpo-cis-server-grid" class="gpo-cis-server-grid"></div>
+
+                        <div id="gpo-cis-unmapped-classification" class="gpo-cis-unmapped-classification">
+              <div class="gpo-cis-unmapped-head">
+                <span>Restbestand</span>
+                <strong>Nicht automatisch vergleichbare Empfehlungen</strong>
+                <small>Diese Einträge werden nicht durch Namensähnlichkeit in Settings umgewandelt.</small>
+              </div>
+              <div id="gpo-cis-unmapped-classification-grid"></div>
+            </div>
+<div id="gpo-cis-admin-template-summary" class="gpo-cis-admin-template-summary">
+              <div class="gpo-cis-admin-template-head">
+                <div>
+                  <span>Administrative Templates</span>
+                  <strong>Eindeutig verifizierte Zuordnungen</strong>
+                  <small>Nur exakte Category + Name-Zuordnungen werden als vergleichbar geführt.</small>
+                </div>
+                <div id="gpo-cis-admin-template-counts"></div>
+              </div>
+              <div id="gpo-cis-admin-template-list" class="gpo-cis-admin-template-list"></div>
+            </div>
+
+            <div id="gpo-cis-reference-stand" class="gpo-cis-reference-stand">
+              <div class="gpo-cis-reference-stand-title">
+                <span>CIS</span><strong>Benchmark / Empfehlungen</strong>
+                <small>Referenzstand</small>
+              </div>
+              <div id="gpo-cis-reference-stand-list"></div>
+            </div>
+
+          </section>
         </section>
+
+          <section class="gpo-cis-windows-panel" id="gpo-cis-windows-panel" aria-labelledby="gpo-cis-windows-title">
+            <div class="gpo-section-kicker">V5.2 / Windows-Client-Benchmark</div>
+            <h3 class="gpo-baseline-compare-title" id="gpo-cis-windows-title">CIS Windows 11 Enterprise</h3>
+            <p class="gpo-reference-intro">CIS Windows 11 wird als eigener Benchmark-Referenzstand geführt. Account Policies, User Rights Assignment, Security Options und Administrative Templates werden als technische Referenzen geführt. Bei Administrative Templates ist die Zuordnung sprachabhängig: es gibt keine automatische Übersetzung oder Ähnlichkeitssuche. Es wird noch keine CIS-Compliance berechnet und kein Score erzeugt.</p>
+            <div id="gpo-cis-windows-status" class="gpo-cis-server-status"></div>
+            <div id="gpo-cis-windows-grid" class="gpo-cis-server-grid"></div>
+          </section>
 
         <section class="gpo-section gpo-rsop-section" id="gpo-rsop-section">
           <div class="gpo-section-kicker">04 / Vergleich &amp; Prüfung</div>
@@ -615,7 +659,10 @@
   <script src="js/gpo/gpo-rsop.js"></script>
   <script src="js/gpo/gpo-reference-engine.js"></script>
   <script src="js/gpo/gpo-baseline-import.js"></script>
-  <script src="js/gpo/gpo-renderer.js"></script>
+  <script src="js/gpo/gpo-cis-server.js"></script>
+  <script src="js/gpo/gpo-cis-windows11.js"></script>
+  <script src="js/gpo/gpo-cis-localization.js"></script>
+          <script src="js/gpo/gpo-renderer.js"></script>
   <script src="js/gpo/gpo-loader.js"></script>
   <script>
     if ('serviceWorker' in navigator) {

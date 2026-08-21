@@ -215,6 +215,8 @@ window.GpoRenderer = (function() {
     renderExecutiveDashboard();
     renderTwentySecondOverview();
     renderReferenceEngine();
+    renderCisServerCatalog();
+    renderCisWindows11Catalog();
     renderMicrosoftBaselineComparison();
     renderOverviewSummary();
     renderIntegrityPanel();
@@ -613,6 +615,358 @@ window.GpoRenderer = (function() {
     renderMicrosoftBaselineStatus();
   }
 
+  // V5.2: CIS Windows Server – verifizierter Katalog + Erkennung vorhandener Server.
+  // Noch keine Compliance-Berechnung, kein Score und keine erfundenen Setting-Mappings.
+
+
+  function renderCisReferenceStand(catalog) {
+    const host = document.getElementById('gpo-cis-reference-stand-list');
+    if (!host) return;
+    const p = catalog?.referenceProvenance;
+    const safe = v => String(v ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    host.innerHTML = `<div class="gpo-cis-reference-source">Quelle: ${safe(p?.source || 'CIS Benchmark')}</div>
+      <div class="gpo-cis-reference-version-grid">
+        ${(p?.benchmarks || []).map(b => `<div class="gpo-cis-reference-version">
+          <strong>${safe(b.platform || b.id)}</strong><small>${safe(b.version || b.id)}</small>
+        </div>`).join('')}</div>`;
+  }
+
+
+  function renderCisAdminTemplateSummary(catalog) {
+    const countHost = document.getElementById('gpo-cis-admin-template-counts');
+    const listHost = document.getElementById('gpo-cis-admin-template-list');
+    if (!countHost || !listHost) return;
+
+    const rows = [];
+    (catalog?.benchmarks || []).forEach(benchmark => {
+      (benchmark.recommendations || []).forEach(rec => {
+        if (rec.mappingStatus !== 'cross-baseline-verified' || !rec.settingKeys?.length) return;
+        rows.push({
+          benchmark: benchmark.platform || benchmark.id,
+          number: rec.requirementNumber || rec.id,
+          title: rec.title || rec.id,
+          key: rec.settingKeys[0],
+          evidence: rec.mappingEvidence || ''
+        });
+      });
+    });
+
+    const byBenchmark = {};
+    rows.forEach(row => { byBenchmark[row.benchmark] = (byBenchmark[row.benchmark] || 0) + 1; });
+
+    countHost.innerHTML = Object.entries(byBenchmark).map(([name,count]) =>
+      `<span class="gpo-cis-admin-chip">${String(name).replace(/[&<>]/g,'')} · ${count}</span>`
+    ).join('');
+
+    listHost.innerHTML = rows.slice(0, 80).map(row => `
+      <div class="gpo-cis-admin-row">
+        <div>
+          <strong>${String(row.title).replace(/[&<>]/g,'')}</strong>
+          <small>${String(row.number).replace(/[&<>]/g,'')} · ${String(row.key).replace(/[&<>]/g,'')}</small>
+        </div>
+        <span>✓ verifiziert</span>
+      </div>`).join('');
+
+    if (rows.length > 80) {
+      listHost.insertAdjacentHTML('beforeend',
+        `<div class="gpo-cis-admin-more">Weitere ${rows.length - 80} eindeutig verifizierte Zuordnungen sind im Katalog enthalten.</div>`);
+    }
+  }
+
+
+  function renderCisUnmappedClassification(catalog) {
+    const host = document.getElementById('gpo-cis-unmapped-classification-grid');
+    if (!host) return;
+    const counts = {};
+    (catalog?.benchmarks || []).forEach(benchmark => {
+      (benchmark.recommendations || []).forEach(rec => {
+        if (rec.mappingStatus === 'exact-name' ||
+            rec.mappingStatus === 'normalized-account-policy' ||
+            rec.mappingStatus === 'cross-baseline-verified') return;
+        const note = String(rec.mappingNote || rec.mappingEvidence || '').toLowerCase();
+        const title = String(rec.title || '').toLowerCase();
+        const text = title + ' ' + note;
+        let label = 'Nicht eindeutig abbildbar';
+        if (/manual|audit|review/.test(text)) label = 'Manuelle Prüfung';
+        else if (/multiple|list|mehrfach/.test(text)) label = 'Listen-/Mehrfachwert';
+        else if (/dc|domain controller|member server/.test(text)) label = 'Rollenabhängig';
+        counts[label] = (counts[label] || 0) + 1;
+      });
+    });
+    const order = ['Nicht eindeutig abbildbar','Manuelle Prüfung','Rollenabhängig','Listen-/Mehrfachwert'];
+    host.innerHTML = order.filter(k => counts[k]).map(k =>
+      `<div class="gpo-cis-unmapped-chip"><strong>${k}</strong><span>${counts[k]}</span></div>`
+    ).join('');
+  }
+
+  // V5.2-C2: CIS technical comparison. No score, percentage or aggregate compliance judgement.
+  function cisComparableScalar(value) {
+    if (value === null || value === undefined) return null;
+    if (Array.isArray(value)) return JSON.stringify(value);
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value).trim();
+  }
+
+  function cisExpectedValueFromTitle(title) {
+    const text = String(title || '');
+    const m = text.match(/\bis set to\s+['"]([^'"]+)['"]/i);
+    return m ? m[1].trim() : null;
+  }
+
+  function collectCisSnapshotSettings() {
+    const groups = new Map();
+    const gpos = Array.isArray(_model?.gpos) ? _model.gpos : [];
+    gpos.forEach(gpo => {
+      (gpo.settings || []).forEach(setting => {
+        const key = String(setting.key || setting.settingKey || '').trim();
+        if (!key) return;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push({
+          gpoId: gpo.id,
+          gpoName: gpo.name,
+          value: cisComparableScalar(setting.value)
+        });
+      });
+    });
+    return groups;
+  }
+
+  function renderCisServerComparison(catalog) {
+    const host = document.getElementById('gpo-cis-server-compare');
+    const summaryHost = document.getElementById('gpo-cis-server-compare-summary');
+    const listHost = document.getElementById('gpo-cis-server-compare-list');
+    const benchmarkSelect = document.getElementById('gpo-cis-server-compare-benchmark');
+    const searchInput = document.getElementById('gpo-cis-server-compare-search');
+    if (!host || !summaryHost || !listHost || !benchmarkSelect || !searchInput) return;
+
+    const snapshot = collectCisSnapshotSettings();
+    const benchmarks = catalog.benchmarks || [];
+
+    benchmarkSelect.replaceChildren();
+    const all = document.createElement('option');
+    all.value = 'all'; all.textContent = 'Alle';
+    benchmarkSelect.appendChild(all);
+    benchmarks.forEach(b => {
+      const o = document.createElement('option');
+      o.value = b.id; o.textContent = b.platform || b.version || b.id;
+      benchmarkSelect.appendChild(o);
+    });
+
+    const rows = [];
+    benchmarks.forEach(benchmark => {
+      (benchmark.recommendations || []).forEach(rec => {
+        const key = Array.isArray(rec.settingKeys) && rec.settingKeys.length === 1 ? rec.settingKeys[0] : null;
+        if (!key) return;
+        const values = snapshot.get(String(key)) || [];
+        const expected = cisExpectedValueFromTitle(rec.title);
+        let state = 'not_found';
+        let label = 'ℹ Im Snapshot nicht vorhanden';
+        if (values.length) {
+          if (expected === null) {
+            state = 'presence_only';
+            label = '🔎 Setting vorhanden · Wert separat prüfen';
+          } else {
+            const normExpected = cisComparableScalar(expected);
+            const same = values.some(v => cisComparableScalar(v.value) === normExpected);
+            state = same ? 'match' : 'different';
+            label = same ? '✓ Hinterlegter Wert stimmt mit dem CIS-Titel überein'
+                         : '⚠ Abweichender Wert zum CIS-Titel';
+          }
+        }
+        rows.push({ benchmark, rec, key, values, expected, state, label });
+      });
+    });
+
+    function paint() {
+      const selected = benchmarkSelect.value;
+      const query = searchInput.value.trim().toLowerCase();
+      const filtered = rows.filter(row => {
+        if (selected !== 'all' && row.benchmark.id !== selected) return false;
+        if (!query) return true;
+        return [row.key, row.rec.requirementNumber, row.rec.title, row.benchmark.platform]
+          .join(' ').toLowerCase().includes(query);
+      });
+
+      const counts = {match:0, different:0, not_found:0, presence_only:0};
+      filtered.forEach(x => counts[x.state] = (counts[x.state] || 0) + 1);
+      summaryHost.innerHTML = `
+        <span class="gpo-cis-chip gpo-cis-chip--match">✓ ${counts.match}</span>
+        <span class="gpo-cis-chip gpo-cis-chip--different">⚠ ${counts.different}</span>
+        <span class="gpo-cis-chip gpo-cis-chip--notfound">ℹ ${counts.not_found}</span>
+        <span class="gpo-cis-chip gpo-cis-chip--presence">🔎 ${counts.presence_only}</span>
+        <span class="gpo-cis-compare-total">${filtered.length} eindeutig gemappte CIS-Empfehlungen in der aktuellen Auswahl</span>
+      `;
+
+      listHost.replaceChildren();
+      const frag = document.createDocumentFragment();
+      filtered.slice(0, 120).forEach(row => {
+        const item = document.createElement('article');
+        item.className = 'gpo-cis-compare-row gpo-cis-compare-row--' + row.state;
+        const main = document.createElement('div');
+        main.className = 'gpo-cis-compare-main';
+        const title = document.createElement('strong');
+        title.textContent = row.rec.title || row.rec.id;
+        const meta = document.createElement('small');
+        meta.textContent = `${row.rec.requirementNumber} · ${row.key}`;
+        main.append(title, meta);
+        const badge = document.createElement('span');
+        badge.className = 'gpo-cis-compare-badge';
+        badge.textContent = row.label;
+        item.append(main, badge);
+        if (row.values.length) {
+          const details = document.createElement('div');
+          details.className = 'gpo-cis-compare-values';
+          details.textContent = 'Im Snapshot vorhandene Definitionen: ' + row.values.length;
+          item.appendChild(details);
+        }
+        frag.appendChild(item);
+      });
+      listHost.appendChild(frag);
+      if (filtered.length > 120) {
+        const more = document.createElement('p');
+        more.className = 'gpo-cis-server-note';
+        more.textContent = `Weitere ${filtered.length - 120} Einträge werden durch die Filterauswahl zurückgehalten.`;
+        listHost.appendChild(more);
+      }
+    }
+
+    benchmarkSelect.onchange = paint;
+    searchInput.oninput = paint;
+    paint();
+  }
+
+  async function renderCisServerCatalog() {
+    const grid = document.getElementById('gpo-cis-server-grid');
+    const status = document.getElementById('gpo-cis-server-status');
+    if (!grid || !status || !window.GpoCisServer) return;
+    grid.replaceChildren();
+    status.textContent = 'CIS Server-Katalog wird geladen …';
+    try {
+      const catalog = await window.GpoCisServer.load();
+      const detected = window.GpoCisServer.detectServers(_model && _model.computers);
+      const detectedText = detected.total
+        ? detected.total + ' Server-Ziel' + (detected.total === 1 ? '' : 'e') + ' im Snapshot erkannt.'
+        : 'Keine Server-Ziele im Snapshot erkannt.';
+      const parts = [];
+      ['2019','2022','2025'].forEach(v => {
+        const count = detected.byVersion[v].length;
+        if (count) parts.push(count + '× Server ' + v);
+      });
+      if (detected.byVersion.unknown.length) parts.push(detected.byVersion.unknown.length + '× Server-Version unbekannt');
+      status.replaceChildren();
+      const strong = document.createElement('strong');
+      strong.textContent = detectedText;
+      status.appendChild(strong);
+      if (parts.length) status.appendChild(document.createTextNode(' ' + parts.join(' · ') + '.'));
+
+      (catalog.benchmarks || []).forEach(benchmark => {
+        const version = String(benchmark.id).replace('windows-server-', '');
+        const count = (detected.byVersion[version] || []).length;
+        const card = document.createElement('article');
+        card.className = 'gpo-cis-server-card' + (count ? ' gpo-cis-server-card--detected' : '');
+
+        const header = document.createElement('div');
+        header.className = 'gpo-cis-server-card-header';
+        const title = document.createElement('div');
+        title.className = 'gpo-cis-server-card-title';
+        title.textContent = benchmark.platform;
+        const badge = document.createElement('span');
+        badge.className = 'gpo-cis-server-badge';
+        badge.textContent = count ? count + ' erkannt' : 'kein Treffer';
+        header.append(title, badge);
+        card.appendChild(header);
+
+        const meta = document.createElement('div');
+        meta.className = 'gpo-cis-server-card-meta';
+        const mappedCount = (benchmark.recommendations || []).filter(r => r.status === 'mapped' && Array.isArray(r.settingKeys) && r.settingKeys.length === 1).length;
+        [['Benchmark', benchmark.version], ['Release', benchmark.releaseDate], ['Empfehlungen', benchmark.recommendationCount], ['eindeutig zugeordnet', mappedCount], ['Status', 'Katalog']].forEach(([label, value]) => {
+          const l = document.createElement('span'); l.textContent = label;
+          const v = document.createElement('span'); v.textContent = String(value);
+          meta.append(l, v);
+        });
+        card.appendChild(meta);
+
+        const note = document.createElement('div');
+        note.className = 'gpo-cis-server-note';
+        note.textContent = 'Quelle: ' + benchmark.document + '. User Rights Assignment ist über die bestehenden Se*-Setting-Keys technisch eindeutig zugeordnet. Weitere CIS-Bereiche bleiben separat; keine Aussage „erfüllt/nicht erfüllt“ aus diesem Katalog.';
+        card.appendChild(note);
+        grid.appendChild(card);
+      });
+
+      if (detected.byVersion.unknown.length) {
+        const note = document.createElement('div');
+        note.className = 'gpo-cis-server-note';
+        note.textContent = 'Bei ' + detected.byVersion.unknown.length + ' Server-Ziel' + (detected.byVersion.unknown.length === 1 ? ' konnte' : 'en konnten') + ' aus den vorhandenen OS-Daten keine eindeutige Server-Version 2019/2022/2025 abgeleitet werden.';
+        grid.appendChild(note);
+      }
+      renderCisUnmappedClassification(catalog);
+      renderCisAdminTemplateSummary(catalog);
+      renderCisReferenceStand(catalog);
+      renderCisServerComparison(catalog);
+    } catch (err) {
+      console.error('[GpoCisServer] Katalog konnte nicht geladen werden:', err);
+      status.textContent = 'CIS Server-Katalog konnte nicht geladen werden.';
+    }
+  }
+
+
+  function cisWindows11MappingState(rec, snapshotKeys, locale) {
+    const key = Array.isArray(rec?.settingKeys) && rec.settingKeys.length === 1 ? rec.settingKeys[0] : null;
+    if (!key) return { state: 'unresolved', snapshotKey: null };
+    if (window.GpoCisLocalization && window.GpoCisLocalization.isLocaleSensitive(rec.mappingStatus)) {
+      return window.GpoCisLocalization.resolve(key, snapshotKeys, locale);
+    }
+    return window.GpoCisLocalization
+      ? window.GpoCisLocalization.resolve(key, snapshotKeys, locale)
+      : { state: snapshotKeys.includes(key) ? 'exact' : 'unresolved', snapshotKey: snapshotKeys.includes(key) ? key : null };
+  }
+
+  async function renderCisWindows11Catalog() {
+    const grid = document.getElementById('gpo-cis-windows-grid');
+    const status = document.getElementById('gpo-cis-windows-status');
+    if (!grid || !status || !window.GpoCisWindows11) return;
+    grid.replaceChildren();
+    status.textContent = 'CIS Windows 11-Katalog wird geladen …';
+    try {
+      const catalog = await window.GpoCisWindows11.load();
+      const benchmark = (catalog.benchmarks || [])[0];
+      const summary = catalog.mappingSummary?.byBenchmark?.[benchmark?.id] || {};
+      status.replaceChildren();
+      const strong = document.createElement('strong');
+      strong.textContent = (benchmark?.recommendationCount || 0) + ' Empfehlungen: ' + (summary.mapped || 0) + ' direkt technisch zugeordnet, ' + (summary.localeSensitive || 0) + ' sprachabhängig referenzierbar, ' + (summary.referenceOnly || 0) + ' Referenz-only.';
+      status.appendChild(strong);
+
+      const card = document.createElement('article');
+      card.className = 'gpo-cis-server-card gpo-cis-server-card--detected';
+      const header = document.createElement('div');
+      header.className = 'gpo-cis-server-card-header';
+      const title = document.createElement('div');
+      title.className = 'gpo-cis-server-card-title';
+      title.textContent = benchmark.platform;
+      const badge = document.createElement('span');
+      badge.className = 'gpo-cis-server-badge';
+      badge.textContent = benchmark.version;
+      header.append(title, badge);
+      card.appendChild(header);
+      const meta = document.createElement('div');
+      meta.className = 'gpo-cis-server-card-meta';
+      [['Benchmark', benchmark.version], ['Stand', benchmark.releaseDate], ['Empfehlungen', benchmark.recommendationCount], ['Account Policies', summary.accountPolicy || 0], ['User Rights', summary.userRight || 0], ['Security Options', summary.securityOption || 0], ['Administrative Templates', summary.administrativeTemplate || 0], ['Advanced Audit Policy', summary.advancedAuditPolicy || 0], ['Windows Firewall', summary.windowsFirewall || 0], ['System Services', summary.systemService || 0]].forEach(([label,value]) => {
+        const l=document.createElement('span'); l.textContent=label;
+        const v=document.createElement('span'); v.textContent=String(value);
+        meta.append(l,v);
+      });
+      card.appendChild(meta);
+      const note=document.createElement('div');
+      note.className='gpo-cis-server-note';
+      note.textContent='Quelle: '+benchmark.document+'. CIS Windows 11 ist in direkte Mappings, sprachabhängige Administrative-Template-Referenzen und weitere Referenz-only-Bereiche getrennt. Ohne verifizierten Sprachalias darf ein fehlender englischer Key nicht als „Setting nicht vorhanden“ interpretiert werden. Keine automatische Übersetzung, kein Fuzzy-Matching, keine Compliance-Aussage und kein Score.';
+      card.appendChild(note);
+      grid.appendChild(card);
+    } catch (err) {
+      console.error('[GpoCisWindows11] Katalog konnte nicht geladen werden:', err);
+      status.textContent = 'CIS Windows 11-Katalog konnte nicht geladen werden.';
+    }
+  }
+
   // V5.1-D: Microsoft-Baseline gegen den bereits geladenen Snapshot vergleichen.
   // Reine Setting-Ebene: keine Gewinner-GPO, kein Score, keine Prozentwerte.
   function baselineComparableValue(value) {
@@ -670,7 +1024,6 @@ window.GpoRenderer = (function() {
         baselineGpos: Array.from(new Set(baselineEntries.map(s => s.gpoName).filter(Boolean))),
         snapshotValues,
         snapshotGpos: Array.from(new Set(snapshotEntries.map(s => s.gpoName).filter(Boolean))),
-        snapshotGpoIds: Array.from(new Set(snapshotEntries.map(s => s.gpoId).filter(Boolean))),
       });
     });
 
@@ -726,20 +1079,6 @@ window.GpoRenderer = (function() {
     baselineNote.textContent = String(s.baselineNotComparable) + ' Baseline-Inhalte sind bereits beim Import als nicht eindeutig vergleichbar gekennzeichnet und werden nicht in die Vergleichsgruppen einbezogen.';
     summaryEl.parentElement.insertBefore(baselineNote, summaryEl.nextSibling);
 
-    const missingNote = document.createElement('div');
-    missingNote.className = 'gpo-baseline-compare-guidance';
-    missingNote.innerHTML = '<strong>ℹ „Nicht vorhanden“ ist kein Handlungsurteil.</strong> Es bedeutet nur, dass das entsprechende Setting im geladenen Snapshot nicht gefunden wurde. Die ' + String(s.missing) + ' Einträge sollten deshalb einzeln weiter geprüft werden; je nach Umgebung ist ein fehlendes Snapshot-Setting nicht automatisch problematisch. Die Zahlen oben sind bewusst <strong>keine Compliance-Quote und kein Score</strong>.';
-    summaryEl.parentElement.insertBefore(missingNote, summaryEl.nextSibling);
-
-    const findFindingForResult = (result) => {
-      const candidates = (_findings || []).filter(f => {
-        if (!f || f.settingKey !== result.settingKey) return false;
-        if (!result.snapshotGpoIds.length) return true;
-        return result.snapshotGpoIds.some(id => findingInvolvesGpo(f, id));
-      });
-      return candidates[0] || null;
-    };
-
     const renderList = () => {
       const filter = filterEl ? filterEl.value : 'all';
       const query = searchEl ? searchEl.value.trim().toLowerCase() : '';
@@ -762,40 +1101,7 @@ window.GpoRenderer = (function() {
         const base = document.createElement('div'); base.innerHTML = '<span>Microsoft</span><strong></strong>'; base.querySelector('strong').textContent = r.baselineValue === null ? 'nicht eindeutig' : r.baselineValue;
         const snap = document.createElement('div'); snap.innerHTML = '<span>Snapshot</span><strong></strong>'; snap.querySelector('strong').textContent = r.snapshotValues.length ? r.snapshotValues.join(' · ') : 'nicht vorhanden';
         values.append(base, snap); article.appendChild(values);
-        const source = document.createElement('div'); source.className = 'gpo-baseline-compare-meta';
-        const msLine = document.createElement('div');
-        msLine.append(document.createTextNode('Microsoft-GPO: ' + (r.baselineGpos.length ? r.baselineGpos.join(', ') : 'unbekannt')));
-        source.appendChild(msLine);
-        const snapLine = document.createElement('div');
-        snapLine.append(document.createTextNode('Snapshot-GPO: '));
-        if (r.snapshotGpoIds.length) {
-          r.snapshotGpoIds.forEach((id, index) => {
-            if (index) snapLine.appendChild(document.createTextNode(', '));
-            const gpo = gpoById(id);
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'gpo-baseline-compare-link';
-            button.textContent = gpo ? gpo.name : (r.snapshotGpos[index] || id);
-            button.addEventListener('click', () => openGpoDetail(id));
-            snapLine.appendChild(button);
-          });
-        } else {
-          snapLine.appendChild(document.createTextNode('keine'));
-        }
-        source.appendChild(snapLine);
-        const finding = findFindingForResult(r);
-        if (finding) {
-          const findingLine = document.createElement('div');
-          findingLine.className = 'gpo-baseline-compare-finding-link';
-          const button = document.createElement('button');
-          button.type = 'button';
-          button.className = 'gpo-baseline-compare-link';
-          button.textContent = 'Finding öffnen →';
-          button.addEventListener('click', () => jumpToFindingCard(finding, '#gpo-findings-section'));
-          findingLine.appendChild(button);
-          source.appendChild(findingLine);
-        }
-        article.appendChild(source);
+        const source = document.createElement('div'); source.className = 'gpo-baseline-compare-meta'; source.textContent = 'Microsoft-GPO: ' + (r.baselineGpos.length ? r.baselineGpos.join(', ') : 'unbekannt') + ' · Snapshot-GPO: ' + (r.snapshotGpos.length ? r.snapshotGpos.join(', ') : 'keine'); article.appendChild(source);
         listEl.appendChild(article);
       });
       if (filtered.length > cap) { const more = document.createElement('div'); more.className = 'gpo-baseline-compare-more'; more.textContent = 'Weitere ' + (filtered.length - cap) + ' Einträge über Filter/Suche eingrenzen.'; listEl.appendChild(more); }
