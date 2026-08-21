@@ -189,82 +189,6 @@ window.GpoRenderer = (function() {
     return _diagnoseCommandsPromise;
   }
 
-
-  function formatCollectedAt(value) {
-    if (!value) return null;
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return String(value);
-    return new Intl.DateTimeFormat('de-DE', {
-      dateStyle: 'medium',
-      timeStyle: 'short'
-    }).format(d);
-  }
-
-  function renderEnvironmentHeader() {
-    const el = document.getElementById('gpo-environment-header');
-    if (!el) return;
-    el.replaceChildren();
-
-    const meta = _model && _model.metadata;
-    if (!meta) {
-      el.hidden = true;
-      return;
-    }
-
-    const environment = meta.environmentName || meta.domain || null;
-    const collected = formatCollectedAt(meta.collectedAt);
-    const forest = meta.forest || null;
-    const netbios = meta.domainNetBIOS || null;
-    const collector = meta.collectorVersion || null;
-
-    if (!environment && !collected && !forest && !netbios && !collector) {
-      el.hidden = true;
-      return;
-    }
-
-    el.hidden = false;
-
-    const identity = document.createElement('div');
-    identity.className = 'gpo-environment-identity';
-
-    const kicker = document.createElement('span');
-    kicker.className = 'gpo-environment-kicker';
-    kicker.textContent = 'Snapshot';
-
-    const name = document.createElement('strong');
-    name.className = 'gpo-environment-name';
-    name.textContent = environment || 'Umgebung nicht angegeben';
-
-    identity.append(kicker, name);
-
-    const facts = document.createElement('div');
-    facts.className = 'gpo-environment-facts';
-
-    const addFact = (labelText, value) => {
-      if (!value) return;
-      const item = document.createElement('span');
-      item.className = 'gpo-environment-fact';
-
-      const label = document.createElement('span');
-      label.className = 'gpo-environment-fact-label';
-      label.textContent = labelText;
-
-      const val = document.createElement('span');
-      val.className = 'gpo-environment-fact-value';
-      val.textContent = value;
-
-      item.append(label, val);
-      facts.appendChild(item);
-    };
-
-    addFact('Gesammelt', collected);
-    addFact('Forest', forest);
-    if (netbios && netbios !== environment) addFact('NetBIOS', netbios);
-    addFact('Collector', collector);
-
-    el.append(identity, facts);
-  }
-
   async function renderOverview(model, findings, missingFiles) {
     _model = model;
     _findings = findings || [];
@@ -296,7 +220,6 @@ window.GpoRenderer = (function() {
     renderMicrosoftBaselineComparison();
     renderOverviewSummary();
     renderIntegrityPanel();
-    renderEnvironmentHeader();
     renderNumGrid();
     renderAmpelRow();
     renderMaintenancePanel();
@@ -616,6 +539,42 @@ window.GpoRenderer = (function() {
     const catalog = window.GpoReferenceEngine.getCatalog();
     grid.replaceChildren();
 
+    let cisWindows11Catalog = null;
+    let cisServerCatalog = null;
+    try {
+      cisWindows11Catalog = window.GpoCisWindows11?.getCatalog
+        ? window.GpoCisWindows11.getCatalog() : null;
+      cisServerCatalog = window.GpoCisServer?.getCatalog
+        ? window.GpoCisServer.getCatalog() : null;
+    } catch (err) {
+      // Die Referenzkarten bleiben auch ohne optionale CIS-Kataloge funktionsfähig.
+    }
+
+    const getCisSummary = (catalog) => {
+      const benchmarks = catalog?.benchmarks || [];
+      const recommendations = benchmarks.flatMap(b => b.recommendations || []);
+      const direct = recommendations.filter(r =>
+        ['account-policy','user-right','security-option'].includes(r.mappingType)
+      ).length;
+      const localeSensitive = recommendations.filter(r =>
+        r.mappingType === 'administrative-template'
+      ).length;
+      const referenceOnly = recommendations.length - direct - localeSensitive;
+      return {
+        total: recommendations.length,
+        direct,
+        localeSensitive,
+        referenceOnly,
+        benchmarks
+      };
+    };
+
+    const w11 = getCisSummary(cisWindows11Catalog);
+    const server = getCisSummary(cisServerCatalog);
+
+    const microsoftState = window.GpoBaselineImporter?.getState
+      ? window.GpoBaselineImporter.getState() : null;
+
     catalog.forEach(standard => {
       const card = document.createElement('article');
       card.className = 'gpo-reference-card';
@@ -626,26 +585,51 @@ window.GpoRenderer = (function() {
       title.className = 'gpo-reference-card-title';
       title.textContent = standard.label;
       const state = document.createElement('span');
-      state.className = 'gpo-reference-state gpo-reference-state--' + standard.state;
-      state.textContent = standard.state === 'active' ? 'Hinterlegt' : 'Vorbereitet';
+      state.className = 'gpo-reference-state';
+
+      const isBsi = standard.id === 'bsi';
+      const isMicrosoft = /microsoft/i.test(standard.label);
+      const isCis = /cis/i.test(standard.label);
+
+      if (isBsi) {
+        state.classList.add('gpo-reference-state--active');
+        state.textContent = 'Hinterlegt';
+      } else if (isMicrosoft) {
+        state.classList.add('gpo-reference-state--prepared');
+        state.textContent = microsoftState?.status === 'loaded' ? 'Importiert' : 'Importierbar';
+      } else if (isCis) {
+        state.classList.add('gpo-reference-state--active');
+        state.textContent = 'Hinterlegt';
+      } else {
+        state.classList.add('gpo-reference-state--' + standard.state);
+        state.textContent = standard.state === 'active' ? 'Hinterlegt' : 'Vorbereitet';
+      }
       header.append(title, state);
       card.appendChild(header);
 
       const desc = document.createElement('p');
       desc.className = 'gpo-reference-card-desc';
-      desc.textContent = standard.description;
+      if (isBsi) {
+        desc.textContent = 'Anforderungen / Grundlage';
+      } else if (isMicrosoft) {
+        desc.textContent = 'Baseline / Soll-Konfiguration';
+      } else if (isCis) {
+        desc.textContent = 'Benchmark / Empfehlungen';
+      } else {
+        desc.textContent = standard.description;
+      }
       card.appendChild(desc);
 
-      if (standard.requirements.length === 0) {
-        const empty = document.createElement('div');
-        empty.className = 'gpo-reference-empty';
-        empty.textContent = 'Noch keine Anforderungen / Controls hinterlegt. Die gemeinsame Struktur ist vorbereitet; die fachliche Einbindung erfolgt in einem eigenen Schritt.';
-        card.appendChild(empty);
-      } else {
+      if (isBsi) {
         const count = document.createElement('div');
         count.className = 'gpo-reference-count';
-        count.textContent = standard.requirements.length + ' ' + (standard.requirements.length === 1 ? 'Anforderung' : 'Anforderungen') + ' hinterlegt';
+        count.textContent = standard.requirements.length + ' Anforderungen hinterlegt';
         card.appendChild(count);
+
+        const stand = document.createElement('div');
+        stand.className = 'gpo-reference-stand';
+        stand.textContent = 'Stand: BSI IT-Grundschutz';
+        card.appendChild(stand);
 
         const list = document.createElement('div');
         list.className = 'gpo-reference-requirements';
@@ -659,10 +643,10 @@ window.GpoRenderer = (function() {
           item.appendChild(itemTitle);
 
           if (requirement.buildingBlock) {
-            const block = document.createElement('div');
-            block.className = 'gpo-reference-meta';
-            block.textContent = requirement.buildingBlock;
-            item.appendChild(block);
+            const meta = document.createElement('div');
+            meta.className = 'gpo-reference-meta';
+            meta.textContent = requirement.buildingBlock;
+            item.appendChild(meta);
           }
 
           if (requirement.sourceUrl) {
@@ -681,18 +665,84 @@ window.GpoRenderer = (function() {
             ? requirement.settingKeys.length + ' eindeutige Setting-Zuordnung' + (requirement.settingKeys.length === 1 ? '' : 'en') + ' aus bestehender BSI-Evidenz'
             : 'Keine eindeutige Setting-Zuordnung aus der bestehenden Evidenz hinterlegt';
           item.appendChild(mapping);
-
           list.appendChild(item);
         });
         card.appendChild(list);
+      } else if (isMicrosoft) {
+        const facts = document.createElement('div');
+        facts.className = 'gpo-reference-summary';
+
+        const addFact = (value, label) => {
+          const item = document.createElement('div');
+          item.className = 'gpo-reference-summary-item';
+          const strong = document.createElement('strong');
+          strong.textContent = value;
+          const small = document.createElement('span');
+          small.textContent = label;
+          item.append(strong, small);
+          facts.appendChild(item);
+        };
+
+        if (microsoftState?.status === 'loaded') {
+          addFact(String(microsoftState.gpoCount || 0), 'GPOs importiert');
+          addFact(String(microsoftState.settings?.length || 0), 'Settings importiert');
+          addFact(String(microsoftState.settings?.filter(s => s.comparability === 'comparable').length || 0), 'eindeutig vergleichbar');
+          addFact(String(microsoftState.notComparable?.length || 0), 'nicht eindeutig');
+          const stand = document.createElement('div');
+          stand.className = 'gpo-reference-stand';
+          stand.textContent = 'Stand: ' + (microsoftState.baselineVersion || 'Windows 11 v25H2 Security Baseline');
+          card.appendChild(facts);
+          card.appendChild(stand);
+        } else {
+          addFact('Windows 11 v25H2', 'Security Baseline');
+          addFact('separat', 'Referenzimport');
+          const stand = document.createElement('div');
+          stand.className = 'gpo-reference-stand';
+          stand.textContent = 'Stand: Windows 11 v25H2 Security Baseline';
+          card.append(facts, stand);
+        }
+      } else if (isCis) {
+        const facts = document.createElement('div');
+        facts.className = 'gpo-reference-summary';
+        const addFact = (value, label) => {
+          const item = document.createElement('div');
+          item.className = 'gpo-reference-summary-item';
+          const strong = document.createElement('strong');
+          strong.textContent = value;
+          const small = document.createElement('span');
+          small.textContent = label;
+          item.append(strong, small);
+          facts.appendChild(item);
+        };
+
+        addFact(String(w11.total), 'Windows 11 Empfehlungen');
+        addFact(String(w11.direct), 'direkt technisch zugeordnet');
+        addFact(String(w11.localeSensitive), 'sprachabhängig referenzierbar');
+        addFact(String(w11.referenceOnly), 'Referenz-only');
+
+        const stand = document.createElement('div');
+        stand.className = 'gpo-reference-stand';
+        stand.textContent = 'Windows 11 Enterprise v5.1.0 · 28.07.2026';
+        card.append(facts, stand);
+
+        const serverStand = document.createElement('div');
+        serverStand.className = 'gpo-reference-substand';
+        serverStand.textContent = 'Server: 2019 v5.0.0 · 2022 v5.1.0 · 2025 v2.1.0';
+        card.appendChild(serverStand);
+      } else if (standard.requirements.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'gpo-reference-empty';
+        empty.textContent = 'Noch keine Anforderungen / Controls hinterlegt. Die gemeinsame Struktur ist vorbereitet; die fachliche Einbindung erfolgt in einem eigenen Schritt.';
+        card.appendChild(empty);
       }
 
       grid.appendChild(card);
     });
+
     renderMicrosoftBaselineStatus();
   }
 
-  // V5.2: CIS Windows Server – verifizierter Katalog + Erkennung vorhandener Server.
+    // V5.2: CIS Windows Server – verifizierter Katalog + Erkennung vorhandener Server.
   // Noch keine Compliance-Berechnung, kein Score und keine erfundenen Setting-Mappings.
 
 
