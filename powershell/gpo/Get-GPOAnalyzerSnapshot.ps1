@@ -57,7 +57,8 @@ try {
     exit 1
 }
 
-Write-Host "  Domaene: $($domain.DNSRoot)" -ForegroundColor Gray
+Write-Host "  Umgebung: $($domain.DNSRoot)" -ForegroundColor Gray
+Write-Host "  Domain:    $($domain.DNSRoot)" -ForegroundColor Gray
 Write-Host ""
 
 # ── Hilfsfunktionen: JSON-Ausgabe ────────────────────────────
@@ -658,9 +659,17 @@ try {
 }
 
 # ── 6) Metadaten ─────────────────────────────────────────────
+$collectedAt = Get-Date
+$forest = $null
+try { $forest = Get-ADForest -ErrorAction Stop } catch { $forest = $null }
+
 $metadata = [ordered]@{
+    # Umgebung: bewusst aus AD-Metadaten, nicht aus Kundendaten/Policy-Inhalten.
+    environmentName  = $domain.DNSRoot
     domain           = $domain.DNSRoot
-    collectedAt      = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ss')
+    domainNetBIOS    = $domain.NetBIOSName
+    forest           = if ($forest) { $forest.Name } else { $null }
+    collectedAt      = $collectedAt.ToString('yyyy-MM-ddTHH:mm:ss')
     collectedBy      = "$env:USERDOMAIN\$env:USERNAME"
     computerName     = $env:COMPUTERNAME
     gpoCount         = $gpoRecords.Count
