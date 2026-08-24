@@ -48,7 +48,7 @@ window.GpoParser = (function() {
       modified: g.modified,
       computerEnabled: !!g.computerConfigEnabled,
       userEnabled: !!g.userConfigEnabled,
-      settings: (g.settings || []).map(s => ({
+      settings: reconstructAccountPolicySettings(g.settings || []).map(s => ({
         key: s.category ? s.category + ' > ' + s.name : s.name,
         scope: s.scope,
         value: effectiveValue(s),
@@ -93,6 +93,46 @@ window.GpoParser = (function() {
   function effectiveValue(setting) {
     if (!setting.state || setting.state === 'Configured') return setting.value || '';
     return setting.value ? setting.state + ' (' + setting.value + ')' : setting.state;
+  }
+
+  const ACCOUNT_POLICIES_CATEGORY = 'Security Settings > Account Policies';
+
+  // Der Collector liefert jede Account-Policy als 3 aufeinanderfolgende
+  // Rohzeilen (Name / SettingNumber|SettingBoolean / Type) statt als ein
+  // einzelnes Setting - real geprueft an gpo-snapshot-2026-08-18.zip UND
+  // gpo-snapshot-2026-08-21.zip (identisches Rohformat in beiden). Ohne
+  // diese Rekonstruktion landet der rohe Feldname ("Name"/"SettingNumber"/
+  // "Type") statt des eigentlichen Policy-Namens im Setting-Key.
+  function reconstructAccountPolicySettings(rawSettings) {
+    const out = [];
+    for (let i = 0; i < rawSettings.length; i++) {
+      const s = rawSettings[i];
+      if (s.category !== ACCOUNT_POLICIES_CATEGORY || s.name !== 'Name') {
+        out.push(s);
+        continue;
+      }
+      const valueRow = rawSettings[i + 1];
+      const typeRow = rawSettings[i + 2];
+      if (!valueRow || !typeRow ||
+          valueRow.category !== ACCOUNT_POLICIES_CATEGORY ||
+          typeRow.category !== ACCOUNT_POLICIES_CATEGORY ||
+          typeRow.name !== 'Type' ||
+          (valueRow.name !== 'SettingNumber' && valueRow.name !== 'SettingBoolean')) {
+        // Unerwartetes Muster - Rohzeile unveraendert durchreichen statt
+        // stillschweigend zu verwerfen.
+        out.push(s);
+        continue;
+      }
+      out.push({
+        category: ACCOUNT_POLICIES_CATEGORY,
+        name: s.value,
+        scope: s.scope,
+        state: valueRow.state,
+        value: valueRow.value,
+      });
+      i += 2;
+    }
+    return out;
   }
 
   // Ein Eintrag pro (GPO, Ziel) statt eines Eintrags pro Ziel mit

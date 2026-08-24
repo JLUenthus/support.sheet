@@ -2143,9 +2143,10 @@ a.gpo-20sec-fact:hover { background:var(--panel2); text-decoration:none; }
   font-size: .76rem;
   line-height: 1.45;
   color: var(--muted);
+  overflow-wrap: anywhere;
 }
 @media (max-width: 900px) {
-  .gpo-cis-server-grid { grid-template-columns: 1fr; }
+  .gpo-cis-server-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* V5.2-C2 – CIS technical comparison */

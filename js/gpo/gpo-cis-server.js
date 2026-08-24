@@ -2316,6 +2316,7 @@ window.GpoCisServer = (function() {
           settingKey
         };
         recommendation.status = 'mapped';
+        recommendation.mappingStatus = 'exact-user-right';
         mappedRecommendations++;
         mappedNames.add(match[1]);
       });

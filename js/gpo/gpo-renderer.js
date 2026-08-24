@@ -584,7 +584,7 @@ window.GpoRenderer = (function() {
   // dem bestehenden Evidence-Index gespeist. Microsoft/CIS sind hier bewusst
   // nur als vorbereitete Standards registriert; ihre Regeln werden erst in
   // V5.1/V5.2 ergänzt. Keine neue Compliance-Berechnung, kein Score.
-  function renderReferenceEngine() {
+  async function renderReferenceEngine() {
     const grid = document.getElementById('gpo-reference-grid');
     if (!grid || !window.GpoReferenceEngine) return;
 
@@ -619,10 +619,10 @@ window.GpoRenderer = (function() {
     let cisWindows11Catalog = null;
     let cisServerCatalog = null;
     try {
-      cisWindows11Catalog = window.GpoCisWindows11?.getCatalog
-        ? window.GpoCisWindows11.getCatalog() : null;
-      cisServerCatalog = window.GpoCisServer?.getCatalog
-        ? window.GpoCisServer.getCatalog() : null;
+      cisWindows11Catalog = window.GpoCisWindows11?.load
+        ? await window.GpoCisWindows11.load() : null;
+      cisServerCatalog = window.GpoCisServer?.load
+        ? await window.GpoCisServer.load() : null;
     } catch (err) {
       // Die Referenzkarten bleiben auch ohne optionale CIS-Kataloge funktionsfähig.
     }
@@ -886,6 +886,7 @@ window.GpoRenderer = (function() {
       (benchmark.recommendations || []).forEach(rec => {
         if (rec.mappingStatus === 'exact-name' ||
             rec.mappingStatus === 'normalized-account-policy' ||
+            rec.mappingStatus === 'exact-user-right' ||
             rec.mappingStatus === 'cross-baseline-verified') return;
         const note = String(rec.mappingNote || rec.mappingEvidence || '').toLowerCase();
         const title = String(rec.title || '').toLowerCase();
