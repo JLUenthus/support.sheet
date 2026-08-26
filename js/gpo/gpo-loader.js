@@ -14,6 +14,7 @@ window.GpoLoader = (function() {
     'filters.json': 'filters',
     'wmi-filters.json': 'wmiFilters',
     'metadata.json': 'metadata',
+    'computers.json': 'computers',
   };
 
   function init() {

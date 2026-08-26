@@ -41,6 +41,52 @@
 </head>
 <body>
 
+  <!-- V5.3-Disclaimer: zentrales Hinweis-Modal beim Aufruf von gpo.html.
+       Bewusst NICHT ueber Klick ausserhalb oder Escape schliessbar (siehe
+       V5.3-DISCLAIMER-BERICHT.md) - einzig interaktives Element ist der
+       Bestaetigungs-Button, daher genuegt ein einfacher Tab-Trap auf genau
+       dieses Element. -->
+  <div id="gpo-disclaimer-overlay" class="gpo-disclaimer-overlay" role="dialog" aria-modal="true" aria-labelledby="gpo-disclaimer-title">
+    <div class="gpo-disclaimer-modal" id="gpo-disclaimer-modal">
+      <h2 class="gpo-disclaimer-modal-title" id="gpo-disclaimer-title">Hinweis zur Nutzung</h2>
+      <p class="gpo-disclaimer-modal-core">Dieses Tool unterstützt die technische Prüfung – es ersetzt keine fachliche Bewertung.</p>
+
+      <div class="gpo-disclaimer-modal-section">
+        <h3>Was das Tool kann</h3>
+        <ul>
+          <li>GPOs und Einstellungen technisch auswerten</li>
+          <li>Abweichungen und fehlende Zuordnungen aufzeigen</li>
+          <li>technische Evidenz und Referenzen anzeigen</li>
+          <li>die manuelle Prüfung unterstützen</li>
+        </ul>
+      </div>
+
+      <div class="gpo-disclaimer-modal-section gpo-disclaimer-modal-section--warn">
+        <h3>Wichtiger Hinweis</h3>
+        <p class="gpo-disclaimer-modal-core">Das Tool kann sich irren.</p>
+        <p>Nicht jede erkannte Abweichung bedeutet automatisch ein Problem. Fehlende Daten, unterschiedliche Datenstände oder nicht eindeutige Zuordnungen können das Ergebnis beeinflussen.</p>
+        <p>Ergebnisse müssen deshalb anhand der tatsächlichen Umgebung geprüft werden.</p>
+      </div>
+
+      <div class="gpo-disclaimer-modal-section">
+        <h3>Warum kein Score?</h3>
+        <p class="gpo-disclaimer-modal-core">Bewusst ohne pauschalen Compliance-Score.</p>
+        <p>Ein einzelner Score könnte ohne Kenntnis der konkreten Umgebung eine falsche Sicherheit vermitteln. Deshalb zeigt das Tool stattdessen Hinweise, Evidenz und Quellen.</p>
+      </div>
+
+      <div class="gpo-disclaimer-modal-section">
+        <h3>Referenzen</h3>
+        <ul class="gpo-disclaimer-modal-refs">
+          <li><strong>BSI</strong> → Anforderungen / Grundlage</li>
+          <li><strong>Microsoft</strong> → Baseline</li>
+          <li><strong>CIS</strong> → Benchmark / Empfehlungen</li>
+        </ul>
+      </div>
+
+      <button type="button" class="gpo-disclaimer-modal-btn" id="gpo-disclaimer-ack-btn">Ich habe verstanden</button>
+    </div>
+  </div>
+
   <!-- Wiederverwendet von windows.html/mitmachen.html fuer createCommandCard()
        (js/render.js) - Weiterfuehrende Diagnose bei Konflikt-/Hygiene-Findings. -->
   <template id="command-template">
@@ -157,6 +203,17 @@
           <div class="gpo-onboarding-expect-icon">📋</div>
           <div class="gpo-onboarding-expect-title">GPO-Detaildaten</div>
           <div class="gpo-onboarding-expect-desc">Zu jeder GPO stehen Verknüpfungen, Security-/WMI-Filter, Einstellungen und zugehörige Findings im Detail zur Verfügung.</div>
+        </div>
+        <div class="gpo-onboarding-expect-card gpo-onboarding-expect-card--roadmap">
+          <div class="gpo-onboarding-expect-icon">🗺️</div>
+          <div class="gpo-onboarding-expect-title">Roadmap</div>
+          <ul class="gpo-onboarding-expect-roadmap-list">
+            <li>✅ BSI / Microsoft / CIS-Referenzen</li>
+            <li>✅ Registry-/ADMX-Evidenz für Microsoft-Baseline-Import</li>
+            <li>🔜 V5.4 – GPO-Berechtigungen / Security Filtering</li>
+            <li>🔜 V5.5 – Vergleich zweier Snapshots</li>
+            <li>🔜 Planung von weiteren Fixen und Features</li>
+          </ul>
         </div>
       </div>
     </details>
@@ -422,6 +479,36 @@
               <div id="gpo-microsoft-baseline-compare-list" class="gpo-baseline-compare-list"></div>
             </div>
           </section>
+          <section class="gpo-baseline-compare" id="gpo-microsoft-baseline-registry-evidence" aria-labelledby="gpo-microsoft-baseline-registry-evidence-title">
+            <div class="gpo-baseline-compare-heading">
+              <div>
+                <div class="gpo-section-kicker">V5.3-D / Registry- und ADMX-Evidenz</div>
+                <h3 class="gpo-baseline-compare-title" id="gpo-microsoft-baseline-registry-evidence-title">Administrative Templates: technische Evidenz</h3>
+                <p class="gpo-reference-intro">Registry-Einträge aus der importierten Baseline (registry.pol) und ihre technische Zuordnung zu ADMX-Policies. Reine technische Evidenz zur manuellen Prüfung – keine Bewertung, kein Score, kein Vergleich mit dem Kunden-Snapshot. Der verfügbare ADMX-Referenzsatz ist nicht zwingend vollständig; insbesondere Central-Store- und Drittanbieter-Policies können fehlen.</p>
+              </div>
+            </div>
+            <div id="gpo-microsoft-baseline-registry-evidence-empty" class="gpo-baseline-compare-empty">Noch keine Microsoft-Baseline importiert.</div>
+            <div id="gpo-microsoft-baseline-registry-evidence-content" hidden>
+              <div id="gpo-microsoft-baseline-registry-evidence-summary" class="gpo-baseline-compare-summary"></div>
+              <div class="gpo-baseline-compare-toolbar">
+                <label>
+                  <span>Filter</span>
+                  <select id="gpo-microsoft-baseline-registry-evidence-filter">
+                    <option value="all">Alle</option>
+                    <option value="resolved">Eindeutig aufgelöst</option>
+                    <option value="missing">Nicht im ADMX-Satz gefunden</option>
+                    <option value="ambiguous">Mehrdeutig</option>
+                  </select>
+                </label>
+                <label class="gpo-baseline-compare-search-label">
+                  <span>Registry/GPO suchen</span>
+                  <input id="gpo-microsoft-baseline-registry-evidence-search" type="search" placeholder="Registry-Key, Value oder GPO-Name">
+                </label>
+                <span id="gpo-microsoft-baseline-registry-evidence-result-count" class="gpo-filter-result-count"></span>
+              </div>
+              <div id="gpo-microsoft-baseline-registry-evidence-list" class="gpo-baseline-compare-list"></div>
+            </div>
+          </section>
           <div class="gpo-reference-grid" id="gpo-reference-grid"></div>
           <section class="gpo-cis-server-panel" id="gpo-cis-server-panel" aria-labelledby="gpo-cis-server-title">
             <div class="gpo-section-kicker">V5.2 / Server-Benchmarks</div>
@@ -653,6 +740,7 @@
   <script src="js/recent.js"></script>
   <script src="js/favorites.js"></script>
   <script src="js/render.js"></script>
+  <script src="js/gpo/gpo-disclaimer.js"></script>
   <script src="js/gpo/gpo-parser.js"></script>
   <script src="js/gpo/gpo-rules.js"></script>
   <script src="js/gpo/gpo-analyzer.js"></script>
@@ -660,10 +748,11 @@
   <script src="js/gpo/gpo-xml-utils.js"></script>
   <script src="js/gpo/gpo-rsop.js"></script>
   <script src="js/gpo/gpo-reference-engine.js"></script>
+  <script src="js/gpo/gpo-registry-pol.js"></script>
+  <script src="js/gpo/gpo-admx-resolver.js"></script>
   <script src="js/gpo/gpo-baseline-import.js"></script>
   <script src="js/gpo/gpo-cis-server.js"></script>
   <script src="js/gpo/gpo-cis-windows11.js"></script>
-  <script src="js/gpo/gpo-cis-localization.js"></script>
           <script src="js/gpo/gpo-renderer.js"></script>
   <script src="js/gpo/gpo-loader.js"></script>
   <script>

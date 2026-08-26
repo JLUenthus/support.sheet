@@ -132,6 +132,72 @@
 .gpo-onboarding-expect-icon { font-size: 1.3rem; margin-bottom: 6px; }
 .gpo-onboarding-expect-title { font-size: .86rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
 .gpo-onboarding-expect-desc { font-size: .78rem; color: var(--muted); line-height: 1.5; }
+.gpo-onboarding-expect-roadmap-list { list-style: none; margin: 0; padding: 0; font-size: .78rem; color: var(--muted); line-height: 1.6; }
+.gpo-onboarding-expect-roadmap-list li { white-space: normal; }
+
+/* ── V5.3-Disclaimer: zentrales Hinweis-Modal (gpo-disclaimer.js) ── */
+.gpo-disclaimer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: rgba(0, 0, 0, .65);
+  backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.gpo-disclaimer-overlay--open { display: flex; }
+body.gpo-disclaimer-open { overflow: hidden; }
+.gpo-disclaimer-modal {
+  background: var(--panel);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-lg);
+  width: 100%;
+  max-width: 640px;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 22px 26px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .4);
+}
+.gpo-disclaimer-modal-title { font-size: 1.05rem; font-weight: 800; color: var(--text); margin: 0 0 12px; }
+.gpo-disclaimer-modal-core {
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--accent-bg);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  padding: 9px 12px;
+  margin: 0 0 14px;
+  line-height: 1.5;
+}
+.gpo-disclaimer-modal-section { margin-bottom: 14px; }
+.gpo-disclaimer-modal-section h3 { font-size: .74rem; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); margin: 0 0 6px; }
+.gpo-disclaimer-modal-section p { font-size: .78rem; color: var(--muted); line-height: 1.55; margin: 0 0 6px; }
+.gpo-disclaimer-modal-section ul { margin: 0; padding-left: 18px; font-size: .78rem; color: var(--muted); line-height: 1.6; }
+.gpo-disclaimer-modal-section--warn .gpo-disclaimer-modal-core { border-left-color: var(--amber); background: rgba(240, 173, 78, .12); }
+.gpo-disclaimer-modal-refs { list-style: none; padding: 0; }
+.gpo-disclaimer-modal-refs li { padding: 3px 0; }
+.gpo-disclaimer-modal-btn {
+  display: block;
+  width: 100%;
+  min-height: 42px;
+  margin-top: 4px;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.gpo-disclaimer-modal-btn:hover { filter: brightness(1.08); }
+.gpo-disclaimer-modal-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 640px) {
+  .gpo-disclaimer-overlay { padding: 12px; align-items: flex-start; }
+  .gpo-disclaimer-modal { max-height: 92vh; padding: 16px 18px; margin-top: 12px; }
+}
 
 /* Details/Summary statt eigener JS-Toggle-Logik - "Was dich erwartet" und
    "BSI-Grundlage" sind standardmaessig offen (erster Eindruck), aber vom
@@ -2069,6 +2135,14 @@ a.gpo-20sec-fact:hover { background:var(--panel2); text-decoration:none; }
 .gpo-baseline-compare-badge--deviation { color:var(--red); }
 .gpo-baseline-compare-badge--not_comparable { color:var(--amber); }
 .gpo-baseline-compare-badge--match { color:var(--accent); }
+.gpo-baseline-compare-stat--resolved strong { color: var(--accent); }
+.gpo-baseline-compare-stat--ambiguous strong { color: var(--amber); }
+.gpo-baseline-compare-row--resolved { box-shadow: inset 3px 0 0 var(--accent); }
+.gpo-baseline-compare-row--ambiguous { box-shadow: inset 3px 0 0 var(--amber); }
+.gpo-baseline-compare-row--error { box-shadow: inset 3px 0 0 var(--red); }
+.gpo-baseline-compare-badge--resolved { color:var(--accent); }
+.gpo-baseline-compare-badge--ambiguous { color:var(--amber); }
+.gpo-baseline-compare-badge--error { color:var(--red); }
 .gpo-baseline-compare-setting { font-family:var(--font-mono); font-size:.72rem; color:var(--text); line-height:1.5; word-break:break-word; }
 .gpo-baseline-compare-values { display:grid; grid-template-columns:1fr 1fr; gap:1px; margin-top:9px; background:var(--border); }
 .gpo-baseline-compare-values > div { padding:8px 10px; background:var(--panel2); min-width:0; }

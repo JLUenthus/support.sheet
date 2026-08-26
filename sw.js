@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260821-cis-v52c5-win11cis';
+const CACHE_VERSION = '20260826-v53-disclaimer';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -110,6 +110,7 @@ const ASSETS = [
   './powershell/gpo/Get-GPOAnalyzerSnapshot.ps1',
   './gpo.html',
   './css/gpo/gpo.css',
+  './js/gpo/gpo-disclaimer.js',
   './js/gpo/gpo-loader.js',
   './js/gpo/gpo-parser.js',
   './js/gpo/gpo-analyzer.js',
@@ -117,6 +118,8 @@ const ASSETS = [
   './js/gpo/gpo-xml-utils.js',
   './js/gpo/gpo-rsop.js',
   './js/gpo/gpo-reference-engine.js',
+  './js/gpo/gpo-registry-pol.js',
+  './js/gpo/gpo-admx-resolver.js',
   './js/gpo/gpo-baseline-import.js',
   './js/gpo/gpo-cis-server.js',
   './js/gpo/gpo-cis-windows11.js',
@@ -124,6 +127,8 @@ const ASSETS = [
   './js/gpo/gpo-renderer.js',
   './data/gpo/rules.json',
   './data/gpo/cis-server-baselines.json',
+  './data/gpo/admx-index.json',
+  './data/gpo/admx-display-de-DE.json',
 ];
 
 // ── INSTALL: Cache alle eigenen Assets ───────────────────

@@ -294,6 +294,7 @@ window.GpoRenderer = (function() {
     renderCisServerCatalog();
     renderCisWindows11Catalog();
     renderMicrosoftBaselineComparison();
+    renderMicrosoftBaselineRegistryEvidence();
     renderOverviewSummary();
     renderIntegrityPanel();
     renderEnvironmentHeader();
@@ -1115,17 +1116,6 @@ window.GpoRenderer = (function() {
   }
 
 
-  function cisWindows11MappingState(rec, snapshotKeys, locale) {
-    const key = Array.isArray(rec?.settingKeys) && rec.settingKeys.length === 1 ? rec.settingKeys[0] : null;
-    if (!key) return { state: 'unresolved', snapshotKey: null };
-    if (window.GpoCisLocalization && window.GpoCisLocalization.isLocaleSensitive(rec.mappingStatus)) {
-      return window.GpoCisLocalization.resolve(key, snapshotKeys, locale);
-    }
-    return window.GpoCisLocalization
-      ? window.GpoCisLocalization.resolve(key, snapshotKeys, locale)
-      : { state: snapshotKeys.includes(key) ? 'exact' : 'unresolved', snapshotKey: snapshotKeys.includes(key) ? key : null };
-  }
-
   async function renderCisWindows11Catalog() {
     const grid = document.getElementById('gpo-cis-windows-grid');
     const status = document.getElementById('gpo-cis-windows-status');
@@ -1312,6 +1302,222 @@ window.GpoRenderer = (function() {
       if (filtered.length > cap) { const more = document.createElement('div'); more.className = 'gpo-baseline-compare-more'; more.textContent = 'Weitere ' + (filtered.length - cap) + ' Einträge über Filter/Suche eingrenzen.'; listEl.appendChild(more); }
       if (!filtered.length) { const none = document.createElement('div'); none.className = 'gpo-baseline-compare-empty'; none.textContent = 'Keine Einträge für diese Auswahl.'; listEl.appendChild(none); }
       if (countEl) countEl.textContent = filtered.length + ' von ' + comparison.results.length + ' Einträgen';
+    };
+    renderList();
+    if (filterEl && !filterEl.dataset.bound) { filterEl.dataset.bound = '1'; filterEl.addEventListener('change', renderList); }
+    if (searchEl && !searchEl.dataset.bound) { searchEl.dataset.bound = '1'; searchEl.addEventListener('input', renderList); }
+  }
+
+  // V5.3-D: Registry-/ADMX-Evidenz fuer die bereits importierte Microsoft-
+  // Baseline. Rein additiv zur bestehenden Vergleichslogik oben
+  // (collectMicrosoftBaselineComparison/renderMicrosoftBaselineComparison
+  // bleiben unveraendert) - hier wird nichts verglichen und nichts bewertet,
+  // nur die technische Herkunft (registry.pol) und die technische ADMX-
+  // Zuordnung (resolved/missing/ambiguous, siehe gpo-admx-resolver.js)
+  // sichtbar gemacht. CIS-Bezug ist ein reiner Key/ValueName-Abgleich gegen
+  // die bestehende CIS-registryEvidence - mappingStatus/mappingType bleiben
+  // dabei unangetastet (siehe gpo-cis-windows11.js).
+  function buildCisRegistryEvidenceIndex(cisCatalog) {
+    const index = new Map();
+    (cisCatalog && cisCatalog.benchmarks || []).forEach(b => {
+      (b.recommendations || []).forEach(r => {
+        const ev = r.registryEvidence;
+        if (!ev || !ev.key || !ev.valueName || !window.GpoAdmxResolver) return;
+        const nk = window.GpoAdmxResolver.normalizeRegistryKey(ev.key);
+        const k = nk + '|' + ev.valueName;
+        if (!index.has(k)) index.set(k, []);
+        index.get(k).push({ id: r.requirementNumber, title: r.title, benchmarkId: b.id });
+      });
+    });
+    return index;
+  }
+
+  async function collectMicrosoftBaselineRegistryEvidence() {
+    const state = window.GpoBaselineImporter && window.GpoBaselineImporter.getState
+      ? window.GpoBaselineImporter.getState() : null;
+    if (!state || state.status !== 'loaded') return null;
+    const evidence = state.registryEvidence || [];
+
+    let cisIndex = null;
+    try {
+      const cisCatalog = window.GpoCisWindows11 && window.GpoCisWindows11.load
+        ? await window.GpoCisWindows11.load() : null;
+      if (cisCatalog) cisIndex = buildCisRegistryEvidenceIndex(cisCatalog);
+    } catch (err) {
+      // CIS-Katalog ist fuer diese Anzeige rein zusaetzlich, kein harter Fehler.
+    }
+
+    const rows = evidence.map(e => {
+      let cisMatches = [];
+      if (cisIndex && !e.error && window.GpoAdmxResolver) {
+        const nk = window.GpoAdmxResolver.normalizeRegistryKey(e.key);
+        cisMatches = cisIndex.get(nk + '|' + e.valueName) || [];
+      }
+      return { ...e, cisMatches };
+    });
+
+    const summary = { total: rows.length, resolved: 0, missing: 0, ambiguous: 0, unavailable: 0, error: 0, machine: 0, user: 0 };
+    rows.forEach(r => {
+      if (r.error) { summary.error++; return; }
+      if (r.scope === 'Machine') summary.machine++;
+      else if (r.scope === 'User') summary.user++;
+      const status = r.admx ? r.admx.status : 'unavailable';
+      if (summary[status] !== undefined) summary[status]++;
+    });
+
+    return { rows, summary, admxIndexError: state.admxIndexError };
+  }
+
+  const REGISTRY_EVIDENCE_STATUS_LABEL = {
+    resolved: 'Eindeutig aufgelöst',
+    missing: 'Nicht im ADMX-Satz gefunden',
+    ambiguous: 'Mehrdeutig',
+    unavailable: 'ADMX-Auflösung nicht verfügbar',
+    error: 'registry.pol-Fehler',
+  };
+
+  function formatRegistryEvidenceValue(r) {
+    if (r.valueNameClass === 'special-marker') return '(Löschmarker: ' + r.valueName + ')';
+    if (r.data === null || r.data === undefined) return '(kein Wert, Typ ' + r.typeName + ')';
+    if (Array.isArray(r.data)) return r.data.join(', ');
+    return String(r.data) + '  [' + r.typeName + ']';
+  }
+
+  function makeValuePair(label, value) {
+    const cell = document.createElement('div');
+    const span = document.createElement('span'); span.textContent = label;
+    const strong = document.createElement('strong'); strong.textContent = value;
+    cell.append(span, strong);
+    return cell;
+  }
+
+  function buildRegistryEvidenceRow(r) {
+    const status = r.error ? 'error' : (r.admx ? r.admx.status : 'unavailable');
+    const article = document.createElement('article');
+    article.className = 'gpo-baseline-compare-row gpo-baseline-compare-row--' + status;
+
+    const top = document.createElement('div'); top.className = 'gpo-baseline-compare-row-top';
+    const badge = document.createElement('span'); badge.className = 'gpo-baseline-compare-badge gpo-baseline-compare-badge--' + status;
+    badge.textContent = REGISTRY_EVIDENCE_STATUS_LABEL[status] || status;
+    const scope = document.createElement('span'); scope.className = 'gpo-reference-meta'; scope.textContent = r.scope || 'Scope unbekannt';
+    top.append(badge, scope); article.appendChild(top);
+
+    const kicker = document.createElement('div'); kicker.className = 'gpo-baseline-compare-meta'; kicker.textContent = 'Administrative Template'; article.appendChild(kicker);
+
+    if (r.error) {
+      const err = document.createElement('div'); err.className = 'gpo-baseline-status-message gpo-baseline-status-message--error'; err.textContent = r.error; article.appendChild(err);
+      const meta = document.createElement('div'); meta.className = 'gpo-baseline-compare-meta'; meta.textContent = 'GPO: ' + (r.gpoName || 'unbekannt') + ' · Quelle: ' + (r.sourceFile || 'registry.pol'); article.appendChild(meta);
+      return article;
+    }
+
+    const title = document.createElement('div'); title.className = 'gpo-baseline-compare-setting';
+    title.textContent = (r.admx && r.admx.status === 'resolved' && r.admx.display && r.admx.display.displayName) || (r.admx && r.admx.status === 'resolved' && r.admx.policy.name) || r.valueName;
+    article.appendChild(title);
+
+    const regValues = document.createElement('div'); regValues.className = 'gpo-baseline-compare-values';
+    regValues.append(makeValuePair('Registry', r.key), makeValuePair('Value', r.valueName + ' = ' + formatRegistryEvidenceValue(r)));
+    article.appendChild(regValues);
+
+    const admxValues = document.createElement('div'); admxValues.className = 'gpo-baseline-compare-values';
+    if (status === 'resolved') {
+      admxValues.append(makeValuePair('ADMX', r.admx.policy.name), makeValuePair('Source', r.admx.policy.admxFile));
+    } else if (status === 'missing') {
+      admxValues.append(makeValuePair('ADMX', 'Nicht im verfügbaren ADMX-Satz gefunden'), makeValuePair('Hinweis', 'Die technische Registry-Evidenz ist vorhanden. Die ADMX-Auflösung konnte nicht durchgeführt werden.'));
+    } else if (status === 'ambiguous') {
+      admxValues.append(makeValuePair('ADMX', 'Mehrere passende Policies gefunden'), makeValuePair('Hinweis', 'Keine eindeutige technische Zuordnung vorgenommen.'));
+    } else {
+      admxValues.append(makeValuePair('ADMX', 'Auflösung nicht verfügbar'), makeValuePair('Hinweis', (r.admx && r.admx.reason) || 'ADMX-Referenzindex konnte nicht geladen werden.'));
+    }
+    article.appendChild(admxValues);
+
+    const statusValues = document.createElement('div'); statusValues.className = 'gpo-baseline-compare-values';
+    statusValues.append(makeValuePair('Status', REGISTRY_EVIDENCE_STATUS_LABEL[status] || status));
+    article.appendChild(statusValues);
+
+    if (status === 'resolved' && r.admx.display && r.admx.display.explainText) {
+      const explain = document.createElement('div'); explain.className = 'gpo-baseline-compare-meta'; explain.textContent = 'ADML-Erläuterung: ' + r.admx.display.explainText;
+      article.appendChild(explain);
+    }
+    if (status === 'resolved' && r.admx.matchType === 'list-element') {
+      const hint = document.createElement('div'); hint.className = 'gpo-baseline-compare-meta'; hint.textContent = 'Zuordnung erfolgte über ein Listen-/Multi-Text-Element der ADMX-Policy (kein einzelner Skalarwert).';
+      article.appendChild(hint);
+    }
+
+    if (r.cisMatches && r.cisMatches.length) {
+      const cis = document.createElement('div'); cis.className = 'gpo-baseline-compare-meta';
+      cis.textContent = 'CIS-Bezug (technischer Registry-Match, keine Bewertung): ' + r.cisMatches.map(m => m.id + ' ' + m.title).join(' · ');
+      article.appendChild(cis);
+    }
+
+    const source = document.createElement('div'); source.className = 'gpo-baseline-compare-meta';
+    source.textContent = 'GPO: ' + (r.gpoName || 'unbekannt') + ' · Quelle: registry.pol (' + r.scope + ')';
+    article.appendChild(source);
+
+    return article;
+  }
+
+  async function renderMicrosoftBaselineRegistryEvidence() {
+    const empty = document.getElementById('gpo-microsoft-baseline-registry-evidence-empty');
+    const content = document.getElementById('gpo-microsoft-baseline-registry-evidence-content');
+    const summaryEl = document.getElementById('gpo-microsoft-baseline-registry-evidence-summary');
+    const listEl = document.getElementById('gpo-microsoft-baseline-registry-evidence-list');
+    const filterEl = document.getElementById('gpo-microsoft-baseline-registry-evidence-filter');
+    const searchEl = document.getElementById('gpo-microsoft-baseline-registry-evidence-search');
+    const countEl = document.getElementById('gpo-microsoft-baseline-registry-evidence-result-count');
+    if (!empty || !content || !summaryEl || !listEl) return;
+
+    const data = await collectMicrosoftBaselineRegistryEvidence();
+    if (!data || !data.rows.length) {
+      empty.hidden = false;
+      content.hidden = true;
+      if (data) empty.textContent = 'Die importierte Baseline enthält keine registry.pol-Dateien (Administrative Templates ohne Registry-Evidenz in diesem Import).';
+      return;
+    }
+    empty.hidden = true;
+    content.hidden = false;
+
+    const s = data.summary;
+    summaryEl.replaceChildren();
+    [
+      ['Registry-Einträge', s.total, 'total'],
+      ['Eindeutig aufgelöst', s.resolved, 'resolved'],
+      ['Nicht im ADMX-Satz gefunden', s.missing, 'missing'],
+      ['Mehrdeutig', s.ambiguous, 'ambiguous'],
+      ['Machine', s.machine, 'total'],
+      ['User', s.user, 'total'],
+    ].forEach(([label, value, kind]) => {
+      const item = document.createElement('div');
+      item.className = 'gpo-baseline-compare-stat gpo-baseline-compare-stat--' + kind;
+      const valueEl = document.createElement('strong'); valueEl.textContent = String(value);
+      const labelEl = document.createElement('span'); labelEl.textContent = label;
+      item.append(valueEl, labelEl); summaryEl.appendChild(item);
+    });
+
+    const oldNote = summaryEl.parentElement.querySelector('.gpo-baseline-registry-evidence-note');
+    if (oldNote) oldNote.remove();
+    let noteText = 'Der verfügbare ADMX-Referenzsatz basiert auf Standard-Windows-ADMX-Dateien. Central-Store- und Drittanbieter-Policies können darin fehlen; „nicht im ADMX-Satz gefunden" bedeutet ausschließlich „im verfügbaren ADMX-Satz nicht gefunden", nicht „Policy existiert nicht" oder „GPO fehlerhaft".';
+    if (s.error) noteText += ' ' + s.error + ' registry.pol-Datei(en) konnten nicht gelesen werden (siehe Einträge unten).';
+    if (data.admxIndexError) noteText = data.admxIndexError + ' Es konnte keine ADMX-Auflösung durchgeführt werden; die technische Registry-Evidenz selbst bleibt unten sichtbar.';
+    const note = document.createElement('div');
+    note.className = 'gpo-baseline-compare-note gpo-baseline-registry-evidence-note';
+    note.textContent = noteText;
+    summaryEl.parentElement.insertBefore(note, summaryEl.nextSibling);
+
+    const renderList = () => {
+      const filter = filterEl ? filterEl.value : 'all';
+      const query = searchEl ? searchEl.value.trim().toLowerCase() : '';
+      const filtered = data.rows.filter(r => {
+        const status = r.error ? 'error' : (r.admx ? r.admx.status : 'unavailable');
+        if (filter !== 'all' && status !== filter) return false;
+        if (!query) return true;
+        return [r.key, r.valueName, r.gpoName, r.admx && r.admx.policy && r.admx.policy.name, r.admx && r.admx.display && r.admx.display.displayName].filter(Boolean).join(' ').toLowerCase().includes(query);
+      });
+      listEl.replaceChildren();
+      const cap = 20;
+      filtered.slice(0, cap).forEach(r => listEl.appendChild(buildRegistryEvidenceRow(r)));
+      if (filtered.length > cap) { const more = document.createElement('div'); more.className = 'gpo-baseline-compare-more'; more.textContent = 'Weitere ' + (filtered.length - cap) + ' Einträge über Filter/Suche eingrenzen.'; listEl.appendChild(more); }
+      if (!filtered.length) { const none = document.createElement('div'); none.className = 'gpo-baseline-compare-empty'; none.textContent = 'Keine Einträge für diese Auswahl.'; listEl.appendChild(none); }
+      if (countEl) countEl.textContent = filtered.length + ' von ' + data.rows.length + ' Einträgen';
     };
     renderList();
     if (filterEl && !filterEl.dataset.bound) { filterEl.dataset.bound = '1'; filterEl.addEventListener('change', renderList); }
@@ -5390,6 +5596,7 @@ window.GpoRenderer = (function() {
   document.addEventListener('gpo-baseline-loaded', () => {
     renderMicrosoftBaselineStatus();
     renderMicrosoftBaselineComparison();
+    renderMicrosoftBaselineRegistryEvidence();
   });
 
   const BSI_COMPLIANCE_LABELS = { erfuellt: 'Erfüllt', nicht_erfuellt: 'Nicht erfüllt', pruefen: 'Prüfen' };

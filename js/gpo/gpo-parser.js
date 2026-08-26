@@ -23,6 +23,12 @@ window.GpoParser = (function() {
     // Abschnitt 8: eine fehlende Links-Datei darf nicht als
     // "alle GPOs unverknuepft" interpretiert werden.
     const linksFileMissing = raw.links === undefined;
+    // computers.json ist optional (nicht jeder Snapshot enthaelt sie) - wie
+    // bei linksFileMissing unterscheidet dies "Datei fehlt komplett" von
+    // "Datei vorhanden, aber leer" fuer die BSI-Computer-Coverage und die
+    // CIS-Server-Erkennung (gpo-renderer.js/bsi-mapping.js/gpo-cis-server.js).
+    const computersFileMissing = raw.computers === undefined;
+    const computers = (raw.computers || []).map(classifyComputer);
 
     const links = flattenLinks(rawLinks);
 
@@ -80,7 +86,34 @@ window.GpoParser = (function() {
 
     const ouTree = buildOuTree(rawLinks, links);
 
-    return { gpos, links, ouTree, metadata, dataQuality: { linksFileMissing } };
+    return { gpos, links, ouTree, metadata, computers, dataQuality: { linksFileMissing, computersFileMissing } };
+  }
+
+  // Klassifiziert ein rohes computers.json-Element in genau die Kategorie,
+  // die bsi-mapping.js (evaluateComputerCoverage(), V3.5.1) und
+  // gpo-cis-server.js (detectServers()) erwarten - beide lesen
+  // ausschliesslich computer.category (domain_controllers/member_servers/
+  // clients/unknown) und computer.operatingSystem. isDomainController ist
+  // im Collector-Rohformat bereits vorhanden und eindeutig; ohne erkennbares
+  // Windows-Server/-Client-Betriebssystem (z.B. Azure-AD-SSO-Computerkonten
+  // ohne operatingSystem) bleibt der Computer "unknown" statt geraten
+  // zugeordnet zu werden.
+  function classifyComputer(c) {
+    const os = c.operatingSystem || '';
+    let category = 'unknown';
+    if (c.isDomainController) category = 'domain_controllers';
+    else if (/server/i.test(os)) category = 'member_servers';
+    else if (/iot|embedded/i.test(os)) category = 'unknown';
+    else if (/windows/i.test(os)) category = 'clients';
+    return {
+      distinguishedName: c.distinguishedName,
+      category,
+      operatingSystem: c.operatingSystem,
+      operatingSystemVersion: c.operatingSystemVersion,
+      enabled: !!c.enabled,
+      isDomainController: !!c.isDomainController,
+      isReadOnlyDomainController: !!c.isReadOnlyDomainController,
+    };
   }
 
   // Fuer reine Enabled/Disabled-Policies ohne zusaetzlichen Parameter ist
