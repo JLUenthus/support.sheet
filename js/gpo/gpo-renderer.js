@@ -200,6 +200,141 @@ window.GpoRenderer = (function() {
     }).format(d);
   }
 
+  // V5.3-E: zentrale, einzige Quelle fuer die vom Analyzer aktuell
+  // unterstuetzte Collector-Version - real aus $ScriptVersion in
+  // powershell/gpo/Get-GPOAnalyzerSnapshot.ps1 uebernommen (siehe
+  // V5.3-METADATA-BERICHT.md Abschnitt 2/3). Bezeichnet die Version, mit
+  // der ein Snapshot ERZEUGT wurde, NICHT die Version dieser Analyzer-Seite.
+  const CURRENT_COLLECTOR_VERSION = '1.1';
+
+  // Real verifiziert (siehe BSI_REQUIREMENT_INFO unten: alle 3 sourceUrl
+  // referenzieren "Edition_2023" desselben IT-Grundschutz-Kompendiums) -
+  // kein erfundener Stand, aber ein statischer Wert, der bei einer
+  // spaeteren BSI-Quellen-Aktualisierung manuell nachgezogen werden muss.
+  const BSI_REFERENCE_STAND = 'BSI IT-Grundschutz-Kompendium · Edition 2023';
+
+  // Real verifiziert (siehe V5.3-METADATA-BERICHT.md Abschnitt 11): Herkunft
+  // von data/gpo/admx-index.json und data/gpo/admx-display-de-DE.json aus
+  // V5.3-D - lokale ADMX/ADML-Dateien von genau dieser Maschine
+  // (Get-CimInstance Win32_OperatingSystem: Windows 11 Enterprise, Build
+  // 26200), generiert am 26.08.2026. Statischer Wert, kein automatisch
+  // neu ermittelter Stand - wird bei einer Neugenerierung des Index nicht
+  // automatisch aktualisiert (siehe Bericht, offener Punkt).
+  const ADMX_REFERENCE_STAND = 'Windows 11 Enterprise, Build 26200 · Stand 26.08.2026';
+
+  // Segmentweise numerischer Versionsvergleich (Auftrag Abschnitt 5, bewusst
+  // ohne zusaetzliche Bibliothek): "1.9" < "1.10", da 9 < 10 als Zahlen
+  // verglichen werden, nicht als String. Liefert null, wenn irgendein
+  // Segment nicht numerisch ist - das macht "Version nicht eindeutig
+  // ermittelbar" (statt eines falschen Vergleichsergebnisses) explizit.
+  function parseVersionSegments(v) {
+    if (v === null || v === undefined) return null;
+    const str = String(v).trim();
+    if (!str) return null;
+    const nums = str.split('.').map(p => Number(p));
+    if (!nums.length || nums.some(n => !Number.isFinite(n))) return null;
+    return nums;
+  }
+  function compareVersionSegments(a, b) {
+    const len = Math.max(a.length, b.length);
+    for (let i = 0; i < len; i++) {
+      const na = a[i] !== undefined ? a[i] : 0;
+      const nb = b[i] !== undefined ? b[i] : 0;
+      if (na !== nb) return na < nb ? -1 : 1;
+    }
+    return 0;
+  }
+  // Ampellogik exakt nach Auftrag Abschnitt 4/13: gruen = exakt aktuell,
+  // gelb = aelter (ausdruecklich kein Fehler/Compliance-Aussage), alles
+  // andere (fehlend/nicht parsebar/neuer als unterstuetzt) = neutral, da
+  // dafuer keine geprüfte Kompatibilitätsaussage getroffen werden darf.
+  function resolveCollectorFreshness(snapshotVersion) {
+    const segSnapshot = parseVersionSegments(snapshotVersion);
+    const segCurrent = parseVersionSegments(CURRENT_COLLECTOR_VERSION);
+    if (!snapshotVersion || !segSnapshot || !segCurrent) {
+      return { status: 'unknown', text: 'Collector-Version nicht eindeutig ermittelbar.' };
+    }
+    const cmp = compareVersionSegments(segSnapshot, segCurrent);
+    if (cmp === 0) return { status: 'current', text: snapshotVersion + ' · aktuell' };
+    if (cmp < 0) return { status: 'older', text: snapshotVersion + ' · ältere Version' };
+    return { status: 'unknown', text: snapshotVersion + ' · neuer als unterstützt', hint: 'Snapshot wurde mit einer neueren Collector-Version erzeugt.' };
+  }
+
+  // "baseline" ist der einzige bekannte, uninformative Fallback-Wert fuer
+  // baselineVersion (siehe gpo-baseline-import.js: baselineVersion ist der
+  // ZIP-Dateiname ohne Endung - bei einer Datei namens "baseline.zip" bleibt
+  // davon nur "baseline" uebrig). Kein generischer Heuristik-Filter, nur
+  // dieser eine dokumentierte Fall (Auftrag Abschnitt 7).
+  function isGenericBaselineVersion(v) {
+    if (!v) return true;
+    return String(v).trim().toLowerCase() === 'baseline';
+  }
+
+  function buildFactItem(labelText, value, extraClass) {
+    if (!value) return null;
+    const item = document.createElement('span');
+    item.className = 'gpo-environment-fact';
+    const label = document.createElement('span');
+    label.className = 'gpo-environment-fact-label';
+    label.textContent = labelText;
+    const val = document.createElement('span');
+    val.className = 'gpo-environment-fact-value' + (extraClass ? ' ' + extraClass : '');
+    val.textContent = value;
+    item.append(label, val);
+    return item;
+  }
+
+  // V5.3-E: Datenstand-/Referenzanzeige. Rein additiv zur bestehenden
+  // Snapshot-Identitaet (Name/Gesammelt/Forest/NetBIOS) oben - siehe
+  // V5.3-METADATA-BERICHT.md. Trennt bewusst zwei Datenquellen (Auftrag
+  // Abschnitt 0/14): SYSVOL-Status bezieht sich ausschliesslich auf den
+  // Kunden-Collector (statischer, bekannter Funktionsumfang - hier NICHT
+  // aus V5.3-D-Registry-/ADMX-Evidenz abgeleitet), Microsoft/ADMX-Stand
+  // bezieht sich ausschliesslich auf den getrennten Baseline-Import-Pfad.
+  async function renderEnvironmentReferences() {
+    const container = document.getElementById('gpo-environment-references');
+    if (!container) return;
+    container.replaceChildren();
+
+    const grid = document.createElement('div');
+    grid.className = 'gpo-environment-references-grid';
+
+    grid.appendChild(buildFactItem('BSI', BSI_REFERENCE_STAND));
+
+    const baselineState = window.GpoBaselineImporter && window.GpoBaselineImporter.getState
+      ? window.GpoBaselineImporter.getState() : null;
+    let msValue = 'Noch keine Baseline importiert';
+    if (baselineState && baselineState.status === 'loaded') {
+      msValue = isGenericBaselineVersion(baselineState.baselineVersion)
+        ? 'Stand nicht eindeutig verfügbar'
+        : baselineState.baselineVersion;
+    }
+    grid.appendChild(buildFactItem('Microsoft', msValue));
+
+    try {
+      const cisCatalog = window.GpoCisWindows11 && window.GpoCisWindows11.load
+        ? await window.GpoCisWindows11.load() : null;
+      const benchmark = cisCatalog && (cisCatalog.benchmarks || [])[0];
+      if (benchmark && benchmark.platform && benchmark.version) {
+        grid.appendChild(buildFactItem('CIS', benchmark.platform + ' Benchmark ' + benchmark.version));
+      }
+    } catch (err) {
+      // CIS-Katalog ist fuer diese Anzeige rein zusaetzlich, kein harter Fehler.
+    }
+
+    grid.appendChild(buildFactItem('ADMX', ADMX_REFERENCE_STAND));
+
+    const sysvolItem = buildFactItem('SYSVOL', 'nicht erfasst', 'gpo-environment-fact-value--neutral');
+    if (sysvolItem) grid.appendChild(sysvolItem);
+
+    container.appendChild(grid);
+
+    const note = document.createElement('div');
+    note.className = 'gpo-environment-note';
+    note.textContent = 'Der aktuelle Kunden-Collector erfasst SYSVOL/registry.pol noch nicht. Registry-/ADMX-Evidenz oben (falls vorhanden) stammt ausschließlich aus einem separat importierten Microsoft-Baseline-Paket, nicht aus diesem Kunden-Snapshot.';
+    container.appendChild(note);
+  }
+
   function renderEnvironmentHeader() {
     const el = document.getElementById('gpo-environment-header');
     if (!el) return;
@@ -224,6 +359,9 @@ window.GpoRenderer = (function() {
 
     el.hidden = false;
 
+    const top = document.createElement('div');
+    top.className = 'gpo-environment-top';
+
     const identity = document.createElement('div');
     identity.className = 'gpo-environment-identity';
 
@@ -240,29 +378,25 @@ window.GpoRenderer = (function() {
     const facts = document.createElement('div');
     facts.className = 'gpo-environment-facts';
 
-    const addFact = (labelText, value) => {
-      if (!value) return;
-      const item = document.createElement('span');
-      item.className = 'gpo-environment-fact';
-
-      const label = document.createElement('span');
-      label.className = 'gpo-environment-fact-label';
-      label.textContent = labelText;
-
-      const val = document.createElement('span');
-      val.className = 'gpo-environment-fact-value';
-      val.textContent = value;
-
-      item.append(label, val);
-      facts.appendChild(item);
+    const addFact = (labelText, value, extraClass) => {
+      const item = buildFactItem(labelText, value, extraClass);
+      if (item) facts.appendChild(item);
     };
 
     addFact('Gesammelt', collected);
     addFact('Forest', forest);
     if (netbios && netbios !== environment) addFact('NetBIOS', netbios);
-    addFact('Collector', collector);
+    const freshness = resolveCollectorFreshness(collector);
+    addFact('Collector', freshness.text, 'gpo-environment-fact-value--' + freshness.status);
 
-    el.append(identity, facts);
+    top.append(identity, facts);
+
+    const references = document.createElement('div');
+    references.className = 'gpo-environment-references';
+    references.id = 'gpo-environment-references';
+
+    el.append(top, references);
+    renderEnvironmentReferences();
   }
 
   async function renderOverview(model, findings, missingFiles) {
@@ -5597,6 +5731,7 @@ window.GpoRenderer = (function() {
     renderMicrosoftBaselineStatus();
     renderMicrosoftBaselineComparison();
     renderMicrosoftBaselineRegistryEvidence();
+    renderEnvironmentReferences();
   });
 
   const BSI_COMPLIANCE_LABELS = { erfuellt: 'Erfüllt', nicht_erfuellt: 'Nicht erfüllt', pruefen: 'Prüfen' };

@@ -2284,9 +2284,8 @@ a.gpo-20sec-fact:hover { background:var(--panel2); text-decoration:none; }
 /* Snapshot / Umgebungsinformationen */
 .gpo-environment-header {
   display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:22px;
+  flex-direction:column;
+  gap:14px;
   margin:0 0 18px;
   padding:14px 18px;
   border:1px solid var(--border2);
@@ -2295,6 +2294,7 @@ a.gpo-20sec-fact:hover { background:var(--panel2); text-decoration:none; }
   background:linear-gradient(90deg,rgba(45,212,191,.075),rgba(45,212,191,.018));
 }
 .gpo-environment-header[hidden]{display:none}
+.gpo-environment-top{display:flex;align-items:center;justify-content:space-between;gap:22px}
 .gpo-environment-identity{min-width:0;display:flex;flex-direction:column;gap:3px}
 .gpo-environment-kicker{font-size:.64rem;text-transform:uppercase;letter-spacing:.09em;font-weight:700;color:var(--accent)}
 .gpo-environment-name{font-size:1rem;line-height:1.25;color:var(--text);overflow-wrap:anywhere}
@@ -2302,8 +2302,15 @@ a.gpo-20sec-fact:hover { background:var(--panel2); text-decoration:none; }
 .gpo-environment-fact{display:inline-flex;flex-direction:column;gap:2px;min-width:90px}
 .gpo-environment-fact-label{font-size:.62rem;color:var(--dim);text-transform:uppercase;letter-spacing:.055em}
 .gpo-environment-fact-value{font-size:.74rem;color:var(--muted);overflow-wrap:anywhere}
+.gpo-environment-fact-value--current::before{content:'● ';color:var(--accent)}
+.gpo-environment-fact-value--older::before{content:'● ';color:var(--amber)}
+.gpo-environment-fact-value--unknown::before{content:'● ';color:var(--dim)}
+.gpo-environment-fact-value--neutral::before{content:'● ';color:var(--dim)}
+.gpo-environment-references{border-top:1px solid var(--border);padding-top:12px}
+.gpo-environment-references-grid{display:flex;flex-wrap:wrap;gap:8px 24px}
+.gpo-environment-note{font-size:.68rem;color:var(--dim);line-height:1.5;margin-top:9px}
 @media (max-width:700px){
-  .gpo-environment-header{align-items:flex-start;flex-direction:column;gap:12px}
+  .gpo-environment-top{align-items:flex-start;flex-direction:column;gap:12px}
   .gpo-environment-facts{width:100%;justify-content:flex-start}
 }
 
