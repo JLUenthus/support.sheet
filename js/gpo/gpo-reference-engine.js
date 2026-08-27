@@ -120,11 +120,9 @@ window.GpoReferenceEngine = (function() {
   }
 
   return {
-    STANDARD_META: JSON.parse(JSON.stringify(STANDARD_META)),
     registerRequirements,
     getStandard,
     getCatalog,
-    findRequirement,
     registerBaselineSettings,
     getBaseline,
   };

@@ -194,5 +194,5 @@ window.GpoAdmxResolver = (function() {
     return { category: 'A', admxPolicy: matches[0].policy, via };
   }
 
-  return { normalizeRegistryKey, fetchXmlText, parseAdmxFile, parseAdmlFile, resolveAdmlRef, buildKeyIndex, matchRegistryEvidence };
+  return { normalizeRegistryKey, fetchXmlText, parseAdmxFile, parseAdmlFile, buildKeyIndex, matchRegistryEvidence };
 })();

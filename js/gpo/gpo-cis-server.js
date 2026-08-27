@@ -2387,5 +2387,5 @@ window.GpoCisServer = (function() {
     return (_catalog.benchmarks || []).find(b => b.id === 'windows-server-' + version) || null;
   }
 
-  return { load, detectVersion, detectServers, getBenchmark, getUserRightsMappingNames: () => Object.keys(USER_RIGHTS_SETTING_KEYS) };
+  return { load, detectVersion, detectServers };
 })();

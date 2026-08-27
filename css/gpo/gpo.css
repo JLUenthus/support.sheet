@@ -1156,6 +1156,8 @@ body.gpo-disclaimer-open { overflow: hidden; }
 .gpo-detail { margin-top: 4px; }
 .gpo-detail-row { font-size: .78rem; color: var(--muted); margin-bottom: 8px; }
 .gpo-detail-row--warn { color: var(--amber); }
+.gpo-permission-hints { margin-top: 10px; }
+.gpo-permission-hint-row { box-shadow: inset 3px 0 0 var(--amber); padding-left: 10px; }
 .gpo-detail-gpo {
   background: var(--bg);
   border: 1px solid var(--border);
@@ -2111,7 +2113,7 @@ a.gpo-20sec-fact:hover { background:var(--panel2); text-decoration:none; }
 }
 .gpo-baseline-compare-stat strong { display:block; font-size:1.05rem; color:var(--text); }
 .gpo-baseline-compare-stat span { display:block; margin-top:3px; font-size:.62rem; color:var(--muted); line-height:1.35; }
-.gpo-baseline-compare-stat--deviation strong { color: var(--red); }
+.gpo-baseline-compare-stat--deviation strong { color: var(--dim); }
 .gpo-baseline-compare-stat--not_comparable strong { color: var(--amber); }
 .gpo-baseline-compare-stat--match strong { color: var(--accent); }
 .gpo-baseline-compare-note { margin:-7px 0 12px; color:var(--muted); font-size:.64rem; line-height:1.45; }
@@ -2127,12 +2129,12 @@ a.gpo-20sec-fact:hover { background:var(--panel2); text-decoration:none; }
 .gpo-baseline-compare-search-label { flex:1 1 250px; }
 .gpo-baseline-compare-list { display:flex; flex-direction:column; gap:1px; background:var(--border); border:1px solid var(--border); }
 .gpo-baseline-compare-row { background:var(--panel); padding:12px 14px; min-width:0; }
-.gpo-baseline-compare-row--deviation { box-shadow: inset 3px 0 0 var(--red); }
+.gpo-baseline-compare-row--deviation { box-shadow: inset 3px 0 0 var(--dim); }
 .gpo-baseline-compare-row--not_comparable { box-shadow: inset 3px 0 0 var(--amber); }
 .gpo-baseline-compare-row--match { box-shadow: inset 3px 0 0 var(--accent); }
 .gpo-baseline-compare-row-top { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
 .gpo-baseline-compare-badge { display:inline-flex; padding:3px 6px; border:1px solid var(--border2); border-radius:3px; font-size:.61rem; font-weight:800; }
-.gpo-baseline-compare-badge--deviation { color:var(--red); }
+.gpo-baseline-compare-badge--deviation { color:var(--dim); }
 .gpo-baseline-compare-badge--not_comparable { color:var(--amber); }
 .gpo-baseline-compare-badge--match { color:var(--accent); }
 .gpo-baseline-compare-stat--resolved strong { color: var(--accent); }

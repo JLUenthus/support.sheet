@@ -35,7 +35,7 @@ window.GpoBsiMapping = (function() {
   const AUTHENTICATED_USERS_NAMES = ['authenticated users', 'authentifizierte benutzer'];
 
   function isDefaultSecurityFilterTrustee(filter) {
-    if (filter.trusteeSid) return filter.trusteeSid.toUpperCase() === AUTHENTICATED_USERS_SID;
+    if (filter.trusteeSid) return filter.trusteeSid.trim().toUpperCase() === AUTHENTICATED_USERS_SID;
     return AUTHENTICATED_USERS_NAMES.indexOf((filter.trustee || '').trim().toLowerCase()) !== -1;
   }
 

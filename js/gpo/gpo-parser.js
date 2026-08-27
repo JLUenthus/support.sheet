@@ -11,6 +11,7 @@ window.GpoParser = (function() {
     const rawLinks      = raw.links      || [];
     const rawFilters    = raw.filters    || [];
     const rawWmiFilters = raw.wmiFilters || [];
+    const rawPermissions = raw.permissions || [];
     const metadata = raw.metadata || null;
 
     // raw.links ist nur dann undefined, wenn links.json im ZIP komplett
@@ -29,6 +30,11 @@ window.GpoParser = (function() {
     // CIS-Server-Erkennung (gpo-renderer.js/bsi-mapping.js/gpo-cis-server.js).
     const computersFileMissing = raw.computers === undefined;
     const computers = (raw.computers || []).map(classifyComputer);
+    // permissions.json ist optional (V5.4-B, nicht jeder - insbesondere
+    // aeltere - Snapshot enthaelt sie) - wie bei computersFileMissing
+    // unterscheidet dies "Datei fehlt komplett" (Collector-Version vor
+    // V5.4-B) von "Datei vorhanden, aber leer" (siehe gpo-renderer.js).
+    const permissionsFileMissing = raw.permissions === undefined;
 
     const links = flattenLinks(rawLinks);
 
@@ -39,6 +45,26 @@ window.GpoParser = (function() {
         trustee: f.trustee,
         trusteeSid: f.trusteeSid,
         permission: f.permission,
+      });
+    });
+
+    // GPO-ACL/Delegation (V5.4-B) - bewusst getrennt von filtersByGpo/
+    // securityFilter oben (Security Filtering/Apply Group Policy bleibt
+    // unveraendert). Reine additive technische Evidenz aus dem bereits
+    // vom Collector gelesenen gpreport.xml-SecurityDescriptor (siehe
+    // .md/gpo/V5.4-A-BERECHTIGUNGS-ANALYSE.md) - 1:1-Uebernahme der vom
+    // Collector bereits benannten Felder, kein Raten, kein neues Feld.
+    const permissionsByGpo = {};
+    rawPermissions.forEach(p => {
+      if (!permissionsByGpo[p.gpoId]) permissionsByGpo[p.gpoId] = [];
+      permissionsByGpo[p.gpoId].push({
+        trustee: p.trustee,
+        trusteeSid: p.trusteeSid,
+        permissionState: p.permissionState,
+        permission: p.permission,
+        accessMask: p.accessMask,
+        inherited: p.inherited,
+        applicability: p.applicability || null,
       });
     });
 
@@ -60,6 +86,7 @@ window.GpoParser = (function() {
         value: effectiveValue(s),
       })),
       securityFilter: filtersByGpo[g.id] || [],
+      permissions: permissionsByGpo[g.id] || [],
       wmiFilter: g.wmiFilterId
         ? (wmiFilterById[g.wmiFilterId] || { id: g.wmiFilterId, name: null, query: null })
         : null,
@@ -86,7 +113,7 @@ window.GpoParser = (function() {
 
     const ouTree = buildOuTree(rawLinks, links);
 
-    return { gpos, links, ouTree, metadata, computers, dataQuality: { linksFileMissing, computersFileMissing } };
+    return { gpos, links, ouTree, metadata, computers, dataQuality: { linksFileMissing, computersFileMissing, permissionsFileMissing } };
   }
 
   // Klassifiziert ein rohes computers.json-Element in genau die Kategorie,

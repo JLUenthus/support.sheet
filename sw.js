@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260826-v53e-metadata';
+const CACHE_VERSION = '20260827-v54d1-cleanup';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -127,6 +127,7 @@ const ASSETS = [
   './js/gpo/gpo-renderer.js',
   './data/gpo/rules.json',
   './data/gpo/cis-server-baselines.json',
+  './data/gpo/cis-windows11-baselines.json',
   './data/gpo/admx-index.json',
   './data/gpo/admx-display-de-DE.json',
 ];

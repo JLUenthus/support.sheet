@@ -5,18 +5,18 @@
 .DESCRIPTION
     Erzeugt einen moeglichst vollstaendigen Snapshot aller GPOs der aktuellen
     Domaene (Inventar, Einstellungen, Links, Security Filtering, WMI-Filter,
-    Block Inheritance) sowie eine reine Rohdaten-/DC-Evidenz-Sammlung der
-    Computerobjekte (computers.json, fuer kuenftige BSI-Scope-Coverage) und
-    verpackt alles als ZIP zum Hochladen auf gpo.html.
+    Block Inheritance, GPO-Berechtigungen/ACL) sowie eine reine Rohdaten-/
+    DC-Evidenz-Sammlung der Computerobjekte (computers.json, fuer kuenftige
+    BSI-Scope-Coverage) und verpackt alles als ZIP zum Hochladen auf gpo.html.
 .NOTES
-    Autor: support.sheet | Version: 1.1
+    Autor: support.sheet | Version: 1.2
     Benoetigt: PowerShell 5.1+, RSAT-Module GroupPolicy und ActiveDirectory
     Ausfuehrung: auf einem Domain Controller oder einem domaenen-verbundenen
     Client mit installierten RSAT-Tools. Keine Admin-Rechte noetig, nur
     Leserechte auf GPOs/AD.
 #>
 
-$ScriptVersion = '1.1'
+$ScriptVersion = '1.2'
 
 Write-Host ""
 Write-Host "======================================================" -ForegroundColor Cyan
@@ -345,6 +345,73 @@ function ConvertFrom-GpoReportXml {
     return $settings
 }
 
+# ── GPO-Berechtigungen / ACL (V5.4-B) ────────────────────────
+# Liest den bereits von Get-GPOReport gelieferten <SecurityDescriptor>-
+# Block desselben $reportXml, der oben schon fuer die Settings verwendet
+# wird - kein zusaetzlicher Get-GPOReport-/Get-GPPermission-/AD-Aufruf.
+# Real verifiziert (siehe .md/gpo/V5.4-A-BERECHTIGUNGS-ANALYSE.md,
+# Abschnitt V5.4-A1): GPMC liefert dort bereits vollstaendig
+# vorstrukturierte <TrusteePermissions>-Eintraege - kein SDDL-Parsing,
+# keine ACE-Bitmasken-Interpretation. Getrennt von Security Filtering
+# (Abschnitt "2) Security Filtering" unten, eigener Get-GPPermission-
+# Aufruf, eigene Ausgabedatei filters.json) - reine additive ACL-/
+# Delegation-Evidenz, keine Bewertung, kein Effective-Permissions-Bezug.
+#
+# Real beobachtete GPOGroupedAccessEnum-Werte (165 Eintraege, 33 echte
+# gpreport.xml-Dateien): "Read", "Apply Group Policy", "Edit, delete,
+# modify security". PermissionType ausschliesslich "Allow" beobachtet -
+# das Feld wird unveraendert 1:1 uebernommen, falls ein Deny-Eintrag
+# auftaucht, aber Deny ist damit NICHT real verifiziert (siehe Bericht).
+# TrusteeType existiert NICHT als eigenes Feld in dieser XML-Struktur
+# (real gegengeprueft, alle Element-Namen im SecurityDescriptor-Block
+# aufgelistet) - wird deshalb bewusst nicht erfasst/erfunden.
+function Get-GpoPermissions {
+    param([Parameter(Mandatory)][string]$Xml, [Parameter(Mandatory)][string]$GpoId)
+    $results = @()
+    try {
+        $doc = [xml]$Xml
+    } catch {
+        return $results
+    }
+    $trusteePermNodes = @($doc.SelectNodes("//*[local-name()='TrusteePermissions']"))
+    foreach ($node in $trusteePermNodes) {
+        $trusteeNode = $node.SelectSingleNode("*[local-name()='Trustee']")
+        $sidNode = if ($trusteeNode) { $trusteeNode.SelectSingleNode("*[local-name()='SID']") } else { $null }
+        $nameNode = if ($trusteeNode) { $trusteeNode.SelectSingleNode("*[local-name()='Name']") } else { $null }
+        $permTypeNode = $node.SelectSingleNode("*[local-name()='Type']/*[local-name()='PermissionType']")
+        $inheritedNode = $node.SelectSingleNode("*[local-name()='Inherited']")
+        $standardNode = $node.SelectSingleNode("*[local-name()='Standard']/*[local-name()='GPOGroupedAccessEnum']")
+        $accessMaskNode = $node.SelectSingleNode("*[local-name()='AccessMask']")
+        $applicNode = $node.SelectSingleNode("*[local-name()='Applicability']")
+
+        $applicability = $null
+        if ($applicNode) {
+            $toSelfNode = $applicNode.SelectSingleNode("*[local-name()='ToSelf']")
+            $toDescObjNode = $applicNode.SelectSingleNode("*[local-name()='ToDescendantObjects']")
+            $toDescContNode = $applicNode.SelectSingleNode("*[local-name()='ToDescendantContainers']")
+            $toDirectNode = $applicNode.SelectSingleNode("*[local-name()='ToDirectDescendantsOnly']")
+            $applicability = [ordered]@{
+                toSelf                  = if ($toSelfNode) { [bool]::Parse($toSelfNode.InnerText) } else { $null }
+                toDescendantObjects     = if ($toDescObjNode) { [bool]::Parse($toDescObjNode.InnerText) } else { $null }
+                toDescendantContainers  = if ($toDescContNode) { [bool]::Parse($toDescContNode.InnerText) } else { $null }
+                toDirectDescendantsOnly = if ($toDirectNode) { [bool]::Parse($toDirectNode.InnerText) } else { $null }
+            }
+        }
+
+        $results += [ordered]@{
+            gpoId           = $GpoId
+            trustee         = if ($nameNode) { $nameNode.InnerText } else { $null }
+            trusteeSid      = if ($sidNode) { $sidNode.InnerText } else { $null }
+            permissionState = if ($permTypeNode) { $permTypeNode.InnerText } else { $null }
+            permission      = if ($standardNode) { $standardNode.InnerText } else { $null }
+            accessMask      = if ($accessMaskNode) { [int]$accessMaskNode.InnerText } else { $null }
+            inherited       = if ($inheritedNode) { [bool]::Parse($inheritedNode.InnerText) } else { $null }
+            applicability   = $applicability
+        }
+    }
+    return $results
+}
+
 # WMI-Filter-Query steckt kodiert in msWMI-Parm2, pro Klausel im Format
 # <len(lang)>;<len(namespace)>;<len(query)>;<lang>;<namespace>;<query>;
 # vorangestellt durch <Anzahl Klauseln>;. Bestaetigt an echten AD-Rohdaten
@@ -417,6 +484,7 @@ Write-Host "  $($allGpos.Count) GPOs gefunden." -ForegroundColor Gray
 
 $gpoRecords = @()
 $skippedGpos = @()
+$permissionRecords = @()
 
 foreach ($gpo in $allGpos) {
     $wmiFilterId = $null
@@ -450,6 +518,17 @@ foreach ($gpo in $allGpos) {
             # Report) - das betrifft beide Scopes gleichermassen, damit
             # zaehlt das als komplett fehlgeschlagen, nicht nur "partial".
             $reportError = "GPO-Report-XML konnte nicht geparst werden: $($_.Exception.Message)"
+        }
+    }
+
+    # GPO-Berechtigungen (V5.4-B) - additive Evidenz aus demselben, oben
+    # bereits erfolgreich gelesenen $reportXml. Ein Fehler hier darf den
+    # ansonsten gueltigen Report/die Settings nicht ungueltig machen.
+    if (-not $reportError) {
+        try {
+            $permissionRecords += Get-GpoPermissions -Xml $reportXml -GpoId $gpo.Id.Guid
+        } catch {
+            Write-Host "  GPO-Berechtigungen fuer '$($gpo.DisplayName)' konnten nicht gelesen werden: $($_.Exception.Message)" -ForegroundColor Yellow
         }
     }
 
@@ -684,25 +763,36 @@ Write-Host "[6] Snapshot verpacken ..." -ForegroundColor Yellow
 
 $dateStamp = Get-Date -Format 'yyyy-MM-dd'
 $outputRoot = 'C:\Temp'
-if (-not (Test-Path $outputRoot)) {
-    New-Item -ItemType Directory -Path $outputRoot -Force | Out-Null
+
+try {
+    if (-not (Test-Path $outputRoot)) {
+        New-Item -ItemType Directory -Path $outputRoot -Force -ErrorAction Stop | Out-Null
+    }
+
+    $workDir = Join-Path $outputRoot "gpo-snapshot-$dateStamp-work"
+    if (Test-Path $workDir) { Remove-Item $workDir -Recurse -Force -ErrorAction Stop }
+    New-Item -ItemType Directory -Path $workDir -Force -ErrorAction Stop | Out-Null
+
+    Write-JsonArray -Items $gpoRecords -Path (Join-Path $workDir 'gpos.json')
+    Write-JsonArray -Items $linkRecords -Path (Join-Path $workDir 'links.json')
+    Write-JsonArray -Items $filterRecords -Path (Join-Path $workDir 'filters.json')
+    Write-JsonArray -Items $permissionRecords -Path (Join-Path $workDir 'permissions.json')
+    Write-JsonArray -Items $wmiFilterRecords -Path (Join-Path $workDir 'wmi-filters.json')
+    Write-JsonArray -Items $computerRecords -Path (Join-Path $workDir 'computers.json')
+    Write-JsonObject -Data $metadata -Path (Join-Path $workDir 'metadata.json')
+
+    $zipPath = Join-Path $outputRoot "gpo-snapshot-$dateStamp.zip"
+    if (Test-Path $zipPath) { Remove-Item $zipPath -Force -ErrorAction Stop }
+    Compress-Archive -Path (Join-Path $workDir '*') -DestinationPath $zipPath -Force -ErrorAction Stop
+    Remove-Item $workDir -Recurse -Force -ErrorAction Stop
+} catch {
+    Write-Host ""
+    Write-Host "  FEHLER: Die GPO-/AD-Sammlung war erfolgreich, aber das Schreiben/Verpacken der Ergebnisse ist fehlgeschlagen." -ForegroundColor Red
+    Write-Host "  Moegliche Ursachen: Zielverzeichnis ($outputRoot) nicht beschreibbar, kein freier Speicherplatz, Antivirus/Dateisperre auf der ZIP-Datei, oder Pfadlaenge ueberschritten." -ForegroundColor Yellow
+    Write-Host "  $($_.Exception.Message)" -ForegroundColor Gray
+    Write-Host ""
+    exit 1
 }
-
-$workDir = Join-Path $outputRoot "gpo-snapshot-$dateStamp-work"
-if (Test-Path $workDir) { Remove-Item $workDir -Recurse -Force }
-New-Item -ItemType Directory -Path $workDir -Force | Out-Null
-
-Write-JsonArray -Items $gpoRecords -Path (Join-Path $workDir 'gpos.json')
-Write-JsonArray -Items $linkRecords -Path (Join-Path $workDir 'links.json')
-Write-JsonArray -Items $filterRecords -Path (Join-Path $workDir 'filters.json')
-Write-JsonArray -Items $wmiFilterRecords -Path (Join-Path $workDir 'wmi-filters.json')
-Write-JsonArray -Items $computerRecords -Path (Join-Path $workDir 'computers.json')
-Write-JsonObject -Data $metadata -Path (Join-Path $workDir 'metadata.json')
-
-$zipPath = Join-Path $outputRoot "gpo-snapshot-$dateStamp.zip"
-if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-Compress-Archive -Path (Join-Path $workDir '*') -DestinationPath $zipPath -Force
-Remove-Item $workDir -Recurse -Force
 
 Write-Host ""
 Write-Host "======================================================" -ForegroundColor Cyan

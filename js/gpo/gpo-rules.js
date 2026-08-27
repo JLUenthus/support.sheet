@@ -22,5 +22,5 @@ window.GpoRules = (function() {
     return (rules || []).find(r => r.id === id) || null;
   }
 
-  return { loadRules, getRuleById };
+  return { loadRules };
 })();

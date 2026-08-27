@@ -205,7 +205,11 @@ window.GpoRenderer = (function() {
   // powershell/gpo/Get-GPOAnalyzerSnapshot.ps1 uebernommen (siehe
   // V5.3-METADATA-BERICHT.md Abschnitt 2/3). Bezeichnet die Version, mit
   // der ein Snapshot ERZEUGT wurde, NICHT die Version dieser Analyzer-Seite.
-  const CURRENT_COLLECTOR_VERSION = '1.1';
+  // V5.4-B: auf '1.2' nachgezogen, da der Collector in diesem Schritt
+  // bewusst (mit Freigabe) auf $ScriptVersion='1.2' erhoeht wurde (neue
+  // permissions.json/GPO-ACL-Extraktion) - siehe .md/gpo/
+  // V5.4-B-BERECHTIGUNGEN-IMPLEMENTIERUNG.md.
+  const CURRENT_COLLECTOR_VERSION = '1.2';
 
   // Real verifiziert (siehe BSI_REQUIREMENT_INFO unten: alle 3 sourceUrl
   // referenzieren "Edition_2023" desselben IT-Grundschutz-Kompendiums) -
@@ -958,15 +962,25 @@ window.GpoRenderer = (function() {
   // Noch keine Compliance-Berechnung, kein Score und keine erfundenen Setting-Mappings.
 
 
+  // Gemeinsame HTML-Entity-Escaping-Funktion fuer die CIS-Katalog-Renderer
+  // unten (renderCisReferenceStand/renderCisAdminTemplateSummary/
+  // renderCisUnmappedClassification), die statische Katalogwerte per
+  // Template-String in innerHTML einsetzen. Ersetzt das vormals nur an
+  // dieser Stelle genutzte, character-strippende `.replace(/[&<>]/g,'')`
+  // in den beiden anderen Funktionen (V5.4-D1) - echtes Escaping statt
+  // Entfernen, konsistent an allen drei Stellen.
+  function escapeCisHtml(v) {
+    return String(v ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+
   function renderCisReferenceStand(catalog) {
     const host = document.getElementById('gpo-cis-reference-stand-list');
     if (!host) return;
     const p = catalog?.referenceProvenance;
-    const safe = v => String(v ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-    host.innerHTML = `<div class="gpo-cis-reference-source">Quelle: ${safe(p?.source || 'CIS Benchmark')}</div>
+    host.innerHTML = `<div class="gpo-cis-reference-source">Quelle: ${escapeCisHtml(p?.source || 'CIS Benchmark')}</div>
       <div class="gpo-cis-reference-version-grid">
         ${(p?.benchmarks || []).map(b => `<div class="gpo-cis-reference-version">
-          <strong>${safe(b.platform || b.id)}</strong><small>${safe(b.version || b.id)}</small>
+          <strong>${escapeCisHtml(b.platform || b.id)}</strong><small>${escapeCisHtml(b.version || b.id)}</small>
         </div>`).join('')}</div>`;
   }
 
@@ -994,14 +1008,14 @@ window.GpoRenderer = (function() {
     rows.forEach(row => { byBenchmark[row.benchmark] = (byBenchmark[row.benchmark] || 0) + 1; });
 
     countHost.innerHTML = Object.entries(byBenchmark).map(([name,count]) =>
-      `<span class="gpo-cis-admin-chip">${String(name).replace(/[&<>]/g,'')} · ${count}</span>`
+      `<span class="gpo-cis-admin-chip">${escapeCisHtml(name)} · ${count}</span>`
     ).join('');
 
     listHost.innerHTML = rows.slice(0, 80).map(row => `
       <div class="gpo-cis-admin-row">
         <div>
-          <strong>${String(row.title).replace(/[&<>]/g,'')}</strong>
-          <small>${String(row.number).replace(/[&<>]/g,'')} · ${String(row.key).replace(/[&<>]/g,'')}</small>
+          <strong>${escapeCisHtml(row.title)}</strong>
+          <small>${escapeCisHtml(row.number)} · ${escapeCisHtml(row.key)}</small>
         </div>
         <span>✓ verifiziert</span>
       </div>`).join('');
@@ -1393,7 +1407,7 @@ window.GpoRenderer = (function() {
       ['Importiert', comparison.baseline.settings.length, 'total'],
       ['Vergleichsgruppen', s.total, 'total'],
       ['✓ Übereinstimmung', s.match, 'match'],
-      ['⚠ Abweichung', s.deviation, 'deviation'],
+      ['Abweichung', s.deviation, 'deviation'],
       ['ℹ Nicht vorhanden', s.missing, 'missing'],
       ['? Nicht vergleichbar', s.not_comparable, 'not_comparable'],
     ].forEach(([label, value, kind]) => {
@@ -1422,7 +1436,7 @@ window.GpoRenderer = (function() {
         const article = document.createElement('article'); article.className = 'gpo-baseline-compare-row gpo-baseline-compare-row--' + r.status;
         const top = document.createElement('div'); top.className = 'gpo-baseline-compare-row-top';
         const status = document.createElement('span'); status.className = 'gpo-baseline-compare-badge gpo-baseline-compare-badge--' + r.status;
-        status.textContent = ({match:'✓ Übereinstimmung', deviation:'⚠ Abweichung', missing:'ℹ Nicht vorhanden', not_comparable:'? Nicht vergleichbar'})[r.status];
+        status.textContent = ({match:'✓ Übereinstimmung', deviation:'Abweichung', missing:'ℹ Nicht vorhanden', not_comparable:'? Nicht vergleichbar'})[r.status];
         const scope = document.createElement('span'); scope.className = 'gpo-reference-meta'; scope.textContent = r.scope || 'Scope unbekannt';
         top.append(status, scope); article.appendChild(top);
         const title = document.createElement('div'); title.className = 'gpo-baseline-compare-setting'; title.textContent = r.settingKey; article.appendChild(title);
@@ -5195,6 +5209,226 @@ window.GpoRenderer = (function() {
     return details;
   }
 
+  // V5.4-C: Hinweisregeln fuer ungewoehnliche GPO-Berechtigungen - rein
+  // additive Evidenzschicht ueber gpo.permissions (keine neue AD-/LDAP-
+  // Abfrage, kein Collector-/Parser-Eingriff, siehe .md/gpo/
+  // V5.4-C-BERECHTIGUNGS-HINWEISE.md). Jede Regel liefert ausschliesslich
+  // Hinweis + Evidenz + Quelle + Aufforderung zur manuellen Pruefung -
+  // NIEMALS eine automatische "sicher"/"unsicher"-Aussage, keinen Score.
+  // Real an 165 echten TrusteePermissions-Eintraegen (33 echte
+  // gpreport.xml) kalibriert: alle Regeln liefern dort 0 Treffer, da die
+  // verfuegbaren Realdaten ausschliesslich Microsofts eigene, uniforme
+  // Standard-Baseline-Sicherheitsdeskriptoren sind (5 wohlbekannte
+  // Trustees, keine reale Kunden-Delegation) - siehe Bericht fuer die
+  // vollstaendige Kalibrierung. "Regel B - direkte Benutzerberechtigung"
+  // wurde bewusst NICHT implementiert: die GPO-Report-XML enthaelt kein
+  // TrusteeType-Feld (real gegengeprueft), es gibt also kein zuverlaessiges
+  // technisches Signal, um einen Benutzer-Trustee von einem Gruppen-
+  // Trustee zu unterscheiden - eine namensbasierte Heuristik waere Raten
+  // und wird bewusst nicht gebaut (siehe Bericht, Abschnitt Regel B).
+
+  // Real beobachtete, wohlbekannte administrative Well-known-Principals
+  // (SID-basiert, nicht namensbasiert). Enterprise Domain Controllers ist
+  // real S-1-5-9 (universelle SID) - NICHT "-516" wie im Auftrag als
+  // Beispiel genannt; das Auftrags-Beispiel wurde anhand der echten
+  // gpreport.xml-Daten (V5.4-A1/B1) korrigiert.
+  const WELLKNOWN_ADMIN_SID_PATTERNS = [
+    /^S-1-5-18$/i,   // SYSTEM (real beobachtet)
+    /^S-1-5-9$/i,    // Enterprise Domain Controllers (real beobachtet, universelle SID)
+    /-512$/,         // Domain Admins (real beobachtet, domaenenrelativ)
+    /-519$/,         // Enterprise Admins (real beobachtet, domaenenrelativ)
+  ];
+  function isKnownAdministrativeTrustee(sid) {
+    if (!sid) return false;
+    const s = sid.trim();
+    return WELLKNOWN_ADMIN_SID_PATTERNS.some(p => p.test(s));
+  }
+
+  function looksLikeUnresolvedSidName(name) {
+    return !!(name && /^S-1-\d/.test(name.trim()));
+  }
+
+  // Regel C (Auftrag Abschnitt 8): darf nur feuern, wenn die eigene
+  // Domain-SID zuverlaessig bestimmbar ist. Hier: nur wenn irgendwo im
+  // SELBEN Snapshot bereits eine bekannte domaenenrelative Well-known-RID
+  // (Domain Admins -512 oder Enterprise Admins -519) tatsaechlich
+  // vorkommt - dann liefert deren SID-Praefix die Domain-SID. Kein Raten,
+  // keine angenommene SID-Struktur, keine externe Quelle. Liefert null,
+  // wenn keine solche Referenz im Snapshot vorhanden ist - Regel C bleibt
+  // dann fuer den gesamten Snapshot inaktiv statt zu raten.
+  function inferDomainSidPrefix(model) {
+    for (const gpo of ((model && model.gpos) || [])) {
+      for (const p of (gpo.permissions || [])) {
+        if (!p.trusteeSid) continue;
+        const m = /^(S-1-5-21-\d+-\d+-\d+)-(512|519)$/i.exec(p.trusteeSid.trim());
+        if (m) return m[1];
+      }
+    }
+    return null;
+  }
+
+  function buildPermissionHints(p, domainSidPrefix) {
+    const hints = [];
+
+    // Regel A - unbekannte SID (SID vorhanden, aber kein verlaesslicher Name)
+    if (p.trusteeSid && (!p.trustee || looksLikeUnresolvedSidName(p.trustee))) {
+      hints.push({
+        label: 'Unbekannte SID',
+        text: 'Für diese Berechtigung liegt eine SID ohne verlässlich aufgelösten Namen vor.',
+        review: 'Prüfen Sie das Objekt anhand der SID direkt in Active Directory.',
+      });
+    }
+
+    // Regel C - anderer Domaenenkontext (nur aktiv, wenn Domain-SID bekannt)
+    if (domainSidPrefix && p.trusteeSid) {
+      const m = /^(S-1-5-21-\d+-\d+-\d+)-\d+$/i.exec(p.trusteeSid.trim());
+      if (m && m[1].toLowerCase() !== domainSidPrefix.toLowerCase()) {
+        hints.push({
+          label: 'Trustee aus einem anderen Domänenkontext',
+          text: 'Die SID dieses Trustees stammt nicht aus derselben Domäne wie die im Snapshot referenzierten Standard-Administratorgruppen.',
+          review: 'Prüfen Sie die Herkunft dieses Trustees in Active Directory (z. B. Trust-Beziehung, fremde Domäne).',
+        });
+      }
+    }
+
+    // Regel D - hohe Berechtigungsstufe, gefiltert um bekannte Admin-Principals
+    if (p.permission === 'Edit, delete, modify security' && !isKnownAdministrativeTrustee(p.trusteeSid)) {
+      hints.push({
+        label: 'Ungewöhnlich hohe Berechtigungsstufe',
+        text: 'Dieser Trustee besitzt „Edit, delete, modify security" auf der GPO, ist aber kein bekannter administrativer Standard-Principal (Domain Admins/Enterprise Admins/SYSTEM).',
+        review: 'Prüfen Sie, ob der Trustee tatsächlich GPO-Änderungen und Sicherheitsdelegation durchführen soll.',
+      });
+    }
+
+    // Regel E - Custom/unbekannte Permission (kein GPOGroupedAccessEnum)
+    if (!p.permission) {
+      const hasAccessMask = p.accessMask !== null && p.accessMask !== undefined;
+      hints.push({
+        label: 'Unbekannte Berechtigungsstufe',
+        text: 'Für diesen Eintrag liegt kein bekannter gruppierter Berechtigungswert vor' + (hasAccessMask ? ' (AccessMask ' + p.accessMask + ')' : '') + '.',
+        review: 'Prüfen Sie die konkrete Berechtigung im GPMC/AD.',
+      });
+    }
+
+    // Regel F - expliziter Deny
+    if (p.permissionState === 'Deny') {
+      hints.push({
+        label: 'Expliziter Deny-Eintrag',
+        text: 'Für diesen Trustee liegt ein expliziter Deny-Eintrag vor.',
+        review: 'Prüfen Sie die konkrete Allow-/Deny-Konstellation im AD/GPMC.',
+      });
+    }
+
+    return hints;
+  }
+
+  function buildPermissionHintRow(p, hint) {
+    const row = document.createElement('div');
+    row.className = 'gpo-detail-row gpo-permission-hint-row';
+
+    const label = document.createElement('strong');
+    label.textContent = '🟡 ' + hint.label;
+    row.appendChild(label);
+
+    const explain = document.createElement('div');
+    explain.textContent = hint.text;
+    row.appendChild(explain);
+
+    const evidenceParts = ['Trustee: ' + (p.trustee || 'unbekannt')];
+    if (p.trusteeSid) evidenceParts.push('SID: ' + p.trusteeSid);
+    if (p.permission) evidenceParts.push('Permission: ' + p.permission);
+    const evidence = document.createElement('div');
+    evidence.textContent = 'Evidenz — ' + evidenceParts.join(' · ');
+    row.appendChild(evidence);
+
+    const source = document.createElement('div');
+    source.textContent = 'Quelle: GPO SecurityDescriptor / TrusteePermissions (gpreport.xml)';
+    row.appendChild(source);
+
+    const review = document.createElement('div');
+    review.textContent = 'Manuelle Prüfung: ' + hint.review;
+    row.appendChild(review);
+
+    return row;
+  }
+
+  // V5.4-B: GPO-Berechtigungen/ACL - reine additive technische Evidenz aus
+  // gpo.permissions (gpo-parser.js), bewusst getrennt von Security
+  // Filtering (buildGpoDetailSecurityFilter() oben bleibt unveraendert -
+  // "Wer darf anwenden" vs. "wer hat welche Berechtigung auf der GPO
+  // selbst" sind zwei verschiedene Fragen, siehe .md/gpo/
+  // V5.4-A-BERECHTIGUNGS-ANALYSE.md). Quelle: der bereits vom Collector
+  // gelesene gpreport.xml-SecurityDescriptor (V5.4-A1, real belegt: GPMC
+  // liefert dort bereits fertig strukturierte TrusteePermissions-
+  // Eintraege). Ein Eintrag hier entspricht NICHT zwingend genau einem
+  // rohen ACE - GPMC kann mehrere ACEs desselben Trustees zu einem
+  // Eintrag zusammenfassen (real beobachtet in V5.4-A1) - deshalb wird
+  // das explizit als "Berechtigungs-Evidenz", nie als vollstaendige rohe
+  // ACE-Liste bezeichnet. Kein Raten bei fehlendem Allow/Deny-Status,
+  // keine Effective-Permissions-Berechnung.
+  function buildGpoDetailPermissions(gpo) {
+    const permissions = gpo.permissions || [];
+    if (!permissions.length) return null;
+
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    summary.className = 'gpo-finding-sub-title';
+    summary.textContent = 'Berechtigungen (GPO-ACL) (' + permissions.length + ')';
+    details.appendChild(summary);
+
+    const intro = document.createElement('div');
+    intro.className = 'gpo-detail-no-link';
+    intro.textContent = 'Technische GPO-Berechtigungs-Evidenz aus dem GPO-Report – keine Berechnung effektiver Berechtigungen und keine vollständige Liste roher Zugriffssteuerungseinträge (GPMC kann mehrere davon zu einem Eintrag zusammenfassen).';
+    details.appendChild(intro);
+
+    const list = document.createElement('div');
+    list.className = 'gpo-entry-row-list';
+    permissions.forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'gpo-detail-row';
+
+      const strong = document.createElement('strong');
+      strong.textContent = p.trustee || 'Unbekannter Trustee';
+      row.appendChild(strong);
+
+      const metaParts = [];
+      if (p.trusteeSid) metaParts.push('SID: ' + p.trusteeSid);
+      const hasAccessMask = p.accessMask !== null && p.accessMask !== undefined;
+      const permLabel = p.permission || ('Custom / unbekannt' + (hasAccessMask ? ' (AccessMask ' + p.accessMask + ')' : ''));
+      metaParts.push('Berechtigung: ' + permLabel);
+      metaParts.push('Status: ' + (p.permissionState || 'nicht angegeben'));
+      if (p.inherited !== null && p.inherited !== undefined) metaParts.push('Geerbt: ' + (p.inherited ? 'ja' : 'nein'));
+
+      const meta = document.createElement('div');
+      meta.textContent = metaParts.join(' · ');
+      row.appendChild(meta);
+
+      list.appendChild(row);
+    });
+    details.appendChild(list);
+
+    // V5.4-C: Hinweise - eigener Unterabschnitt, nur sichtbar, wenn es
+    // tatsaechlich etwas zu melden gibt (keine kuenstliche "alles gut"-
+    // Meldung, Auftrag Abschnitt 18).
+    const domainSidPrefix = inferDomainSidPrefix(_model);
+    const hintEntries = [];
+    permissions.forEach(p => {
+      buildPermissionHints(p, domainSidPrefix).forEach(hint => hintEntries.push({ p, hint }));
+    });
+    if (hintEntries.length) {
+      const hintsWrap = document.createElement('div');
+      hintsWrap.className = 'gpo-permission-hints';
+      const hintsTitle = document.createElement('div');
+      hintsTitle.className = 'gpo-finding-sub-title';
+      hintsTitle.textContent = 'Hinweise (' + hintEntries.length + ')';
+      hintsWrap.appendChild(hintsTitle);
+      hintEntries.forEach(({ p, hint }) => hintsWrap.appendChild(buildPermissionHintRow(p, hint)));
+      details.appendChild(hintsWrap);
+    }
+
+    return details;
+  }
+
   // null, wenn kein WMI-Filter zugewiesen ist - siehe Kommentar an
   // buildGpoDetailSecurityFilter().
   function buildGpoDetailWmiFilter(gpo) {
@@ -5297,6 +5531,8 @@ window.GpoRenderer = (function() {
     body.appendChild(buildGpoDetailLinks(gpo));
     const secFilterDetails = buildGpoDetailSecurityFilter(gpo);
     if (secFilterDetails) body.appendChild(secFilterDetails);
+    const permissionDetails = buildGpoDetailPermissions(gpo);
+    if (permissionDetails) body.appendChild(permissionDetails);
     const wmiDetails = buildGpoDetailWmiFilter(gpo);
     if (wmiDetails) body.appendChild(wmiDetails);
     body.appendChild(buildGpoDetailSettings(gpo));
@@ -5967,12 +6203,14 @@ window.GpoRenderer = (function() {
     { label: 'GPO-Verknüpfungen', filename: 'links.json' },
     { label: 'Security-Filter', filename: 'filters.json' },
     { label: 'WMI-Filter', filename: 'wmi-filters.json' },
+    { label: 'Berechtigungen (GPO-ACL)', filename: 'permissions.json' },
   ];
 
   function isBsiDataSourceMissing(filename) {
     const dq = _model.dataQuality || {};
     if (filename === 'computers.json') return !!dq.computersFileMissing;
     if (filename === 'links.json') return !!dq.linksFileMissing;
+    if (filename === 'permissions.json') return !!dq.permissionsFileMissing;
     return (_missingFiles || []).indexOf(filename) !== -1;
   }
 
