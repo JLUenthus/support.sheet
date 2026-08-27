@@ -1,0 +1,126 @@
+{
+  "scripts": [
+    {
+      "id": "get-systeminventory",
+      "path": "powershell/Get-SystemInventory.ps1",
+      "prerequisites": {
+        "runAsAdmin": false,
+        "modules": [],
+        "executionPolicy": "RemoteSigned",
+        "notes": []
+      },
+      "blocks": []
+    },
+    {
+      "id": "get-localadmins",
+      "path": "powershell/Get-LocalAdmins.ps1",
+      "prerequisites": {
+        "runAsAdmin": false,
+        "modules": [],
+        "executionPolicy": "RemoteSigned",
+        "notes": [
+          "Admin-Rechte und WinRM sind laut Skript-Kopf nur für Abfragen auf Remote-Computern nötig, nicht für den lokalen Rechner (Standard)."
+        ]
+      },
+      "blocks": []
+    },
+    {
+      "id": "test-networkconnectivity",
+      "path": "powershell/Test-NetworkConnectivity.ps1",
+      "prerequisites": {
+        "runAsAdmin": false,
+        "modules": [],
+        "executionPolicy": "RemoteSigned",
+        "notes": []
+      },
+      "blocks": []
+    },
+    {
+      "id": "get-installedsoftware",
+      "path": "powershell/Get-InstalledSoftware.ps1",
+      "prerequisites": {
+        "runAsAdmin": false,
+        "modules": [],
+        "executionPolicy": "RemoteSigned",
+        "notes": [
+          "Admin-Rechte sind laut Skript-Kopf nur für Abfragen auf Remote-Computern nötig, nicht für den lokalen Rechner (Standard)."
+        ]
+      },
+      "blocks": []
+    },
+    {
+      "id": "set-powerplan-win11",
+      "path": "powershell/Set-PowerPlan-Win11.ps1",
+      "prerequisites": {
+        "runAsAdmin": true,
+        "modules": [],
+        "executionPolicy": "RemoteSigned",
+        "notes": [
+          "Skript-Kopf: „Als Administrator ausfuehren!“"
+        ]
+      },
+      "blocks": []
+    },
+    {
+      "id": "get-eventlogcollector-client",
+      "path": "powershell/Get-EventLogCollector-Client.ps1",
+      "prerequisites": {
+        "runAsAdmin": true,
+        "modules": [],
+        "executionPolicy": "RemoteSigned",
+        "notes": []
+      },
+      "blocks": []
+    },
+    {
+      "id": "get-eventlogcollector-server",
+      "path": "powershell/Get-EventLogCollector-Server.ps1",
+      "prerequisites": {
+        "runAsAdmin": true,
+        "modules": [],
+        "executionPolicy": "RemoteSigned",
+        "notes": []
+      },
+      "blocks": []
+    },
+    {
+      "id": "exchange-preflightcheck",
+      "path": "powershell/Exchange-PreflightCheck.ps1",
+      "prerequisites": {
+        "runAsAdmin": false,
+        "modules": [],
+        "executionPolicy": "RemoteSigned",
+        "notes": [
+          "Muss in der Exchange Management Shell (EMS) ausgeführt werden."
+        ]
+      },
+      "blocks": []
+    },
+    {
+      "id": "set-bravedebloat",
+      "path": "powershell/Set-BraveDebloat.ps1",
+      "prerequisites": {
+        "runAsAdmin": true,
+        "modules": [],
+        "executionPolicy": "RemoteSigned",
+        "notes": []
+      },
+      "blocks": []
+    },
+    {
+      "id": "get-gpoanalyzersnapshot",
+      "path": "powershell/gpo/Get-GPOAnalyzerSnapshot.ps1",
+      "prerequisites": {
+        "runAsAdmin": false,
+        "modules": ["GroupPolicy", "ActiveDirectory"],
+        "executionPolicy": "RemoteSigned",
+        "notes": [
+          "Muss auf einem Domain Controller oder einem domänenverbundenen Client mit installierten RSAT-Tools (Gruppenrichtlinienverwaltung + Active Directory) ausgeführt werden.",
+          "Keine Admin-Rechte nötig, nur Leserechte auf GPOs/AD (laut Skript-Kopf).",
+          "Fehlt die Berechtigung auf Computerobjekte, sammelt das Skript trotzdem weiter – computers.json kann dann unvollständig sein (nicht-fataler Warnhinweis im Skript)."
+        ]
+      },
+      "blocks": []
+    }
+  ]
+}

@@ -1010,6 +1010,44 @@ body.page-tools    .hero h1 { background: linear-gradient(135deg, #e0e4f0 0%, #9
 }
 .guide-overlay-links a:hover { text-decoration: underline; }
 
+/* Script-Overlay-Inhalt (js/script-overlay.js) - wiederverwendet auf allen
+   Host-Seiten (scripts.html, eventlog.html, gpo.html), damit jede Seite
+   diese Regeln nicht einzeln duplizieren muss. Nutzt dieselbe .guide-
+   overlay-content pre/code-Darstellung fuer den eigentlichen Skripttext. */
+.script-overlay-prereqs { margin: 0 0 16px; padding: 12px 14px; background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: var(--r); font-size: .8rem; }
+.script-overlay-prereqs h3 { margin: 0 0 8px; font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; color: var(--dim); }
+.script-overlay-prereqs dl { margin: 0 0 8px; display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; }
+.script-overlay-prereqs dl:last-child { margin-bottom: 0; }
+.script-overlay-prereqs dt { color: var(--muted); }
+.script-overlay-prereqs dd { margin: 0; color: var(--text); }
+.script-overlay-prereqs ul { margin: 0; padding-left: 18px; }
+.script-overlay-prereqs li { margin: 2px 0; color: var(--text); }
+.script-overlay-loading,
+.script-overlay-error { padding: 12px 14px; border-radius: var(--r); font-size: .82rem; }
+.script-overlay-loading { color: var(--muted); }
+.script-overlay-error { border: 1px solid rgba(248,113,113,.3); background: rgba(248,113,113,.08); color: #f87171; }
+
+.script-overlay-hash { margin: 0 0 16px; padding: 12px 14px; background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: var(--r); font-size: .8rem; }
+.script-overlay-hash h3 { margin: 0 0 8px; font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; color: var(--dim); }
+.script-overlay-hash-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.script-overlay-hash-value { flex: 1 1 auto; min-width: 0; font-family: var(--font-mono); font-size: .74rem; color: var(--text); word-break: break-all; }
+.script-overlay-hash-copy {
+  flex-shrink: 0;
+  font-size: .68rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border2);
+  background: var(--panel2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+  font-family: var(--font-ui);
+}
+.script-overlay-hash-copy:hover:not(:disabled) { color: var(--text); border-color: var(--green); }
+.script-overlay-hash-copy.copied { color: var(--green); border-color: rgba(74,222,128,.4); }
+.script-overlay-hash-copy:disabled { opacity: .5; cursor: default; }
+
 /* Guide-Button im card-header (vor dem Stern) */
 .guide-ref-btn-header {
   width: 26px;

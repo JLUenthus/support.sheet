@@ -12,6 +12,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <title>support.sheet – Event Log Analyzer</title>
   <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/highlight-atom-one-dark.min.css">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
 </head>
@@ -37,12 +38,18 @@
         <div class="collector-card">
           <div class="collector-head"><span class="collector-icon">💻</span><div><div class="collector-name">Windows Client</div><div class="collector-sub">Windows 10 / 11</div></div></div>
           <code class="collector-cmd">powershell.exe -ExecutionPolicy Bypass -File "C:\Temp\Get-EventLogCollector-Client.ps1"</code>
-          <a href="powershell/Get-EventLogCollector-Client.ps1" class="collector-dl" download>⬇️ Client-Script herunterladen</a>
+          <div class="collector-actions">
+            <button class="collector-guide-btn" data-script-guide="get-eventlogcollector-client">📖 Guide</button>
+            <a href="powershell/Get-EventLogCollector-Client.ps1" class="collector-dl" download>⬇️ Client-Script herunterladen</a>
+          </div>
         </div>
         <div class="collector-card">
           <div class="collector-head"><span class="collector-icon">🖥️</span><div><div class="collector-name">Windows Server</div><div class="collector-sub">2016 / 2019 / 2022</div></div></div>
           <code class="collector-cmd">powershell.exe -ExecutionPolicy Bypass -File "C:\Temp\Get-EventLogCollector-Server.ps1"</code>
-          <a href="powershell/Get-EventLogCollector-Server.ps1" class="collector-dl" download>⬇️ Server-Script herunterladen</a>
+          <div class="collector-actions">
+            <button class="collector-guide-btn" data-script-guide="get-eventlogcollector-server">📖 Guide</button>
+            <a href="powershell/Get-EventLogCollector-Server.ps1" class="collector-dl" download>⬇️ Server-Script herunterladen</a>
+          </div>
         </div>
       </div>
     </section>
@@ -230,6 +237,27 @@
 
   </main>
 
+  <!-- Script Overlay -->
+  <div id="script-overlay" class="guide-overlay" hidden aria-modal="true" role="dialog">
+    <div class="guide-overlay-backdrop"></div>
+    <div class="guide-overlay-panel">
+      <div class="guide-overlay-header">
+        <div class="guide-overlay-title" id="script-overlay-title"></div>
+        <div class="guide-overlay-actions">
+          <a href="#" id="script-overlay-download"
+             class="guide-overlay-open-btn"
+             download hidden>
+            ⬇️ Herunterladen
+          </a>
+          <button class="guide-overlay-close" id="script-overlay-close"
+                  aria-label="Schliessen" title="Schliessen">✕</button>
+        </div>
+      </div>
+      <div class="guide-overlay-content" id="script-overlay-content">
+        <!-- Voraussetzungen + Skriptinhalt werden hier gerendert -->
+      </div>
+    </div>
+  </div>
 
   <style>
     .el-section { margin-bottom: 32px; }
@@ -242,8 +270,11 @@
     .collector-name { font-size:.88rem; font-weight:700; color:var(--text); }
     .collector-sub  { font-size:.72rem; color:var(--muted); }
     .collector-cmd  { font-family:var(--font-mono); font-size:.7rem; color:var(--accent); background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:8px 10px; word-break:break-all; }
-    .collector-dl   { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:7px; border:1px solid var(--border2); background:var(--panel2); color:var(--muted); font-size:.78rem; font-weight:600; text-decoration:none; transition:all .15s; }
+    .collector-actions { display:flex; gap:8px; }
+    .collector-dl   { display:inline-flex; align-items:center; justify-content:center; gap:6px; flex:1; padding:7px 14px; border-radius:7px; border:1px solid var(--border2); background:var(--panel2); color:var(--muted); font-size:.78rem; font-weight:600; text-decoration:none; transition:all .15s; }
     .collector-dl:hover { color:var(--text); border-color:rgba(74,222,128,.4); }
+    .collector-guide-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; flex:1; padding:7px 14px; border-radius:7px; border:1px solid rgba(124,140,248,.35); background:rgba(124,140,248,.08); color:var(--accent); font-size:.78rem; font-weight:600; text-decoration:none; transition:all .15s; cursor:pointer; }
+    .collector-guide-btn:hover { background:rgba(124,140,248,.18); }
 
     /* Upload */
     .upload-zone { border:2px dashed var(--border2); border-radius:var(--r-lg); padding:48px 24px; text-align:center; cursor:pointer; transition:border-color .2s,background .2s; }
@@ -2274,6 +2305,8 @@
     }
   </script>
 
+  <script type="module" src="js/highlight-init.js"></script>
+  <script src="js/script-overlay.js"></script>
   <script src="nav.js"></script>
 </body>
 </html>

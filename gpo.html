@@ -12,6 +12,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <title>support.sheet – GPO Analyzer</title>
   <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/highlight-atom-one-dark.min.css">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
   <link rel="stylesheet" href="css/gpo/gpo.css">
@@ -137,7 +138,10 @@
             Läuft auf einem Domain Controller oder einem domänenverbundenen Client mit den RSAT-Modulen
             GroupPolicy und Active Directory. Keine Admin-Rechte nötig, nur Leserechte auf GPOs/AD.
           </div>
-          <a href="powershell/gpo/Get-GPOAnalyzerSnapshot.ps1" download class="gpo-onboarding-card-download">⬇️ Collector-Skript herunterladen</a>
+          <div class="gpo-onboarding-card-actions">
+            <button class="gpo-onboarding-card-guide" data-script-guide="get-gpoanalyzersnapshot">📖 Guide</button>
+            <a href="powershell/gpo/Get-GPOAnalyzerSnapshot.ps1" download class="gpo-onboarding-card-download">⬇️ Collector-Skript herunterladen</a>
+          </div>
         </div>
       </div>
     </section>
@@ -732,6 +736,28 @@
 
   </main>
 
+  <!-- Script Overlay -->
+  <div id="script-overlay" class="guide-overlay" hidden aria-modal="true" role="dialog">
+    <div class="guide-overlay-backdrop"></div>
+    <div class="guide-overlay-panel">
+      <div class="guide-overlay-header">
+        <div class="guide-overlay-title" id="script-overlay-title"></div>
+        <div class="guide-overlay-actions">
+          <a href="#" id="script-overlay-download"
+             class="guide-overlay-open-btn"
+             download hidden>
+            ⬇️ Herunterladen
+          </a>
+          <button class="guide-overlay-close" id="script-overlay-close"
+                  aria-label="Schliessen" title="Schliessen">✕</button>
+        </div>
+      </div>
+      <div class="guide-overlay-content" id="script-overlay-content">
+        <!-- Voraussetzungen + Skriptinhalt werden hier gerendert -->
+      </div>
+    </div>
+  </div>
+
   <script src="js/jszip.min.js"></script>
   <!-- Fuer createCommandCard()-Wiederverwendung (js/render.js) im
        "Weiterfuehrende Diagnose"-Bereich der Konflikt-/Hygiene-Findings. -->
@@ -760,6 +786,8 @@
       window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
     }
   </script>
+  <script type="module" src="js/highlight-init.js"></script>
+  <script src="js/script-overlay.js"></script>
   <script src="nav.js"></script>
 </body>
 </html>

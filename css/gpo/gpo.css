@@ -108,6 +108,21 @@
   text-decoration: none;
 }
 .gpo-onboarding-card-download:hover { filter: brightness(1.15); }
+.gpo-onboarding-card-actions { display: flex; gap: 8px; }
+.gpo-onboarding-card-guide {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(124, 140, 248, .08);
+  border: 1px solid rgba(124, 140, 248, .35);
+  border-radius: var(--r);
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.gpo-onboarding-card-guide:hover { background: rgba(124, 140, 248, .18); }
 
 .gpo-onboarding-note { font-size: .76rem; color: var(--dim); margin-top: 10px; line-height: 1.5; }
 .gpo-onboarding-note code {

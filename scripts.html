@@ -14,6 +14,7 @@
 
   <link rel="stylesheet" href="fonts/fonts.css">
 
+  <link rel="stylesheet" href="css/highlight-atom-one-dark.min.css">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
 </head>
@@ -50,7 +51,10 @@
           <span class="tag">system</span>
           <span class="tag">info</span>
         </div>
-        <a href="powershell/Get-SystemInventory.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        <div class="script-card-actions">
+          <button class="script-guide-btn" data-script-guide="get-systeminventory">📖 Guide</button>
+          <a href="powershell/Get-SystemInventory.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        </div>
       </div>
 
       <!-- Get-LocalAdmins -->
@@ -67,7 +71,10 @@
           <span class="tag">security</span>
           <span class="tag">audit</span>
         </div>
-        <a href="powershell/Get-LocalAdmins.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        <div class="script-card-actions">
+          <button class="script-guide-btn" data-script-guide="get-localadmins">📖 Guide</button>
+          <a href="powershell/Get-LocalAdmins.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        </div>
       </div>
 
       <!-- Test-NetworkConnectivity -->
@@ -84,7 +91,10 @@
           <span class="tag">diag</span>
           <span class="tag">quick</span>
         </div>
-        <a href="powershell/Test-NetworkConnectivity.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        <div class="script-card-actions">
+          <button class="script-guide-btn" data-script-guide="test-networkconnectivity">📖 Guide</button>
+          <a href="powershell/Test-NetworkConnectivity.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        </div>
       </div>
 
       <!-- Get-InstalledSoftware -->
@@ -101,7 +111,10 @@
           <span class="tag">software</span>
           <span class="tag">audit</span>
         </div>
-        <a href="powershell/Get-InstalledSoftware.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        <div class="script-card-actions">
+          <button class="script-guide-btn" data-script-guide="get-installedsoftware">📖 Guide</button>
+          <a href="powershell/Get-InstalledSoftware.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        </div>
       </div>
 
       <!-- Set-PowerPlan-Win11 -->
@@ -118,7 +131,10 @@
           <span class="tag">windows11</span>
           <span class="tag">performance</span>
         </div>
-        <a href="powershell/Set-PowerPlan-Win11.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        <div class="script-card-actions">
+          <button class="script-guide-btn" data-script-guide="set-powerplan-win11">📖 Guide</button>
+          <a href="powershell/Set-PowerPlan-Win11.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        </div>
       </div>
 
       <!-- Get-EventLogCollector-Client -->
@@ -135,7 +151,10 @@
           <span class="tag">client</span>
           <span class="tag">diag</span>
         </div>
-        <a href="powershell/Get-EventLogCollector-Client.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        <div class="script-card-actions">
+          <button class="script-guide-btn" data-script-guide="get-eventlogcollector-client">📖 Guide</button>
+          <a href="powershell/Get-EventLogCollector-Client.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        </div>
       </div>
 
       <!-- Get-EventLogCollector-Server -->
@@ -152,7 +171,10 @@
           <span class="tag">server</span>
           <span class="tag">diag</span>
         </div>
-        <a href="powershell/Get-EventLogCollector-Server.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        <div class="script-card-actions">
+          <button class="script-guide-btn" data-script-guide="get-eventlogcollector-server">📖 Guide</button>
+          <a href="powershell/Get-EventLogCollector-Server.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        </div>
       </div>
 
       <!-- Exchange-PreflightCheck -->
@@ -173,7 +195,10 @@
         <div style="font-size:.72rem;padding:6px 10px;background:rgba(232,179,57,.08);border:1px solid rgba(232,179,57,.2);border-radius:6px;color:#e8b339;margin-top:2px;">
           ⚠️ Muss in der <strong>Exchange Management Shell (EMS)</strong> ausgeführt werden
         </div>
-        <a href="powershell/Exchange-PreflightCheck.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        <div class="script-card-actions">
+          <button class="script-guide-btn" data-script-guide="exchange-preflightcheck">📖 Guide</button>
+          <a href="powershell/Exchange-PreflightCheck.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        </div>
       </div>
 
       <!-- Set-BraveDebloat -->
@@ -191,12 +216,36 @@
           <span class="tag">admin</span>
           <span class="tag">windows</span>
         </div>
-        <a href="powershell/Set-BraveDebloat.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        <div class="script-card-actions">
+          <button class="script-guide-btn" data-script-guide="set-bravedebloat">📖 Guide</button>
+          <a href="powershell/Set-BraveDebloat.ps1" class="script-dl-btn" download>⬇️ Herunterladen</a>
+        </div>
       </div>
 
     </div><!-- /scripts-container -->
   </main>
 
+  <!-- Script Overlay -->
+  <div id="script-overlay" class="guide-overlay" hidden aria-modal="true" role="dialog">
+    <div class="guide-overlay-backdrop"></div>
+    <div class="guide-overlay-panel">
+      <div class="guide-overlay-header">
+        <div class="guide-overlay-title" id="script-overlay-title"></div>
+        <div class="guide-overlay-actions">
+          <a href="#" id="script-overlay-download"
+             class="guide-overlay-open-btn"
+             download hidden>
+            ⬇️ Herunterladen
+          </a>
+          <button class="guide-overlay-close" id="script-overlay-close"
+                  aria-label="Schliessen" title="Schliessen">✕</button>
+        </div>
+      </div>
+      <div class="guide-overlay-content" id="script-overlay-content">
+        <!-- Voraussetzungen + Skriptinhalt werden hier gerendert -->
+      </div>
+    </div>
+  </div>
 
   <style>
     .scripts-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; padding-top:8px; }
@@ -207,8 +256,11 @@
     .script-name   { font-size:.88rem; font-weight:700; color:var(--text); margin-bottom:4px; }
     .script-desc   { font-size:.78rem; color:var(--muted); line-height:1.45; }
     .script-tags   { display:flex; gap:6px; flex-wrap:wrap; }
-    .script-dl-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; margin-top:auto; padding:7px 14px; border-radius:7px; border:1px solid rgba(74,222,128,.35); background:rgba(74,222,128,.08); color:#4ade80; font-size:.78rem; font-weight:600; text-decoration:none; transition:all .15s; }
+    .script-card-actions { display:flex; gap:8px; margin-top:auto; }
+    .script-dl-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; flex:1; padding:7px 14px; border-radius:7px; border:1px solid rgba(74,222,128,.35); background:rgba(74,222,128,.08); color:#4ade80; font-size:.78rem; font-weight:600; text-decoration:none; transition:all .15s; }
     .script-dl-btn:hover { background:rgba(74,222,128,.18); }
+    .script-guide-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; flex:1; padding:7px 14px; border-radius:7px; border:1px solid rgba(124,140,248,.35); background:rgba(124,140,248,.08); color:var(--accent); font-size:.78rem; font-weight:600; text-decoration:none; transition:all .15s; cursor:pointer; }
+    .script-guide-btn:hover { background:rgba(124,140,248,.18); }
   </style>
 
   <script>
@@ -261,14 +313,12 @@
         cards.forEach(card => {
           card.style.display = (tag === 'all' || card.dataset.category === tag) ? '' : 'none';
         });
-        // Update count
-        const visible = tag === 'all' ? cards.length
-          : [...cards].filter(c => c.dataset.category === tag).length;
-        document.getElementById('stat-scripts').textContent = visible;
       });
     });
   </script>
 
+  <script type="module" src="js/highlight-init.js"></script>
+  <script src="js/script-overlay.js"></script>
   <script src="nav.js"></script>
 </body>
 </html>
