@@ -1194,6 +1194,109 @@
       "guideRef": "support-schnellbefehle"
     },
     {
+      "id": "registry-wert-auslesen",
+      "name": "Registry-Wert auslesen",
+      "cmd": "reg query \"HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\" /v ProductName",
+      "desc": "Liest einen einzelnen Registry-Wert direkt über die Kommandozeile aus – ohne den Editor zu öffnen. Ideal für Remote-Sessions ohne GUI oder zum Einbauen in Skripte.",
+      "tags": [
+        "registry",
+        "windows",
+        "quick",
+        "info"
+      ],
+      "guideRef": "support-registry"
+    },
+    {
+      "id": "registry-key-komplett-anzeigen",
+      "name": "Alle Werte eines Keys anzeigen",
+      "cmd": "reg query \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\" /s",
+      "desc": "Zeigt alle Unterschlüssel und Werte rekursiv (/s). Guter erster Schritt bei der Fehlersuche, um zu sehen was per GPO/Richtlinie tatsächlich in der Registry angekommen ist.",
+      "tags": [
+        "registry",
+        "windows",
+        "admin",
+        "diag"
+      ],
+      "guideRef": "support-registry"
+    },
+    {
+      "id": "registry-wert-setzen",
+      "name": "Registry-Wert setzen/anlegen",
+      "cmd": "reg add \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU\" /v NoAutoUpdate /t REG_DWORD /d 1 /f",
+      "desc": "Legt einen Wert an oder überschreibt ihn (/f = ohne Rückfrage). /t gibt den Typ vor (REG_DWORD, REG_SZ, REG_BINARY, ...) – falscher Typ ist die häufigste Fehlerquelle bei diesem Befehl.",
+      "tags": [
+        "registry",
+        "windows",
+        "admin",
+        "caution"
+      ],
+      "guideRef": "support-registry"
+    },
+    {
+      "id": "registry-wert-loeschen",
+      "name": "Registry-Wert löschen",
+      "cmd": "reg delete \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU\" /v NoAutoUpdate /f",
+      "desc": "Entfernt einen einzelnen Wert (nicht den ganzen Key). Ohne /v würde der komplette Key inkl. aller Unterwerte gelöscht – vorher immer exportieren (siehe Backup-Befehl).",
+      "tags": [
+        "registry",
+        "windows",
+        "admin",
+        "caution"
+      ],
+      "guideRef": "support-registry"
+    },
+    {
+      "id": "registry-backup-export",
+      "name": "Registry-Key vor Änderung sichern",
+      "cmd": "reg export \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\" \"C:\\Temp\\WU-Backup.reg\"",
+      "desc": "Sichert einen kompletten Key inkl. aller Unterschlüssel als .reg-Datei. Vor jeder manuellen Änderung ausführen – der wichtigste Befehl in dieser Gruppe, weil er jeden anderen hier reversibel macht.",
+      "tags": [
+        "registry",
+        "windows",
+        "admin",
+        "quick"
+      ],
+      "guideRef": "support-registry"
+    },
+    {
+      "id": "registry-backup-import",
+      "name": "Registry-Backup zurückspielen",
+      "cmd": "reg import \"C:\\Temp\\WU-Backup.reg\"",
+      "desc": "Spielt eine zuvor exportierte .reg-Datei zurück – z.B. um eine fehlgeschlagene Änderung rückgängig zu machen. Import überschreibt vorhandene Werte ohne Rückfrage.",
+      "tags": [
+        "registry",
+        "windows",
+        "admin",
+        "caution"
+      ],
+      "guideRef": "support-registry"
+    },
+    {
+      "id": "registry-remote-abfrage",
+      "name": "Registry auf Remote-Rechner abfragen",
+      "cmd": "reg query \"\\\\SERVER01\\HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\" /v ProductName",
+      "desc": "Fragt einen Wert auf einem anderen Rechner ab, ohne RDP oder Remote-Registry-GUI zu öffnen. Benötigt Remote-Registry-Dienst auf dem Zielsystem und passende Firewall-/Berechtigungsfreigabe.",
+      "tags": [
+        "registry",
+        "windows",
+        "remote",
+        "admin"
+      ],
+      "guideRef": "support-registry"
+    },
+    {
+      "id": "registry-32bit-view",
+      "name": "32-Bit-Registry-View auf 64-Bit-System abfragen",
+      "cmd": "reg query \"HKLM\\SOFTWARE\\Vendor\" /reg:32",
+      "desc": "Fragt gezielt die 32-Bit-Sicht ab (WOW6432Node), ohne den Pfad manuell umzubauen. Klassische Falle: ein 32-Bit-Programm schreibt seine Werte dorthin, die Suche im normalen HKLM\\SOFTWARE findet nichts.",
+      "tags": [
+        "registry",
+        "windows",
+        "diag"
+      ],
+      "guideRef": "support-registry"
+    },
+    {
       "id": "quick-task-manager",
       "name": "Task-Manager",
       "cmd": "taskmgr",
@@ -1354,6 +1457,57 @@
         "windows",
         "info",
         "diag"
+      ],
+      "guideRef": "support-eventlog"
+    },
+    {
+      "id": "eventlog-wevtutil-abfragen",
+      "name": "Event Log per wevtutil abfragen",
+      "cmd": "wevtutil qe System /c:10 /rd:true /f:text",
+      "desc": "Zeigt die letzten 10 Einträge des System-Logs als Klartext, neueste zuerst. Funktioniert auch ohne PowerShell, z.B. in einer reinen CMD-Session oder auf Core-Servern.",
+      "tags": [
+        "eventlog",
+        "windows",
+        "admin",
+        "info"
+      ],
+      "guideRef": "support-eventlog"
+    },
+    {
+      "id": "eventlog-wevtutil-export",
+      "name": "Event Log als .evtx exportieren",
+      "cmd": "wevtutil epl System C:\\Temp\\System.evtx",
+      "desc": "Exportiert das komplette System-Log als .evtx-Datei – behält alle Original-Metadaten (im Gegensatz zu CSV-Export). Ideal zum Mitgeben an den Hersteller-Support oder für spätere Offline-Analyse in der Ereignisanzeige.",
+      "tags": [
+        "eventlog",
+        "windows",
+        "admin",
+        "quick"
+      ],
+      "guideRef": "support-eventlog"
+    },
+    {
+      "id": "eventlog-wevtutil-info",
+      "name": "Log-Konfiguration und Größe anzeigen",
+      "cmd": "wevtutil gl System",
+      "desc": "Zeigt maximale Größe, aktuellen Füllstand, Retention-Verhalten und Pfad der Log-Datei. Praktisch um vor einer Größenänderung (wevtutil sl) den Ist-Zustand zu dokumentieren.",
+      "tags": [
+        "eventlog",
+        "windows",
+        "info"
+      ],
+      "guideRef": "support-eventlog"
+    },
+    {
+      "id": "eventlog-wevtutil-leeren",
+      "name": "Event Log leeren",
+      "cmd": "wevtutil epl Application C:\\Temp\\Application-Backup.evtx\nwevtutil cl Application",
+      "desc": "Leert das Application-Log vollständig – vorher wird es als Backup exportiert, damit nichts unwiderruflich verloren geht. Nur nach Rücksprache/dokumentiertem Grund einsetzen, niemals routinemäßig auf produktiven Systemen.",
+      "tags": [
+        "eventlog",
+        "windows",
+        "admin",
+        "caution"
       ],
       "guideRef": "support-eventlog"
     },
@@ -2197,6 +2351,112 @@
         "caution"
       ],
       "guideRef": "support-prozesse-dienste"
+    },
+    {
+      "id": "schtasks-alle-auflisten",
+      "name": "Alle geplanten Aufgaben auflisten",
+      "cmd": "schtasks /query /fo table",
+      "desc": "Zeigt alle geplanten Aufgaben mit Status und nächster Ausführungszeit als Tabelle. Funktioniert in CMD und PowerShell gleich, auch remote per RDP-freier Session.",
+      "tags": [
+        "scheduled-task",
+        "windows",
+        "admin",
+        "quick"
+      ],
+      "guideRef": "support-schtasks"
+    },
+    {
+      "id": "schtasks-details-anzeigen",
+      "name": "Details zu einer Aufgabe anzeigen",
+      "cmd": "schtasks /query /tn \"Wartung\\TaeglichesBackup\" /v /fo list",
+      "desc": "Zeigt alle Details eines einzelnen Tasks: letzte/nächste Laufzeit, letztes Ergebnis, ausführendes Konto, Trigger. /fo list macht die vielen Felder lesbar (Tabelle wäre hier zu breit).",
+      "tags": [
+        "scheduled-task",
+        "windows",
+        "admin",
+        "diag"
+      ],
+      "guideRef": "support-schtasks"
+    },
+    {
+      "id": "schtasks-erstellen-taeglich",
+      "name": "Täglichen Task per CLI erstellen",
+      "cmd": "schtasks /create /tn \"Wartung\\TaeglichesBackup\" /tr \"C:\\Scripts\\backup.ps1\" /sc daily /st 02:00 /ru SYSTEM /rl highest",
+      "desc": "Legt einen täglich um 02:00 Uhr laufenden Task an, ausgeführt als SYSTEM mit höchsten Rechten – läuft auch ohne angemeldeten Benutzer. Backslash im Namen (\"Wartung\\...\") legt einen Ordner in der Aufgabenplanung an.",
+      "tags": [
+        "scheduled-task",
+        "windows",
+        "server",
+        "admin",
+        "caution"
+      ],
+      "guideRef": "support-schtasks"
+    },
+    {
+      "id": "schtasks-sofort-ausfuehren",
+      "name": "Task sofort manuell ausführen",
+      "cmd": "schtasks /run /tn \"Wartung\\TaeglichesBackup\"",
+      "desc": "Startet einen geplanten Task sofort, unabhängig von seinem eigentlichen Trigger – zum Testen nach dem Anlegen oder um eine Aktion außerplanmäßig anzustoßen.",
+      "tags": [
+        "scheduled-task",
+        "windows",
+        "admin",
+        "quick"
+      ],
+      "guideRef": "support-schtasks"
+    },
+    {
+      "id": "schtasks-abbrechen",
+      "name": "Laufenden Task abbrechen",
+      "cmd": "schtasks /end /tn \"Wartung\\TaeglichesBackup\"",
+      "desc": "Beendet einen aktuell laufenden Task sofort. Bricht den Prozess hart ab, es gibt kein sauberes Herunterfahren des ausgeführten Programms.",
+      "tags": [
+        "scheduled-task",
+        "windows",
+        "admin",
+        "caution"
+      ],
+      "guideRef": "support-schtasks"
+    },
+    {
+      "id": "schtasks-loeschen",
+      "name": "Geplante Aufgabe per CLI löschen",
+      "cmd": "schtasks /delete /tn \"Wartung\\TaeglichesBackup\" /f",
+      "desc": "Entfernt einen Task endgültig, /f unterdrückt die Rückfrage. Vorher mit /query prüfen, ob es wirklich der richtige Task ist – es gibt kein Undo.",
+      "tags": [
+        "scheduled-task",
+        "windows",
+        "admin",
+        "caution"
+      ],
+      "guideRef": "support-schtasks"
+    },
+    {
+      "id": "schtasks-remote-abfrage",
+      "name": "Geplante Aufgaben auf Remote-Rechner abfragen",
+      "cmd": "schtasks /query /s SERVER01 /u DOMAIN\\Admin /p * /fo table",
+      "desc": "Fragt die Task-Liste eines anderen Rechners ab, ohne RDP zu öffnen. /p * fragt das Passwort interaktiv ab, statt es im Klartext in der Befehlszeile zu hinterlegen.",
+      "tags": [
+        "scheduled-task",
+        "windows",
+        "remote",
+        "admin"
+      ],
+      "guideRef": "support-schtasks"
+    },
+    {
+      "id": "schtasks-fehlgeschlagene-finden",
+      "name": "Fehlgeschlagene Tasks finden",
+      "cmd": "Get-ScheduledTask | Get-ScheduledTaskInfo | Where-Object { $_.LastTaskResult -ne 0 -and $_.LastRunTime } | Select TaskName, LastRunTime, LastTaskResult",
+      "desc": "Findet alle Tasks, deren letzter Lauf mit einem Fehlercode endete (0 = Erfolg). Guter erster Schritt bei \"irgendein Wartungsjob lief heute Nacht nicht durch\", ohne jeden Task einzeln durchzuklicken.",
+      "tags": [
+        "scheduled-task",
+        "powershell",
+        "windows",
+        "admin",
+        "diag"
+      ],
+      "guideRef": "support-schtasks"
     },
     {
       "id": "winget-software-suchen",
