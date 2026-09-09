@@ -1606,11 +1606,24 @@
     // der Browser erfolgreich geöffnet hat) - das neue Fenster spricht für sich.
   }
 
-  // Gleiches Ziel, ohne Fenstermerkmale - Browser öffnen ein window.open() ohne
-  // width/height-Angabe standardmäßig als regulären Tab statt als Popup-Fenster.
+  // "oder in Tab öffnen" (#pw-btn-new-tab): window.open() OHNE drittes
+  // windowFeatures-Argument - exakt das bereits an anderer Stelle im Projekt
+  // bewährte Muster (siehe js/wizard-renderer.js, openTicketAssistant()/
+  // openGuideCreate()). Sowohl ein <a target="_blank"> als auch ein
+  // window.open()-Aufruf MIT Fenstermerkmalen (und sei es nur
+  // "noopener,noreferrer" ohne width/height) werden von installierten PWA-
+  // Fenstern (z.B. Edge im App-Modus) als Popup-/App-Fenster statt als Tab
+  // interpretiert, weil ein chromeloses App-Fenster gar keine Tab-Leiste
+  // besitzt, an die sich ein Tab anhängen ließe - window.open() ganz ohne
+  // Fenstermerkmale wird dagegen zuverlässig als normale Tab-Navigation
+  // behandelt, auch innerhalb einer installierten PWA. Der Rückkanal
+  // (window.opener) wird stattdessen nachträglich über newTab.opener = null
+  // gekappt, ohne dafür ein Fenstermerkmal setzen zu müssen.
   function handleOpenInNewTabClick() {
-    const newTab = window.open('private.html', '_blank', 'noopener,noreferrer');
-    if (!newTab) {
+    const newTab = window.open('private.html', '_blank');
+    if (newTab) {
+      newTab.opener = null;
+    } else {
       showToast('Der neue Tab konnte nicht geöffnet werden. Bitte erlaube Pop-ups für diese Seite.', 'error');
     }
   }

@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260909-private-workspace-phase11c-open-in-tab-fix';
+const CACHE_VERSION = '20260909-private-workspace-phase11d-open-in-tab-pwa-fix';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
