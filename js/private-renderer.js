@@ -29,6 +29,7 @@
 
     btnOpen: document.getElementById('pw-btn-open'),
     btnCreate: document.getElementById('pw-btn-create'),
+    btnNewWindow: document.getElementById('pw-btn-new-window'),
     startError: document.getElementById('pw-start-error'),
 
     btnLockedReopen: document.getElementById('pw-btn-locked-reopen'),
@@ -36,6 +37,7 @@
     workspaceName: document.getElementById('pw-workspace-name'),
     btnClose: document.getElementById('pw-btn-close'),
     statusSavedAt: document.getElementById('pw-status-saved-at'),
+    statusAutoLockHint: document.getElementById('pw-status-autolock-hint'),
     statusPill: document.getElementById('pw-status-pill'),
     btnSave: document.getElementById('pw-btn-save'),
     btnSaveAs: document.getElementById('pw-btn-save-as'),
@@ -99,8 +101,41 @@
     editorUnsavedCancel: document.getElementById('pw-editor-unsaved-cancel'),
 
     dialogDeleteNote: document.getElementById('pw-dialog-delete-note'),
+    deleteNoteTitle: document.getElementById('pw-delete-note-title'),
+    deleteNoteBody: document.getElementById('pw-delete-note-body'),
     deleteNoteCancel: document.getElementById('pw-delete-note-cancel'),
-    deleteNoteConfirm: document.getElementById('pw-delete-note-confirm')
+    deleteNoteConfirm: document.getElementById('pw-delete-note-confirm'),
+
+    // Notes/Entries-Umschalter (Phase 7)
+    tabNotes: document.getElementById('pw-tab-notes'),
+    tabEntries: document.getElementById('pw-tab-entries'),
+    notesPanel: document.getElementById('pw-notes-panel'),
+    entriesPanel: document.getElementById('pw-entries-panel'),
+
+    btnNewEntry: document.getElementById('pw-btn-new-entry'),
+    entriesSearch: document.getElementById('pw-entries-search'),
+    entriesSearchClear: document.getElementById('pw-entries-search-clear'),
+    entryCategoryFilter: document.getElementById('pw-entry-category-filter'),
+    entriesList: document.getElementById('pw-entries-list'),
+    entriesEmpty: document.getElementById('pw-entries-empty'),
+
+    entryEditorEmpty: document.getElementById('pw-entry-editor-empty'),
+    entryEditorEmptyText: document.getElementById('pw-entry-editor-empty-text'),
+    entryEditorEmptyCta: document.getElementById('pw-entry-editor-empty-cta'),
+    entryEditorForm: document.getElementById('pw-entry-editor-form'),
+    entryTitle: document.getElementById('pw-entry-title'),
+    entryCategory: document.getElementById('pw-entry-category'),
+    entryDescription: document.getElementById('pw-entry-description'),
+    entryTags: document.getElementById('pw-entry-tags'),
+    entryTagInput: document.getElementById('pw-entry-tag-input'),
+    entryTagAdd: document.getElementById('pw-entry-tag-add'),
+    entryFields: document.getElementById('pw-entry-fields'),
+    entryFieldAdd: document.getElementById('pw-entry-field-add'),
+    entryEditorDirtyHint: document.getElementById('pw-entry-editor-dirty-hint'),
+    entryDelete: document.getElementById('pw-entry-delete'),
+    entrySave: document.getElementById('pw-entry-save'),
+
+    editorUnsavedBody: document.getElementById('pw-editor-unsaved-body')
   };
 
   // ── Renderer-lokaler Zusatzstate (nur Anzeige, keine Geheimnisse) ──
@@ -117,6 +152,16 @@
   let currentEditorTags = [];
   let searchQuery = '';
   let pendingEditorGuardAction = null;
+
+  // Analoger UI-State für Entries (Phase 7) - gleiche Prinzipien: keine
+  // Zweitspeicherung, Daten immer frisch über PrivateWorkspace.getEntry(ies)().
+  let activeTab = 'notes'; // 'notes' | 'entries' - bestimmt u.a., welcher Editor vom Dirty-Guard/Löschen-Dialog gemeint ist
+  let selectedEntryId = null;
+  let entriesEditorDirty = false;
+  let currentEntryTags = [];
+  let currentEntryFields = []; // [{label, value}] - Feld-IDs vergibt erst PrivateWorkspace beim Speichern
+  let entriesSearchQuery = '';
+  let entryCategoryFilter = ''; // '' = "Alle"
   // Verhindert, dass ein zufällig währenddessen laufender Session-Poll-Tick
   // (siehe startPolling()) den synchron gesetzten "Wird gespeichert …"-Status
   // mit dem zu diesem Zeitpunkt noch unveränderten Dirty-Flag überschreibt.
@@ -177,6 +222,12 @@
         return 'Ungültige Notiz-Daten.';
       case PrivateWorkspace.ErrorCodes.NOTE_NOT_FOUND:
         return 'Diese Notiz wurde nicht gefunden (möglicherweise bereits gelöscht).';
+      case PrivateWorkspace.ErrorCodes.INVALID_ENTRY:
+        return 'Ungültige Eintragsdaten.';
+      case PrivateWorkspace.ErrorCodes.INVALID_ENTRY_FIELD:
+        return 'Ungültiges Feld in diesem Eintrag.';
+      case PrivateWorkspace.ErrorCodes.ENTRY_NOT_FOUND:
+        return 'Dieser Eintrag wurde nicht gefunden (möglicherweise bereits gelöscht).';
       default:
         return 'Ein unerwarteter Fehler ist aufgetreten.';
     }
@@ -276,6 +327,23 @@
     overlayEl.addEventListener('click', (e) => { if (e.target === overlayEl) cancelBtn.click(); });
   }
 
+  // Läuft die Session ab, während ein Dialog offen ist (Phase-9-Vorgabe 12),
+  // muss dieser sauber verschwinden statt über der gesperrten Ansicht hängen
+  // zu bleiben. Sicher für alle Dialoge, die überhaupt parallel zu einer
+  // aktiven Session offen sein können (Workspace-Unsaved/Editor-Unsaved/
+  // Notiz-Eintrag-Löschen) - diese sind rein event-getrieben ohne offene
+  // Promise. Passwort- und Create-Dialog setzen "kein Workspace offen" voraus
+  // und können daher konstruktionsbedingt nie parallel zu einer aktiven
+  // Session offen sein.
+  function forceCloseAllDialogs() {
+    while (dialogStack.length > 0) {
+      dialogStack.pop().overlayEl.hidden = true;
+    }
+    document.removeEventListener('keydown', trapTabHandler, true);
+    currentTrapDialog = null;
+    pendingEditorGuardAction = null;
+  }
+
   // ── Eye-Toggle (Passwort anzeigen/verbergen) ────────────
   document.querySelectorAll('.pw-eye-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -289,8 +357,30 @@
   });
 
   // ── Aktivitäts-Tracking für Session-Timeout ─────────────
+  // Bewusst nur echte, diskrete Nutzerinteraktionen - keine Mausbewegungen
+  // (zu hochfrequent) und nichts Timer-/Render-/Visibility-Basiertes.
+  // PrivateWorkspace.touchActivity() ist bereits intern auf `session.active`
+  // gegated (siehe private-workspace.js) - ohne offenen Workspace lösen diese
+  // Events also ohnehin keine Wirkung aus (Vorgabe Abschnitt 7).
   ['pointerdown', 'keydown', 'touchstart'].forEach(evt => {
     document.addEventListener(evt, () => PrivateWorkspace.touchActivity(), { passive: true });
+  });
+
+  // ── Sichtbarkeitswechsel (Phase 9) ───────────────────────
+  //
+  // "hidden" darf laut Vorgabe niemals selbst einen Lock auslösen und bleibt
+  // hier bewusst ein reines No-Op. Bei Rückkehr zu "visible" wird lediglich
+  // die UI mit dem tatsächlichen (ggf. inzwischen abgelaufenen) Session-
+  // Zustand synchronisiert - über denselben refreshWorkspaceView()-Pfad, den
+  // auch das bestehende Polling nutzt (siehe Abschnitt 11: keine zweite
+  // Cleanup-Implementierung). `pollTimer` ist nur zwischen startPolling()
+  // (bei onWorkspaceOpened) und stopPolling() (bei Close/Lock) gesetzt - das
+  // verhindert zuverlässig, dass ein Tab-Wechsel auf der Start-/Locked-Ansicht
+  // (ganz ohne je geöffneten Workspace) fälschlich reagiert.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    if (!pollTimer) return;
+    refreshWorkspaceView();
   });
 
   // ── Status-/Session-Polling ──────────────────────────────
@@ -314,7 +404,37 @@
       : 'Wird gespeichert …';
   }
 
+  // ── Zeitbasierte Session-Prüfung (Phase 9) ───────────────
+  //
+  // PrivateWorkspace sperrt intern bereits selbst über einen setTimeout()
+  // (siehe private-workspace.js) - diese Funktion ändert daran nichts und
+  // erfindet keine zweite Timeout-Mechanik. Sie schließt nur eine Lücke:
+  // In einem länger im Hintergrund gedrosselten Tab kann auch der interne
+  // setTimeout() selbst verspätet feuern, wodurch die Session in der Zwischen-
+  // zeit fälschlich noch "aktiv" erscheinen könnte. Beim tatsächlichen Prüf-
+  // zeitpunkt (Poll-Tick oder Rückkehr aus dem Hintergrund) wird deshalb
+  // zusätzlich anhand der bereits vorhandenen session.lastActivity/
+  // timeoutMinutes real verstrichene Zeit nachgerechnet - läuft die Session
+  // rechnerisch bereits ab, wird sie sofort über die bestehende, öffentliche
+  // clearSession()-Methode beendet (identisch zu einem regulär gefeuerten
+  // internen Timeout, inkl. sessionGeneration-Erhöhung für die Race-Guards).
+  function checkSessionExpiry() {
+    const session = PrivateWorkspace.getSession();
+    if (!session.active || !session.lastActivity || !(session.timeoutMinutes > 0)) return;
+    const elapsedMs = Date.now() - new Date(session.lastActivity).getTime();
+    if (elapsedMs >= session.timeoutMinutes * 60 * 1000) {
+      PrivateWorkspace.clearSession();
+    }
+  }
+
+  function formatAutoLockHint(timeoutMinutes) {
+    if (!(timeoutMinutes > 0)) return '';
+    if (timeoutMinutes >= 1) return 'Auto-Lock: ' + Math.round(timeoutMinutes) + ' Min.';
+    return 'Auto-Lock: ' + Math.round(timeoutMinutes * 60) + ' Sek.';
+  }
+
   function refreshWorkspaceView() {
+    checkSessionExpiry();
     const session = PrivateWorkspace.getSession();
     if (!session.active) {
       // Auto-Lock: PrivateWorkspace hat den State bereits entfernt. Keine
@@ -323,6 +443,9 @@
       const wasWorkspaceView = !els.viewWorkspace.hidden;
       stopPolling();
       lastFallbackDownloadAt = null;
+      // Läuft die Session während ein Dialog offen ist ab, darf dieser nicht
+      // über der jetzt gesperrten Ansicht hängen bleiben (Phase-9-Vorgabe 12).
+      if (dialogStack.length > 0) forceCloseAllDialogs();
       resetNotesUiState();
       showView('locked');
       // Ein unsichtbares Feld aus der jetzt ausgeblendeten Workspace-Ansicht
@@ -343,6 +466,8 @@
 
     const savedAtIso = lastFallbackDownloadAt || (state && state.modified);
     els.statusSavedAt.textContent = savedAtIso ? ('Zuletzt gespeichert: ' + formatDateTime(savedAtIso)) : 'Noch nicht gespeichert';
+    // Rein informativ, keine Live-Sekundenanzeige/kein Countdown (Vorgabe Abschnitt 9).
+    els.statusAutoLockHint.textContent = formatAutoLockHint(session.timeoutMinutes);
 
     els.fallbackHint.hidden = !!PrivateWorkspace.getFileHandle();
   }
@@ -352,7 +477,10 @@
     startPolling();
     resetNotesUiState();
     renderNotesList();
+    renderEntriesList();
+    renderEntryCategoryFilter();
     showEditorEmpty();
+    showEntryEditorEmpty();
     refreshWorkspaceView();
     // Sinnvoller Einstiegspunkt direkt nach dem Öffnen: entweder eine
     // vorhandene erste Notiz oder (bei leerem Workspace) direkt "Neue Notiz".
@@ -381,19 +509,72 @@
     searchQuery = '';
     els.notesSearch.value = '';
     els.notesList.innerHTML = '';
+    // Der zuletzt gerenderte Empty-State-Text kann den Suchbegriff enthalten
+    // ("Keine Notizen gefunden für „…") - muss beim Zurücksetzen ebenfalls
+    // weg, sonst bliebe der Suchbegriff nach Close/Auto-Lock im DOM stehen
+    // (Phase-9-Fund, Vorgabe Abschnitt 11).
+    els.notesEmpty.textContent = '';
+    els.notesEmpty.hidden = true;
     els.editorTitle.value = '';
     els.editorContent.value = '';
     els.editorTags.innerHTML = '';
     els.editorTagInput.value = '';
     els.editorDirtyHint.hidden = true;
-    els.workspaceName.textContent = '';
     els.notesSearchClear.hidden = true;
+
+    // Entry-Zustand (Phase 7) - dieselben Gründe wie bei Notizen: nach
+    // Close/Auto-Lock darf kein Eintrags-Klartext (Titel, Beschreibung,
+    // Kategorie, Tags, Field-Label/-Werte) im DOM verbleiben.
+    selectedEntryId = null;
+    entriesEditorDirty = false;
+    currentEntryTags = [];
+    currentEntryFields = [];
+    entriesSearchQuery = '';
+    entryCategoryFilter = '';
+    els.entriesSearch.value = '';
+    els.entriesSearchClear.hidden = true;
+    els.entriesList.innerHTML = '';
+    // Siehe Kommentar bei els.notesEmpty oben - gilt identisch für Entries.
+    els.entriesEmpty.textContent = '';
+    els.entriesEmpty.hidden = true;
+    els.entryTitle.value = '';
+    els.entryCategory.value = '';
+    els.entryDescription.value = '';
+    els.entryTags.innerHTML = '';
+    els.entryTagInput.value = '';
+    els.entryFields.innerHTML = '';
+    els.entryEditorDirtyHint.hidden = true;
+    els.entryCategoryFilter.innerHTML = '';
+    els.entryCategoryFilter.hidden = true;
+
+    // Beim nächsten geöffneten Workspace immer wieder auf dem Notizen-Tab starten.
+    activeTab = 'notes';
+    els.tabNotes.classList.add('pw-content-tab--active');
+    els.tabEntries.classList.remove('pw-content-tab--active');
+    els.tabNotes.setAttribute('aria-selected', 'true');
+    els.tabEntries.setAttribute('aria-selected', 'false');
+    els.notesPanel.hidden = false;
+    els.entriesPanel.hidden = true;
+
+    els.workspaceName.textContent = '';
     // Kein irreführender Speicherstatus darf nach Close/Auto-Lock stehen bleiben,
     // auch wenn die Sektion selbst ausgeblendet ist (siehe Phase-6-Vorgabe 10).
     els.statusPill.className = 'pw-status-pill';
     els.statusPill.textContent = '';
     els.statusSavedAt.textContent = '';
+    els.statusAutoLockHint.textContent = '';
+
+    // Temporäre Dialogdaten (Phase 8, Vorgabe Abschnitt 8): die dynamisch
+    // gesetzten Lösch-/Unsaved-Dialogtexte enthalten zwar nie den eigentlichen
+    // Notiz-/Eintragsinhalt (nur generische Bezeichner wie "Eintrag löschen?"),
+    // werden aber der Vollständigkeit halber ebenfalls auf den neutralen
+    // Ausgangszustand zurückgesetzt.
+    els.deleteNoteTitle.textContent = 'Notiz löschen?';
+    els.deleteNoteBody.textContent = 'Diese Notiz wird aus dem Workspace entfernt.';
+    els.editorUnsavedBody.textContent = 'Diese Notiz enthält Änderungen, die noch nicht übernommen wurden.';
+
     showEditorEmpty();
+    showEntryEditorEmpty();
   }
 
   // ── generischer Passwort-Dialog (aktuell nur für "Workspace öffnen") ──
@@ -588,40 +769,64 @@
     }
   }
 
-  function renderTagChips() {
-    els.editorTags.innerHTML = '';
-    currentEditorTags.forEach((tag, idx) => {
-      const chip = document.createElement('span');
-      chip.className = 'pw-tag-chip';
+  // Gemeinsame Tag-Mechanik für Notizen UND Entries (Phase 7: "keine zweite
+  // Implementierung mit abweichendem Verhalten") - trimmen, keine Duplikate,
+  // Enter zum Hinzufügen, sichtbare Chips, Entfernen möglich. Notizen und
+  // Entries übergeben jeweils nur ihr eigenes Tags-Array/DOM-Ziel/Dirty-Marker.
+  function createTagChip(tag, onRemove) {
+    const chip = document.createElement('span');
+    chip.className = 'pw-tag-chip';
 
-      const label = document.createElement('span');
-      label.textContent = tag;
+    const label = document.createElement('span');
+    label.textContent = tag;
 
-      const removeBtn = document.createElement('button');
-      removeBtn.type = 'button';
-      removeBtn.className = 'pw-tag-remove';
-      removeBtn.setAttribute('aria-label', 'Tag „' + tag + '“ entfernen');
-      removeBtn.textContent = '×';
-      removeBtn.addEventListener('click', () => {
-        currentEditorTags.splice(idx, 1);
-        renderTagChips();
-        markEditorDirty();
-      });
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'pw-tag-remove';
+    removeBtn.setAttribute('aria-label', 'Tag „' + tag + '“ entfernen');
+    removeBtn.textContent = '×';
+    removeBtn.addEventListener('click', onRemove);
 
-      chip.appendChild(label);
-      chip.appendChild(removeBtn);
-      els.editorTags.appendChild(chip);
+    chip.appendChild(label);
+    chip.appendChild(removeBtn);
+    return chip;
+  }
+
+  function renderTagChipsInto(containerEl, tagsArr, renderFn, markDirtyFn) {
+    containerEl.innerHTML = '';
+    tagsArr.forEach((tag, idx) => {
+      containerEl.appendChild(createTagChip(tag, () => {
+        tagsArr.splice(idx, 1);
+        renderFn();
+        markDirtyFn();
+      }));
     });
   }
 
+  function addTagFromInputGeneric(inputEl, tagsArr, renderFn, markDirtyFn) {
+    const raw = inputEl.value.trim();
+    inputEl.value = '';
+    if (!raw || tagsArr.includes(raw)) return; // leere/doppelte Tags ignorieren
+    tagsArr.push(raw);
+    renderFn();
+    markDirtyFn();
+    inputEl.focus();
+  }
+
+  function renderTagChips() {
+    renderTagChipsInto(els.editorTags, currentEditorTags, renderTagChips, markEditorDirty);
+  }
+
   function addTagFromInput() {
-    const raw = els.editorTagInput.value.trim();
-    els.editorTagInput.value = '';
-    if (!raw || currentEditorTags.includes(raw)) return; // leere/doppelte Tags ignorieren
-    currentEditorTags.push(raw);
-    renderTagChips();
-    markEditorDirty();
-    els.editorTagInput.focus();
+    addTagFromInputGeneric(els.editorTagInput, currentEditorTags, renderTagChips, markEditorDirty);
+  }
+
+  function renderEntryTagChips() {
+    renderTagChipsInto(els.entryTags, currentEntryTags, renderEntryTagChips, markEntryEditorDirty);
+  }
+
+  function addEntryTagFromInput() {
+    addTagFromInputGeneric(els.entryTagInput, currentEntryTags, renderEntryTagChips, markEntryEditorDirty);
   }
 
   function markEditorDirty() {
@@ -672,13 +877,22 @@
     refreshWorkspaceView();
   }
 
-  // Alle Aktionen, die die aktuell im Editor angezeigte Notiz verlassen
-  // (andere Notiz wählen, neue Notiz anlegen, Workspace schließen), laufen
-  // über diesen Guard: bei lokalen, nicht übernommenen Editor-Änderungen wird
-  // zuerst nachgefragt, bevor die eigentliche Aktion ausgeführt wird.
+  // Alle Aktionen, die den aktuell im Editor angezeigten Inhalt verlassen
+  // (andere Notiz/anderen Eintrag wählen, neu anlegen, Notes<->Entries
+  // wechseln, Workspace schließen), laufen über diesen EINEN Guard - bewusst
+  // keine zweite, unabhängige Dirty-Dialog-Architektur für Entries (Phase 7,
+  // Vorgabe Abschnitt 10). Welcher der beiden Editoren gemeint ist, ergibt
+  // sich aus dem zum Aufrufzeitpunkt aktiven Tab.
+  function currentEditorDirty() {
+    return activeTab === 'entries' ? entriesEditorDirty : editorDirty;
+  }
+
   function withEditorGuard(action) {
-    if (!editorDirty) { action(); return; }
+    if (!currentEditorDirty()) { action(); return; }
     pendingEditorGuardAction = action;
+    els.editorUnsavedBody.textContent = activeTab === 'entries'
+      ? 'Dieser Eintrag enthält Änderungen, die noch nicht übernommen wurden.'
+      : 'Diese Notiz enthält Änderungen, die noch nicht übernommen wurden.';
     openDialog(els.dialogEditorUnsaved, els.editorUnsavedCancel);
   }
 
@@ -708,35 +922,385 @@
     });
   }
 
-  function handleDeleteNoteClick() {
-    if (!selectedNoteId) return;
+  // Ein gemeinsamer Löschen-Dialog für Notizen UND Entries (Phase 7, Vorgabe
+  // Abschnitt 13/23: bestehenden Bestätigungsdialog wiederverwenden statt
+  // einen zweiten zu bauen) - Überschrift/Text werden je nach aktivem Tab
+  // gesetzt, Mechanik (Dialog, Fokus, Escape/Backdrop) bleibt identisch.
+  function handleDeleteClick() {
+    const isEntry = activeTab === 'entries';
+    const id = isEntry ? selectedEntryId : selectedNoteId;
+    if (!id) return;
+    els.deleteNoteTitle.textContent = isEntry ? 'Eintrag löschen?' : 'Notiz löschen?';
+    els.deleteNoteBody.textContent = isEntry ? 'Dieser Eintrag wird aus dem Workspace entfernt.' : 'Diese Notiz wird aus dem Workspace entfernt.';
     openDialog(els.dialogDeleteNote, els.deleteNoteCancel);
   }
 
-  function handleDeleteNoteConfirm() {
-    const id = selectedNoteId;
+  function handleDeleteConfirm() {
+    const isEntry = activeTab === 'entries';
+    const id = isEntry ? selectedEntryId : selectedNoteId;
     if (!id) { closeDialog(els.dialogDeleteNote); return; }
     try {
-      PrivateWorkspace.deleteNote(id);
+      if (isEntry) PrivateWorkspace.deleteEntry(id); else PrivateWorkspace.deleteNote(id);
     } catch (err) {
-      logSafeError('note-delete', err);
+      logSafeError(isEntry ? 'entry-delete' : 'note-delete', err);
       showToast(describeWorkspaceError(err), 'error');
       closeDialog(els.dialogDeleteNote);
       return;
     }
     closeDialog(els.dialogDeleteNote);
-    editorDirty = false; // eine gelöschte Notiz kann keine zu übernehmenden Änderungen mehr haben
 
-    const remaining = getFilteredSortedNotes();
-    if (remaining.length > 0) {
-      loadNoteIntoEditor(remaining[0].id);
+    if (isEntry) {
+      entriesEditorDirty = false; // ein gelöschter Eintrag kann keine zu übernehmenden Änderungen mehr haben
+      const remaining = getFilteredSortedEntries();
+      if (remaining.length > 0) {
+        loadEntryIntoEditor(remaining[0].id);
+      } else {
+        selectedEntryId = null;
+        showEntryEditorEmpty();
+      }
+      renderEntriesList();
+      renderEntryCategoryFilter();
+      showToast('Eintrag gelöscht.', 'warning');
     } else {
-      selectedNoteId = null;
-      showEditorEmpty();
+      editorDirty = false; // eine gelöschte Notiz kann keine zu übernehmenden Änderungen mehr haben
+      const remaining = getFilteredSortedNotes();
+      if (remaining.length > 0) {
+        loadNoteIntoEditor(remaining[0].id);
+      } else {
+        selectedNoteId = null;
+        showEditorEmpty();
+      }
+      renderNotesList();
+      showToast('Notiz gelöscht.', 'warning');
     }
-    renderNotesList();
     refreshWorkspaceView();
-    showToast('Notiz gelöscht.', 'warning');
+  }
+
+  // ── Entries: Liste, Suche, Kategorie-Filter, Editor ──────
+  //
+  // Struktureller Zwilling der Notizen-Sektion oben - keine zweite
+  // Datenhaltung, jede Anzeige liest frisch über PrivateWorkspace.getEntries()/
+  // getEntry(). Kategorien werden dynamisch aus den vorhandenen Entries
+  // abgeleitet, nicht hart codiert (Vorgabe Abschnitt 11).
+
+  function getFilteredSortedEntries() {
+    const entries = PrivateWorkspace.getEntries();
+    entries.sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime());
+    let filtered = entries;
+    if (entryCategoryFilter) {
+      filtered = filtered.filter(e => (e.category || '') === entryCategoryFilter);
+    }
+    const q = entriesSearchQuery.trim().toLowerCase();
+    if (!q) return filtered;
+    return filtered.filter(e =>
+      (e.title || '').toLowerCase().includes(q) ||
+      (e.category || '').toLowerCase().includes(q) ||
+      (e.description || '').toLowerCase().includes(q) ||
+      (e.tags || []).some(t => t.toLowerCase().includes(q)) ||
+      (e.fields || []).some(f => (f.label || '').toLowerCase().includes(q) || (f.value || '').toLowerCase().includes(q))
+    );
+  }
+
+  function getEntryCategories() {
+    const set = new Set();
+    PrivateWorkspace.getEntries().forEach(e => { if (e.category && e.category.trim()) set.add(e.category.trim()); });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'de'));
+  }
+
+  function renderEntryCategoryFilter() {
+    const categories = getEntryCategories();
+    els.entryCategoryFilter.innerHTML = '';
+    if (categories.length === 0) {
+      els.entryCategoryFilter.hidden = true;
+      entryCategoryFilter = '';
+      return;
+    }
+    // Falls die zuletzt gewählte Kategorie durch Löschen/Umbenennen
+    // verschwunden ist, den Filter sauber auf "Alle" zurücksetzen.
+    if (entryCategoryFilter && !categories.includes(entryCategoryFilter)) {
+      entryCategoryFilter = '';
+    }
+    els.entryCategoryFilter.hidden = false;
+
+    function makePill(label, value) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pw-category-pill' + (entryCategoryFilter === value ? ' pw-category-pill--active' : '');
+      btn.textContent = label;
+      btn.addEventListener('click', () => {
+        entryCategoryFilter = entryCategoryFilter === value ? '' : value;
+        renderEntryCategoryFilter();
+        renderEntriesList();
+      });
+      return btn;
+    }
+
+    els.entryCategoryFilter.appendChild(makePill('Alle', ''));
+    categories.forEach(cat => els.entryCategoryFilter.appendChild(makePill(cat, cat)));
+  }
+
+  function renderEntriesList() {
+    if (!PrivateWorkspace.hasWorkspace()) return;
+
+    const allEntries = PrivateWorkspace.getEntries();
+    const visibleEntries = getFilteredSortedEntries();
+
+    els.entriesList.innerHTML = '';
+
+    if (allEntries.length === 0) {
+      els.entriesEmpty.textContent = 'Noch keine Einträge. Erstelle deinen ersten strukturierten Eintrag.';
+      els.entriesEmpty.hidden = false;
+      els.entriesList.hidden = true;
+      return;
+    }
+    if (visibleEntries.length === 0) {
+      els.entriesEmpty.textContent = entriesSearchQuery.trim()
+        ? 'Keine Einträge gefunden für „' + entriesSearchQuery.trim() + '“.'
+        : 'Keine Einträge für diese Kategorie gefunden.';
+      els.entriesEmpty.hidden = false;
+      els.entriesList.hidden = true;
+      return;
+    }
+    els.entriesEmpty.hidden = true;
+    els.entriesList.hidden = false;
+
+    visibleEntries.forEach(entry => {
+      const li = document.createElement('li');
+      li.className = 'pw-note-item';
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pw-note-item-btn';
+      btn.setAttribute('aria-current', entry.id === selectedEntryId ? 'true' : 'false');
+      // Die Entry-ID wandert bewusst nur als Closure-Variable in den Handler,
+      // nicht als data-Attribut ins DOM (siehe Sicherheitsvorgabe Abschnitt 17).
+      btn.addEventListener('click', () => selectEntry(entry.id));
+
+      const titleEl = document.createElement('div');
+      titleEl.className = 'pw-note-item-title';
+      titleEl.textContent = entry.title && entry.title.trim() ? entry.title : 'Unbenannter Eintrag';
+      btn.appendChild(titleEl);
+
+      if (entry.category) {
+        const catEl = document.createElement('div');
+        catEl.className = 'pw-note-item-meta';
+        catEl.textContent = entry.category;
+        btn.appendChild(catEl);
+      }
+
+      if (entry.description) {
+        const descEl = document.createElement('div');
+        descEl.className = 'pw-note-item-preview';
+        descEl.textContent = entry.description.slice(0, 80);
+        btn.appendChild(descEl);
+      }
+
+      if (entry.modified) {
+        const metaEl = document.createElement('div');
+        metaEl.className = 'pw-note-item-meta';
+        metaEl.textContent = 'Geändert: ' + formatDateTime(entry.modified);
+        btn.appendChild(metaEl);
+      }
+
+      if (entry.tags && entry.tags.length) {
+        const tagsEl = document.createElement('div');
+        tagsEl.className = 'pw-note-item-tags';
+        entry.tags.forEach(t => {
+          const chip = document.createElement('span');
+          chip.className = 'pw-note-item-tag';
+          chip.textContent = t;
+          tagsEl.appendChild(chip);
+        });
+        btn.appendChild(tagsEl);
+      }
+
+      li.appendChild(btn);
+      els.entriesList.appendChild(li);
+    });
+  }
+
+  function showEntryEditorEmpty() {
+    els.entryEditorForm.hidden = true;
+    els.entryEditorEmpty.hidden = false;
+    const hasAnyEntries = PrivateWorkspace.hasWorkspace() && PrivateWorkspace.getEntries().length > 0;
+    if (hasAnyEntries) {
+      els.entryEditorEmptyText.textContent = 'Wähle einen Eintrag aus oder erstelle einen neuen.';
+      els.entryEditorEmptyCta.hidden = true;
+    } else {
+      els.entryEditorEmptyText.textContent = 'Noch keine Einträge. Erstelle deinen ersten strukturierten Eintrag.';
+      els.entryEditorEmptyCta.hidden = false;
+    }
+  }
+
+  function renderEntryFieldRows() {
+    els.entryFields.innerHTML = '';
+    currentEntryFields.forEach((field, idx) => {
+      const row = document.createElement('div');
+      row.className = 'pw-entry-field-row';
+
+      const labelInput = document.createElement('input');
+      labelInput.type = 'text';
+      labelInput.className = 'pw-input pw-entry-field-label';
+      labelInput.placeholder = 'Label';
+      labelInput.value = field.label;
+      labelInput.setAttribute('aria-label', 'Feld-Label');
+      labelInput.addEventListener('input', () => { currentEntryFields[idx].label = labelInput.value; markEntryEditorDirty(); });
+
+      const valueInput = document.createElement('input');
+      valueInput.type = 'text';
+      valueInput.className = 'pw-input pw-entry-field-value';
+      valueInput.placeholder = 'Wert';
+      valueInput.value = field.value;
+      valueInput.setAttribute('aria-label', 'Feld-Wert');
+      valueInput.addEventListener('input', () => { currentEntryFields[idx].value = valueInput.value; markEntryEditorDirty(); });
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'pw-entry-field-remove';
+      removeBtn.setAttribute('aria-label', 'Feld entfernen');
+      removeBtn.textContent = '×';
+      removeBtn.addEventListener('click', () => {
+        currentEntryFields.splice(idx, 1);
+        renderEntryFieldRows();
+        markEntryEditorDirty();
+      });
+
+      row.appendChild(labelInput);
+      row.appendChild(valueInput);
+      row.appendChild(removeBtn);
+      els.entryFields.appendChild(row);
+    });
+  }
+
+  function handleAddFieldClick() {
+    currentEntryFields.push({ label: '', value: '' });
+    renderEntryFieldRows();
+    markEntryEditorDirty();
+    const labelInputs = els.entryFields.querySelectorAll('.pw-entry-field-label');
+    const last = labelInputs[labelInputs.length - 1];
+    if (last) last.focus();
+  }
+
+  function markEntryEditorDirty() {
+    if (entriesEditorDirty) return;
+    entriesEditorDirty = true;
+    els.entryEditorDirtyHint.hidden = false;
+  }
+
+  function loadEntryIntoEditor(id) {
+    const entry = PrivateWorkspace.getEntry(id);
+    if (!entry) {
+      selectedEntryId = null;
+      showEntryEditorEmpty();
+      return;
+    }
+    selectedEntryId = id;
+    els.entryEditorForm.hidden = false;
+    els.entryEditorEmpty.hidden = true;
+    els.entryTitle.value = entry.title;
+    els.entryCategory.value = entry.category;
+    els.entryDescription.value = entry.description;
+    currentEntryTags = entry.tags.slice();
+    renderEntryTagChips();
+    els.entryTagInput.value = '';
+    currentEntryFields = entry.fields.map(f => ({ label: f.label, value: f.value }));
+    renderEntryFieldRows();
+    entriesEditorDirty = false;
+    els.entryEditorDirtyHint.hidden = true;
+  }
+
+  function commitEntryEditorChanges() {
+    if (!selectedEntryId) return;
+    const title = els.entryTitle.value;
+    const category = els.entryCategory.value;
+    const description = els.entryDescription.value;
+    const trimmedTags = currentEntryTags.map(t => t.trim()).filter(t => t.length > 0);
+    const tags = trimmedTags.filter((t, i) => trimmedTags.indexOf(t) === i);
+    const fields = currentEntryFields.map(f => ({ label: f.label, value: f.value }));
+
+    try {
+      PrivateWorkspace.updateEntry(selectedEntryId, { title, category, description, tags, fields });
+      entriesEditorDirty = false;
+      els.entryEditorDirtyHint.hidden = true;
+      renderEntriesList();
+      renderEntryCategoryFilter();
+      showToast('Eintrag gespeichert.', 'success');
+    } catch (err) {
+      logSafeError('entry-save', err);
+      showToast(describeWorkspaceError(err), 'error');
+    }
+    refreshWorkspaceView();
+  }
+
+  function selectEntry(id) {
+    if (id === selectedEntryId) return;
+    withEditorGuard(() => {
+      loadEntryIntoEditor(id);
+      renderEntriesList();
+    });
+  }
+
+  function handleNewEntryClick() {
+    withEditorGuard(() => {
+      let entry;
+      try {
+        entry = PrivateWorkspace.addEntry({});
+      } catch (err) {
+        logSafeError('entry-create', err);
+        showToast(describeWorkspaceError(err), 'error');
+        return;
+      }
+      renderEntriesList();
+      renderEntryCategoryFilter();
+      loadEntryIntoEditor(entry.id);
+      renderEntriesList(); // aria-current auf den neuen Eintrag aktualisieren
+      els.entryTitle.focus();
+      refreshWorkspaceView();
+    });
+  }
+
+  // ── Notes/Entries-Umschalter ──────────────────────────────
+  //
+  // Reiner Sichtbarkeits-Wechsel, kein erneutes Entschlüsseln/Öffnen und kein
+  // Reset des jeweils anderen Bereichs - bestehender Zustand (Auswahl, Suche)
+  // bleibt beim Zurückwechseln erhalten (Vorgabe Abschnitt 6).
+  function switchTab(tab) {
+    if (tab === activeTab) return;
+    withEditorGuard(() => {
+      activeTab = tab;
+      els.tabNotes.classList.toggle('pw-content-tab--active', tab === 'notes');
+      els.tabEntries.classList.toggle('pw-content-tab--active', tab === 'entries');
+      els.tabNotes.setAttribute('aria-selected', tab === 'notes' ? 'true' : 'false');
+      els.tabEntries.setAttribute('aria-selected', tab === 'entries' ? 'true' : 'false');
+      els.notesPanel.hidden = tab !== 'notes';
+      els.entriesPanel.hidden = tab !== 'entries';
+      // Sinnvoller Fokus im jetzt aktiven Bereich, statt auf einem jetzt
+      // ausgeblendeten Element des vorherigen Tabs stehen zu bleiben.
+      if (tab === 'notes') els.btnNewNote.focus(); else els.btnNewEntry.focus();
+    });
+  }
+
+  // ── In neuem Fenster öffnen (Phase 8) ────────────────────
+  //
+  // Bewusst schlicht gehalten: normales window.open() auf die bestehende
+  // Seite, ohne Query-Parameter/Payload/postMessage - das neue Fenster startet
+  // komplett frisch auf der Start-Ansicht und öffnet seinen eigenen Workspace
+  // selbst. "noopener,noreferrer" verhindert zusätzlich jeden Rückkanal
+  // (window.opener) vom neuen zum alten Fenster. Es gibt keine gemeinsame
+  // Session, keinen Cross-Window-Storage und keinen Datei-/Passwort-Transfer -
+  // jedes Fenster ist danach eine vollständig unabhängige PrivateWorkspace-
+  // Instanz (eigenes Modul-Closure-State pro Tab/Fenster/Prozess).
+  //
+  // Muss synchron und direkt aus dem Klick-Handler aufgerufen werden - jeder
+  // await/setTimeout davor lässt Popup-Blocker den Aufruf verwerfen, weil er
+  // dann nicht mehr als direkte Folge einer Nutzer-Geste gilt.
+  function handleOpenInNewWindowClick() {
+    const newWindow = window.open('private.html', '_blank', 'noopener,noreferrer');
+    if (!newWindow) {
+      showToast('Das neue Fenster konnte nicht geöffnet werden. Bitte erlaube Pop-ups für diese Seite.', 'error');
+    }
+    // Kein Erfolgs-Toast bei geglücktem Öffnen (Vorgabe: keine Meldung, wenn
+    // der Browser erfolgreich geöffnet hat) - das neue Fenster spricht für sich.
   }
 
   // ── Workspace öffnen ─────────────────────────────────────
@@ -992,6 +1556,7 @@
 
   // ── Event-Verkabelung ────────────────────────────────────
   els.btnOpen.addEventListener('click', handleOpenClick);
+  els.btnNewWindow.addEventListener('click', handleOpenInNewWindowClick);
   els.btnCreate.addEventListener('click', () => {
     resetCreateDialog();
     openDialog(els.dialogCreate, els.createName);
@@ -1002,7 +1567,9 @@
   els.createPickLocation.addEventListener('click', handleCreatePickLocation);
   els.createCancel.addEventListener('click', () => { resetCreateDialog(); closeDialog(els.dialogCreate); });
   els.createClose.addEventListener('click', () => { resetCreateDialog(); closeDialog(els.dialogCreate); });
-  wireBackdropCancel(els.dialogCreate, els.createCancel);
+  // Bewusst kein wireBackdropCancel() hier: beim Ausfüllen von Name/Passwort
+  // soll ein versehentlicher Klick neben den Dialog die Eingaben nicht
+  // verwerfen - nur "Abbrechen" oder das X schließen den Dialog.
 
   wireBackdropCancel(els.dialogPassword, els.passwordCancel);
 
@@ -1014,6 +1581,10 @@
   els.unsavedDiscard.addEventListener('click', handleUnsavedDiscard);
   els.unsavedCancel.addEventListener('click', handleUnsavedCancel);
   wireBackdropCancel(els.dialogUnsaved, els.unsavedCancel);
+
+  // Notes/Entries-Umschalter
+  els.tabNotes.addEventListener('click', () => switchTab('notes'));
+  els.tabEntries.addEventListener('click', () => switchTab('entries'));
 
   // Notizen
   els.btnNewNote.addEventListener('click', handleNewNoteClick);
@@ -1038,17 +1609,55 @@
     if (e.key === 'Enter') { e.preventDefault(); addTagFromInput(); }
   });
   els.editorSave.addEventListener('click', commitEditorChanges);
-  els.editorDelete.addEventListener('click', handleDeleteNoteClick);
+  els.editorDelete.addEventListener('click', handleDeleteClick);
+
+  // Entries
+  els.btnNewEntry.addEventListener('click', handleNewEntryClick);
+  els.entryEditorEmptyCta.addEventListener('click', handleNewEntryClick);
+  els.entriesSearch.addEventListener('input', () => {
+    entriesSearchQuery = els.entriesSearch.value;
+    els.entriesSearchClear.hidden = entriesSearchQuery.length === 0;
+    renderEntriesList();
+  });
+  els.entriesSearchClear.addEventListener('click', () => {
+    entriesSearchQuery = '';
+    els.entriesSearch.value = '';
+    els.entriesSearchClear.hidden = true;
+    renderEntriesList();
+    els.entriesSearch.focus();
+  });
+
+  els.entryTitle.addEventListener('input', markEntryEditorDirty);
+  els.entryCategory.addEventListener('input', markEntryEditorDirty);
+  els.entryDescription.addEventListener('input', markEntryEditorDirty);
+  els.entryTagAdd.addEventListener('click', addEntryTagFromInput);
+  els.entryTagInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addEntryTagFromInput(); }
+  });
+  els.entryFieldAdd.addEventListener('click', handleAddFieldClick);
+  els.entrySave.addEventListener('click', commitEntryEditorChanges);
+  els.entryDelete.addEventListener('click', handleDeleteClick);
 
   els.editorUnsavedApply.addEventListener('click', () => {
-    commitEditorChanges();
+    if (activeTab === 'entries') commitEntryEditorChanges(); else commitEditorChanges();
     closeDialog(els.dialogEditorUnsaved);
     const action = pendingEditorGuardAction; pendingEditorGuardAction = null;
     if (action) action();
   });
   els.editorUnsavedDiscard.addEventListener('click', () => {
-    editorDirty = false;
-    els.editorDirtyHint.hidden = true;
+    // Nicht nur den Dirty-Flag löschen, sondern den Editor auch aus dem
+    // persistierten State neu laden - sonst bliebe der verworfene Entwurf
+    // optisch stehen, falls die anschließende Aktion (z.B. Tab-Wechsel) den
+    // gerade verlassenen Editor nicht selbst neu befüllt.
+    if (activeTab === 'entries') {
+      entriesEditorDirty = false;
+      els.entryEditorDirtyHint.hidden = true;
+      if (selectedEntryId) loadEntryIntoEditor(selectedEntryId); else showEntryEditorEmpty();
+    } else {
+      editorDirty = false;
+      els.editorDirtyHint.hidden = true;
+      if (selectedNoteId) loadNoteIntoEditor(selectedNoteId); else showEditorEmpty();
+    }
     closeDialog(els.dialogEditorUnsaved);
     const action = pendingEditorGuardAction; pendingEditorGuardAction = null;
     if (action) action();
@@ -1059,7 +1668,7 @@
   });
   wireBackdropCancel(els.dialogEditorUnsaved, els.editorUnsavedCancel);
 
-  els.deleteNoteConfirm.addEventListener('click', handleDeleteNoteConfirm);
+  els.deleteNoteConfirm.addEventListener('click', handleDeleteConfirm);
   els.deleteNoteCancel.addEventListener('click', () => closeDialog(els.dialogDeleteNote));
   wireBackdropCancel(els.dialogDeleteNote, els.deleteNoteCancel);
 
@@ -1070,6 +1679,28 @@
     else if (!els.dialogEditorUnsaved.hidden) els.editorUnsavedCancel.click();
     else if (!els.dialogDeleteNote.hidden) els.deleteNoteCancel.click();
     else if (!els.dialogUnsaved.hidden) els.unsavedCancel.click();
+  });
+
+  // ── Keyboard Shortcuts (Phase 8) ──────────────────────────
+  // Ctrl/Cmd+S -> Speichern, Ctrl/Cmd+Shift+S -> Speichern unter … Bewusst nur
+  // ein dünner Dispatch auf die bereits bestehenden Handler/Buttons - kein
+  // zweiter Save-Mechanismus, kein eigener Guard. Der disabled-Zustand der
+  // Buttons (siehe setSaveButtonsBusy()) verhindert bereits zuverlässig eine
+  // zweite parallele Save-Operation; der Generation-Guard in
+  // private-workspace.js bleibt davon komplett unberührt.
+  document.addEventListener('keydown', (e) => {
+    if (!((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 's')) return;
+    if (els.viewWorkspace.hidden) return; // außerhalb des geöffneten Workspace: normales Browserverhalten unangetastet lassen
+    // In jedem Fall verhindern, dass der Browser-eigene "Seite speichern"-
+    // Dialog zusätzlich aufgeht - unabhängig davon, ob unser Save unten
+    // tatsächlich ausgeführt wird.
+    e.preventDefault();
+    if (dialogStack.length > 0) return; // Vorgabe: Shortcuts lösen nicht aus, wenn ein Dialog aktiv ist
+    if (e.shiftKey) {
+      if (!els.btnSaveAs.hidden && !els.btnSaveAs.disabled) handleSaveAsClick();
+    } else if (!els.btnSave.disabled) {
+      handleSaveClick();
+    }
   });
 
   // Wenn FSA nicht verfügbar ist, macht "Speicherort wählen" keinen Sinn -

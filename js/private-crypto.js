@@ -247,7 +247,9 @@
       typeof obj.modified === 'string' &&
       !!obj.sections &&
       Array.isArray(obj.sections.notes) &&
-      Array.isArray(obj.sections.entries);
+      // entries ist optional (Backward Compatibility Phase 7): ältere
+      // Workspaces ohne dieses Feld müssen weiterhin geöffnet werden können.
+      (obj.sections.entries === undefined || Array.isArray(obj.sections.entries));
   }
 
   async function openWorkspace(data, password) {

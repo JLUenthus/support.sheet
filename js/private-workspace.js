@@ -23,7 +23,10 @@
     WRITE_FAILED: 'WRITE_FAILED',
     UNSAVED_CHANGES: 'UNSAVED_CHANGES',
     INVALID_NOTE: 'INVALID_NOTE',
-    NOTE_NOT_FOUND: 'NOTE_NOT_FOUND'
+    NOTE_NOT_FOUND: 'NOTE_NOT_FOUND',
+    INVALID_ENTRY: 'INVALID_ENTRY',
+    ENTRY_NOT_FOUND: 'ENTRY_NOT_FOUND',
+    INVALID_ENTRY_FIELD: 'INVALID_ENTRY_FIELD'
   });
 
   class PrivateWorkspaceError extends Error {
@@ -124,10 +127,10 @@
     }
   }
 
-  function assertNoServerFields(fields, disallowed) {
+  function assertNoServerFields(fields, disallowed, code) {
     for (const key of disallowed) {
       if (key in fields) {
-        throw new PrivateWorkspaceError(ErrorCodes.INVALID_NOTE, `${key} wird automatisch verwaltet und darf nicht übergeben werden.`);
+        throw new PrivateWorkspaceError(code || ErrorCodes.INVALID_NOTE, `${key} wird automatisch verwaltet und darf nicht übergeben werden.`);
       }
     }
   }
@@ -137,6 +140,104 @@
       throw new TypeError('id muss ein nicht-leerer String sein.');
     }
     return currentWorkspace.sections.notes.findIndex(n => n.id === id);
+  }
+
+  // ── Entry-Hilfsfunktionen (Phase 7) ─────────────────────
+  //
+  // Struktureller Zwilling der Notiz-Hilfsfunktionen oben - bewusst separat
+  // gehalten statt generalisiert, weil Notes/Entries unterschiedliche Felder
+  // validieren und eine gemeinsame Abstraktion hier mehr Komplexität als
+  // Nutzen bringen würde.
+
+  function generateEntryId() {
+    const existingIds = new Set(currentWorkspace.sections.entries.map(e => e.id));
+    let id;
+    do {
+      id = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+        ? crypto.randomUUID()
+        : 'entry-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    } while (existingIds.has(id));
+    return id;
+  }
+
+  function generateFieldId(existingIds) {
+    let id;
+    do {
+      id = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+        ? crypto.randomUUID()
+        : 'field-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    } while (existingIds.has(id));
+    return id;
+  }
+
+  // Validiert die Struktur eines rohen fields-Arrays (Aufrufer-Eingabe, vor
+  // der Normalisierung). id wird serverseitig vergeben und darf hier nicht
+  // vom Aufrufer kommen - genau wie id/created/modified auf Entry-Ebene.
+  function validateEntryFieldsArray(fieldsArr) {
+    if (!Array.isArray(fieldsArr)) {
+      throw new PrivateWorkspaceError(ErrorCodes.INVALID_ENTRY, 'fields muss ein Array sein.');
+    }
+    fieldsArr.forEach(f => {
+      if (f === null || typeof f !== 'object' || Array.isArray(f)) {
+        throw new PrivateWorkspaceError(ErrorCodes.INVALID_ENTRY_FIELD, 'Jedes Field muss ein Objekt sein.');
+      }
+      if ('id' in f) {
+        throw new PrivateWorkspaceError(ErrorCodes.INVALID_ENTRY_FIELD, 'id wird automatisch verwaltet und darf nicht übergeben werden.');
+      }
+      if ('label' in f && typeof f.label !== 'string') {
+        throw new PrivateWorkspaceError(ErrorCodes.INVALID_ENTRY_FIELD, 'label muss ein String sein.');
+      }
+      if ('value' in f && typeof f.value !== 'string') {
+        throw new PrivateWorkspaceError(ErrorCodes.INVALID_ENTRY_FIELD, 'value muss ein String sein.');
+      }
+    });
+  }
+
+  // Baut aus einem bereits validierten fields-Array die tatsächlich
+  // gespeicherte Form mit serverseitig vergebenen IDs.
+  function normalizeEntryFields(fieldsArr) {
+    const usedIds = new Set();
+    return fieldsArr.map(f => {
+      const id = generateFieldId(usedIds);
+      usedIds.add(id);
+      return {
+        id,
+        label: typeof f.label === 'string' ? f.label : '',
+        value: typeof f.value === 'string' ? f.value : ''
+      };
+    });
+  }
+
+  // Validiert nur die Felder, die im übergebenen Objekt tatsächlich vorhanden
+  // sind - addEntry()/updateEntry() entscheiden selbst über Defaults.
+  function validateEntryTopFields(fields) {
+    if ('title' in fields && typeof fields.title !== 'string') {
+      throw new PrivateWorkspaceError(ErrorCodes.INVALID_ENTRY, 'title muss ein String sein.');
+    }
+    if ('category' in fields && typeof fields.category !== 'string') {
+      throw new PrivateWorkspaceError(ErrorCodes.INVALID_ENTRY, 'category muss ein String sein.');
+    }
+    if ('description' in fields && typeof fields.description !== 'string') {
+      throw new PrivateWorkspaceError(ErrorCodes.INVALID_ENTRY, 'description muss ein String sein.');
+    }
+    if ('tags' in fields) {
+      if (!Array.isArray(fields.tags)) {
+        throw new PrivateWorkspaceError(ErrorCodes.INVALID_ENTRY, 'tags muss ein Array sein.');
+      }
+      if (!fields.tags.every(t => typeof t === 'string')) {
+        throw new PrivateWorkspaceError(ErrorCodes.INVALID_ENTRY, 'tags darf ausschließlich Strings enthalten.');
+      }
+    }
+    if ('fields' in fields) {
+      validateEntryFieldsArray(fields.fields);
+    }
+  }
+
+  function findEntryIndex(id) {
+    if (typeof id !== 'string' || id.length === 0) {
+      throw new TypeError('id muss ein nicht-leerer String sein.');
+    }
+    return currentWorkspace.sections.entries.findIndex(e => e.id === id);
   }
 
   async function readBytes(file) {
@@ -243,6 +344,14 @@
       // Wirft bei falschem Passwort / ungültigem Format (PrivateCrypto.ErrorCodes.*).
       // Es wird an dieser Stelle noch NICHTS am internen State verändert.
       const workspace = await PrivateCrypto.openWorkspace(bytes, password);
+
+      // Backward Compatibility (Phase 7): ältere Workspaces ohne
+      // sections.entries bekommen beim Öffnen nur in-memory ein leeres Array -
+      // kein Datei-Rewrite, kein ungefragtes Format-Upgrade. Erst ein
+      // expliziter save() würde das Feld tatsächlich auf Disk schreiben.
+      if (!Array.isArray(workspace.sections.entries)) {
+        workspace.sections.entries = [];
+      }
 
       // Erst nach erfolgreicher Entschlüsselung: State übernehmen (kontrollierte Kopie).
       currentWorkspace = deepClone(workspace);
@@ -450,6 +559,88 @@
     return note ? deepClone(note) : null;
   }
 
+  // ── Entry-API (Phase 7: strukturierte Einträge, kein Passwortmanager) ──
+  //
+  // title/category/description sind beim Erstellen optional (Default: '') -
+  // tags/fields optional (Default: []). Es gibt bewusst keine spezielle
+  // Credential-Logik (Passwörter, MFA-Codes, API-Secrets, ...) und keine
+  // zusätzliche Feld-Verschlüsselung über die Workspace-Verschlüsselung
+  // hinaus - siehe Abschlussbericht.
+
+  function addEntry(entryData) {
+    if (!currentWorkspace) {
+      throw new PrivateWorkspaceError(ErrorCodes.NO_WORKSPACE, 'Kein Workspace geöffnet.');
+    }
+    const data = assertPlainObject(entryData, 'entryData');
+    assertNoServerFields(data, ['id', 'created', 'modified'], ErrorCodes.INVALID_ENTRY);
+    validateEntryTopFields(data);
+
+    const now = new Date().toISOString();
+    const entry = {
+      id: generateEntryId(),
+      title: typeof data.title === 'string' ? data.title : '',
+      category: typeof data.category === 'string' ? data.category : '',
+      description: typeof data.description === 'string' ? data.description : '',
+      tags: Array.isArray(data.tags) ? data.tags.slice() : [],
+      fields: Array.isArray(data.fields) ? normalizeEntryFields(data.fields) : [],
+      created: now,
+      modified: now
+    };
+
+    currentWorkspace.sections.entries.push(entry);
+    markDirty();
+    return deepClone(entry);
+  }
+
+  function updateEntry(id, changes) {
+    if (!currentWorkspace) {
+      throw new PrivateWorkspaceError(ErrorCodes.NO_WORKSPACE, 'Kein Workspace geöffnet.');
+    }
+    const data = assertPlainObject(changes, 'changes');
+    assertNoServerFields(data, ['id', 'created', 'modified'], ErrorCodes.INVALID_ENTRY);
+    validateEntryTopFields(data);
+
+    const idx = findEntryIndex(id);
+    if (idx === -1) {
+      throw new PrivateWorkspaceError(ErrorCodes.ENTRY_NOT_FOUND, 'Eintrag mit dieser ID wurde nicht gefunden.');
+    }
+
+    const entry = currentWorkspace.sections.entries[idx];
+    if ('title' in data) entry.title = data.title;
+    if ('category' in data) entry.category = data.category;
+    if ('description' in data) entry.description = data.description;
+    if ('tags' in data) entry.tags = data.tags.slice();
+    if ('fields' in data) entry.fields = normalizeEntryFields(data.fields);
+    entry.modified = new Date().toISOString();
+
+    markDirty();
+    return deepClone(entry);
+  }
+
+  function deleteEntry(id) {
+    if (!currentWorkspace) {
+      throw new PrivateWorkspaceError(ErrorCodes.NO_WORKSPACE, 'Kein Workspace geöffnet.');
+    }
+    const idx = findEntryIndex(id);
+    if (idx === -1) {
+      throw new PrivateWorkspaceError(ErrorCodes.ENTRY_NOT_FOUND, 'Eintrag mit dieser ID wurde nicht gefunden.');
+    }
+    currentWorkspace.sections.entries.splice(idx, 1);
+    markDirty();
+  }
+
+  function getEntries() {
+    if (!currentWorkspace) return [];
+    return deepClone(currentWorkspace.sections.entries);
+  }
+
+  function getEntry(id) {
+    if (!currentWorkspace) return null;
+    if (typeof id !== 'string' || id.length === 0) return null;
+    const entry = currentWorkspace.sections.entries.find(e => e.id === id);
+    return entry ? deepClone(entry) : null;
+  }
+
   function close(options) {
     const discard = !!(options && options.discard);
 
@@ -556,6 +747,11 @@
     deleteNote,
     getNotes,
     getNote,
+    addEntry,
+    updateEntry,
+    deleteEntry,
+    getEntries,
+    getEntry,
     ErrorCodes
   });
 })();

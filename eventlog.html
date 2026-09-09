@@ -90,16 +90,32 @@
 
     <!-- ── ERGEBNISSE ─────────────────────────────────────── -->
     <div id="results-section" class="results-hidden">
+     <div class="el-layout">
+
+      <nav class="el-page-nav" id="el-page-nav" aria-label="Bereichsnavigation">
+        <div class="el-page-nav-title">Log Analyzer</div>
+        <a href="#el-overview-section" class="el-page-nav-link">Übersicht</a>
+        <a href="#el-severity-section" class="el-page-nav-link">Priorität</a>
+        <a href="#auth-block" class="el-page-nav-link" id="el-nav-auth" hidden>Authentifizierung</a>
+        <a href="#timeline-section" class="el-page-nav-link" id="el-nav-timeline" hidden>Timeline</a>
+        <a href="#cluster-section" class="el-page-nav-link" id="el-nav-cluster" hidden>Event-Cluster</a>
+        <a href="#correlation-section" class="el-page-nav-link" id="el-nav-correlation" hidden>Hauptursachen</a>
+        <a href="#el-findings-section" class="el-page-nav-link">Findings</a>
+        <a href="#improvements-section" class="el-page-nav-link" id="el-nav-improvements" hidden>Optimierung</a>
+        <a href="#el-eventtable-section" class="el-page-nav-link">Alle Ereignisse</a>
+      </nav>
+
+      <div class="el-main-content">
 
       <!-- Systemübersicht -->
-      <section class="el-section">
+      <section class="el-section" id="el-overview-section">
         <h2 class="section-title">Systemübersicht</h2>
         <div class="sys-grid" id="sys-grid"></div>
         <div class="summary-pills" id="summary-pills"></div>
       </section>
 
       <!-- Severity Summary + Priorität + Export -->
-      <section class="el-section">
+      <section class="el-section" id="el-severity-section">
         <div class="results-topbar">
           <div class="sev-summary" id="sev-summary" style="display:none"></div>
           <button class="export-btn" id="export-btn">⬇️ Findings exportieren</button>
@@ -198,7 +214,7 @@
       </section>
 
       <!-- Findings -->
-      <section class="el-section">
+      <section class="el-section" id="el-findings-section">
         <h2 class="section-title">Analyseergebnis <span id="findings-count" class="section-count">0</span></h2>
         <div id="cat-bar" class="el-cat-bar"></div>
         <div id="findings"></div>
@@ -213,7 +229,7 @@
       </section>
 
       <!-- Ereignistabelle (ein/ausblendbar) -->
-      <section class="el-section">
+      <section class="el-section" id="el-eventtable-section">
         <div class="raw-header">
           <button class="table-toggle-btn" id="table-toggle-btn" onclick="toggleEventTable()">
             <span id="table-toggle-icon">▼</span>
@@ -233,6 +249,9 @@
           </table>
         </div>
       </section>
+
+      </div>
+     </div>
     </div>
 
   </main>
@@ -261,6 +280,58 @@
 
   <style>
     .el-section { margin-bottom: 32px; }
+
+    /* ── Seiten-Layout: Sidebar-Navigation + Hauptinhalt (analog gpo.html) ──
+       Desktop: 2-Spalten-Grid, Navigation sticky links. Mobile: 1 Spalte,
+       Navigation wird zur horizontal scrollbaren, sticky Pill-Leiste. */
+    .el-layout {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+    .el-main-content { min-width: 0; }
+
+    .el-page-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      position: sticky;
+      top: 74px;
+      align-self: start;
+      max-height: calc(100vh - 96px);
+      overflow-y: auto;
+    }
+    .el-page-nav-title {
+      font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+      color: var(--dim); padding: 0 12px 8px;
+    }
+    .el-page-nav-link {
+      padding: 7px 12px; border-radius: var(--r); border: 1px solid transparent;
+      background: transparent; color: var(--muted); font-family: var(--font-ui);
+      font-size: .82rem; font-weight: 600; text-decoration: none; transition: all .15s;
+    }
+    .el-page-nav-link:hover { color: var(--text); background: var(--panel); }
+    .el-page-nav-link--active { color: var(--accent); background: var(--accent-bg); border-color: rgba(45,212,191,.25); }
+    .el-page-nav-link[hidden] { display: none; }
+
+    @media (max-width: 900px) {
+      .el-layout { grid-template-columns: 160px 1fr; gap: 20px; }
+    }
+    @media (max-width: 640px) {
+      .el-layout { grid-template-columns: 1fr; }
+      .el-page-nav {
+        flex-direction: row; flex-wrap: nowrap; overflow-x: auto; overflow-y: visible;
+        max-height: none; gap: 8px; top: 58px; z-index: 20; padding: 10px 2px;
+        margin-bottom: 20px; background: rgba(15,17,23,.95); backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border);
+      }
+      .el-page-nav-title { display: none; }
+      .el-page-nav-link {
+        flex-shrink: 0; border: 1px solid var(--border); background: var(--panel);
+        padding: 6px 14px; border-radius: 20px;
+      }
+    }
 
     /* Collector */
     .collector-row  { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; }
@@ -848,8 +919,60 @@
       // Preview ausblenden nach Upload
       const preview = document.getElementById('upload-preview');
       if (preview) preview.style.display = 'none';
+      syncElNavVisibility();
       setTimeout(() => results.scrollIntoView({ behavior:'smooth', block:'start' }), 150);
     }
+
+    // ── Seitennavigation (Sidebar links, analog gpo.html) ────
+    // Bestimmte Sektionen (Auth/Timeline/Cluster/Hauptursachen/Optimierung)
+    // werden je nach Datenlage ein-/ausgeblendet - die zugehörigen Nav-Links
+    // folgen dieser Sichtbarkeit, statt jede Render-Funktion einzeln anzufassen.
+    function syncElNavVisibility() {
+      const map = {
+        'el-nav-auth': 'auth-block',
+        'el-nav-timeline': 'timeline-section',
+        'el-nav-cluster': 'cluster-section',
+        'el-nav-correlation': 'correlation-section',
+        'el-nav-improvements': 'improvements-section'
+      };
+      Object.keys(map).forEach(linkId => {
+        const link = document.getElementById(linkId);
+        const section = document.getElementById(map[linkId]);
+        if (!link || !section) return;
+        link.hidden = section.offsetParent === null;
+      });
+    }
+
+    // Hebt den Nav-Link der gerade sichtbaren Sektion hervor (wie im GPO Analyzer).
+    function initElNavHighlight() {
+      if (typeof IntersectionObserver !== 'function') return;
+      const linksById = {};
+      document.querySelectorAll('.el-page-nav-link').forEach(a => {
+        const id = (a.getAttribute('href') || '').replace('#', '');
+        if (id) linksById[id] = a;
+      });
+      const sections = Object.keys(linksById).map(id => document.getElementById(id)).filter(Boolean);
+      if (!sections.length) return;
+
+      let activeId = null;
+      function setActive(id) {
+        if (id === activeId) return;
+        activeId = id;
+        Object.keys(linksById).forEach(linkId => {
+          linksById[linkId].classList.toggle('el-page-nav-link--active', linkId === id);
+        });
+      }
+      const ratioById = new Map();
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => { ratioById.set(entry.target.id, entry.isIntersecting ? entry.intersectionRatio : 0); });
+        let bestId = null, bestRatio = 0;
+        ratioById.forEach((ratio, id) => { if (ratio > bestRatio) { bestRatio = ratio; bestId = id; } });
+        if (bestId) setActive(bestId);
+      }, { root: null, rootMargin: '-96px 0px -55% 0px', threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] });
+
+      sections.forEach(sec => observer.observe(sec));
+    }
+    initElNavHighlight();
 
     // ── System Grid ─────────────────────────────────────────
     function renderSysGrid(meta, sum, events) {

@@ -42,6 +42,10 @@
         <button type="button" class="pw-btn" id="pw-btn-create">✨ Neuen Workspace erstellen</button>
       </div>
       <p class="pw-inline-error" id="pw-start-error" hidden></p>
+      <div class="pw-new-window-row">
+        <button type="button" class="pw-btn pw-btn-ghost" id="pw-btn-new-window">🗗 In neuem Fenster öffnen</button>
+        <p class="pw-hint">Empfohlen für längere Sitzungen</p>
+      </div>
       <div class="pw-security-note">
         <strong>Hinweis:</strong> Dieser Bereich eignet sich für interne, private Notizen und Informationen.
         Für hochkritische Zugangsdaten (z.B. Domain-Admin-Passwörter) empfehlen wir weiterhin einen dedizierten Passwortmanager.
@@ -71,6 +75,7 @@
 
       <div class="pw-status-row">
         <span id="pw-status-saved-at"></span>
+        <span id="pw-status-autolock-hint" class="pw-hint"></span>
         <span id="pw-status-pill" class="pw-status-pill" aria-live="polite"></span>
       </div>
 
@@ -80,7 +85,13 @@
         <span class="pw-hint" id="pw-fallback-hint" hidden>Dieser Browser kann nicht direkt in die geöffnete Datei zurückschreiben – „Speichern“ lädt eine aktualisierte, verschlüsselte Datei herunter.</span>
       </div>
 
-      <div class="pw-notes-layout">
+      <!-- Umschalter zwischen den beiden Inhaltstypen (Phase 7) -->
+      <div class="pw-content-tabs" role="tablist" aria-label="Inhaltsbereich">
+        <button type="button" class="pw-content-tab pw-content-tab--active" id="pw-tab-notes" role="tab" aria-selected="true">📝 Notizen</button>
+        <button type="button" class="pw-content-tab" id="pw-tab-entries" role="tab" aria-selected="false">🗂️ Einträge</button>
+      </div>
+
+      <div class="pw-notes-layout" id="pw-notes-panel">
         <!-- NOTIZLISTE -->
         <div class="pw-notes-sidebar">
           <button type="button" class="pw-btn pw-btn-primary pw-notes-new-btn" id="pw-btn-new-note">+ Neue Notiz</button>
@@ -128,6 +139,73 @@
               <div class="pw-editor-actions">
                 <button type="button" class="pw-btn pw-btn-danger" id="pw-editor-delete">Löschen</button>
                 <button type="button" class="pw-btn pw-btn-primary" id="pw-editor-save">Änderungen speichern</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pw-notes-layout" id="pw-entries-panel" hidden>
+        <!-- EINTRAGSLISTE -->
+        <div class="pw-notes-sidebar">
+          <button type="button" class="pw-btn pw-btn-primary pw-notes-new-btn" id="pw-btn-new-entry">+ Neuer Eintrag</button>
+
+          <div class="pw-notes-search-row">
+            <label class="pw-visually-hidden" for="pw-entries-search">Einträge durchsuchen</label>
+            <input type="search" id="pw-entries-search" class="pw-input" placeholder="Einträge durchsuchen …" autocomplete="off">
+            <button type="button" class="pw-search-clear" id="pw-entries-search-clear" aria-label="Suche zurücksetzen" hidden>✕</button>
+          </div>
+
+          <div class="pw-entry-category-filter" id="pw-entry-category-filter" hidden></div>
+
+          <ul class="pw-notes-list" id="pw-entries-list" aria-label="Einträge"></ul>
+          <p class="pw-notes-empty" id="pw-entries-empty" hidden></p>
+        </div>
+
+        <!-- ENTRY-EDITOR -->
+        <div class="pw-editor" id="pw-entry-editor">
+          <div class="pw-editor-empty" id="pw-entry-editor-empty">
+            <p id="pw-entry-editor-empty-text">Wähle einen Eintrag aus oder erstelle einen neuen.</p>
+            <button type="button" class="pw-btn pw-btn-primary" id="pw-entry-editor-empty-cta" hidden>+ Neuer Eintrag</button>
+          </div>
+
+          <div class="pw-editor-form" id="pw-entry-editor-form" hidden>
+            <div class="pw-field">
+              <label class="pw-label" for="pw-entry-title">Titel</label>
+              <input type="text" id="pw-entry-title" class="pw-input pw-editor-title-input" placeholder="Unbenannter Eintrag" autocomplete="off">
+            </div>
+
+            <div class="pw-field">
+              <label class="pw-label" for="pw-entry-category">Kategorie</label>
+              <input type="text" id="pw-entry-category" class="pw-input" placeholder="z.B. Server, System, Kunde" autocomplete="off">
+            </div>
+
+            <div class="pw-field">
+              <label class="pw-label" for="pw-entry-description">Beschreibung</label>
+              <textarea id="pw-entry-description" class="pw-input pw-entry-description-textarea" rows="3"></textarea>
+            </div>
+
+            <div class="pw-field">
+              <span class="pw-label" id="pw-entry-tags-label">Tags</span>
+              <div class="pw-tags-row" id="pw-entry-tags" aria-labelledby="pw-entry-tags-label"></div>
+              <div class="pw-tag-add-row">
+                <label class="pw-visually-hidden" for="pw-entry-tag-input">Neuen Tag hinzufügen</label>
+                <input type="text" id="pw-entry-tag-input" class="pw-input" placeholder="Tag hinzufügen …">
+                <button type="button" class="pw-btn" id="pw-entry-tag-add">+ Tag</button>
+              </div>
+            </div>
+
+            <div class="pw-field">
+              <span class="pw-label" id="pw-entry-fields-label">Felder</span>
+              <div class="pw-entry-fields" id="pw-entry-fields" aria-labelledby="pw-entry-fields-label"></div>
+              <button type="button" class="pw-btn" id="pw-entry-field-add">+ Feld hinzufügen</button>
+            </div>
+
+            <div class="pw-editor-footer">
+              <span class="pw-editor-dirty-hint" id="pw-entry-editor-dirty-hint" hidden>Ungespeicherte Änderungen im Editor</span>
+              <div class="pw-editor-actions">
+                <button type="button" class="pw-btn pw-btn-danger" id="pw-entry-delete">Löschen</button>
+                <button type="button" class="pw-btn pw-btn-primary" id="pw-entry-save">Änderungen speichern</button>
               </div>
             </div>
           </div>
@@ -241,7 +319,7 @@
         <h2 id="pw-editor-unsaved-title">Ungespeicherte Änderungen</h2>
       </div>
       <div class="pw-dialog-body">
-        <p>Diese Notiz enthält Änderungen, die noch nicht übernommen wurden.</p>
+        <p id="pw-editor-unsaved-body">Diese Notiz enthält Änderungen, die noch nicht übernommen wurden.</p>
       </div>
       <div class="pw-dialog-footer pw-dialog-footer--stack">
         <button type="button" class="pw-btn pw-btn-primary" id="pw-editor-unsaved-apply">Änderungen übernehmen</button>
@@ -258,7 +336,7 @@
         <h2 id="pw-delete-note-title">Notiz löschen?</h2>
       </div>
       <div class="pw-dialog-body">
-        <p>Diese Notiz wird aus dem Workspace entfernt.</p>
+        <p id="pw-delete-note-body">Diese Notiz wird aus dem Workspace entfernt.</p>
       </div>
       <div class="pw-dialog-footer">
         <button type="button" class="pw-btn" id="pw-delete-note-cancel">Abbrechen</button>
