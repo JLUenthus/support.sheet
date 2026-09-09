@@ -1,0 +1,382 @@
+/* ============================================================
+   private.css – Private Workspace (Phase 3A)
+   Nutzt ausschließlich die Design-Tokens aus css/main.css.
+   ============================================================ */
+
+.pw-main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Der geöffnete Workspace braucht mit der Notizen-UI (Liste + Editor)
+   spürbar mehr Breite als die Start-/Gesperrt-Ansicht. */
+.pw-main:has(#pw-view-workspace:not([hidden])) {
+  max-width: 1100px;
+}
+
+.pw-view[hidden] { display: none; }
+
+/* ── Karten / Buttons (gleiche Sprache wie priv-*/tools-* an anderer Stelle) ── */
+.pw-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 24px;
+}
+
+.pw-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 18px; border-radius: var(--r);
+  border: 1px solid var(--border2); background: var(--panel2);
+  color: var(--text); font-family: var(--font-ui); font-size: .84rem; font-weight: 600;
+  cursor: pointer; text-decoration: none; transition: all .15s;
+}
+.pw-btn:hover { border-color: var(--accent); color: var(--accent); }
+.pw-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pw-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.pw-btn-primary { background: var(--accent-bg); border-color: rgba(124,140,248,.35); color: var(--accent); }
+.pw-btn-primary:hover { background: var(--accent-glow); color: var(--accent); border-color: var(--accent); }
+
+.pw-btn-danger { background: var(--red-bg); border-color: rgba(248,113,113,.35); color: var(--red); }
+.pw-btn-danger:hover { background: rgba(248,113,113,.18); border-color: var(--red); color: var(--red); }
+
+/* ── Start-Ansicht ───────────────────────────────────────── */
+.pw-hero {
+  text-align: center;
+  padding: 32px 16px 8px;
+}
+.pw-hero-icon { font-size: 40px; margin-bottom: 12px; }
+.pw-hero h1 { font-size: 1.3rem; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+.pw-hero p { font-size: .86rem; color: var(--muted); line-height: 1.6; max-width: 480px; margin: 0 auto; }
+
+.pw-actions {
+  display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+  margin: 24px 0 28px;
+}
+
+.pw-security-note {
+  font-size: .78rem; color: var(--dim); line-height: 1.6;
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 14px 16px; max-width: 560px; margin: 0 auto;
+}
+.pw-security-note strong { color: var(--muted); }
+
+.pw-inline-error {
+  color: var(--red); font-size: .8rem; font-weight: 600;
+  background: var(--red-bg); border: 1px solid rgba(248,113,113,.3); border-radius: var(--r);
+  padding: 10px 14px; margin: 12px 0;
+}
+.pw-inline-error[hidden] { display: none; }
+
+/* ── Gesperrter Zustand (Auto-Lock) ──────────────────────── */
+.pw-locked-card {
+  text-align: center;
+  background: var(--amber-bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--amber);
+  border-radius: var(--r-lg);
+  padding: 32px 24px;
+  max-width: 480px;
+  margin: 40px auto 0;
+}
+.pw-locked-icon { font-size: 32px; margin-bottom: 10px; }
+.pw-locked-card h2 { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+.pw-locked-card p { font-size: .84rem; color: var(--muted); line-height: 1.6; margin-bottom: 6px; }
+.pw-locked-card .pw-btn { margin-top: 16px; }
+
+/* ── Geöffneter Workspace ─────────────────────────────────── */
+.pw-workspace-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 16px;
+}
+.pw-workspace-title {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 1.05rem; font-weight: 700; color: var(--text);
+  min-width: 0;
+}
+.pw-workspace-title span#pw-workspace-name {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pw-lock-icon { flex-shrink: 0; }
+
+.pw-status-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  margin-bottom: 20px;
+  font-size: .8rem; color: var(--muted);
+}
+
+.pw-status-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: 999px;
+  font-size: .74rem; font-weight: 700;
+  border: 1px solid transparent;
+}
+.pw-status-pill--saved  { background: var(--green-bg); color: var(--green); border-color: rgba(74,222,128,.3); }
+.pw-status-pill--dirty  { background: var(--amber-bg); color: var(--amber); border-color: rgba(251,191,36,.3); }
+.pw-status-pill--saving { background: var(--accent-bg); color: var(--accent); border-color: rgba(124,140,248,.3); }
+
+.pw-content-placeholder {
+  border: 1px dashed var(--border2);
+  border-radius: var(--r-lg);
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+.pw-content-placeholder-icon { font-size: 28px; margin-bottom: 10px; }
+.pw-content-placeholder p { font-size: .86rem; line-height: 1.6; }
+.pw-content-placeholder .pw-hint { margin-top: 4px; }
+
+.pw-hint { font-size: .76rem; color: var(--dim); }
+
+.pw-save-row {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+
+/* ── Dialoge ─────────────────────────────────────────────── */
+.pw-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(10, 11, 16, .72);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.pw-overlay[hidden] { display: none; }
+
+/* Der Passwort-Dialog wird auch als verschachtelter Bestätigungsschritt aus
+   dem "Ungespeicherte Änderungen"-Dialog heraus geöffnet (Fallback-Speichern) -
+   deshalb immer über anderen Dialogen liegen, unabhängig von der DOM-Reihenfolge. */
+#pw-dialog-password { z-index: 1001; }
+
+.pw-dialog {
+  background: var(--panel);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-lg);
+  width: 100%; max-width: 440px;
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0,0,0,.5);
+}
+
+.pw-dialog-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 18px 20px; border-bottom: 1px solid var(--border);
+}
+.pw-dialog-header h2 { font-size: 1rem; font-weight: 700; color: var(--text); }
+
+.pw-dialog-close {
+  background: none; border: none; color: var(--dim); font-size: 16px;
+  cursor: pointer; padding: 4px 6px; border-radius: 6px; line-height: 1;
+}
+.pw-dialog-close:hover { color: var(--text); }
+.pw-dialog-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.pw-dialog-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+.pw-dialog-footer {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  padding: 16px 20px; border-top: 1px solid var(--border);
+}
+.pw-dialog-footer--stack { flex-direction: column; align-items: stretch; }
+.pw-dialog-footer--stack .pw-btn { width: 100%; }
+
+.pw-field { display: flex; flex-direction: column; gap: 6px; }
+.pw-label { font-size: .78rem; font-weight: 600; color: var(--muted); }
+
+.pw-input {
+  padding: 9px 12px; border-radius: var(--r);
+  border: 1px solid var(--border2); background: var(--panel2);
+  color: var(--text); font-family: var(--font-ui); font-size: .84rem;
+  outline: none; transition: border-color .15s; width: 100%;
+}
+.pw-input:focus-visible { border-color: var(--accent); }
+
+.pw-password-row { display: flex; gap: 8px; }
+.pw-password-row .pw-input { flex: 1; }
+
+.pw-eye-btn {
+  flex-shrink: 0; width: 38px;
+  border: 1px solid var(--border2); background: var(--panel2); border-radius: var(--r);
+  color: var(--dim); cursor: pointer; font-size: 14px;
+}
+.pw-eye-btn:hover { color: var(--text); border-color: var(--accent); }
+.pw-eye-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.pw-location-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pw-location-text { font-size: .78rem; color: var(--dim); font-family: var(--font-mono); word-break: break-all; }
+
+.pw-strength { display: flex; flex-direction: column; gap: 6px; }
+.pw-strength[hidden] { display: none; }
+.pw-strength-bar { height: 6px; border-radius: 999px; background: var(--panel2); overflow: hidden; }
+.pw-strength-fill { height: 100%; width: 0%; transition: width .15s, background-color .15s; background: var(--red); }
+.pw-strength-fill--weak   { background: var(--red); }
+.pw-strength-fill--fair   { background: var(--amber); }
+.pw-strength-fill--good   { background: var(--teal); }
+.pw-strength-fill--strong { background: var(--green); }
+.pw-strength-label { font-size: .74rem; color: var(--dim); }
+
+/* Nur für Screenreader sichtbare Labels (z.B. Suchfeld-Beschriftung) */
+.pw-visually-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* ── Notizen-Layout (Phase 4B) ───────────────────────────── */
+.pw-notes-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 20px;
+  align-items: start;
+  /* Ohne min-width:0 verweigern Grid-Spalten das Schrumpfen unter die
+     Content-Breite ihrer Kinder (z.B. eine lange Notiz-Vorschauzeile oder ein
+     langer Tag) - das würde die gesamte Seite horizontal überlaufen lassen,
+     obwohl die Spalten selbst korrekt umbrechen könnten. */
+  min-width: 0;
+}
+@media (max-width: 760px) {
+  .pw-notes-layout { grid-template-columns: 1fr; }
+}
+
+.pw-notes-sidebar {
+  display: flex; flex-direction: column; gap: 12px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-lg);
+  padding: 16px;
+  min-width: 0;
+}
+.pw-notes-new-btn { width: 100%; }
+.pw-notes-search-row { position: relative; display: flex; }
+.pw-notes-search-row .pw-input { width: 100%; padding-right: 34px; }
+.pw-search-clear {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+  background: none; border: none; color: var(--dim); cursor: pointer; border-radius: 50%; font-size: 12px;
+}
+.pw-search-clear[hidden] { display: none; }
+.pw-search-clear:hover { color: var(--text); background: var(--panel2); }
+.pw-search-clear:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.pw-notes-list {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: 6px;
+  max-height: 60vh; overflow-y: auto;
+  min-width: 0;
+}
+.pw-notes-list[hidden] { display: none; }
+
+.pw-note-item-btn {
+  width: 100%; text-align: left; display: flex; flex-direction: column; gap: 4px;
+  background: var(--panel2); border: 1px solid var(--border); border-left: 3px solid transparent;
+  border-radius: var(--r);
+  padding: 10px 12px; cursor: pointer; color: var(--text); font-family: var(--font-ui);
+  transition: border-color .15s, background .15s;
+  min-width: 0; max-width: 100%;
+}
+.pw-note-item-btn:hover { border-color: var(--accent); }
+.pw-note-item-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pw-note-item-btn[aria-current="true"] { border-color: var(--accent); border-left-color: var(--accent); background: var(--accent-bg); }
+
+.pw-note-item-title {
+  font-weight: 700; font-size: .84rem; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pw-note-item-preview {
+  font-size: .76rem; color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pw-note-item-meta {
+  font-size: .68rem; color: var(--dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pw-note-item-tags { display: flex; gap: 4px; flex-wrap: wrap; min-width: 0; }
+.pw-note-item-tag {
+  font-size: .68rem; padding: 1px 7px; border-radius: 999px;
+  background: var(--panel); border: 1px solid var(--border2); color: var(--dim);
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.pw-notes-empty { font-size: .8rem; color: var(--dim); text-align: center; padding: 20px 8px; line-height: 1.6; }
+
+.pw-editor {
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-lg);
+  padding: 20px; min-height: 420px;
+  display: flex; flex-direction: column;
+  min-width: 0;
+}
+.pw-editor-empty {
+  margin: auto; color: var(--dim); font-size: .86rem; text-align: center; max-width: 320px;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+}
+.pw-editor-empty[hidden] { display: none; }
+#pw-editor-empty-cta[hidden] { display: none; }
+
+.pw-editor-form { display: flex; flex-direction: column; gap: 16px; flex: 1; min-width: 0; }
+.pw-editor-form[hidden] { display: none; }
+.pw-editor-title-input { font-size: 1rem; font-weight: 700; }
+
+.pw-field-grow { flex: 1; display: flex; flex-direction: column; }
+.pw-editor-textarea {
+  flex: 1; min-height: 220px; resize: vertical;
+  font-family: var(--font-ui); line-height: 1.6;
+}
+
+.pw-tags-row { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.pw-tags-row:not(:empty) { margin-bottom: 4px; }
+.pw-tag-chip {
+  display: inline-flex; align-items: center; gap: 4px; max-width: 100%;
+  background: var(--panel2); border: 1px solid var(--border2); border-radius: 999px;
+  padding: 3px 4px 3px 12px; font-size: .76rem; color: var(--text);
+}
+.pw-tag-chip span:first-child {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px;
+}
+.pw-tag-remove {
+  background: none; border: none; color: var(--dim); cursor: pointer;
+  font-size: 14px; line-height: 1; padding: 3px 7px; border-radius: 50%;
+}
+.pw-tag-remove:hover { color: var(--red); background: var(--red-bg); }
+.pw-tag-remove:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.pw-tag-add-row { display: flex; gap: 8px; }
+.pw-tag-add-row .pw-input { flex: 1; }
+
+.pw-editor-footer {
+  display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap;
+  margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border);
+}
+.pw-editor-dirty-hint { font-size: .76rem; color: var(--amber); font-weight: 600; margin-right: auto; }
+.pw-editor-actions { display: flex; gap: 10px; }
+
+/* ── Mobile (Phase 6) ───────────────────────────────────────
+   Ziel: 320px-390px-Breite ohne horizontales Überlaufen. Die
+   Desktop-Struktur bleibt erhalten - nur Abstände/Umbrüche
+   passen sich an, keine zweite UI. */
+@media (max-width: 480px) {
+  .pw-main { padding: 20px 12px 60px; }
+
+  .pw-workspace-header { flex-wrap: wrap; }
+  .pw-workspace-title { min-width: 0; flex: 1 1 auto; }
+
+  .pw-save-row .pw-btn { flex: 1 1 auto; }
+
+  .pw-notes-sidebar { padding: 12px; }
+  .pw-notes-list { max-height: 40vh; }
+
+  .pw-editor { padding: 14px; min-height: 0; }
+  .pw-editor-textarea { min-height: 160px; }
+
+  .pw-tag-add-row { flex-wrap: wrap; }
+  .pw-tag-add-row .pw-input { flex: 1 1 100%; }
+
+  .pw-editor-footer { flex-direction: column; align-items: stretch; }
+  .pw-editor-dirty-hint { margin-right: 0; text-align: center; }
+  .pw-editor-actions { flex-direction: column; width: 100%; }
+  .pw-editor-actions .pw-btn { width: 100%; }
+
+  .pw-dialog { max-width: none; }
+  .pw-dialog-footer:not(.pw-dialog-footer--stack) { flex-wrap: wrap; }
+  .pw-dialog-footer:not(.pw-dialog-footer--stack) .pw-btn { flex: 1 1 auto; }
+
+  .pw-location-row { flex-direction: column; align-items: stretch; }
+}

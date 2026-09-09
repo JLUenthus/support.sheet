@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260908-schtasks-registry-commands';
+const CACHE_VERSION = '20260909-private-workspace-phase6-ux';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -36,6 +36,10 @@ const ASSETS = [
   './assets/install_guide.jpg',
   './ticketassistent.html',
   './private.html',
+  './js/private-crypto.js',
+  './js/private-workspace.js',
+  './js/private-renderer.js',
+  './css/private.css',
   './js/har.js',
   './js/entra.js',
   './css/har.css',

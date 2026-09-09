@@ -13,141 +13,8 @@
   <title>support.sheet – Privat</title>
   <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="css/main.css">
-  <style>
-    .priv-main { max-width: 720px; margin: 0 auto; padding: 0 24px 80px; position: relative; z-index: 1; }
-
-    .priv-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    .priv-card h2 { font-size: .95rem; font-weight: 700; color: var(--text); margin-bottom: 14px; }
-    .priv-card p { font-size: .84rem; color: var(--muted); margin-bottom: 8px; line-height: 1.5; }
-    .priv-card a { color: var(--accent); }
-
-    .priv-banner-checking {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(251,191,36,.06);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--amber);
-      border-radius: var(--r);
-      padding: 20px;
-      margin-bottom: 20px;
-      color: var(--amber);
-      font-weight: 700;
-      font-size: .95rem;
-    }
-    .priv-banner-checking[hidden] { display: none; }
-    .priv-spin { display: inline-block; animation: priv-spin 1s linear infinite; }
-    @keyframes priv-spin { to { transform: rotate(360deg); } }
-
-    .priv-banner-error {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(248,113,113,.06);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--red);
-      border-radius: var(--r);
-      padding: 20px;
-      margin-bottom: 20px;
-      color: var(--red);
-      font-weight: 700;
-      font-size: .95rem;
-    }
-
-    .priv-banner-ok {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 14px;
-      background: rgba(74,222,128,.06);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--green);
-      border-radius: var(--r);
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    .priv-banner-ok[hidden] { display: none; }
-    .priv-banner-ok-title { font-size: .95rem; font-weight: 700; color: var(--text); }
-
-    .priv-btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 10px 18px; border-radius: var(--r);
-      border: 1px solid var(--border2); background: var(--panel2);
-      color: var(--text); font-family: var(--font-ui); font-size: .84rem; font-weight: 600;
-      cursor: pointer; text-decoration: none; transition: all .15s;
-    }
-    .priv-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .priv-btn-primary { background: rgba(74,222,128,.1); border-color: rgba(74,222,128,.35); color: var(--green); }
-    .priv-btn-primary:hover { background: rgba(74,222,128,.18); color: var(--green); border-color: var(--green); }
-
-    .priv-code {
-      font-family: var(--font-mono);
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      padding: 10px 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      font-size: .82rem;
-      color: var(--text);
-      overflow-x: auto;
-    }
-
-    .priv-copy-btn {
-      flex-shrink: 0;
-      font-size: .7rem;
-      font-family: var(--font-ui);
-      font-weight: 600;
-      padding: 5px 10px;
-      border-radius: 6px;
-      border: 1px solid var(--border2);
-      background: var(--panel2);
-      color: var(--dim);
-      cursor: pointer;
-      transition: all .15s;
-      white-space: nowrap;
-    }
-    .priv-copy-btn:hover  { color: var(--text); border-color: var(--accent); }
-    .priv-copy-btn.copied { color: var(--green); border-color: rgba(74,222,128,.4); }
-
-    .priv-step-box { margin-bottom: 16px; }
-    .priv-step-label { font-size: .78rem; color: var(--muted); margin-bottom: 8px; }
-    .priv-hint { font-size: .78rem; color: var(--dim); margin-top: 8px; }
-
-    .priv-input-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
-    .priv-input {
-      flex: 1; min-width: 200px;
-      padding: 9px 12px; border-radius: var(--r);
-      border: 1px solid var(--border2); background: var(--panel2);
-      color: var(--text); font-family: var(--font-ui); font-size: .84rem;
-      outline: none; transition: border-color .15s;
-    }
-    .priv-input:focus { border-color: var(--accent); }
-
-    .priv-path-saved { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-    .priv-path-text { font-family: var(--font-mono); color: var(--accent); font-size: .84rem; word-break: break-all; }
-    .priv-confirm { font-size: .78rem; color: var(--green); margin-top: 8px; }
-
-    .priv-toggle-link {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: none; border: none; color: var(--muted);
-      font-family: var(--font-ui); font-size: .82rem; font-weight: 600;
-      cursor: pointer; padding: 4px 0; margin-top: 4px;
-    }
-    .priv-toggle-link:hover { color: var(--accent); }
-    .priv-toggle-chevron { display: inline-block; transition: transform .15s; }
-    .priv-toggle-link.open .priv-toggle-chevron { transform: rotate(180deg); }
-    .priv-combined { margin-top: 12px; display: none; }
-    .priv-combined.show { display: block; }
-  </style>
+  <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/private.css">
 </head>
 <body>
 
@@ -161,266 +28,254 @@
     </div>
   </header>
 
-  
-  <main class="priv-main">
+  <main class="pw-main">
 
-    <!-- ZUSTAND – Wird geprüft (Übergangszustand) -->
-    <div class="priv-banner-checking" id="priv-state-checking">
-      <span class="priv-spin">🔄</span> Wird geprüft…
-    </div>
+    <!-- START-ANSICHT: kein Workspace geöffnet -->
+    <section id="pw-view-start" class="pw-view">
+      <div class="pw-hero">
+        <div class="pw-hero-icon">🔒</div>
+        <h1>Private Workspace</h1>
+        <p>Aktuell ist kein Workspace geöffnet. Öffne eine vorhandene <code>.support</code>-Datei oder erstelle einen neuen, passwortverschlüsselten Workspace.</p>
+      </div>
+      <div class="pw-actions">
+        <button type="button" class="pw-btn pw-btn-primary" id="pw-btn-open">📂 Workspace öffnen</button>
+        <button type="button" class="pw-btn" id="pw-btn-create">✨ Neuen Workspace erstellen</button>
+      </div>
+      <p class="pw-inline-error" id="pw-start-error" hidden></p>
+      <div class="pw-security-note">
+        <strong>Hinweis:</strong> Dieser Bereich eignet sich für interne, private Notizen und Informationen.
+        Für hochkritische Zugangsdaten (z.B. Domain-Admin-Passwörter) empfehlen wir weiterhin einen dedizierten Passwortmanager.
+      </div>
+    </section>
 
-    <!-- ZUSTAND A – Localhost erreichbar -->
-    <div class="priv-banner-ok" id="priv-state-connected" hidden>
-      <div class="priv-banner-ok-title">✅ Privater Bereich ist erreichbar</div>
-      <a href="http://localhost:5000" class="priv-btn priv-btn-primary">🔒 Privaten Bereich öffnen</a>
-      <button type="button" class="priv-btn" id="priv-recheck-connected">🔄 Erneut prüfen</button>
-    </div>
+    <!-- GESPERRTE ANSICHT: Session-Timeout / Auto-Lock -->
+    <section id="pw-view-locked" class="pw-view" hidden>
+      <div class="pw-locked-card">
+        <div class="pw-locked-icon">🔒</div>
+        <h2>Workspace automatisch gesperrt</h2>
+        <p>Nach 30 Minuten Inaktivität wurde der Workspace gesperrt.</p>
+        <p>Ungespeicherte Änderungen gehen verloren.</p>
+        <button type="button" class="pw-btn pw-btn-primary" id="pw-btn-locked-reopen">Workspace erneut öffnen</button>
+      </div>
+    </section>
 
-    <!-- ZUSTAND B – Einrichtungsanleitung (Standard beim Laden) -->
-    <div id="priv-state-setup" hidden>
-
-      <div class="priv-banner-error">❌ Privater Bereich nicht erreichbar</div>
-
-      <div class="priv-card">
-        <h2>Voraussetzungen</h2>
-        <p>🐍 Python muss installiert sein.</p>
-        <p><a href="https://python.org/downloads" target="_blank" rel="noopener">Python herunterladen →</a></p>
-        <p class="priv-hint">get the standalone installer for Python 3.14.6 empfohlen, nicht vergessen add to path</p>
+    <!-- GEÖFFNETER WORKSPACE -->
+    <section id="pw-view-workspace" class="pw-view" hidden>
+      <div class="pw-workspace-header">
+        <div class="pw-workspace-title">
+          <span class="pw-lock-icon">🔒</span>
+          <span id="pw-workspace-name">Workspace</span>
+        </div>
+        <button type="button" class="pw-btn" id="pw-btn-close">Schließen</button>
       </div>
 
-      <div class="priv-card">
-        <h2>PowerShell öffnen</h2>
-        <button type="button" class="priv-btn" id="priv-open-ps">⚡ PowerShell öffnen</button>
-        <p class="priv-hint" id="priv-ps-hint" hidden>Falls sich nichts öffnet: Win+X drücken, dann „T“ für Windows PowerShell (bzw. „Terminal“ je nach Windows-Version).</p>
+      <div class="pw-status-row">
+        <span id="pw-status-saved-at"></span>
+        <span id="pw-status-pill" class="pw-status-pill" aria-live="polite"></span>
       </div>
 
-      <div class="priv-card">
-        <h2>Schritt 1 – Projektpfad festlegen</h2>
+      <div class="pw-save-row">
+        <button type="button" class="pw-btn pw-btn-primary" id="pw-btn-save">💾 Speichern</button>
+        <button type="button" class="pw-btn" id="pw-btn-save-as" hidden>Speichern unter …</button>
+        <span class="pw-hint" id="pw-fallback-hint" hidden>Dieser Browser kann nicht direkt in die geöffnete Datei zurückschreiben – „Speichern“ lädt eine aktualisierte, verschlüsselte Datei herunter.</span>
+      </div>
 
-        <div id="priv-path-input-wrap">
-          <div class="priv-input-row">
-            <input type="text" id="priv-path-input" class="priv-input" placeholder="C:\Users\...\MeinProjekt" autocomplete="off">
-            <button type="button" class="priv-btn priv-btn-primary" id="priv-path-save">💾 Speichern</button>
+      <div class="pw-notes-layout">
+        <!-- NOTIZLISTE -->
+        <div class="pw-notes-sidebar">
+          <button type="button" class="pw-btn pw-btn-primary pw-notes-new-btn" id="pw-btn-new-note">+ Neue Notiz</button>
+
+          <div class="pw-notes-search-row">
+            <label class="pw-visually-hidden" for="pw-notes-search">Notizen durchsuchen</label>
+            <input type="search" id="pw-notes-search" class="pw-input" placeholder="Notizen durchsuchen …" autocomplete="off">
+            <button type="button" class="pw-search-clear" id="pw-notes-search-clear" aria-label="Suche zurücksetzen" hidden>✕</button>
           </div>
-          <div class="priv-confirm" id="priv-path-confirm" hidden>✓ Pfad gespeichert</div>
+
+          <ul class="pw-notes-list" id="pw-notes-list" aria-label="Notizen"></ul>
+          <p class="pw-notes-empty" id="pw-notes-empty" hidden></p>
         </div>
 
-        <div id="priv-path-saved-wrap" hidden>
-          <div class="priv-path-saved">
-            <span class="priv-path-text" id="priv-path-text"></span>
-            <button type="button" class="priv-btn" id="priv-path-edit">✏️ Bearbeiten</button>
+        <!-- EDITOR -->
+        <div class="pw-editor" id="pw-editor">
+          <div class="pw-editor-empty" id="pw-editor-empty">
+            <p id="pw-editor-empty-text">Wähle eine Notiz aus oder erstelle eine neue.</p>
+            <button type="button" class="pw-btn pw-btn-primary" id="pw-editor-empty-cta" hidden>+ Neue Notiz</button>
+          </div>
+
+          <div class="pw-editor-form" id="pw-editor-form" hidden>
+            <div class="pw-field">
+              <label class="pw-label" for="pw-editor-title">Titel</label>
+              <input type="text" id="pw-editor-title" class="pw-input pw-editor-title-input" placeholder="Unbenannte Notiz" autocomplete="off">
+            </div>
+
+            <div class="pw-field pw-field-grow">
+              <label class="pw-label" for="pw-editor-content">Inhalt</label>
+              <textarea id="pw-editor-content" class="pw-input pw-editor-textarea" rows="12"></textarea>
+            </div>
+
+            <div class="pw-field">
+              <span class="pw-label" id="pw-editor-tags-label">Tags</span>
+              <div class="pw-tags-row" id="pw-editor-tags" aria-labelledby="pw-editor-tags-label"></div>
+              <div class="pw-tag-add-row">
+                <label class="pw-visually-hidden" for="pw-editor-tag-input">Neuen Tag hinzufügen</label>
+                <input type="text" id="pw-editor-tag-input" class="pw-input" placeholder="Tag hinzufügen …">
+                <button type="button" class="pw-btn" id="pw-editor-tag-add">+ Tag</button>
+              </div>
+            </div>
+
+            <div class="pw-editor-footer">
+              <span class="pw-editor-dirty-hint" id="pw-editor-dirty-hint" hidden>Ungespeicherte Änderungen im Editor</span>
+              <div class="pw-editor-actions">
+                <button type="button" class="pw-btn pw-btn-danger" id="pw-editor-delete">Löschen</button>
+                <button type="button" class="pw-btn pw-btn-primary" id="pw-editor-save">Änderungen speichern</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-
-      <div class="priv-card" id="priv-section-commands" hidden>
-        <h2>Schritt 2 – Server starten</h2>
-
-        <div class="priv-step-box">
-          <div class="priv-step-label">Zum Projektordner wechseln</div>
-          <div class="priv-code">
-            <span id="priv-cmd-cd"></span>
-            <button type="button" class="priv-copy-btn" data-copy-target="priv-cmd-cd">📋 Kopieren</button>
-          </div>
-        </div>
-
-        <div class="priv-step-box">
-          <div class="priv-step-label">Python-Server starten</div>
-          <div class="priv-code">
-            <span id="priv-cmd-serve">python -m http.server 5000 --bind 127.0.0.1</span>
-            <button type="button" class="priv-copy-btn" data-copy-target="priv-cmd-serve">📋 Kopieren</button>
-          </div>
-        </div>
-
-        <button type="button" class="priv-toggle-link" id="priv-combined-toggle">Oder: Beides in einem Befehl <span class="priv-toggle-chevron">▾</span></button>
-        <div class="priv-combined" id="priv-combined-wrap">
-          <div class="priv-code">
-            <span id="priv-cmd-combined"></span>
-            <button type="button" class="priv-copy-btn" data-copy-target="priv-cmd-combined">📋 Kopieren</button>
-          </div>
-        </div>
-
-        <p class="priv-hint">💡 Den Server beenden: Strg+C im PowerShell-Fenster</p>
-      </div>
-
-      <div class="priv-card" id="priv-section-recheck" hidden>
-        <h2>Erneut prüfen</h2>
-        <button type="button" class="priv-btn priv-btn-primary" id="priv-recheck-setup">🔄 Prüfen ob Server läuft</button>
-      </div>
-
-    </div>
+    </section>
 
   </main>
 
+  <!-- Verstecktes File-Input für Browser ohne File System Access API -->
+  <input type="file" id="pw-file-input" accept=".support" hidden>
+
+  <!-- DIALOG: Neuen Workspace erstellen -->
+  <div class="pw-overlay" id="pw-dialog-create" hidden>
+    <form class="pw-dialog" id="pw-create-form" role="dialog" aria-modal="true" aria-labelledby="pw-create-title" novalidate>
+      <div class="pw-dialog-header">
+        <h2 id="pw-create-title">Neuen Workspace erstellen</h2>
+        <button type="button" class="pw-dialog-close" id="pw-create-close" aria-label="Dialog schließen">✕</button>
+      </div>
+      <div class="pw-dialog-body">
+        <div class="pw-field">
+          <label class="pw-label" for="pw-create-name">Dateiname</label>
+          <input type="text" id="pw-create-name" class="pw-input" value="Neuer-Workspace" autocomplete="off">
+        </div>
+
+        <div class="pw-field">
+          <label class="pw-label" id="pw-create-location-label">Speicherort</label>
+          <div class="pw-location-row">
+            <button type="button" class="pw-btn" id="pw-create-pick-location" aria-describedby="pw-create-location-text">📁 Speicherort wählen</button>
+            <span class="pw-location-text" id="pw-create-location-text">Kein Speicherort gewählt</span>
+          </div>
+        </div>
+
+        <div class="pw-field">
+          <label class="pw-label" for="pw-create-password">Passwort</label>
+          <div class="pw-password-row">
+            <input type="password" id="pw-create-password" class="pw-input" autocomplete="new-password" minlength="12">
+            <button type="button" class="pw-eye-btn" data-target="pw-create-password" aria-label="Passwort anzeigen">👁</button>
+          </div>
+        </div>
+
+        <div class="pw-field">
+          <label class="pw-label" for="pw-create-password2">Passwort wiederholen</label>
+          <div class="pw-password-row">
+            <input type="password" id="pw-create-password2" class="pw-input" autocomplete="new-password" minlength="12">
+            <button type="button" class="pw-eye-btn" data-target="pw-create-password2" aria-label="Passwort anzeigen">👁</button>
+          </div>
+        </div>
+
+        <div class="pw-strength" id="pw-create-strength" hidden>
+          <div class="pw-strength-bar"><div class="pw-strength-fill" id="pw-create-strength-fill"></div></div>
+          <span class="pw-strength-label" id="pw-create-strength-label"></span>
+        </div>
+
+        <p class="pw-inline-error" id="pw-create-error" hidden></p>
+      </div>
+      <div class="pw-dialog-footer">
+        <button type="button" class="pw-btn" id="pw-create-cancel">Abbrechen</button>
+        <button type="submit" class="pw-btn pw-btn-primary" id="pw-create-submit">Workspace erstellen</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- DIALOG: Passwort (Öffnen / Fallback-Speichern) -->
+  <div class="pw-overlay" id="pw-dialog-password" hidden>
+    <form class="pw-dialog" id="pw-password-form" role="dialog" aria-modal="true" aria-labelledby="pw-password-title" novalidate>
+      <div class="pw-dialog-header">
+        <h2 id="pw-password-title">Passwort eingeben</h2>
+        <button type="button" class="pw-dialog-close" id="pw-password-close" aria-label="Dialog schließen">✕</button>
+      </div>
+      <div class="pw-dialog-body">
+        <p class="pw-hint" id="pw-password-hint" hidden></p>
+        <div class="pw-field">
+          <label class="pw-label" for="pw-password-input">Passwort</label>
+          <div class="pw-password-row">
+            <input type="password" id="pw-password-input" class="pw-input" autocomplete="current-password">
+            <button type="button" class="pw-eye-btn" data-target="pw-password-input" aria-label="Passwort anzeigen">👁</button>
+          </div>
+        </div>
+        <p class="pw-inline-error" id="pw-password-error" hidden></p>
+      </div>
+      <div class="pw-dialog-footer">
+        <button type="button" class="pw-btn" id="pw-password-cancel">Abbrechen</button>
+        <button type="submit" class="pw-btn pw-btn-primary" id="pw-password-submit">Öffnen</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- DIALOG: Ungespeicherte Änderungen -->
+  <div class="pw-overlay" id="pw-dialog-unsaved" hidden>
+    <div class="pw-dialog" role="dialog" aria-modal="true" aria-labelledby="pw-unsaved-title">
+      <div class="pw-dialog-header">
+        <h2 id="pw-unsaved-title">Ungespeicherte Änderungen</h2>
+      </div>
+      <div class="pw-dialog-body">
+        <p>Dieser Workspace enthält Änderungen, die noch nicht gespeichert wurden.</p>
+        <p class="pw-inline-error" id="pw-unsaved-error" hidden></p>
+      </div>
+      <div class="pw-dialog-footer pw-dialog-footer--stack">
+        <button type="button" class="pw-btn pw-btn-primary" id="pw-unsaved-save-close">Speichern &amp; schließen</button>
+        <button type="button" class="pw-btn pw-btn-danger" id="pw-unsaved-discard">Ohne speichern schließen</button>
+        <button type="button" class="pw-btn" id="pw-unsaved-cancel">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIALOG: Ungespeicherte Editor-Änderungen -->
+  <div class="pw-overlay" id="pw-dialog-editor-unsaved" hidden>
+    <div class="pw-dialog" role="dialog" aria-modal="true" aria-labelledby="pw-editor-unsaved-title">
+      <div class="pw-dialog-header">
+        <h2 id="pw-editor-unsaved-title">Ungespeicherte Änderungen</h2>
+      </div>
+      <div class="pw-dialog-body">
+        <p>Diese Notiz enthält Änderungen, die noch nicht übernommen wurden.</p>
+      </div>
+      <div class="pw-dialog-footer pw-dialog-footer--stack">
+        <button type="button" class="pw-btn pw-btn-primary" id="pw-editor-unsaved-apply">Änderungen übernehmen</button>
+        <button type="button" class="pw-btn pw-btn-danger" id="pw-editor-unsaved-discard">Verwerfen</button>
+        <button type="button" class="pw-btn" id="pw-editor-unsaved-cancel">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIALOG: Notiz löschen -->
+  <div class="pw-overlay" id="pw-dialog-delete-note" hidden>
+    <div class="pw-dialog" role="dialog" aria-modal="true" aria-labelledby="pw-delete-note-title">
+      <div class="pw-dialog-header">
+        <h2 id="pw-delete-note-title">Notiz löschen?</h2>
+      </div>
+      <div class="pw-dialog-body">
+        <p>Diese Notiz wird aus dem Workspace entfernt.</p>
+      </div>
+      <div class="pw-dialog-footer">
+        <button type="button" class="pw-btn" id="pw-delete-note-cancel">Abbrechen</button>
+        <button type="button" class="pw-btn pw-btn-danger" id="pw-delete-note-confirm">Löschen</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/private-crypto.js"></script>
+  <script src="js/private-workspace.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/private-renderer.js"></script>
 
   <script>
-    // Der Service Worker fängt (wenn registriert) auch Cross-Origin-Anfragen
-    // wie den Localhost-Check ab. Läuft der allererste Check, BEVOR die
-    // Registrierung abgeschlossen ist, nimmt er einen anderen Weg als jeder
-    // spätere Klick auf "Erneut prüfen" – mit teils abweichendem Ergebnis.
-    // swReady löst deshalb erst, wenn die Registrierung (falls unterstützt)
-    // abgeschlossen ist, damit der erste Check denselben Weg nimmt wie alle
-    // folgenden.
-    const swReady = ('serviceWorker' in navigator)
-      ? new Promise((resolve) => {
-          window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js').catch(() => {}).finally(resolve);
-          });
-        })
-      : Promise.resolve();
-
-    const PATH_KEY = 'private-project-path';
-
-    // ── Zwischenablage (gleiches Muster wie an anderer Stelle in support.sheet) ──
-    function copyToClipboard(text, btn) {
-      const done = (ok) => {
-        if (btn) {
-          const original = btn.textContent;
-          btn.textContent = ok ? '✓ Kopiert' : '✗ Fehler';
-          btn.classList.toggle('copied', ok);
-          setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1500);
-        }
-      };
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(() => done(true)).catch(() => execFallback(text, done));
-      } else {
-        execFallback(text, done);
-      }
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
     }
-
-    function execFallback(text, done) {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.setAttribute('readonly', '');
-      ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
-      document.body.appendChild(ta);
-      ta.select();
-      try { done(document.execCommand('copy')); }
-      catch { done(false); }
-      document.body.removeChild(ta);
-    }
-
-    // ── Projektpfad (localStorage) ────────────────────────────
-    function loadPath() { return localStorage.getItem(PATH_KEY) || ''; }
-    function savePath(path) { localStorage.setItem(PATH_KEY, path); }
-
-    function renderPathUI() {
-      const path = loadPath();
-      const inputWrap = document.getElementById('priv-path-input-wrap');
-      const savedWrap = document.getElementById('priv-path-saved-wrap');
-      const commandsSection = document.getElementById('priv-section-commands');
-      const recheckSection = document.getElementById('priv-section-recheck');
-
-      if (path) {
-        inputWrap.hidden = true;
-        savedWrap.hidden = false;
-        document.getElementById('priv-path-text').textContent = path;
-        commandsSection.hidden = false;
-        recheckSection.hidden = false;
-        document.getElementById('priv-cmd-cd').textContent = 'cd "' + path + '"';
-        document.getElementById('priv-cmd-combined').textContent = 'cd "' + path + '" ; python -m http.server 5000 --bind 127.0.0.1';
-      } else {
-        inputWrap.hidden = false;
-        savedWrap.hidden = true;
-        commandsSection.hidden = true;
-        recheckSection.hidden = true;
-      }
-    }
-
-    document.getElementById('priv-path-save').addEventListener('click', () => {
-      const input = document.getElementById('priv-path-input');
-      const value = input.value.trim();
-      if (!value) return;
-      savePath(value);
-      renderPathUI();
-      const confirmEl = document.getElementById('priv-path-confirm');
-      confirmEl.hidden = false;
-      setTimeout(() => { confirmEl.hidden = true; }, 2500);
-    });
-
-    document.getElementById('priv-path-edit').addEventListener('click', () => {
-      document.getElementById('priv-path-input').value = loadPath();
-      document.getElementById('priv-path-input-wrap').hidden = false;
-      document.getElementById('priv-path-saved-wrap').hidden = true;
-    });
-
-    document.getElementById('priv-combined-toggle').addEventListener('click', (e) => {
-      const btn = e.currentTarget;
-      const wrap = document.getElementById('priv-combined-wrap');
-      const willShow = !wrap.classList.contains('show');
-      wrap.classList.toggle('show', willShow);
-      btn.classList.toggle('open', willShow);
-    });
-
-    document.querySelectorAll('.priv-copy-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const targetId = btn.dataset.copyTarget;
-        const text = document.getElementById(targetId).textContent;
-        copyToClipboard(text, btn);
-      });
-    });
-
-    // ── PowerShell öffnen ──────────────────────────────────────
-    document.getElementById('priv-open-ps').addEventListener('click', () => {
-      const btn = document.getElementById('priv-open-ps');
-      try { window.location.href = 'powershell:'; } catch { /* kein Handler registriert */ }
-      setTimeout(() => {
-        btn.textContent = '⚡ PowerShell manuell öffnen (Win+X → T)';
-        document.getElementById('priv-ps-hint').hidden = false;
-      }, 800);
-    });
-
-    // ── Localhost-Check ───────────────────────────────────────
-    function showChecking() {
-      document.getElementById('priv-state-checking').hidden = false;
-      document.getElementById('priv-state-connected').hidden = true;
-      document.getElementById('priv-state-setup').hidden = true;
-    }
-    function showConnected() {
-      document.getElementById('priv-state-checking').hidden = true;
-      document.getElementById('priv-state-connected').hidden = false;
-      document.getElementById('priv-state-setup').hidden = true;
-    }
-    function showSetup() {
-      document.getElementById('priv-state-checking').hidden = true;
-      document.getElementById('priv-state-connected').hidden = true;
-      document.getElementById('priv-state-setup').hidden = false;
-    }
-
-    // Ein no-cors fetch() kann wegen CORS nur "kam irgendeine Antwort an?"
-    // erkennen, nicht ob es WIRKLICH unser Server ist – jede Antwort auf
-    // Port 5000 (auch von einem ganz anderen Programm) zählt dann als
-    // "erreichbar". Ein <img>-Ladeversuch auf eine feste Marker-Datei
-    // (.private/ping.png) ist präziser: onload feuert nur, wenn genau diese
-    // Datei mit Erfolg ausgeliefert wird – eine 404 von irgendeinem
-    // fremden Dienst auf demselben Port führt korrekt zu onerror.
-    function checkLocalhost() {
-      showChecking();
-      return new Promise((resolve) => {
-        const img = new Image();
-        let settled = false;
-        const startedAt = Date.now();
-        const timer = setTimeout(() => { console.log('[priv-check] TIMEOUT nach', Date.now() - startedAt, 'ms'); finish(false); }, 2000);
-        function finish(ok) {
-          if (settled) return;
-          settled = true;
-          clearTimeout(timer);
-          console.log('[priv-check] Ergebnis:', ok ? 'ONLOAD (verbunden)' : 'ONERROR/TIMEOUT (nicht verbunden)', '– nach', Date.now() - startedAt, 'ms – URL:', img.src);
-          if (ok) showConnected(); else showSetup();
-          resolve();
-        }
-        img.onload  = () => { console.log('[priv-check] img.onload gefeuert', img.naturalWidth, 'x', img.naturalHeight); finish(true); };
-        img.onerror = (e) => { console.log('[priv-check] img.onerror gefeuert', e); finish(false); };
-        img.src = 'http://localhost:5000/ping.png?t=' + Date.now();
-      });
-    }
-
-    document.getElementById('priv-recheck-connected').addEventListener('click', checkLocalhost);
-    document.getElementById('priv-recheck-setup').addEventListener('click', checkLocalhost);
-
-    // ── Init ───────────────────────────────────────────────────
-    renderPathUI();
-    swReady.then(checkLocalhost);
   </script>
 
   <script src="nav.js"></script>

@@ -20,3 +20,13 @@
 .toast--success { background: #1a1d2e; border: 1px solid rgba(74, 222, 128, .3);  color: #4ade80; }
 .toast--error   { background: #1a1d2e; border: 1px solid rgba(248, 113, 113, .3); color: #f87171; }
 .toast--warning { background: #1a1d2e; border: 1px solid rgba(245, 158, 11, .3);  color: #f59e0b; }
+
+@media (max-width: 480px) {
+  .toast {
+    left: 12px;
+    right: 12px;
+    bottom: 16px;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+}
