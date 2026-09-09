@@ -69,6 +69,14 @@
 }
 .pw-new-window-row .pw-hint { text-align: center; }
 
+.pw-btn-link {
+  background: none; border: none; padding: 2px 4px; cursor: pointer;
+  color: var(--muted); font-family: var(--font-ui); font-size: .78rem;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.pw-btn-link:hover { color: var(--accent); }
+.pw-btn-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 .pw-security-note {
   font-size: .78rem; color: var(--dim); line-height: 1.6;
   background: var(--panel); border: 1px solid var(--border); border-radius: var(--r);
@@ -408,6 +416,47 @@
 }
 .pw-editor-dirty-hint { font-size: .76rem; color: var(--amber); font-weight: 600; margin-right: auto; }
 .pw-editor-actions { display: flex; gap: 10px; }
+
+/* ── Anhänge (Phase 11) ────────────────────────────────────── */
+.pw-attachments { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.pw-attachments:empty { display: none; }
+.pw-attachments-empty { font-size: .8rem; color: var(--dim); margin: 0; }
+.pw-attachments-empty[hidden] { display: none; }
+
+.pw-attachment-card {
+  display: flex; align-items: center; gap: 12px; min-width: 0;
+  background: var(--panel2); border: 1px solid var(--border2); border-radius: var(--r);
+  padding: 10px;
+}
+.pw-attachment-thumb {
+  width: 56px; height: 56px; object-fit: cover; border-radius: var(--r);
+  flex-shrink: 0; cursor: pointer;
+  background: var(--panel); border: 1px solid var(--border);
+}
+.pw-attachment-thumb:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pw-attachment-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pw-attachment-name {
+  font-size: .82rem; font-weight: 600; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-break: break-all;
+}
+.pw-attachment-size { font-size: .72rem; color: var(--dim); }
+.pw-attachment-actions { display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0; }
+.pw-attachment-actions .pw-btn { padding: 6px 10px; font-size: .74rem; }
+
+.pw-attachment-add-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+
+.pw-dialog-attachment { max-width: 640px; }
+.pw-attachment-preview-img {
+  display: block; max-width: 100%; max-height: 60vh; margin: 0 auto;
+  border-radius: var(--r); background: var(--panel2);
+}
+.pw-attachment-preview-meta { text-align: center; font-size: .78rem; color: var(--dim); margin: 10px 0 0; }
+
+@media (max-width: 480px) {
+  .pw-attachment-card { flex-wrap: wrap; }
+  .pw-attachment-actions { width: 100%; }
+  .pw-attachment-actions .pw-btn { flex: 1 1 auto; }
+}
 
 /* ── Mobile (Phase 6) ───────────────────────────────────────
    Ziel: 320px-390px-Breite ohne horizontales Überlaufen. Die

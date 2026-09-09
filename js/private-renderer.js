@@ -30,6 +30,7 @@
     btnOpen: document.getElementById('pw-btn-open'),
     btnCreate: document.getElementById('pw-btn-create'),
     btnNewWindow: document.getElementById('pw-btn-new-window'),
+    btnNewTab: document.getElementById('pw-btn-new-tab'),
     startError: document.getElementById('pw-start-error'),
 
     btnLockedReopen: document.getElementById('pw-btn-locked-reopen'),
@@ -95,6 +96,12 @@
     editorDelete: document.getElementById('pw-editor-delete'),
     editorSave: document.getElementById('pw-editor-save'),
 
+    editorAttachments: document.getElementById('pw-editor-attachments'),
+    editorAttachmentsEmpty: document.getElementById('pw-editor-attachments-empty'),
+    editorAttachmentInput: document.getElementById('pw-editor-attachment-input'),
+    editorAttachmentAdd: document.getElementById('pw-editor-attachment-add'),
+    editorAttachmentHint: document.getElementById('pw-editor-attachment-hint'),
+
     dialogEditorUnsaved: document.getElementById('pw-dialog-editor-unsaved'),
     editorUnsavedApply: document.getElementById('pw-editor-unsaved-apply'),
     editorUnsavedDiscard: document.getElementById('pw-editor-unsaved-discard'),
@@ -135,7 +142,21 @@
     entryDelete: document.getElementById('pw-entry-delete'),
     entrySave: document.getElementById('pw-entry-save'),
 
-    editorUnsavedBody: document.getElementById('pw-editor-unsaved-body')
+    entryAttachments: document.getElementById('pw-entry-attachments'),
+    entryAttachmentsEmpty: document.getElementById('pw-entry-attachments-empty'),
+    entryAttachmentInput: document.getElementById('pw-entry-attachment-input'),
+    entryAttachmentAdd: document.getElementById('pw-entry-attachment-add'),
+    entryAttachmentHint: document.getElementById('pw-entry-attachment-hint'),
+
+    editorUnsavedBody: document.getElementById('pw-editor-unsaved-body'),
+
+    dialogAttachmentPreview: document.getElementById('pw-dialog-attachment-preview'),
+    attachmentPreviewTitle: document.getElementById('pw-attachment-preview-title'),
+    attachmentPreviewImg: document.getElementById('pw-attachment-preview-img'),
+    attachmentPreviewMeta: document.getElementById('pw-attachment-preview-meta'),
+    attachmentPreviewClose: document.getElementById('pw-attachment-preview-close'),
+    attachmentPreviewCloseBtn: document.getElementById('pw-attachment-preview-close-btn'),
+    attachmentPreviewDownload: document.getElementById('pw-attachment-preview-download')
   };
 
   // ── Renderer-lokaler Zusatzstate (nur Anzeige, keine Geheimnisse) ──
@@ -167,6 +188,17 @@
   // mit dem zu diesem Zeitpunkt noch unveränderten Dirty-Flag überschreibt.
   let saveOperationInProgress = false;
 
+  // Anhänge (Phase 11): Es gibt bewusst KEINE eigene Zwischenspeicherung der
+  // Anhang-Listen selbst - die werden immer frisch über
+  // PrivateWorkspace.get(Note|Entry)Attachments() bezogen (gleiches Prinzip
+  // wie bei Notizen/Entries). Renderer-lokal wird nur nachgehalten, welche
+  // temporären Object-URLs (Vorschau-Thumbnails + Lightbox + Download) gerade
+  // aktiv sind, damit sie zuverlässig wieder freigegeben werden können -
+  // niemals als Teil des Workspace-Modells persistiert (Vorgabe Abschnitt 12).
+  const activeObjectUrls = new Set();
+  let attachmentPreviewObjectUrl = null;
+  let currentPreviewAttachment = null;
+
   // ── kleine Helfer ────────────────────────────────────────
 
   function showView(name) {
@@ -194,6 +226,46 @@
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  // ── Anhang-Hilfsfunktionen (Phase 11) ────────────────────
+  //
+  // Gemeinsam für Notizen UND Entries (keine zweite, abweichende
+  // Implementierung) - Object-URLs entstehen ausschließlich hier, aus lokal
+  // aus Base64 rekonstruierten Blobs, und werden über activeObjectUrls
+  // nachgehalten, damit sie in resetNotesUiState() zuverlässig vollständig
+  // freigegeben werden können (Vorgabe Abschnitt 12/20).
+
+  function formatFileSize(bytes) {
+    if (!(bytes >= 0)) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function base64ToBlob(base64, mimeType) {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: mimeType });
+  }
+
+  function createAttachmentObjectUrl(attachment) {
+    const blob = base64ToBlob(attachment.data, attachment.type);
+    const url = URL.createObjectURL(blob);
+    activeObjectUrls.add(url);
+    return url;
+  }
+
+  function revokeAttachmentObjectUrl(url) {
+    if (!url) return;
+    URL.revokeObjectURL(url);
+    activeObjectUrls.delete(url);
+  }
+
+  function revokeAllAttachmentObjectUrls() {
+    activeObjectUrls.forEach(url => URL.revokeObjectURL(url));
+    activeObjectUrls.clear();
   }
 
   function describeWorkspaceError(err) {
@@ -228,6 +300,14 @@
         return 'Ungültiges Feld in diesem Eintrag.';
       case PrivateWorkspace.ErrorCodes.ENTRY_NOT_FOUND:
         return 'Dieser Eintrag wurde nicht gefunden (möglicherweise bereits gelöscht).';
+      case PrivateWorkspace.ErrorCodes.INVALID_ATTACHMENT:
+        return 'Es wurde keine gültige Bilddatei übergeben.';
+      case PrivateWorkspace.ErrorCodes.ATTACHMENT_TYPE_UNSUPPORTED:
+        return 'Nur Bilddateien (PNG, JPEG, GIF, WebP, SVG) werden als Anhang unterstützt.';
+      case PrivateWorkspace.ErrorCodes.ATTACHMENT_TOO_LARGE:
+        return 'Diese Datei ist zu groß für einen Anhang (max. ' + Math.round(PrivateWorkspace.MAX_ATTACHMENT_BYTES / (1024 * 1024)) + ' MB).';
+      case PrivateWorkspace.ErrorCodes.ATTACHMENT_NOT_FOUND:
+        return 'Dieser Anhang wurde nicht gefunden (möglicherweise bereits entfernt).';
       default:
         return 'Ein unerwarteter Fehler ist aufgetreten.';
     }
@@ -573,6 +653,21 @@
     els.deleteNoteBody.textContent = 'Diese Notiz wird aus dem Workspace entfernt.';
     els.editorUnsavedBody.textContent = 'Diese Notiz enthält Änderungen, die noch nicht übernommen wurden.';
 
+    // Anhänge (Phase 11): ALLE aktiven Object-URLs freigeben (Karten-
+    // Thumbnails, Lightbox) - Vorgabe Abschnitt 12/20, kein einziger
+    // blob:-Verweis darf ein Close/Auto-Lock/Reset überleben. Der einzige
+    // Ort, an dem das geschieht (keine zweite Cleanup-Implementierung).
+    revokeAllAttachmentObjectUrls();
+    attachmentPreviewObjectUrl = null;
+    currentPreviewAttachment = null;
+    els.dialogAttachmentPreview.hidden = true;
+    els.attachmentPreviewImg.src = '';
+    els.attachmentPreviewImg.alt = '';
+    els.attachmentPreviewTitle.textContent = 'Anhang';
+    els.attachmentPreviewMeta.textContent = '';
+    els.editorAttachments.innerHTML = '';
+    els.entryAttachments.innerHTML = '';
+
     showEditorEmpty();
     showEntryEditorEmpty();
   }
@@ -767,6 +862,7 @@
       els.editorEmptyText.textContent = 'Noch keine Notizen. Erstelle deine erste Notiz, um loszulegen.';
       els.editorEmptyCta.hidden = false;
     }
+    renderAttachmentsForContext(getAttachmentContext(false));
   }
 
   // Gemeinsame Tag-Mechanik für Notizen UND Entries (Phase 7: "keine zweite
@@ -835,6 +931,206 @@
     els.editorDirtyHint.hidden = false;
   }
 
+  // ── Anhänge: gemeinsame Render-/Aktions-Logik (Phase 11) ─
+  //
+  // Ein generischer Kontext (Notiz vs. Eintrag) statt zweier abweichender
+  // Implementierungen - gleiches Prinzip wie currentEditorDirty()/
+  // withEditorGuard() oben (Dispatch statt Duplikation, Vorgabe Abschnitt 5/21).
+
+  function getAttachmentContext(isEntry) {
+    return isEntry
+      ? {
+          kind: 'entry',
+          id: selectedEntryId,
+          getAttachments: PrivateWorkspace.getEntryAttachments,
+          addAttachment: PrivateWorkspace.addEntryAttachment,
+          deleteAttachment: PrivateWorkspace.deleteEntryAttachment,
+          containerEl: els.entryAttachments,
+          emptyEl: els.entryAttachmentsEmpty,
+          markDirty: markEntryEditorDirty
+        }
+      : {
+          kind: 'note',
+          id: selectedNoteId,
+          getAttachments: PrivateWorkspace.getNoteAttachments,
+          addAttachment: PrivateWorkspace.addNoteAttachment,
+          deleteAttachment: PrivateWorkspace.deleteNoteAttachment,
+          containerEl: els.editorAttachments,
+          emptyEl: els.editorAttachmentsEmpty,
+          markDirty: markEditorDirty
+        };
+  }
+
+  // Da Notizen/Einträge sich einen einzigen physischen Editor-DOM-Bereich
+  // teilen (kein Editor pro Notiz), muss vor einem DOM-Rerender nach einem
+  // asynchronen Upload geprüft werden, ob zwischenzeitlich zu einer anderen
+  // Notiz/einem anderen Eintrag gewechselt wurde - der Anhang selbst landet
+  // in jedem Fall korrekt an der ursprünglichen Notiz/dem ursprünglichen
+  // Eintrag (ctx.id bleibt dabei unverändert), nur die Anzeige darf nicht
+  // versehentlich die Anhänge der falschen Notiz in den sichtbaren Editor rendern.
+  function isAttachmentContextStillActive(ctx) {
+    return ctx.kind === 'entry' ? selectedEntryId === ctx.id : selectedNoteId === ctx.id;
+  }
+
+  function renderAttachmentsInto(containerEl, emptyEl, attachments) {
+    // Vorschau-Object-URLs des bisherigen Renderings dieses Containers
+    // freigeben, bevor er neu befüllt wird - sonst häufen sich bei jedem
+    // erneuten Rendern (z.B. nach Hinzufügen/Entfernen) verwaiste Blob-URLs an.
+    containerEl.querySelectorAll('img[data-object-url]').forEach(img => revokeAttachmentObjectUrl(img.dataset.objectUrl));
+    containerEl.innerHTML = '';
+    emptyEl.hidden = attachments.length > 0;
+
+    attachments.forEach(att => {
+      const card = document.createElement('div');
+      card.className = 'pw-attachment-card';
+
+      const previewUrl = createAttachmentObjectUrl(att);
+      const img = document.createElement('img');
+      img.className = 'pw-attachment-thumb';
+      img.src = previewUrl;
+      img.dataset.objectUrl = previewUrl;
+      // Dateiname landet ausschließlich als alt-Attribut/textContent im DOM -
+      // niemals als HTML interpretiert (Vorgabe Abschnitt 19), auch bei
+      // absichtlich bösartigen Namen wie "<img src=x onerror=...>.png".
+      img.alt = att.name;
+      img.tabIndex = 0;
+      img.setAttribute('role', 'button');
+      img.addEventListener('click', () => openAttachmentPreview(att));
+      img.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAttachmentPreview(att); }
+      });
+      card.appendChild(img);
+
+      const meta = document.createElement('div');
+      meta.className = 'pw-attachment-meta';
+      const nameEl = document.createElement('div');
+      nameEl.className = 'pw-attachment-name';
+      nameEl.textContent = att.name;
+      const sizeEl = document.createElement('div');
+      sizeEl.className = 'pw-attachment-size';
+      sizeEl.textContent = formatFileSize(att.size);
+      meta.appendChild(nameEl);
+      meta.appendChild(sizeEl);
+      card.appendChild(meta);
+
+      const actions = document.createElement('div');
+      actions.className = 'pw-attachment-actions';
+
+      const openBtn = document.createElement('button');
+      openBtn.type = 'button';
+      openBtn.className = 'pw-btn';
+      openBtn.textContent = 'Öffnen';
+      openBtn.addEventListener('click', () => openAttachmentPreview(att));
+      actions.appendChild(openBtn);
+
+      const downloadBtn = document.createElement('button');
+      downloadBtn.type = 'button';
+      downloadBtn.className = 'pw-btn';
+      downloadBtn.textContent = 'Herunterladen';
+      downloadBtn.addEventListener('click', () => downloadAttachment(att));
+      actions.appendChild(downloadBtn);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'pw-btn pw-btn-danger';
+      removeBtn.textContent = 'Entfernen';
+      removeBtn.setAttribute('aria-label', 'Anhang „' + att.name + '“ entfernen');
+      removeBtn.addEventListener('click', () => handleAttachmentRemove(getAttachmentContextForAttachmentOwner(att), att));
+      actions.appendChild(removeBtn);
+
+      card.appendChild(actions);
+      containerEl.appendChild(card);
+    });
+  }
+
+  // "Entfernen" wird aus der Karte heraus aufgerufen, ohne dass die Karte
+  // selbst weiß, ob sie zu einer Notiz oder einem Eintrag gehört - der
+  // aktuell aktive Tab entscheidet das eindeutig (siehe activeTab), exakt
+  // wie beim bestehenden Löschen-Dialog (handleDeleteClick/-Confirm).
+  function getAttachmentContextForAttachmentOwner() {
+    return getAttachmentContext(activeTab === 'entries');
+  }
+
+  function renderAttachmentsForContext(ctx) {
+    if (!ctx.id) {
+      revokeAllAttachmentObjectUrlsIn(ctx.containerEl);
+      ctx.containerEl.innerHTML = '';
+      ctx.emptyEl.hidden = false;
+      return;
+    }
+    renderAttachmentsInto(ctx.containerEl, ctx.emptyEl, ctx.getAttachments(ctx.id));
+  }
+
+  function revokeAllAttachmentObjectUrlsIn(containerEl) {
+    containerEl.querySelectorAll('img[data-object-url]').forEach(img => revokeAttachmentObjectUrl(img.dataset.objectUrl));
+  }
+
+  async function handleAttachmentFileChosen(ctx, file) {
+    if (!file || !ctx.id) return;
+    try {
+      await ctx.addAttachment(ctx.id, file);
+    } catch (err) {
+      logSafeError('attachment-add', err);
+      showToast(describeWorkspaceError(err), 'error');
+      return;
+    }
+    if (isAttachmentContextStillActive(ctx)) {
+      renderAttachmentsForContext(ctx);
+      ctx.markDirty();
+    }
+    refreshWorkspaceView();
+  }
+
+  function handleAttachmentRemove(ctx, att) {
+    if (!ctx.id) return;
+    try {
+      ctx.deleteAttachment(ctx.id, att.id);
+    } catch (err) {
+      logSafeError('attachment-remove', err);
+      showToast(describeWorkspaceError(err), 'error');
+      return;
+    }
+    renderAttachmentsForContext(ctx);
+    ctx.markDirty();
+    refreshWorkspaceView();
+  }
+
+  function closeAttachmentPreview() {
+    closeDialog(els.dialogAttachmentPreview);
+    if (attachmentPreviewObjectUrl) {
+      revokeAttachmentObjectUrl(attachmentPreviewObjectUrl);
+      attachmentPreviewObjectUrl = null;
+    }
+    currentPreviewAttachment = null;
+    els.attachmentPreviewImg.src = '';
+    els.attachmentPreviewImg.alt = '';
+  }
+
+  function openAttachmentPreview(att) {
+    if (attachmentPreviewObjectUrl) revokeAttachmentObjectUrl(attachmentPreviewObjectUrl);
+    attachmentPreviewObjectUrl = createAttachmentObjectUrl(att);
+    currentPreviewAttachment = att;
+    els.attachmentPreviewTitle.textContent = att.name;
+    els.attachmentPreviewImg.src = attachmentPreviewObjectUrl;
+    els.attachmentPreviewImg.alt = att.name;
+    els.attachmentPreviewMeta.textContent = formatFileSize(att.size) + ' · ' + att.type;
+    openDialog(els.dialogAttachmentPreview, els.attachmentPreviewCloseBtn);
+  }
+
+  // Object-URL bewusst nur temporär für den eigentlichen Download-Klick -
+  // wird unmittelbar danach wieder freigegeben (Vorgabe Abschnitt 14),
+  // Original-Dateiname und MIME-Typ bleiben erhalten.
+  function downloadAttachment(att) {
+    const url = createAttachmentObjectUrl(att);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = att.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => revokeAttachmentObjectUrl(url), 2000);
+  }
+
   function loadNoteIntoEditor(id) {
     const note = PrivateWorkspace.getNote(id);
     if (!note) {
@@ -850,6 +1146,7 @@
     currentEditorTags = note.tags.slice();
     renderTagChips();
     els.editorTagInput.value = '';
+    renderAttachmentsForContext(getAttachmentContext(false));
     editorDirty = false;
     els.editorDirtyHint.hidden = true;
   }
@@ -1130,6 +1427,7 @@
       els.entryEditorEmptyText.textContent = 'Noch keine Einträge. Erstelle deinen ersten strukturierten Eintrag.';
       els.entryEditorEmptyCta.hidden = false;
     }
+    renderAttachmentsForContext(getAttachmentContext(true));
   }
 
   function renderEntryFieldRows() {
@@ -1205,6 +1503,7 @@
     els.entryTagInput.value = '';
     currentEntryFields = entry.fields.map(f => ({ label: f.label, value: f.value }));
     renderEntryFieldRows();
+    renderAttachmentsForContext(getAttachmentContext(true));
     entriesEditorDirty = false;
     els.entryEditorDirtyHint.hidden = true;
   }
@@ -1295,12 +1594,25 @@
   // await/setTimeout davor lässt Popup-Blocker den Aufruf verwerfen, weil er
   // dann nicht mehr als direkte Folge einer Nutzer-Geste gilt.
   function handleOpenInNewWindowClick() {
-    const newWindow = window.open('private.html', '_blank', 'noopener,noreferrer');
+    // Explizite width/height-Fenstermerkmale signalisieren dem Browser ein
+    // eigenständiges Popup-Fenster statt eines Tabs (siehe handleOpenInNewTabClick
+    // unten, die bewusst OHNE diese Merkmale aufruft) - dasselbe Ziel, derselbe
+    // "noopener,noreferrer"-Schutz, kein gemeinsamer State zwischen den Fenstern.
+    const newWindow = window.open('private.html', '_blank', 'noopener,noreferrer,width=1100,height=800');
     if (!newWindow) {
       showToast('Das neue Fenster konnte nicht geöffnet werden. Bitte erlaube Pop-ups für diese Seite.', 'error');
     }
     // Kein Erfolgs-Toast bei geglücktem Öffnen (Vorgabe: keine Meldung, wenn
     // der Browser erfolgreich geöffnet hat) - das neue Fenster spricht für sich.
+  }
+
+  // Gleiches Ziel, ohne Fenstermerkmale - Browser öffnen ein window.open() ohne
+  // width/height-Angabe standardmäßig als regulären Tab statt als Popup-Fenster.
+  function handleOpenInNewTabClick() {
+    const newTab = window.open('private.html', '_blank', 'noopener,noreferrer');
+    if (!newTab) {
+      showToast('Der neue Tab konnte nicht geöffnet werden. Bitte erlaube Pop-ups für diese Seite.', 'error');
+    }
   }
 
   // ── Workspace öffnen ─────────────────────────────────────
@@ -1557,6 +1869,7 @@
   // ── Event-Verkabelung ────────────────────────────────────
   els.btnOpen.addEventListener('click', handleOpenClick);
   els.btnNewWindow.addEventListener('click', handleOpenInNewWindowClick);
+  els.btnNewTab.addEventListener('click', handleOpenInNewTabClick);
   els.btnCreate.addEventListener('click', () => {
     resetCreateDialog();
     openDialog(els.dialogCreate, els.createName);
@@ -1638,6 +1951,55 @@
   els.entrySave.addEventListener('click', commitEntryEditorChanges);
   els.entryDelete.addEventListener('click', handleDeleteClick);
 
+  // ── Anhänge (Phase 11): Upload-Button + verstecktes File-Input ──────────
+  // Ein Hinzufügen ändert bewusst nur Editor-/RAM-Zustand (siehe
+  // handleAttachmentFileChosen -> PrivateWorkspace.add(Note|Entry)Attachment)
+  // - kein automatisches Speichern der .support-Datei (Vorgabe Abschnitt 8).
+  els.editorAttachmentAdd.addEventListener('click', () => els.editorAttachmentInput.click());
+  els.editorAttachmentInput.addEventListener('change', () => {
+    const file = els.editorAttachmentInput.files && els.editorAttachmentInput.files[0];
+    els.editorAttachmentInput.value = '';
+    handleAttachmentFileChosen(getAttachmentContext(false), file);
+  });
+  els.entryAttachmentAdd.addEventListener('click', () => els.entryAttachmentInput.click());
+  els.entryAttachmentInput.addEventListener('change', () => {
+    const file = els.entryAttachmentInput.files && els.entryAttachmentInput.files[0];
+    els.entryAttachmentInput.value = '';
+    handleAttachmentFileChosen(getAttachmentContext(true), file);
+  });
+
+  // ── Anhänge: Strg/Cmd+V direkt im aktiven Editor (Phase 11) ─────────────
+  // Nur eingreifen, wenn tatsächlich ein Bild im Clipboard liegt - normales
+  // Text-Paste bleibt in jedem anderen Fall komplett unangetastet (Vorgabe
+  // Abschnitt 10). Enthält die Zwischenablage zusätzlich Text, wird bewusst
+  // nur der Bild-Anhang übernommen (kein zusätzlicher Aufwand für ein sehr
+  // seltenes Mischszenario, siehe Vorgabe "kein unnötiger Mehraufwand").
+  function wireAttachmentPasteHandler(formEl, isEntry) {
+    formEl.addEventListener('paste', (e) => {
+      if (!e.clipboardData || !e.clipboardData.items) return;
+      let imageItem = null;
+      for (let i = 0; i < e.clipboardData.items.length; i++) {
+        const item = e.clipboardData.items[i];
+        if (item.kind === 'file' && item.type && item.type.startsWith('image/')) { imageItem = item; break; }
+      }
+      if (!imageItem) return;
+      const file = imageItem.getAsFile();
+      if (!file) return;
+      e.preventDefault();
+      handleAttachmentFileChosen(getAttachmentContext(isEntry), file);
+    });
+  }
+  wireAttachmentPasteHandler(els.editorForm, false);
+  wireAttachmentPasteHandler(els.entryEditorForm, true);
+
+  // ── Anhänge: Vorschau-/Lightbox-Dialog ───────────────────────────────────
+  els.attachmentPreviewClose.addEventListener('click', closeAttachmentPreview);
+  els.attachmentPreviewCloseBtn.addEventListener('click', closeAttachmentPreview);
+  els.attachmentPreviewDownload.addEventListener('click', () => {
+    if (currentPreviewAttachment) downloadAttachment(currentPreviewAttachment);
+  });
+  wireBackdropCancel(els.dialogAttachmentPreview, els.attachmentPreviewCloseBtn);
+
   els.editorUnsavedApply.addEventListener('click', () => {
     if (activeTab === 'entries') commitEntryEditorChanges(); else commitEditorChanges();
     closeDialog(els.dialogEditorUnsaved);
@@ -1676,6 +2038,7 @@
     if (e.key !== 'Escape') return;
     if (!els.dialogCreate.hidden) els.createCancel.click();
     else if (!els.dialogPassword.hidden) els.passwordCancel.click();
+    else if (!els.dialogAttachmentPreview.hidden) els.attachmentPreviewCloseBtn.click();
     else if (!els.dialogEditorUnsaved.hidden) els.editorUnsavedCancel.click();
     else if (!els.dialogDeleteNote.hidden) els.deleteNoteCancel.click();
     else if (!els.dialogUnsaved.hidden) els.unsavedCancel.click();
@@ -1712,6 +2075,16 @@
   // "Speichern unter" ergibt ohne FSA keinen zusätzlichen Nutzen gegenüber dem
   // ohnehin bestehenden Download-Fallback von "Speichern".
   els.btnSaveAs.hidden = !hasFSA;
+
+  // ── Anhänge: Größenlimit-Hinweis (Phase 11) ──────────────
+  // Kein hartkodierter Zweitwert im Markup - liest denselben, in
+  // private-workspace.js einmalig definierten Grenzwert.
+  (function initAttachmentHints() {
+    const mb = Math.round(PrivateWorkspace.MAX_ATTACHMENT_BYTES / (1024 * 1024));
+    const text = 'Max. ' + mb + ' MB pro Bild.';
+    els.editorAttachmentHint.textContent = text;
+    els.entryAttachmentHint.textContent = text;
+  })();
 
   // ── Init ─────────────────────────────────────────────────
   showView('start');

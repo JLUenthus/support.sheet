@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260909-private-workspace-phase9-session-visibility';
+const CACHE_VERSION = '20260909-private-workspace-phase11b-open-in-tab';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [

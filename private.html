@@ -44,6 +44,7 @@
       <p class="pw-inline-error" id="pw-start-error" hidden></p>
       <div class="pw-new-window-row">
         <button type="button" class="pw-btn pw-btn-ghost" id="pw-btn-new-window">🗗 In neuem Fenster öffnen</button>
+        <button type="button" class="pw-btn-link" id="pw-btn-new-tab">oder in Tab öffnen</button>
         <p class="pw-hint">Empfohlen für längere Sitzungen</p>
       </div>
       <div class="pw-security-note">
@@ -134,6 +135,17 @@
               </div>
             </div>
 
+            <div class="pw-field">
+              <span class="pw-label" id="pw-editor-attachments-label">Anhänge</span>
+              <div class="pw-attachments" id="pw-editor-attachments" aria-labelledby="pw-editor-attachments-label"></div>
+              <p class="pw-attachments-empty" id="pw-editor-attachments-empty">Keine Anhänge vorhanden.</p>
+              <div class="pw-attachment-add-row">
+                <input type="file" id="pw-editor-attachment-input" accept="image/*" hidden>
+                <button type="button" class="pw-btn" id="pw-editor-attachment-add">🖼️ Bild hinzufügen</button>
+                <span class="pw-hint" id="pw-editor-attachment-hint"></span>
+              </div>
+            </div>
+
             <div class="pw-editor-footer">
               <span class="pw-editor-dirty-hint" id="pw-editor-dirty-hint" hidden>Ungespeicherte Änderungen im Editor</span>
               <div class="pw-editor-actions">
@@ -199,6 +211,17 @@
               <span class="pw-label" id="pw-entry-fields-label">Felder</span>
               <div class="pw-entry-fields" id="pw-entry-fields" aria-labelledby="pw-entry-fields-label"></div>
               <button type="button" class="pw-btn" id="pw-entry-field-add">+ Feld hinzufügen</button>
+            </div>
+
+            <div class="pw-field">
+              <span class="pw-label" id="pw-entry-attachments-label">Anhänge</span>
+              <div class="pw-attachments" id="pw-entry-attachments" aria-labelledby="pw-entry-attachments-label"></div>
+              <p class="pw-attachments-empty" id="pw-entry-attachments-empty">Keine Anhänge vorhanden.</p>
+              <div class="pw-attachment-add-row">
+                <input type="file" id="pw-entry-attachment-input" accept="image/*" hidden>
+                <button type="button" class="pw-btn" id="pw-entry-attachment-add">🖼️ Bild hinzufügen</button>
+                <span class="pw-hint" id="pw-entry-attachment-hint"></span>
+              </div>
             </div>
 
             <div class="pw-editor-footer">
@@ -341,6 +364,24 @@
       <div class="pw-dialog-footer">
         <button type="button" class="pw-btn" id="pw-delete-note-cancel">Abbrechen</button>
         <button type="button" class="pw-btn pw-btn-danger" id="pw-delete-note-confirm">Löschen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIALOG: Anhang-Vorschau (groß) -->
+  <div class="pw-overlay" id="pw-dialog-attachment-preview" hidden>
+    <div class="pw-dialog pw-dialog-attachment" role="dialog" aria-modal="true" aria-labelledby="pw-attachment-preview-title">
+      <div class="pw-dialog-header">
+        <h2 id="pw-attachment-preview-title">Anhang</h2>
+        <button type="button" class="pw-dialog-close" id="pw-attachment-preview-close" aria-label="Dialog schließen">✕</button>
+      </div>
+      <div class="pw-dialog-body">
+        <img id="pw-attachment-preview-img" class="pw-attachment-preview-img" alt="">
+        <p class="pw-attachment-preview-meta" id="pw-attachment-preview-meta"></p>
+      </div>
+      <div class="pw-dialog-footer">
+        <button type="button" class="pw-btn" id="pw-attachment-preview-download">⬇️ Herunterladen</button>
+        <button type="button" class="pw-btn pw-btn-primary" id="pw-attachment-preview-close-btn">Schließen</button>
       </div>
     </div>
   </div>

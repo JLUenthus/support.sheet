@@ -13,6 +13,12 @@
 
   const DEFAULT_TIMEOUT_MINUTES = 30;
 
+  // Technische Obergrenze pro Bildanhang (Phase 11, Vorgabe Abschnitt 6): kein
+  // willkürliches, kleines Produktlimit, sondern ein benannter, dokumentierter
+  // Schutz gegen extreme Speicherlast im Browser (Base64 + AES-GCM-Verschlüsselung
+  // der gesamten Workspace-Struktur). Gilt identisch für Upload UND Zwischenablage-Paste.
+  const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024; // 20 MB
+
   const ErrorCodes = Object.freeze({
     ALREADY_OPEN: 'ALREADY_OPEN',
     NO_WORKSPACE: 'NO_WORKSPACE',
@@ -26,7 +32,11 @@
     NOTE_NOT_FOUND: 'NOTE_NOT_FOUND',
     INVALID_ENTRY: 'INVALID_ENTRY',
     ENTRY_NOT_FOUND: 'ENTRY_NOT_FOUND',
-    INVALID_ENTRY_FIELD: 'INVALID_ENTRY_FIELD'
+    INVALID_ENTRY_FIELD: 'INVALID_ENTRY_FIELD',
+    INVALID_ATTACHMENT: 'INVALID_ATTACHMENT',
+    ATTACHMENT_NOT_FOUND: 'ATTACHMENT_NOT_FOUND',
+    ATTACHMENT_TYPE_UNSUPPORTED: 'ATTACHMENT_TYPE_UNSUPPORTED',
+    ATTACHMENT_TOO_LARGE: 'ATTACHMENT_TOO_LARGE'
   });
 
   class PrivateWorkspaceError extends Error {
@@ -240,6 +250,87 @@
     return currentWorkspace.sections.entries.findIndex(e => e.id === id);
   }
 
+  // ── Anhang-Hilfsfunktionen (Phase 11: Bildanhänge für Notes/Entries) ────
+  //
+  // Bewusst gemeinsame Helfer für Notes UND Entries (Vorgabe Abschnitt 5) -
+  // es gibt genau eine Validierungs-/Konvertierungs-/Attachment-Bau-Logik,
+  // die addNoteAttachment() und addEntryAttachment() unten identisch nutzen.
+
+  function generateAttachmentId(existingIds) {
+    let id;
+    do {
+      id = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+        ? crypto.randomUUID()
+        : 'attachment-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    } while (existingIds.has(id));
+    return id;
+  }
+
+  // Nur echte File-Objekte werden akzeptiert (Vorgabe Abschnitt 6) - sowohl der
+  // normale Datei-Upload (input[type=file]) als auch DataTransferItem.getAsFile()
+  // beim Zwischenablage-Paste liefern beide echte File-Instanzen.
+  function validateImageFile(file) {
+    if (typeof File === 'undefined' || !(file instanceof File)) {
+      throw new PrivateWorkspaceError(ErrorCodes.INVALID_ATTACHMENT, 'Es muss eine echte Bilddatei übergeben werden.');
+    }
+    if (typeof file.type !== 'string' || !file.type.startsWith('image/')) {
+      throw new PrivateWorkspaceError(ErrorCodes.ATTACHMENT_TYPE_UNSUPPORTED, 'Nur Bilddateien (image/*) werden als Anhang unterstützt.');
+    }
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      throw new PrivateWorkspaceError(ErrorCodes.ATTACHMENT_TOO_LARGE, 'Die Datei ist zu groß für einen Anhang (max. ' + (MAX_ATTACHMENT_BYTES / (1024 * 1024)) + ' MB).');
+    }
+  }
+
+  // Chunked statt String.fromCharCode(...bytes) auf einmal - vermeidet einen
+  // Stack-Overflow bei sehr vielen Argumenten für größere Bilder.
+  function arrayBufferToBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+    }
+    return btoa(binary);
+  }
+
+  async function fileToBase64(file) {
+    const buffer = await file.arrayBuffer();
+    return arrayBufferToBase64(buffer);
+  }
+
+  // Pastete Bilder ohne Dateiname (z.B. Zwischenablage-Screenshot) bekommen
+  // einen sprechenden, MIME-passenden Ersatznamen (Vorgabe Abschnitt 11) -
+  // niemals einen leeren Anhangsnamen.
+  function defaultAttachmentName(mimeType) {
+    const sub = (mimeType.split('/')[1] || 'png').toLowerCase();
+    const ext = sub === 'jpeg' ? 'jpg' : sub === 'svg+xml' ? 'svg' : sub;
+    return 'clipboard-image.' + ext;
+  }
+
+  // Baut aus einer bereits validierten Datei das eigentliche Attachment-Objekt.
+  // existingIds gehört zum jeweiligen Notiz-/Eintrags-Anhänge-Array, damit die
+  // vergebene ID innerhalb dieses Arrays garantiert eindeutig ist.
+  async function createAttachment(file, existingIds) {
+    validateImageFile(file);
+    const data = await fileToBase64(file);
+    const name = (typeof file.name === 'string' && file.name.trim()) ? file.name : defaultAttachmentName(file.type);
+    return {
+      id: generateAttachmentId(existingIds),
+      name,
+      type: file.type,
+      size: file.size,
+      data,
+      created: new Date().toISOString()
+    };
+  }
+
+  function findAttachmentIndex(attachmentsArr, id) {
+    if (typeof id !== 'string' || id.length === 0) {
+      throw new TypeError('id muss ein nicht-leerer String sein.');
+    }
+    return attachmentsArr.findIndex(a => a.id === id);
+  }
+
   async function readBytes(file) {
     if (file instanceof Uint8Array) return file;
     if (file instanceof ArrayBuffer) return new Uint8Array(file);
@@ -352,6 +443,17 @@
       if (!Array.isArray(workspace.sections.entries)) {
         workspace.sections.entries = [];
       }
+
+      // Backward Compatibility (Phase 11): ältere Notizen/Einträge ohne
+      // attachments bekommen beim Öffnen nur in-memory ein leeres Array -
+      // exakt dasselbe Prinzip wie bei sections.entries oben. Kein
+      // Datei-Rewrite, kein ungefragtes Format-Upgrade beim bloßen Öffnen.
+      workspace.sections.notes.forEach(n => {
+        if (!Array.isArray(n.attachments)) n.attachments = [];
+      });
+      workspace.sections.entries.forEach(e => {
+        if (!Array.isArray(e.attachments)) e.attachments = [];
+      });
 
       // Erst nach erfolgreicher Entschlüsselung: State übernehmen (kontrollierte Kopie).
       currentWorkspace = deepClone(workspace);
@@ -494,7 +596,7 @@
       throw new PrivateWorkspaceError(ErrorCodes.NO_WORKSPACE, 'Kein Workspace geöffnet.');
     }
     const data = assertPlainObject(noteData, 'noteData');
-    assertNoServerFields(data, ['id', 'created', 'modified']);
+    assertNoServerFields(data, ['id', 'created', 'modified', 'attachments']);
     validateNoteFields(data);
 
     const now = new Date().toISOString();
@@ -503,6 +605,7 @@
       title: typeof data.title === 'string' ? data.title : '',
       content: typeof data.content === 'string' ? data.content : '',
       tags: Array.isArray(data.tags) ? data.tags.slice() : [],
+      attachments: [],
       created: now,
       modified: now
     };
@@ -517,7 +620,7 @@
       throw new PrivateWorkspaceError(ErrorCodes.NO_WORKSPACE, 'Kein Workspace geöffnet.');
     }
     const data = assertPlainObject(changes, 'changes');
-    assertNoServerFields(data, ['id', 'created', 'modified']);
+    assertNoServerFields(data, ['id', 'created', 'modified', 'attachments']);
     validateNoteFields(data);
 
     const idx = findNoteIndex(id);
@@ -572,7 +675,7 @@
       throw new PrivateWorkspaceError(ErrorCodes.NO_WORKSPACE, 'Kein Workspace geöffnet.');
     }
     const data = assertPlainObject(entryData, 'entryData');
-    assertNoServerFields(data, ['id', 'created', 'modified'], ErrorCodes.INVALID_ENTRY);
+    assertNoServerFields(data, ['id', 'created', 'modified', 'attachments'], ErrorCodes.INVALID_ENTRY);
     validateEntryTopFields(data);
 
     const now = new Date().toISOString();
@@ -583,6 +686,7 @@
       description: typeof data.description === 'string' ? data.description : '',
       tags: Array.isArray(data.tags) ? data.tags.slice() : [],
       fields: Array.isArray(data.fields) ? normalizeEntryFields(data.fields) : [],
+      attachments: [],
       created: now,
       modified: now
     };
@@ -597,7 +701,7 @@
       throw new PrivateWorkspaceError(ErrorCodes.NO_WORKSPACE, 'Kein Workspace geöffnet.');
     }
     const data = assertPlainObject(changes, 'changes');
-    assertNoServerFields(data, ['id', 'created', 'modified'], ErrorCodes.INVALID_ENTRY);
+    assertNoServerFields(data, ['id', 'created', 'modified', 'attachments'], ErrorCodes.INVALID_ENTRY);
     validateEntryTopFields(data);
 
     const idx = findEntryIndex(id);
@@ -639,6 +743,139 @@
     if (typeof id !== 'string' || id.length === 0) return null;
     const entry = currentWorkspace.sections.entries.find(e => e.id === id);
     return entry ? deepClone(entry) : null;
+  }
+
+  // ── Anhang-API (Phase 11: Bildanhänge für Notes/Entries) ────────────────
+  //
+  // Rein RAM-basiert wie Notes/Entries selbst: setzt dirty, schreibt nie
+  // direkt in eine Datei - erst der bestehende save()/exportEncrypted()-Pfad
+  // persistiert (inklusive Anhänge, da deepClone() dort den gesamten
+  // Workspace ohne Feld-Whitelist kopiert). Die Datei-Konvertierung
+  // (fileToBase64) ist asynchron - vor UND nach diesem await wird geprüft,
+  // ob Workspace/Notiz/Eintrag zwischenzeitlich verschwunden sind (Close/
+  // Auto-Lock/Löschen während eines laufenden Uploads), damit kein Anhang an
+  // einem bereits verworfenen Objekt landet.
+
+  async function addNoteAttachment(noteId, file) {
+    if (!currentWorkspace) {
+      throw new PrivateWorkspaceError(ErrorCodes.NO_WORKSPACE, 'Kein Workspace geöffnet.');
+    }
+    const preIdx = findNoteIndex(noteId);
+    if (preIdx === -1) {
+      throw new PrivateWorkspaceError(ErrorCodes.NOTE_NOT_FOUND, 'Notiz mit dieser ID wurde nicht gefunden.');
+    }
+    const existingIds = new Set(currentWorkspace.sections.notes[preIdx].attachments.map(a => a.id));
+    const attachment = await createAttachment(file, existingIds);
+
+    // Erneute Prüfung nach dem (asynchronen) Konvertieren: Workspace/Notiz
+    // können währenddessen geschlossen/gelöscht worden sein.
+    if (!currentWorkspace) {
+      throw new PrivateWorkspaceError(ErrorCodes.NO_WORKSPACE, 'Kein Workspace geöffnet.');
+    }
+    const idx = findNoteIndex(noteId);
+    if (idx === -1) {
+      throw new PrivateWorkspaceError(ErrorCodes.NOTE_NOT_FOUND, 'Notiz mit dieser ID wurde nicht gefunden.');
+    }
+    const note = currentWorkspace.sections.notes[idx];
+    note.attachments.push(attachment);
+    note.modified = new Date().toISOString();
+    markDirty();
+    return deepClone(attachment);
+  }
+
+  function deleteNoteAttachment(noteId, attachmentId) {
+    if (!currentWorkspace) {
+      throw new PrivateWorkspaceError(ErrorCodes.NO_WORKSPACE, 'Kein Workspace geöffnet.');
+    }
+    const idx = findNoteIndex(noteId);
+    if (idx === -1) {
+      throw new PrivateWorkspaceError(ErrorCodes.NOTE_NOT_FOUND, 'Notiz mit dieser ID wurde nicht gefunden.');
+    }
+    const note = currentWorkspace.sections.notes[idx];
+    const aIdx = findAttachmentIndex(note.attachments, attachmentId);
+    if (aIdx === -1) {
+      throw new PrivateWorkspaceError(ErrorCodes.ATTACHMENT_NOT_FOUND, 'Anhang mit dieser ID wurde nicht gefunden.');
+    }
+    note.attachments.splice(aIdx, 1);
+    note.modified = new Date().toISOString();
+    markDirty();
+  }
+
+  function getNoteAttachments(noteId) {
+    if (!currentWorkspace) return [];
+    const idx = findNoteIndex(noteId);
+    if (idx === -1) return [];
+    return deepClone(currentWorkspace.sections.notes[idx].attachments);
+  }
+
+  function getNoteAttachment(noteId, attachmentId) {
+    if (!currentWorkspace) return null;
+    const idx = findNoteIndex(noteId);
+    if (idx === -1) return null;
+    if (typeof attachmentId !== 'string' || attachmentId.length === 0) return null;
+    const attachment = currentWorkspace.sections.notes[idx].attachments.find(a => a.id === attachmentId);
+    return attachment ? deepClone(attachment) : null;
+  }
+
+  async function addEntryAttachment(entryId, file) {
+    if (!currentWorkspace) {
+      throw new PrivateWorkspaceError(ErrorCodes.NO_WORKSPACE, 'Kein Workspace geöffnet.');
+    }
+    const preIdx = findEntryIndex(entryId);
+    if (preIdx === -1) {
+      throw new PrivateWorkspaceError(ErrorCodes.ENTRY_NOT_FOUND, 'Eintrag mit dieser ID wurde nicht gefunden.');
+    }
+    const existingIds = new Set(currentWorkspace.sections.entries[preIdx].attachments.map(a => a.id));
+    const attachment = await createAttachment(file, existingIds);
+
+    // Erneute Prüfung nach dem (asynchronen) Konvertieren: Workspace/Eintrag
+    // können währenddessen geschlossen/gelöscht worden sein.
+    if (!currentWorkspace) {
+      throw new PrivateWorkspaceError(ErrorCodes.NO_WORKSPACE, 'Kein Workspace geöffnet.');
+    }
+    const idx = findEntryIndex(entryId);
+    if (idx === -1) {
+      throw new PrivateWorkspaceError(ErrorCodes.ENTRY_NOT_FOUND, 'Eintrag mit dieser ID wurde nicht gefunden.');
+    }
+    const entry = currentWorkspace.sections.entries[idx];
+    entry.attachments.push(attachment);
+    entry.modified = new Date().toISOString();
+    markDirty();
+    return deepClone(attachment);
+  }
+
+  function deleteEntryAttachment(entryId, attachmentId) {
+    if (!currentWorkspace) {
+      throw new PrivateWorkspaceError(ErrorCodes.NO_WORKSPACE, 'Kein Workspace geöffnet.');
+    }
+    const idx = findEntryIndex(entryId);
+    if (idx === -1) {
+      throw new PrivateWorkspaceError(ErrorCodes.ENTRY_NOT_FOUND, 'Eintrag mit dieser ID wurde nicht gefunden.');
+    }
+    const entry = currentWorkspace.sections.entries[idx];
+    const aIdx = findAttachmentIndex(entry.attachments, attachmentId);
+    if (aIdx === -1) {
+      throw new PrivateWorkspaceError(ErrorCodes.ATTACHMENT_NOT_FOUND, 'Anhang mit dieser ID wurde nicht gefunden.');
+    }
+    entry.attachments.splice(aIdx, 1);
+    entry.modified = new Date().toISOString();
+    markDirty();
+  }
+
+  function getEntryAttachments(entryId) {
+    if (!currentWorkspace) return [];
+    const idx = findEntryIndex(entryId);
+    if (idx === -1) return [];
+    return deepClone(currentWorkspace.sections.entries[idx].attachments);
+  }
+
+  function getEntryAttachment(entryId, attachmentId) {
+    if (!currentWorkspace) return null;
+    const idx = findEntryIndex(entryId);
+    if (idx === -1) return null;
+    if (typeof attachmentId !== 'string' || attachmentId.length === 0) return null;
+    const attachment = currentWorkspace.sections.entries[idx].attachments.find(a => a.id === attachmentId);
+    return attachment ? deepClone(attachment) : null;
   }
 
   function close(options) {
@@ -752,6 +989,15 @@
     deleteEntry,
     getEntries,
     getEntry,
+    addNoteAttachment,
+    deleteNoteAttachment,
+    getNoteAttachments,
+    getNoteAttachment,
+    addEntryAttachment,
+    deleteEntryAttachment,
+    getEntryAttachments,
+    getEntryAttachment,
+    MAX_ATTACHMENT_BYTES,
     ErrorCodes
   });
 })();
