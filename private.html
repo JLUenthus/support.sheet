@@ -74,6 +74,8 @@
         <button type="button" class="pw-btn" id="pw-btn-close">Schließen</button>
       </div>
 
+      <p class="pw-summary-counts" id="pw-summary-counts" aria-live="polite"></p>
+
       <div class="pw-status-row">
         <span id="pw-status-saved-at"></span>
         <span id="pw-status-autolock-hint" class="pw-hint"></span>
@@ -92,10 +94,21 @@
         <button type="button" class="pw-content-tab" id="pw-tab-entries" role="tab" aria-selected="false">🗂️ Einträge</button>
       </div>
 
+      <!-- Kompakte Übersicht der zuletzt geänderten Notizen/Einträge (Phase 12) -->
+      <div class="pw-recent-overview" id="pw-recent-overview" hidden>
+        <h3 class="pw-recent-overview-title">Zuletzt geändert</h3>
+        <ul class="pw-recent-list" id="pw-recent-list"></ul>
+      </div>
+
       <div class="pw-notes-layout" id="pw-notes-panel">
         <!-- NOTIZLISTE -->
         <div class="pw-notes-sidebar">
           <button type="button" class="pw-btn pw-btn-primary pw-notes-new-btn" id="pw-btn-new-note">+ Neue Notiz</button>
+
+          <div class="pw-favorite-filter" id="pw-notes-favorite-filter" role="group" aria-label="Nach Favoriten filtern">
+            <button type="button" class="pw-favorite-filter-btn pw-favorite-filter-btn--active" id="pw-notes-filter-all" data-filter="all">Alle</button>
+            <button type="button" class="pw-favorite-filter-btn" id="pw-notes-filter-favorites" data-filter="favorites">★ Favoriten</button>
+          </div>
 
           <div class="pw-notes-search-row">
             <label class="pw-visually-hidden" for="pw-notes-search">Notizen durchsuchen</label>
@@ -121,8 +134,19 @@
             </div>
 
             <div class="pw-field pw-field-grow">
-              <label class="pw-label" for="pw-editor-content">Inhalt</label>
+              <div class="pw-editor-content-header">
+                <label class="pw-label" for="pw-editor-content">Inhalt</label>
+                <div class="pw-format-toggle" id="pw-editor-format-toggle" role="group" aria-label="Format">
+                  <button type="button" class="pw-format-toggle-btn pw-format-toggle-btn--active" id="pw-editor-format-plain" data-format="plain">Plain</button>
+                  <button type="button" class="pw-format-toggle-btn" id="pw-editor-format-markdown" data-format="markdown">Markdown</button>
+                </div>
+                <div class="pw-view-toggle" id="pw-editor-view-toggle" role="group" aria-label="Ansicht" hidden>
+                  <button type="button" class="pw-view-toggle-btn pw-view-toggle-btn--active" id="pw-editor-view-edit" data-view="edit">Bearbeiten</button>
+                  <button type="button" class="pw-view-toggle-btn" id="pw-editor-view-preview" data-view="preview">Vorschau</button>
+                </div>
+              </div>
               <textarea id="pw-editor-content" class="pw-input pw-editor-textarea" rows="12"></textarea>
+              <div class="pw-md-preview" id="pw-editor-preview" hidden></div>
             </div>
 
             <div class="pw-field">
@@ -161,6 +185,11 @@
         <!-- EINTRAGSLISTE -->
         <div class="pw-notes-sidebar">
           <button type="button" class="pw-btn pw-btn-primary pw-notes-new-btn" id="pw-btn-new-entry">+ Neuer Eintrag</button>
+
+          <div class="pw-favorite-filter" id="pw-entries-favorite-filter" role="group" aria-label="Nach Favoriten filtern">
+            <button type="button" class="pw-favorite-filter-btn pw-favorite-filter-btn--active" id="pw-entries-filter-all" data-filter="all">Alle</button>
+            <button type="button" class="pw-favorite-filter-btn" id="pw-entries-filter-favorites" data-filter="favorites">★ Favoriten</button>
+          </div>
 
           <div class="pw-notes-search-row">
             <label class="pw-visually-hidden" for="pw-entries-search">Einträge durchsuchen</label>

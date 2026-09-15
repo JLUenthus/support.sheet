@@ -77,7 +77,13 @@
     unsavedDiscard: document.getElementById('pw-unsaved-discard'),
     unsavedCancel: document.getElementById('pw-unsaved-cancel'),
 
+    summaryCounts: document.getElementById('pw-summary-counts'),
+    recentOverview: document.getElementById('pw-recent-overview'),
+    recentList: document.getElementById('pw-recent-list'),
+
     btnNewNote: document.getElementById('pw-btn-new-note'),
+    notesFilterAll: document.getElementById('pw-notes-filter-all'),
+    notesFilterFavorites: document.getElementById('pw-notes-filter-favorites'),
     notesSearch: document.getElementById('pw-notes-search'),
     notesSearchClear: document.getElementById('pw-notes-search-clear'),
     notesList: document.getElementById('pw-notes-list'),
@@ -89,6 +95,12 @@
     editorForm: document.getElementById('pw-editor-form'),
     editorTitle: document.getElementById('pw-editor-title'),
     editorContent: document.getElementById('pw-editor-content'),
+    editorPreview: document.getElementById('pw-editor-preview'),
+    editorFormatPlain: document.getElementById('pw-editor-format-plain'),
+    editorFormatMarkdown: document.getElementById('pw-editor-format-markdown'),
+    editorViewToggle: document.getElementById('pw-editor-view-toggle'),
+    editorViewEdit: document.getElementById('pw-editor-view-edit'),
+    editorViewPreview: document.getElementById('pw-editor-view-preview'),
     editorTags: document.getElementById('pw-editor-tags'),
     editorTagInput: document.getElementById('pw-editor-tag-input'),
     editorTagAdd: document.getElementById('pw-editor-tag-add'),
@@ -120,6 +132,8 @@
     entriesPanel: document.getElementById('pw-entries-panel'),
 
     btnNewEntry: document.getElementById('pw-btn-new-entry'),
+    entriesFilterAll: document.getElementById('pw-entries-filter-all'),
+    entriesFilterFavorites: document.getElementById('pw-entries-filter-favorites'),
     entriesSearch: document.getElementById('pw-entries-search'),
     entriesSearchClear: document.getElementById('pw-entries-search-clear'),
     entryCategoryFilter: document.getElementById('pw-entry-category-filter'),
@@ -173,6 +187,15 @@
   let currentEditorTags = [];
   let searchQuery = '';
   let pendingEditorGuardAction = null;
+  // 'all' | 'favorites' - Vorgabe Abschnitt 11, gilt jeweils nur für den
+  // aktuell aktiven Bereich (Notizen/Einträge haben getrennte Filter).
+  let notesFavoriteFilter = 'all';
+  // Format (plain/markdown) und Ansicht (Bearbeiten/Vorschau) sind reiner
+  // Editor-Zustand, exakt wie currentEditorTags - erst commitEditorChanges()
+  // übernimmt format tatsächlich per updateNote() (Vorgabe Abschnitt 6:
+  // Vorschau ersetzt niemals den gespeicherten Text).
+  let currentEditorFormat = 'plain';
+  let currentEditorView = 'edit';
 
   // Analoger UI-State für Entries (Phase 7) - gleiche Prinzipien: keine
   // Zweitspeicherung, Daten immer frisch über PrivateWorkspace.getEntry(ies)().
@@ -183,6 +206,7 @@
   let currentEntryFields = []; // [{label, value}] - Feld-IDs vergibt erst PrivateWorkspace beim Speichern
   let entriesSearchQuery = '';
   let entryCategoryFilter = ''; // '' = "Alle"
+  let entriesFavoriteFilter = 'all'; // 'all' | 'favorites' - separat vom Notizen-Filter
   // Verhindert, dass ein zufällig währenddessen laufender Session-Poll-Tick
   // (siehe startPolling()) den synchron gesetzten "Wird gespeichert …"-Status
   // mit dem zu diesem Zeitpunkt noch unveränderten Dirty-Flag überschreibt.
@@ -226,6 +250,250 @@
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  // ── Markdown-Darstellung (Phase 12) ──────────────────────
+  //
+  // Bewusst ein eigener, stark begrenzter Markdown-Renderer statt einer
+  // externen Bibliothek (Vorgabe Abschnitt 3: "keine externen Bibliotheken
+  // hinzufügen, wenn das ohne Not vermieden werden kann") - unterstützt genau
+  // die in der Vorgabe genannten Elemente (Überschriften, fett/kursiv, Listen,
+  // Links, Inline-Code, Codeblöcke). Erzeugt AUSSCHLIESSLICH über
+  // document.createElement()/textContent - niemals innerHTML mit
+  // unbereinigtem User-Content (Vorgabe Abschnitt 3/22). Markdown-Text bleibt
+  // dabei unangetastet als reiner Plaintext im Workspace-Modell gespeichert -
+  // die Darstellung hier ist rein transient und wird bei jedem Vorschau-
+  // Wechsel neu aus dem Plaintext erzeugt (kein zweiter, persistenter State).
+
+  // Nur http:/https:/mailto: dürfen als klickbarer Link enden (Vorgabe
+  // Abschnitt 7) - alles andere (javascript:, data:, vbscript:, kein Schema)
+  // wird als reiner Text dargestellt, nie als href gesetzt.
+  const MARKDOWN_ALLOWED_URL_SCHEMES = ['http', 'https', 'mailto'];
+
+  function sanitizeMarkdownUrl(url) {
+    if (typeof url !== 'string') return null;
+    // Steuerzeichen (u.a. Tab/Newline) entfernen, mit denen sich ein Schema
+    // wie "java\tscript:" an naiven Prüfungen vorbeischmuggeln ließe.
+    const cleaned = url.trim().replace(/[ -]/g, '');
+    const match = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(cleaned);
+    const scheme = match ? match[1].toLowerCase() : null;
+    if (!scheme || !MARKDOWN_ALLOWED_URL_SCHEMES.includes(scheme)) return null;
+    return cleaned;
+  }
+
+  // Inline-Parsing: `code`, [text](url), **fett**, *kursiv* - reine
+  // Text-/Element-Erzeugung, rekursiv für verschachtelte Emphase (z.B.
+  // **fett mit `code`**). Nicht erkannte/unvollständige Syntax fällt sicher
+  // auf reinen Text zurück statt zu werfen.
+  function parseMarkdownInline(text, containerEl) {
+    let i = 0;
+    let buffer = '';
+    const len = text.length;
+    function flush() {
+      if (buffer) { containerEl.appendChild(document.createTextNode(buffer)); buffer = ''; }
+    }
+    while (i < len) {
+      if (text[i] === '`') {
+        const end = text.indexOf('`', i + 1);
+        if (end !== -1) {
+          flush();
+          const code = document.createElement('code');
+          code.className = 'pw-md-inline-code';
+          code.textContent = text.slice(i + 1, end);
+          containerEl.appendChild(code);
+          i = end + 1;
+          continue;
+        }
+      }
+      if (text[i] === '[') {
+        const closeBracket = text.indexOf(']', i + 1);
+        if (closeBracket !== -1 && text[closeBracket + 1] === '(') {
+          const closeParen = text.indexOf(')', closeBracket + 2);
+          if (closeParen !== -1) {
+            const linkText = text.slice(i + 1, closeBracket);
+            const rawUrl = text.slice(closeBracket + 2, closeParen);
+            flush();
+            const safeUrl = sanitizeMarkdownUrl(rawUrl);
+            if (safeUrl) {
+              const a = document.createElement('a');
+              a.href = safeUrl;
+              a.textContent = linkText;
+              a.className = 'pw-md-link';
+              a.target = '_blank';
+              a.rel = 'noopener noreferrer';
+              containerEl.appendChild(a);
+            } else {
+              // Unsicheres Schema: als reiner, nicht klickbarer Text darstellen -
+              // niemals ein href aus ungeprüftem User-Content setzen.
+              containerEl.appendChild(document.createTextNode(linkText + ' (' + rawUrl + ')'));
+            }
+            i = closeParen + 1;
+            continue;
+          }
+        }
+      }
+      if (text[i] === '*' && text[i + 1] === '*') {
+        const end = text.indexOf('**', i + 2);
+        if (end !== -1 && end > i + 2) {
+          flush();
+          const strong = document.createElement('strong');
+          parseMarkdownInline(text.slice(i + 2, end), strong);
+          containerEl.appendChild(strong);
+          i = end + 2;
+          continue;
+        }
+      }
+      if (text[i] === '*') {
+        const end = text.indexOf('*', i + 1);
+        if (end !== -1 && end > i + 1) {
+          flush();
+          const em = document.createElement('em');
+          parseMarkdownInline(text.slice(i + 1, end), em);
+          containerEl.appendChild(em);
+          i = end + 1;
+          continue;
+        }
+      }
+      buffer += text[i];
+      i++;
+    }
+    flush();
+  }
+
+  async function copyCodeToClipboard(code) {
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      try {
+        await navigator.clipboard.writeText(code);
+        showToast('Code kopiert', 'success');
+        return;
+      } catch (err) {
+        logSafeError('copy-code', err);
+      }
+    }
+    // Fallback (Vorgabe Abschnitt 5/27): Clipboard API nicht verfügbar/verweigert -
+    // Inhalt bleibt unangetastet im Codeblock stehen, nur ein Hinweis statt Datenverlust.
+    showToast('Kopieren nicht möglich. Bitte den Code manuell markieren und kopieren.', 'error');
+  }
+
+  function createMarkdownCodeBlock(code, lang) {
+    const wrap = document.createElement('div');
+    wrap.className = 'pw-md-codeblock';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'pw-md-copy-btn';
+    copyBtn.textContent = 'Kopieren';
+    copyBtn.setAttribute('aria-label', 'Code kopieren');
+    copyBtn.addEventListener('click', () => copyCodeToClipboard(code));
+    wrap.appendChild(copyBtn);
+
+    const pre = document.createElement('pre');
+    pre.className = 'pw-md-pre';
+    const codeEl = document.createElement('code');
+    codeEl.className = 'pw-md-code' + (lang ? ' language-' + lang.replace(/[^a-z0-9]/gi, '') : '');
+    // textContent: reiner Plaintext, niemals ausgeführt oder als HTML interpretiert.
+    codeEl.textContent = code;
+    pre.appendChild(codeEl);
+    wrap.appendChild(pre);
+    return wrap;
+  }
+
+  // Baut die komplette Vorschau aus Plaintext-Markdown auf - Block für Block
+  // (Codeblock/Überschrift/Liste/Absatz), jeweils mit parseMarkdownInline()
+  // für die Inline-Formatierung innerhalb von Überschriften/Listen/Absätzen.
+  function renderMarkdownToFragment(text) {
+    const frag = document.createDocumentFragment();
+    const lines = (text || '').split('\n');
+    let i = 0;
+
+    function isSpecialLine(line) {
+      return /^```/.test(line.trim()) || /^(#{1,6})\s+/.test(line) ||
+        /^[-*]\s+/.test(line) || /^\d+\.\s+/.test(line) || /^( {4}|\t)/.test(line);
+    }
+
+    while (i < lines.length) {
+      const line = lines[i];
+
+      // Codeblock ```lang ... ```
+      const fenceMatch = /^```(\w*)\s*$/.exec(line.trim());
+      if (fenceMatch) {
+        const codeLines = [];
+        i++;
+        while (i < lines.length && !/^```\s*$/.test(lines[i].trim())) {
+          codeLines.push(lines[i]);
+          i++;
+        }
+        i++; // schließenden Fence überspringen (oder Dateiende erreicht)
+        frag.appendChild(createMarkdownCodeBlock(codeLines.join('\n'), fenceMatch[1]));
+        continue;
+      }
+
+      if (line.trim() === '') { i++; continue; }
+
+      // Eingerückter Codeblock (4 Leerzeichen oder Tab)
+      if (/^( {4}|\t)/.test(line)) {
+        const codeLines = [];
+        while (i < lines.length && /^( {4}|\t)/.test(lines[i])) {
+          codeLines.push(lines[i].replace(/^( {4}|\t)/, ''));
+          i++;
+        }
+        frag.appendChild(createMarkdownCodeBlock(codeLines.join('\n'), ''));
+        continue;
+      }
+
+      // Überschrift - um zwei Ebenen verschoben (h3-h6), damit sie sich nicht
+      // mit den eigenen Seiten-Überschriften (h1/h2) der App vermischt.
+      const headingMatch = /^(#{1,6})\s+(.*)$/.exec(line);
+      if (headingMatch) {
+        const level = headingMatch[1].length;
+        const h = document.createElement('h' + Math.min(level + 2, 6));
+        h.className = 'pw-md-heading pw-md-heading-' + level;
+        parseMarkdownInline(headingMatch[2], h);
+        frag.appendChild(h);
+        i++;
+        continue;
+      }
+
+      // Ungeordnete Liste
+      if (/^[-*]\s+/.test(line)) {
+        const ul = document.createElement('ul');
+        ul.className = 'pw-md-list';
+        while (i < lines.length && /^[-*]\s+/.test(lines[i])) {
+          const li = document.createElement('li');
+          parseMarkdownInline(lines[i].replace(/^[-*]\s+/, ''), li);
+          ul.appendChild(li);
+          i++;
+        }
+        frag.appendChild(ul);
+        continue;
+      }
+
+      // Nummerierte Liste
+      if (/^\d+\.\s+/.test(line)) {
+        const ol = document.createElement('ol');
+        ol.className = 'pw-md-list';
+        while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
+          const li = document.createElement('li');
+          parseMarkdownInline(lines[i].replace(/^\d+\.\s+/, ''), li);
+          ol.appendChild(li);
+          i++;
+        }
+        frag.appendChild(ol);
+        continue;
+      }
+
+      // Absatz: aufeinanderfolgende "normale" Zeilen zusammenfassen
+      const paraLines = [];
+      while (i < lines.length && lines[i].trim() !== '' && !isSpecialLine(lines[i])) {
+        paraLines.push(lines[i]);
+        i++;
+      }
+      const p = document.createElement('p');
+      p.className = 'pw-md-paragraph';
+      parseMarkdownInline(paraLines.join(' '), p);
+      frag.appendChild(p);
+    }
+    return frag;
   }
 
   // ── Anhang-Hilfsfunktionen (Phase 11) ────────────────────
@@ -561,6 +829,7 @@
     renderEntryCategoryFilter();
     showEditorEmpty();
     showEntryEditorEmpty();
+    refreshOverview();
     refreshWorkspaceView();
     // Sinnvoller Einstiegspunkt direkt nach dem Öffnen: entweder eine
     // vorhandene erste Notiz oder (bei leerem Workspace) direkt "Neue Notiz".
@@ -602,6 +871,18 @@
     els.editorDirtyHint.hidden = true;
     els.notesSearchClear.hidden = true;
 
+    // Favoriten-Filter/Markdown-Format-Zustand (Phase 12) - exakt wie der
+    // Tab-Zustand unten immer wieder auf den neutralen Ausgangszustand
+    // zurücksetzen, damit kein vorheriger Workspace-Zustand "durchscheint".
+    notesFavoriteFilter = 'all';
+    setNotesFavoriteFilterUI();
+    currentEditorFormat = 'plain';
+    currentEditorView = 'edit';
+    applyEditorFormatUI();
+    els.summaryCounts.textContent = '';
+    els.recentOverview.hidden = true;
+    els.recentList.innerHTML = '';
+
     // Entry-Zustand (Phase 7) - dieselben Gründe wie bei Notizen: nach
     // Close/Auto-Lock darf kein Eintrags-Klartext (Titel, Beschreibung,
     // Kategorie, Tags, Field-Label/-Werte) im DOM verbleiben.
@@ -611,6 +892,8 @@
     currentEntryFields = [];
     entriesSearchQuery = '';
     entryCategoryFilter = '';
+    entriesFavoriteFilter = 'all';
+    setEntriesFavoriteFilterUI();
     els.entriesSearch.value = '';
     els.entriesSearchClear.hidden = true;
     els.entriesList.innerHTML = '';
@@ -762,12 +1045,154 @@
   // Zustand ist, welche Notiz gerade ausgewählt ist und ob der Editor lokale,
   // noch nicht per updateNote() übernommene Änderungen enthält.
 
+  // ── Favoriten / Übersicht (Phase 12) ─────────────────────
+  //
+  // Favoriten sind ein normales Note-/Entry-Feld (siehe private-workspace.js)
+  // - hier gibt es bewusst KEINE eigene Sortierung/Datenhaltung dafür. Der
+  // Favoriten-Filter wirkt rein additiv zur bestehenden Suche/Sortierung
+  // (weiterhin modified DESC, Vorgabe Abschnitt 12).
+
+  function pluralizeCount(count, singular, plural) {
+    return count + ' ' + (count === 1 ? singular : plural);
+  }
+
+  function renderSummaryCounts() {
+    if (!PrivateWorkspace.hasWorkspace()) { els.summaryCounts.textContent = ''; return; }
+    const notes = PrivateWorkspace.getNotes();
+    const entries = PrivateWorkspace.getEntries();
+    const favoriteCount = notes.filter(n => n.favorite).length + entries.filter(e => e.favorite).length;
+    els.summaryCounts.textContent = [
+      pluralizeCount(notes.length, 'Notiz', 'Notizen'),
+      pluralizeCount(entries.length, 'Eintrag', 'Einträge'),
+      pluralizeCount(favoriteCount, 'Favorit', 'Favoriten')
+    ].join(' · ');
+  }
+
+  function formatRelativeTime(iso) {
+    if (!iso) return '';
+    const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+    if (minutes < 1) return 'gerade eben';
+    if (minutes < 60) return 'vor ' + minutes + ' Min.';
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return 'vor ' + hours + ' Std.';
+    const days = Math.floor(hours / 24);
+    return 'vor ' + days + ' Tag' + (days === 1 ? '' : 'en');
+  }
+
+  // Wechselt in den korrekten Tab (falls nötig) und lädt anschließend das
+  // Ziel-Item - läuft komplett durch den bestehenden Editor-Guard, exakt wie
+  // ein normaler Tab-/Listenwechsel (keine zweite Navigations-Architektur).
+  function setActiveTabUI(tab) {
+    activeTab = tab;
+    els.tabNotes.classList.toggle('pw-content-tab--active', tab === 'notes');
+    els.tabEntries.classList.toggle('pw-content-tab--active', tab === 'entries');
+    els.tabNotes.setAttribute('aria-selected', tab === 'notes' ? 'true' : 'false');
+    els.tabEntries.setAttribute('aria-selected', tab === 'entries' ? 'true' : 'false');
+    els.notesPanel.hidden = tab !== 'notes';
+    els.entriesPanel.hidden = tab !== 'entries';
+  }
+
+  function handleRecentItemClick(kind, id) {
+    const targetTab = kind === 'entry' ? 'entries' : 'notes';
+    withEditorGuard(() => {
+      if (targetTab !== activeTab) setActiveTabUI(targetTab);
+      if (kind === 'entry') { loadEntryIntoEditor(id); renderEntriesList(); }
+      else { loadNoteIntoEditor(id); renderNotesList(); }
+    });
+  }
+
+  // Kombiniert Notizen UND Einträge rein zur Anzeige - keine zweite
+  // Datenhaltung, beide werden bei jedem Aufruf frisch über
+  // PrivateWorkspace.getNotes()/getEntries() bezogen (Vorgabe Abschnitt 14).
+  function renderRecentOverview() {
+    if (!PrivateWorkspace.hasWorkspace()) {
+      els.recentOverview.hidden = true;
+      els.recentList.innerHTML = '';
+      return;
+    }
+    const notes = PrivateWorkspace.getNotes().map(n => ({ kind: 'note', id: n.id, title: n.title, modified: n.modified, favorite: n.favorite }));
+    const entries = PrivateWorkspace.getEntries().map(e => ({ kind: 'entry', id: e.id, title: e.title, modified: e.modified, favorite: e.favorite }));
+    const combined = notes.concat(entries)
+      .sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime())
+      .slice(0, 5);
+
+    els.recentList.innerHTML = '';
+    els.recentOverview.hidden = combined.length === 0;
+
+    combined.forEach(item => {
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pw-recent-item-btn';
+      btn.addEventListener('click', () => handleRecentItemClick(item.kind, item.id));
+
+      if (item.favorite) {
+        const star = document.createElement('span');
+        star.className = 'pw-recent-item-star';
+        star.textContent = '★';
+        star.setAttribute('aria-hidden', 'true');
+        btn.appendChild(star);
+      }
+
+      const titleEl = document.createElement('span');
+      titleEl.className = 'pw-recent-item-title';
+      titleEl.textContent = (item.title && item.title.trim())
+        ? item.title
+        : (item.kind === 'entry' ? 'Unbenannter Eintrag' : 'Unbenannte Notiz');
+      btn.appendChild(titleEl);
+
+      const metaEl = document.createElement('span');
+      metaEl.className = 'pw-recent-item-meta';
+      metaEl.textContent = (item.kind === 'entry' ? 'Eintrag' : 'Notiz') + ' · ' + formatRelativeTime(item.modified);
+      btn.appendChild(metaEl);
+
+      li.appendChild(btn);
+      els.recentList.appendChild(li);
+    });
+  }
+
+  function refreshOverview() {
+    renderSummaryCounts();
+    renderRecentOverview();
+  }
+
+  function handleFavoriteToggle(isEntry, id, currentFavorite) {
+    try {
+      if (isEntry) PrivateWorkspace.updateEntry(id, { favorite: !currentFavorite });
+      else PrivateWorkspace.updateNote(id, { favorite: !currentFavorite });
+    } catch (err) {
+      logSafeError('favorite-toggle', err);
+      showToast(describeWorkspaceError(err), 'error');
+      return;
+    }
+    if (isEntry) renderEntriesList(); else renderNotesList();
+    refreshOverview();
+    refreshWorkspaceView();
+  }
+
+  function createFavoriteStarButton(isEntry, id, isFavorite, itemLabel) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pw-favorite-star-btn' + (isFavorite ? ' pw-favorite-star-btn--active' : '');
+    btn.textContent = isFavorite ? '★' : '☆';
+    btn.setAttribute('aria-pressed', String(isFavorite));
+    btn.setAttribute('aria-label', (isFavorite ? 'Favorit entfernen: ' : 'Als Favorit markieren: ') + itemLabel);
+    // Eigenständiger Button neben (nicht innerhalb) des Listeneintrag-Buttons -
+    // ein Klick wählt daher nie gleichzeitig das Item aus (Vorgabe Abschnitt 10).
+    btn.addEventListener('click', () => handleFavoriteToggle(isEntry, id, isFavorite));
+    return btn;
+  }
+
   function getFilteredSortedNotes() {
     const notes = PrivateWorkspace.getNotes();
     notes.sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime());
+    let filtered = notes;
+    if (notesFavoriteFilter === 'favorites') {
+      filtered = filtered.filter(n => n.favorite);
+    }
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return notes;
-    return notes.filter(n =>
+    if (!q) return filtered;
+    return filtered.filter(n =>
       (n.title || '').toLowerCase().includes(q) ||
       (n.content || '').toLowerCase().includes(q) ||
       (n.tags || []).some(t => t.toLowerCase().includes(q))
@@ -803,6 +1228,12 @@
       const li = document.createElement('li');
       li.className = 'pw-note-item';
 
+      const row = document.createElement('div');
+      row.className = 'pw-note-item-row';
+
+      const displayTitle = note.title && note.title.trim() ? note.title : 'Unbenannte Notiz';
+      row.appendChild(createFavoriteStarButton(false, note.id, !!note.favorite, displayTitle));
+
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'pw-note-item-btn';
@@ -813,7 +1244,7 @@
 
       const titleEl = document.createElement('div');
       titleEl.className = 'pw-note-item-title';
-      titleEl.textContent = note.title && note.title.trim() ? note.title : 'Unbenannte Notiz';
+      titleEl.textContent = displayTitle;
       btn.appendChild(titleEl);
 
       if (note.modified) {
@@ -842,7 +1273,8 @@
         btn.appendChild(tagsEl);
       }
 
-      li.appendChild(btn);
+      row.appendChild(btn);
+      li.appendChild(row);
       els.notesList.appendChild(li);
     });
   }
@@ -862,6 +1294,9 @@
       els.editorEmptyText.textContent = 'Noch keine Notizen. Erstelle deine erste Notiz, um loszulegen.';
       els.editorEmptyCta.hidden = false;
     }
+    currentEditorFormat = 'plain';
+    currentEditorView = 'edit';
+    applyEditorFormatUI();
     renderAttachmentsForContext(getAttachmentContext(false));
   }
 
@@ -929,6 +1364,58 @@
     if (editorDirty) return;
     editorDirty = true;
     els.editorDirtyHint.hidden = false;
+  }
+
+  // ── Markdown-Format-/Ansichts-Umschalter im Note-Editor (Phase 12) ──────
+  //
+  // Reiner Editor-Zustand (wie currentEditorTags) - erst commitEditorChanges()
+  // übernimmt format tatsächlich per updateNote(). Die Vorschau selbst wird
+  // nie persistiert und ersetzt nie den im Textarea gehaltenen Plaintext
+  // (Vorgabe Abschnitt 6) - sie wird bei jedem Wechsel zu "Vorschau" frisch
+  // aus dem aktuellen (ggf. noch ungespeicherten) Textarea-Inhalt erzeugt,
+  // niemals bei jedem Tastendruck (Vorgabe Abschnitt 28: keine unnötigen
+  // Neu-Renderings).
+  function applyEditorFormatUI() {
+    els.editorFormatPlain.classList.toggle('pw-format-toggle-btn--active', currentEditorFormat === 'plain');
+    els.editorFormatMarkdown.classList.toggle('pw-format-toggle-btn--active', currentEditorFormat === 'markdown');
+    els.editorFormatPlain.setAttribute('aria-pressed', String(currentEditorFormat === 'plain'));
+    els.editorFormatMarkdown.setAttribute('aria-pressed', String(currentEditorFormat === 'markdown'));
+    els.editorViewToggle.hidden = currentEditorFormat !== 'markdown';
+    if (currentEditorFormat !== 'markdown') {
+      // Plain-Notizen kennen keine Vorschau - immer im Bearbeiten-Modus zeigen.
+      currentEditorView = 'edit';
+    }
+    applyEditorViewUI();
+  }
+
+  function applyEditorViewUI() {
+    els.editorViewEdit.classList.toggle('pw-view-toggle-btn--active', currentEditorView === 'edit');
+    els.editorViewPreview.classList.toggle('pw-view-toggle-btn--active', currentEditorView === 'preview');
+    els.editorViewEdit.setAttribute('aria-pressed', String(currentEditorView === 'edit'));
+    els.editorViewPreview.setAttribute('aria-pressed', String(currentEditorView === 'preview'));
+    const showPreview = currentEditorFormat === 'markdown' && currentEditorView === 'preview';
+    els.editorContent.hidden = showPreview;
+    els.editorPreview.hidden = !showPreview;
+    // Vorgabe Abschnitt 23: Auch außerhalb von Close/Auto-Lock darf im
+    // ausgeblendeten Vorschau-Container kein gerenderter Markdown-Rest
+    // stehen bleiben - deshalb hier immer leeren, nicht nur beim Reset.
+    els.editorPreview.innerHTML = '';
+    if (showPreview) {
+      els.editorPreview.appendChild(renderMarkdownToFragment(els.editorContent.value));
+    }
+  }
+
+  function handleEditorFormatChange(format) {
+    if (currentEditorFormat === format) return;
+    currentEditorFormat = format;
+    applyEditorFormatUI();
+    markEditorDirty();
+  }
+
+  function handleEditorViewChange(view) {
+    if (currentEditorView === view) return;
+    currentEditorView = view;
+    applyEditorViewUI();
   }
 
   // ── Anhänge: gemeinsame Render-/Aktions-Logik (Phase 11) ─
@@ -1078,6 +1565,7 @@
       renderAttachmentsForContext(ctx);
       ctx.markDirty();
     }
+    refreshOverview();
     refreshWorkspaceView();
   }
 
@@ -1092,6 +1580,7 @@
     }
     renderAttachmentsForContext(ctx);
     ctx.markDirty();
+    refreshOverview();
     refreshWorkspaceView();
   }
 
@@ -1146,6 +1635,9 @@
     currentEditorTags = note.tags.slice();
     renderTagChips();
     els.editorTagInput.value = '';
+    currentEditorFormat = note.format;
+    currentEditorView = 'edit';
+    applyEditorFormatUI();
     renderAttachmentsForContext(getAttachmentContext(false));
     editorDirty = false;
     els.editorDirtyHint.hidden = true;
@@ -1162,10 +1654,11 @@
     const tags = trimmedTags.filter((t, i) => trimmedTags.indexOf(t) === i);
 
     try {
-      PrivateWorkspace.updateNote(selectedNoteId, { title, content, tags });
+      PrivateWorkspace.updateNote(selectedNoteId, { title, content, tags, format: currentEditorFormat });
       editorDirty = false;
       els.editorDirtyHint.hidden = true;
       renderNotesList();
+      refreshOverview();
       showToast('Notiz gespeichert.', 'success');
     } catch (err) {
       logSafeError('note-save', err);
@@ -1214,6 +1707,7 @@
       renderNotesList();
       loadNoteIntoEditor(note.id);
       renderNotesList(); // aria-current auf die neue Notiz aktualisieren
+      refreshOverview();
       els.editorTitle.focus();
       refreshWorkspaceView();
     });
@@ -1257,6 +1751,7 @@
       }
       renderEntriesList();
       renderEntryCategoryFilter();
+      refreshOverview();
       showToast('Eintrag gelöscht.', 'warning');
     } else {
       editorDirty = false; // eine gelöschte Notiz kann keine zu übernehmenden Änderungen mehr haben
@@ -1268,6 +1763,7 @@
         showEditorEmpty();
       }
       renderNotesList();
+      refreshOverview();
       showToast('Notiz gelöscht.', 'warning');
     }
     refreshWorkspaceView();
@@ -1286,6 +1782,9 @@
     let filtered = entries;
     if (entryCategoryFilter) {
       filtered = filtered.filter(e => (e.category || '') === entryCategoryFilter);
+    }
+    if (entriesFavoriteFilter === 'favorites') {
+      filtered = filtered.filter(e => e.favorite);
     }
     const q = entriesSearchQuery.trim().toLowerCase();
     if (!q) return filtered;
@@ -1365,6 +1864,12 @@
       const li = document.createElement('li');
       li.className = 'pw-note-item';
 
+      const row = document.createElement('div');
+      row.className = 'pw-note-item-row';
+
+      const displayTitle = entry.title && entry.title.trim() ? entry.title : 'Unbenannter Eintrag';
+      row.appendChild(createFavoriteStarButton(true, entry.id, !!entry.favorite, displayTitle));
+
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'pw-note-item-btn';
@@ -1375,7 +1880,7 @@
 
       const titleEl = document.createElement('div');
       titleEl.className = 'pw-note-item-title';
-      titleEl.textContent = entry.title && entry.title.trim() ? entry.title : 'Unbenannter Eintrag';
+      titleEl.textContent = displayTitle;
       btn.appendChild(titleEl);
 
       if (entry.category) {
@@ -1411,7 +1916,8 @@
         btn.appendChild(tagsEl);
       }
 
-      li.appendChild(btn);
+      row.appendChild(btn);
+      li.appendChild(row);
       els.entriesList.appendChild(li);
     });
   }
@@ -1523,6 +2029,7 @@
       els.entryEditorDirtyHint.hidden = true;
       renderEntriesList();
       renderEntryCategoryFilter();
+      refreshOverview();
       showToast('Eintrag gespeichert.', 'success');
     } catch (err) {
       logSafeError('entry-save', err);
@@ -1553,6 +2060,7 @@
       renderEntryCategoryFilter();
       loadEntryIntoEditor(entry.id);
       renderEntriesList(); // aria-current auf den neuen Eintrag aktualisieren
+      refreshOverview();
       els.entryTitle.focus();
       refreshWorkspaceView();
     });
@@ -1566,13 +2074,7 @@
   function switchTab(tab) {
     if (tab === activeTab) return;
     withEditorGuard(() => {
-      activeTab = tab;
-      els.tabNotes.classList.toggle('pw-content-tab--active', tab === 'notes');
-      els.tabEntries.classList.toggle('pw-content-tab--active', tab === 'entries');
-      els.tabNotes.setAttribute('aria-selected', tab === 'notes' ? 'true' : 'false');
-      els.tabEntries.setAttribute('aria-selected', tab === 'entries' ? 'true' : 'false');
-      els.notesPanel.hidden = tab !== 'notes';
-      els.entriesPanel.hidden = tab !== 'entries';
+      setActiveTabUI(tab);
       // Sinnvoller Fokus im jetzt aktiven Bereich, statt auf einem jetzt
       // ausgeblendeten Element des vorherigen Tabs stehen zu bleiben.
       if (tab === 'notes') els.btnNewNote.focus(); else els.btnNewEntry.focus();
@@ -1928,6 +2430,31 @@
     els.notesSearch.focus();
   });
 
+  function setNotesFavoriteFilterUI() {
+    els.notesFilterAll.classList.toggle('pw-favorite-filter-btn--active', notesFavoriteFilter === 'all');
+    els.notesFilterFavorites.classList.toggle('pw-favorite-filter-btn--active', notesFavoriteFilter === 'favorites');
+    els.notesFilterAll.setAttribute('aria-pressed', String(notesFavoriteFilter === 'all'));
+    els.notesFilterFavorites.setAttribute('aria-pressed', String(notesFavoriteFilter === 'favorites'));
+  }
+  els.notesFilterAll.addEventListener('click', () => {
+    if (notesFavoriteFilter === 'all') return;
+    notesFavoriteFilter = 'all';
+    setNotesFavoriteFilterUI();
+    renderNotesList();
+  });
+  els.notesFilterFavorites.addEventListener('click', () => {
+    if (notesFavoriteFilter === 'favorites') return;
+    notesFavoriteFilter = 'favorites';
+    setNotesFavoriteFilterUI();
+    renderNotesList();
+  });
+  setNotesFavoriteFilterUI();
+
+  els.editorFormatPlain.addEventListener('click', () => handleEditorFormatChange('plain'));
+  els.editorFormatMarkdown.addEventListener('click', () => handleEditorFormatChange('markdown'));
+  els.editorViewEdit.addEventListener('click', () => handleEditorViewChange('edit'));
+  els.editorViewPreview.addEventListener('click', () => handleEditorViewChange('preview'));
+
   els.editorTitle.addEventListener('input', markEditorDirty);
   els.editorContent.addEventListener('input', markEditorDirty);
   els.editorTagAdd.addEventListener('click', addTagFromInput);
@@ -1952,6 +2479,26 @@
     renderEntriesList();
     els.entriesSearch.focus();
   });
+
+  function setEntriesFavoriteFilterUI() {
+    els.entriesFilterAll.classList.toggle('pw-favorite-filter-btn--active', entriesFavoriteFilter === 'all');
+    els.entriesFilterFavorites.classList.toggle('pw-favorite-filter-btn--active', entriesFavoriteFilter === 'favorites');
+    els.entriesFilterAll.setAttribute('aria-pressed', String(entriesFavoriteFilter === 'all'));
+    els.entriesFilterFavorites.setAttribute('aria-pressed', String(entriesFavoriteFilter === 'favorites'));
+  }
+  els.entriesFilterAll.addEventListener('click', () => {
+    if (entriesFavoriteFilter === 'all') return;
+    entriesFavoriteFilter = 'all';
+    setEntriesFavoriteFilterUI();
+    renderEntriesList();
+  });
+  els.entriesFilterFavorites.addEventListener('click', () => {
+    if (entriesFavoriteFilter === 'favorites') return;
+    entriesFavoriteFilter = 'favorites';
+    setEntriesFavoriteFilterUI();
+    renderEntriesList();
+  });
+  setEntriesFavoriteFilterUI();
 
   els.entryTitle.addEventListener('input', markEntryEditorDirty);
   els.entryCategory.addEventListener('input', markEntryEditorDirty);

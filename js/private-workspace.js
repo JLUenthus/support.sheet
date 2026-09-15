@@ -19,6 +19,10 @@
   // der gesamten Workspace-Struktur). Gilt identisch für Upload UND Zwischenablage-Paste.
   const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024; // 20 MB
 
+  // Erlaubte Werte für Note.format (Phase 12, Vorgabe Abschnitt 2/20) - bewusst
+  // eine geschlossene Liste ohne stillschweigende Typumwandlung ("true"/1/"yes").
+  const NOTE_FORMATS = Object.freeze(['plain', 'markdown']);
+
   const ErrorCodes = Object.freeze({
     ALREADY_OPEN: 'ALREADY_OPEN',
     NO_WORKSPACE: 'NO_WORKSPACE',
@@ -135,6 +139,16 @@
         throw new PrivateWorkspaceError(ErrorCodes.INVALID_NOTE, 'tags darf ausschließlich Strings enthalten.');
       }
     }
+    if ('format' in fields) {
+      if (typeof fields.format !== 'string' || !NOTE_FORMATS.includes(fields.format)) {
+        throw new PrivateWorkspaceError(ErrorCodes.INVALID_NOTE, 'format muss "plain" oder "markdown" sein.');
+      }
+    }
+    if ('favorite' in fields && typeof fields.favorite !== 'boolean') {
+      // Bewusst strikt (Vorgabe Abschnitt 20): keine stillschweigende Umwandlung
+      // von "true"/1/"yes" - nur der echte Boolean-Typ wird akzeptiert.
+      throw new PrivateWorkspaceError(ErrorCodes.INVALID_NOTE, 'favorite muss ein Boolean sein.');
+    }
   }
 
   function assertNoServerFields(fields, disallowed, code) {
@@ -240,6 +254,9 @@
     }
     if ('fields' in fields) {
       validateEntryFieldsArray(fields.fields);
+    }
+    if ('favorite' in fields && typeof fields.favorite !== 'boolean') {
+      throw new PrivateWorkspaceError(ErrorCodes.INVALID_ENTRY, 'favorite muss ein Boolean sein.');
     }
   }
 
@@ -455,6 +472,18 @@
         if (!Array.isArray(e.attachments)) e.attachments = [];
       });
 
+      // Backward Compatibility (Phase 12): ältere Notizen ohne format/favorite
+      // sowie ältere Einträge ohne favorite bekommen beim Öffnen nur in-memory
+      // die dokumentierten Defaults - exakt dasselbe Prinzip wie oben bei
+      // sections.entries/attachments. Kein Datei-Rewrite beim bloßen Öffnen.
+      workspace.sections.notes.forEach(n => {
+        if (typeof n.format !== 'string' || !NOTE_FORMATS.includes(n.format)) n.format = 'plain';
+        if (typeof n.favorite !== 'boolean') n.favorite = false;
+      });
+      workspace.sections.entries.forEach(e => {
+        if (typeof e.favorite !== 'boolean') e.favorite = false;
+      });
+
       // Erst nach erfolgreicher Entschlüsselung: State übernehmen (kontrollierte Kopie).
       currentWorkspace = deepClone(workspace);
       currentFileHandle = fileHandle;
@@ -605,6 +634,8 @@
       title: typeof data.title === 'string' ? data.title : '',
       content: typeof data.content === 'string' ? data.content : '',
       tags: Array.isArray(data.tags) ? data.tags.slice() : [],
+      format: typeof data.format === 'string' ? data.format : 'plain',
+      favorite: typeof data.favorite === 'boolean' ? data.favorite : false,
       attachments: [],
       created: now,
       modified: now
@@ -632,6 +663,8 @@
     if ('title' in data) note.title = data.title;
     if ('content' in data) note.content = data.content;
     if ('tags' in data) note.tags = data.tags.slice();
+    if ('format' in data) note.format = data.format;
+    if ('favorite' in data) note.favorite = data.favorite;
     note.modified = new Date().toISOString();
 
     markDirty();
@@ -686,6 +719,7 @@
       description: typeof data.description === 'string' ? data.description : '',
       tags: Array.isArray(data.tags) ? data.tags.slice() : [],
       fields: Array.isArray(data.fields) ? normalizeEntryFields(data.fields) : [],
+      favorite: typeof data.favorite === 'boolean' ? data.favorite : false,
       attachments: [],
       created: now,
       modified: now
@@ -715,6 +749,7 @@
     if ('description' in data) entry.description = data.description;
     if ('tags' in data) entry.tags = data.tags.slice();
     if ('fields' in data) entry.fields = normalizeEntryFields(data.fields);
+    if ('favorite' in data) entry.favorite = data.favorite;
     entry.modified = new Date().toISOString();
 
     markDirty();
@@ -998,6 +1033,7 @@
     getEntryAttachments,
     getEntryAttachment,
     MAX_ATTACHMENT_BYTES,
+    NOTE_FORMATS,
     ErrorCodes
   });
 })();

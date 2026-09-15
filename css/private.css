@@ -385,7 +385,7 @@
 .pw-editor-form[hidden] { display: none; }
 .pw-editor-title-input { font-size: 1rem; font-weight: 700; }
 
-.pw-field-grow { flex: 1; display: flex; flex-direction: column; }
+.pw-field-grow { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .pw-editor-textarea {
   flex: 1; min-height: 220px; resize: vertical;
   font-family: var(--font-ui); line-height: 1.6;
@@ -459,6 +459,135 @@
   .pw-attachment-actions .pw-btn { flex: 1 1 auto; }
 }
 
+/* ── Summary-Zeile / Übersicht (Phase 12) ──────────────────── */
+.pw-summary-counts {
+  font-size: .76rem; color: var(--dim); margin: -10px 0 12px;
+}
+
+.pw-recent-overview {
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-lg);
+  padding: 14px 16px; margin-bottom: 16px;
+}
+.pw-recent-overview[hidden] { display: none; }
+.pw-recent-overview-title { font-size: .82rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+.pw-recent-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.pw-recent-item-btn {
+  width: 100%; text-align: left; display: flex; align-items: baseline; gap: 8px;
+  background: none; border: none; border-radius: var(--r);
+  padding: 6px 8px; cursor: pointer; color: var(--text); font-family: var(--font-ui);
+  min-width: 0;
+}
+.pw-recent-item-btn:hover { background: var(--panel2); }
+.pw-recent-item-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pw-recent-item-star { flex-shrink: 0; color: var(--amber); }
+.pw-recent-item-title {
+  font-size: .82rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 auto; min-width: 0;
+}
+.pw-recent-item-meta { flex-shrink: 0; font-size: .7rem; color: var(--dim); }
+
+/* ── Favoriten-Filter (Phase 12) ────────────────────────────── */
+.pw-favorite-filter { display: flex; gap: 6px; }
+.pw-favorite-filter-btn {
+  flex: 1 1 auto;
+  padding: 6px 10px; border-radius: var(--r); border: 1px solid var(--border2);
+  background: var(--panel2); color: var(--muted); font-family: var(--font-ui);
+  font-size: .76rem; font-weight: 600; cursor: pointer; transition: all .15s;
+}
+.pw-favorite-filter-btn:hover { color: var(--text); border-color: var(--accent); }
+.pw-favorite-filter-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pw-favorite-filter-btn--active { color: var(--amber); background: var(--amber-bg); border-color: rgba(251,191,36,.35); }
+
+/* ── Favoriten-Stern in der Liste (Phase 12) ───────────────── */
+.pw-note-item-row { display: flex; align-items: stretch; gap: 6px; min-width: 0; }
+.pw-note-item-row .pw-note-item-btn { flex: 1 1 auto; }
+.pw-favorite-star-btn {
+  flex-shrink: 0; align-self: flex-start; width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: 1px solid var(--border2); border-radius: var(--r);
+  color: var(--dim); cursor: pointer; font-size: 15px; line-height: 1;
+}
+.pw-favorite-star-btn:hover { color: var(--amber); border-color: var(--amber); background: var(--amber-bg); }
+.pw-favorite-star-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pw-favorite-star-btn--active { color: var(--amber); border-color: rgba(251,191,36,.35); background: var(--amber-bg); }
+
+/* ── Format-/Ansicht-Umschalter im Note-Editor (Phase 12) ──── */
+.pw-editor-content-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+}
+.pw-format-toggle, .pw-view-toggle { display: flex; gap: 4px; }
+.pw-format-toggle[hidden], .pw-view-toggle[hidden] { display: none; }
+.pw-format-toggle-btn, .pw-view-toggle-btn {
+  padding: 4px 10px; border-radius: var(--r); border: 1px solid var(--border2);
+  background: var(--panel2); color: var(--muted); font-family: var(--font-ui);
+  font-size: .72rem; font-weight: 600; cursor: pointer; transition: all .15s;
+}
+.pw-format-toggle-btn:hover, .pw-view-toggle-btn:hover { color: var(--text); border-color: var(--accent); }
+.pw-format-toggle-btn:focus-visible, .pw-view-toggle-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pw-format-toggle-btn--active, .pw-view-toggle-btn--active { color: var(--accent); background: var(--accent-bg); border-color: rgba(124,140,248,.35); }
+
+/* ── Markdown-Vorschau (Phase 12) ───────────────────────────
+   Ausschließlich über createElement()/textContent erzeugt (siehe
+   private-renderer.js renderMarkdownToFragment) - hier nur Optik. */
+.pw-md-preview {
+  flex: 1; min-height: 220px; overflow-y: auto; overflow-x: hidden;
+  border: 1px solid var(--border2); border-radius: var(--r); background: var(--panel2);
+  padding: 14px 16px; min-width: 0; max-width: 100%;
+}
+.pw-md-preview[hidden] { display: none; }
+.pw-md-preview:empty::before { content: 'Kein Inhalt.'; color: var(--dim); font-size: .84rem; }
+
+.pw-md-heading { font-weight: 700; color: var(--text); margin: 14px 0 6px; line-height: 1.35; }
+.pw-md-heading:first-child { margin-top: 0; }
+.pw-md-heading-1 { font-size: 1.15rem; }
+.pw-md-heading-2 { font-size: 1.05rem; }
+.pw-md-heading-3 { font-size: .96rem; }
+.pw-md-heading-4, .pw-md-heading-5, .pw-md-heading-6 { font-size: .88rem; }
+
+.pw-md-paragraph { font-size: .86rem; color: var(--text); line-height: 1.6; margin: 0 0 10px; word-break: break-word; }
+.pw-md-paragraph:last-child { margin-bottom: 0; }
+
+.pw-md-list { margin: 0 0 10px; padding-left: 22px; font-size: .86rem; color: var(--text); line-height: 1.6; }
+.pw-md-list li { margin-bottom: 2px; }
+
+.pw-md-inline-code {
+  font-family: var(--font-mono); font-size: .82em;
+  background: var(--panel); border: 1px solid var(--border2); border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.pw-md-link { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; word-break: break-word; }
+.pw-md-link:hover { color: var(--accent-glow, var(--accent)); }
+
+/* Codeblöcke: monospace, horizontal scrollbar NUR innerhalb des Blocks -
+   die Seite selbst darf dadurch nie breiter werden (Vorgabe Abschnitt 4/24). */
+.pw-md-codeblock {
+  position: relative; margin: 0 0 10px; min-width: 0;
+}
+.pw-md-codeblock:last-child { margin-bottom: 0; }
+.pw-md-pre {
+  margin: 0; padding: 12px 14px; padding-top: 34px;
+  background: var(--panel); border: 1px solid var(--border2); border-radius: var(--r);
+  overflow-x: auto; max-width: 100%;
+}
+.pw-md-code {
+  font-family: var(--font-mono); font-size: .8rem; line-height: 1.5; color: var(--text);
+  white-space: pre; tab-size: 2;
+}
+.pw-md-copy-btn {
+  position: absolute; top: 6px; right: 6px; z-index: 1;
+  padding: 3px 9px; border-radius: var(--r); border: 1px solid var(--border2);
+  background: var(--panel2); color: var(--muted); font-family: var(--font-ui);
+  font-size: .68rem; font-weight: 600; cursor: pointer;
+}
+.pw-md-copy-btn:hover { color: var(--text); border-color: var(--accent); }
+.pw-md-copy-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+@media (max-width: 480px) {
+  .pw-recent-item-meta { display: none; }
+  .pw-editor-content-header { flex-direction: column; align-items: stretch; }
+  .pw-format-toggle, .pw-view-toggle { justify-content: center; }
+}
+
 /* ── Mobile (Phase 6) ───────────────────────────────────────
    Ziel: 320px-390px-Breite ohne horizontales Überlaufen. Die
    Desktop-Struktur bleibt erhalten - nur Abstände/Umbrüche
@@ -476,6 +605,10 @@
 
   .pw-editor { padding: 14px; min-height: 0; }
   .pw-editor-textarea { min-height: 160px; }
+  .pw-md-preview { min-height: 160px; padding: 10px 12px; }
+
+  .pw-favorite-star-btn { width: 30px; height: 30px; font-size: 13px; }
+  .pw-format-toggle-btn, .pw-view-toggle-btn { flex: 1 1 auto; text-align: center; }
 
   .pw-tag-add-row { flex-wrap: wrap; }
   .pw-tag-add-row .pw-input { flex: 1 1 100%; }
