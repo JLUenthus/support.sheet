@@ -19,7 +19,7 @@ Mittlerweile mehr als nur Commands: Log-/Sign-In-/HAR-Analyzer, ein Ticketassist
 | [Exchange](exchange.html) | On-Premises 2016/2019 & Exchange Online | 69 |
 | [Fortinet](forti.html) | FortiGate, FortiManager, FortiAnalyzer CLI | 78 |
 | [PS Scripts](scripts.html) | Fertige .ps1 Skripte zum Download | 9 |
-| [Log Analyzer](eventlog.html) | Event Log JSON hochladen → automatische Analyse mit Correlation Engine | – |
+| [Event Log Analyzer](eventlog.html) | Event Log JSON hochladen → automatische Analyse mit Correlation Engine | – |
 | [Entra Analyzer](entra.html) | Sign-In Logs als CSV hochladen, Fehlermuster erkennen | – |
 | [HAR Analyzer](har.html) | Browser-Sessions/Auth-Flows aus HAR-Export analysieren | – |
 | [Ticketassistent](ticketassistent.html) | KI-gestützt Tickets formulieren | – |
@@ -53,11 +53,11 @@ Windows, Exchange und Fortinet stehen in der Navigation unter einer gemeinsamen 
 Collector-Script ausführen → JSON hochladen → automatische Analyse:
 
 - **Systemübersicht** – RAM, CPU, Uptime, Laufwerke mit Farbkodierung
-- **🎯 Wahrscheinliche Hauptursachen** – Correlation Engine mit 19 Regeln
-- **💡 Optimierungsvorschläge** – 12 proaktive Checks (Defender, BitLocker, PowerPlan, RAM...)
-- **Analyseergebnis** – Findings mit gruppierten Empfehlungen (Diagnose / Fix / Wartung)
-- **Empfohlene Reihenfolge** – Priorisierungslogik
-- **Export** – Findings inkl. Root Causes als JSON
+- **🎯 Mögliche Ursachen** – Correlation Engine mit 19 Regeln
+- **💡 Optimierung** – 12 proaktive Checks (Defender, BitLocker, PowerPlan, RAM...)
+- **Findings** – gruppierte Empfehlungen (Diagnose / Fix / Wartung)
+- **Empfohlene nächste Schritte** – Priorisierungslogik
+- **Export** – Analyse inkl. Correlations als JSON
 
 ---
 
@@ -94,7 +94,7 @@ Alle Commands liegen in `/data/*.json`. Einfach einen Eintrag hinzufügen:
 | `data/commands.json` | Windows-Commands (241) |
 | `data/exchange-commands.json` | Exchange-Commands (69) |
 | `data/forti-commands.json` | Fortinet-Commands (78) |
-| `data/eventlog-rules.json` | Log Analyzer Erkennungsregeln |
+| `data/eventlog-rules.json` | Event Log Analyzer Erkennungsregeln |
 | `data/correlation-rules.json` | Correlation Engine Regeln (19) |
 | `data/improvement-rules.json` | Proaktive Systemchecks (12) |
 | `data/known-harmless.json` | Bekannte harmlose Events |

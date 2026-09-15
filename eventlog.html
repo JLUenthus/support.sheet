@@ -24,7 +24,7 @@
       <div class="logo-text" id="as-logo-label">support<span>.sheet</span></div>
     </a>
     <div class="header-right">
-      <div class="pill pill-count" style="border-color:rgba(232,179,57,.3);background:rgba(232,179,57,.08);color:#e8b339;">📋 Log Analyzer</div>
+      <div class="pill pill-count" style="border-color:rgba(232,179,57,.3);background:rgba(232,179,57,.08);color:#e8b339;">📋 Event Log Analyzer</div>
     </div>
   </header>
 
@@ -33,7 +33,8 @@
 
     <!-- ── SCHRITT 1 ──────────────────────────────────────── -->
     <section class="el-section">
-      <h2 class="section-title">Schritt 1 – Collector-Script ausführen</h2>
+      <h2 class="section-title">Schritt 1 – Ereignisdaten erfassen</h2>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px;">Collector-Script auf dem Windows-System ausführen.</p>
       <div class="collector-row">
         <div class="collector-card">
           <div class="collector-head"><span class="collector-icon">💻</span><div><div class="collector-name">Windows Client</div><div class="collector-sub">Windows 10 / 11</div></div></div>
@@ -69,10 +70,10 @@
         <div class="upload-preview-title">Was dich erwartet</div>
         <div class="upload-preview-items">
           <div class="upi"><span class="upi-icon">🖥️</span><div><div class="upi-name">Systemübersicht</div><div class="upi-desc">RAM, CPU, Uptime, Laufwerke – farblich bewertet</div></div></div>
-          <div class="upi"><span class="upi-icon">🎯</span><div><div class="upi-name">Wahrscheinliche Hauptursachen</div><div class="upi-desc">Correlation Engine erkennt Zusammenhänge</div></div></div>
-          <div class="upi"><span class="upi-icon">💡</span><div><div class="upi-name">Optimierungsvorschläge</div><div class="upi-desc">Proaktive Checks unabhängig von Fehlern</div></div></div>
-          <div class="upi"><span class="upi-icon">🔍</span><div><div class="upi-name">Analyseergebnis</div><div class="upi-desc">Fehlermuster mit gruppierten Fix-Commands</div></div></div>
-          <div class="upi"><span class="upi-icon">📋</span><div><div class="upi-name">Ereignistabelle</div><div class="upi-desc">Alle Events durchsuchbar, harmlose markiert</div></div></div>
+          <div class="upi"><span class="upi-icon">🎯</span><div><div class="upi-name">Mögliche Ursachen</div><div class="upi-desc">Zusammenhängende Ereignismuster werden erkannt.</div></div></div>
+          <div class="upi"><span class="upi-icon">💡</span><div><div class="upi-name">Optimierung</div><div class="upi-desc">Proaktive Hinweise unabhängig von Findings.</div></div></div>
+          <div class="upi"><span class="upi-icon">🔍</span><div><div class="upi-name">Findings</div><div class="upi-desc">Erkannte Ereignismuster mit Empfehlungen.</div></div></div>
+          <div class="upi"><span class="upi-icon">📋</span><div><div class="upi-name">Ereignisse</div><div class="upi-desc">Alle Events durchsuchbar, harmlose markiert</div></div></div>
         </div>
       </div>
 
@@ -82,7 +83,7 @@
         <div class="disclaimer-text">
           <strong>Hinweis zur Interpretation:</strong>
           Ergebnisse sind Hinweise, keine Diagnosen.
-          Commands vor der Ausführung prüfen, besonders bei Risikostufe <strong>Mittel</strong> oder <strong>Hoch</strong>.
+          Commands vor der Ausführung prüfen, besonders bei Ausführungsrisiko <strong>Mittel</strong> oder <strong>Hoch</strong>.
           Neue Regeln werden laufend ergänzt.
         </div>
       </div>
@@ -93,13 +94,13 @@
      <div class="el-layout">
 
       <nav class="el-page-nav" id="el-page-nav" aria-label="Bereichsnavigation">
-        <div class="el-page-nav-title">Log Analyzer</div>
+        <div class="el-page-nav-title">Event Log Analyzer</div>
         <a href="#el-overview-section" class="el-page-nav-link">Übersicht</a>
-        <a href="#el-severity-section" class="el-page-nav-link">Priorität</a>
+        <a href="#el-severity-section" class="el-page-nav-link">Empfohlene nächste Schritte</a>
         <a href="#auth-block" class="el-page-nav-link" id="el-nav-auth" hidden>Authentifizierung</a>
         <a href="#timeline-section" class="el-page-nav-link" id="el-nav-timeline" hidden>Timeline</a>
         <a href="#cluster-section" class="el-page-nav-link" id="el-nav-cluster" hidden>Event-Cluster</a>
-        <a href="#correlation-section" class="el-page-nav-link" id="el-nav-correlation" hidden>Hauptursachen</a>
+        <a href="#correlation-section" class="el-page-nav-link" id="el-nav-correlation" hidden>Mögliche Ursachen</a>
         <a href="#el-findings-section" class="el-page-nav-link">Findings</a>
         <a href="#improvements-section" class="el-page-nav-link" id="el-nav-improvements" hidden>Optimierung</a>
         <a href="#el-eventtable-section" class="el-page-nav-link">Alle Ereignisse</a>
@@ -118,10 +119,10 @@
       <section class="el-section" id="el-severity-section">
         <div class="results-topbar">
           <div class="sev-summary" id="sev-summary" style="display:none"></div>
-          <button class="export-btn" id="export-btn">⬇️ Findings exportieren</button>
+          <button class="export-btn" id="export-btn">⬇️ Analyse exportieren</button>
         </div>
         <div class="priority-box" id="priority-box" hidden>
-          <div class="priority-title">⚡ Empfohlene Reihenfolge</div>
+          <div class="priority-title">⚡ Empfohlene nächste Schritte</div>
           <ol class="priority-list" id="priority-list"></ol>
         </div>
       </section>
@@ -208,23 +209,23 @@
 
       <!-- Root Cause Correlations -->
       <section class="el-section" id="correlation-section" hidden>
-        <h2 class="section-title">🎯 Wahrscheinliche Hauptursachen <span id="correlation-count" class="section-count">0</span></h2>
-        <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px;">Zusammenhängende Ereignismuster – mögliche Ursachen hinter mehreren Findings.</p>
+        <h2 class="section-title">🎯 Mögliche Ursachen <span id="correlation-count" class="section-count">0</span></h2>
+        <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px;">Zusammenhängende Ereignismuster, die auf eine gemeinsame Ursache hindeuten können.</p>
         <div id="correlations"></div>
       </section>
 
       <!-- Findings -->
       <section class="el-section" id="el-findings-section">
-        <h2 class="section-title">Analyseergebnis <span id="findings-count" class="section-count">0</span></h2>
+        <h2 class="section-title">Findings <span id="findings-count" class="section-count">0</span></h2>
         <div id="cat-bar" class="el-cat-bar"></div>
         <div id="findings"></div>
-        <div id="no-findings" class="no-findings" hidden>✅ Keine bekannten Fehlermuster erkannt.</div>
+        <div id="no-findings" class="no-findings" hidden>✅ Keine Findings erkannt.</div>
       </section>
 
       <!-- Verbesserungsvorschläge -->
       <section class="el-section" id="improvements-section" hidden>
-        <h2 class="section-title">💡 Optimierungsvorschläge <span id="improvements-count" class="section-count">0</span></h2>
-        <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px;">Proaktive Hinweise basierend auf Systemdaten – unabhängig von Fehlermustern.</p>
+        <h2 class="section-title">💡 Optimierung <span id="improvements-count" class="section-count">0</span></h2>
+        <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px;">Proaktive Hinweise auf mögliche Verbesserungen des Systems – unabhängig von erkannten Event-Log-Findings.</p>
         <div id="improvements"></div>
       </section>
 
@@ -845,6 +846,20 @@
     let HARMLESS     = [];
     let allEvents    = [];
 
+    // Einheitliche UI-Bezeichnung für Schweregrad (Phase 13A Naming) - dieselben
+    // vier Begriffe für Findings, Correlations UND Improvements. Die internen
+    // JSON-Werte (critical/error/warning/info) bleiben unverändert, nur die
+    // Anzeige wird hier zentral übersetzt statt an jeder Render-Stelle einzeln.
+    const SEVERITY_LABELS = { critical: 'Kritisch', error: 'Fehler', warning: 'Warnung', info: 'Info' };
+    function severityLabel(sev) { return SEVERITY_LABELS[sev] || sev; }
+
+    // Phase 13D: gemeinsame Severity-Rangfolge (für Sortierung von Findings) sowie die
+    // feste Abschwächungs-Treppe für Known-Harmless reduceSeverity (siehe isHarmless()).
+    // Bewusst eine feste Tabelle statt einer dynamischen Berechnung (Vorgabe Phase 13D
+    // Abschnitt 7: "keine dynamischen, schwer nachvollziehbaren Regeln").
+    const SEVERITY_ORDER = { critical: 0, error: 1, warning: 2, info: 3 };
+    const SEVERITY_REDUCTION_MAP = { critical: 'warning', error: 'info', warning: 'info', info: 'info' };
+
     // Rules + Improvements + Correlations + Harmless laden
     Promise.all([
       fetch('./data/eventlog-rules.json').then(r => r.json()),
@@ -852,10 +867,15 @@
       fetch('./data/correlation-rules.json').then(r => r.json()),
       fetch('./data/known-harmless.json').then(r => r.json()),
     ]).then(([rulesData, impData, corrData, harmlessData]) => {
-      RULES        = rulesData.rules       || [];
-      IMPROVEMENTS = impData.improvements  || [];
-      CORRELATIONS = corrData.rules        || [];
-      HARMLESS     = harmlessData.events   || [];
+      // Kanonischer Datenvertrag (Phase 13B, siehe docs/eventlog-rule-schema.md):
+      // eventRules/correlationRules/improvementRules/harmlessEvents. Die alten
+      // Root-Keys (rules/improvements/events) bleiben ausschließlich als
+      // Legacy-Fallback erhalten - z.B. falls ein Service-Worker-Cache noch
+      // eine ältere Fassung dieser Dateien ausliefert.
+      RULES        = rulesData.eventRules        || rulesData.rules       || [];
+      IMPROVEMENTS = impData.improvementRules    || impData.improvements  || [];
+      CORRELATIONS = corrData.correlationRules   || corrData.rules        || [];
+      HARMLESS     = harmlessData.harmlessEvents || harmlessData.events   || [];
     }).catch(() => {});
 
     // ── Upload ──────────────────────────────────────────────
@@ -897,12 +917,14 @@
       renderTimeline(events, clusters);
       const improvements  = renderImprovements(meta, sum, events);
       const findings      = analyzeEvents(events);
-      const corrResults   = correlateEvents(events, findings);
+      const corrResults   = correlateEvents(events);
       _corrResults = corrResults; // für isHarmless() Context-Awareness
+      // Phase 13D: muss NACH dem Setzen von _corrResults laufen (siehe Funktionskommentar).
+      applyHarmlessSeverityReduction(findings, events);
       renderCorrelations(corrResults);
       renderTopRootCause(corrResults);
       renderSevSummary(findings, improvements, corrResults);
-      renderPriority(findings, meta, sum);
+      renderPriority(findings, corrResults, meta, sum);
 
       document.getElementById('findings-count').textContent = findings.length;
       renderFindings(findings);
@@ -924,7 +946,7 @@
     }
 
     // ── Seitennavigation (Sidebar links, analog gpo.html) ────
-    // Bestimmte Sektionen (Auth/Timeline/Cluster/Hauptursachen/Optimierung)
+    // Bestimmte Sektionen (Auth/Timeline/Cluster/Mögliche Ursachen/Optimierung)
     // werden je nach Datenlage ein-/ausgeblendet - die zugehörigen Nav-Links
     // folgen dieser Sichtbarkeit, statt jede Render-Funktion einzeln anzufassen.
     function syncElNavVisibility() {
@@ -1007,6 +1029,20 @@
       const errorCount  = (sum.Critical||0) + (sum.Error||0);
       const errorCls    = errorCount > 100 ? 'bad' : errorCount > 30 ? 'warn' : 'good';
 
+      // Endpoint-Schutz (Phase 13C, siehe docs/eventlog-rule-schema.md) - zeigt die
+      // tatsächliche Provider-Lage statt nur "Defender an/aus", damit Drittanbieter-
+      // Schutz (ESET/Bitdefender/Sophos/SentinelOne/CrowdStrike/...) sichtbar bleibt.
+      const secProt = meta.SecurityProtection;
+      let protLabel = 'Unbekannt', protCls = '';
+      if (secProt && secProt.protectionStatus === 'active') {
+        const activeNames = (secProt.providers||[]).filter(p => p.state === 'active').map(p => p.name);
+        protLabel = activeNames.length ? activeNames.join(', ') : 'Aktiv';
+        protCls = 'good';
+      } else if (secProt && secProt.protectionStatus === 'none') {
+        protLabel = 'Kein aktiver Schutz erkannt';
+        protCls = 'bad';
+      }
+
       const items = [
         ['💻 Computer',       meta.ComputerName || '–',                                          ''],
         ['🖥️ Betriebssystem', (meta.OS||'–').replace('Microsoft Windows ',''),                   ''],
@@ -1018,6 +1054,7 @@
         ['🔍 Zeitraum',        meta.TimeRangeLabel || (meta.HoursCollected ? meta.HoursCollected+'h' : '–'), ''],
         ['📊 Ereignisse',      totalEvents,                                                       ''],
         ['❌ Fehler gesamt',   errorCount,                                                        errorCls],
+        ['🛡️ Endpoint-Schutz', protLabel,                                                         protCls],
       ];
 
       if (meta.DetectedRoles?.length) {
@@ -1180,20 +1217,42 @@
       const triggered = [];
       IMPROVEMENTS.forEach(imp => {
         let match = false;
-        if (imp.check === 'uptimeHours'      && (meta.Uptime_Hours||0) > imp.checkThreshold) match = true;
-        if (imp.check === 'diskFreePercent'  && meta.Disks?.some(d => d.Size_GB && (d.Free_GB/d.Size_GB*100) < imp.checkThreshold)) match = true;
-        if (imp.check === 'ramUsedPercent'   && meta.RAM_GB && meta.RAM_Used_GB && (meta.RAM_Used_GB/meta.RAM_GB*100) > imp.checkThreshold) match = true;
-        if (imp.check === 'ramBelowRecommended' && meta.RAM_GB && meta.RAM_GB < imp.checkThreshold) match = true;
-        if (imp.check === 'errorCount'       && ((sum.Critical||0)+(sum.Error||0)) > imp.checkThreshold) match = true;
-        if (imp.check === 'powerPlan'        && meta.PowerPlan && imp.checkValues.some(v => meta.PowerPlan.toLowerCase().includes(v.toLowerCase()))) match = true;
-        if (imp.check === 'windowsBuild'     && meta.BuildNumber && Number(meta.BuildNumber) <= imp.checkMaxBuild) match = true;
-        if (imp.check === 'defenderDisabled' && meta.DefenderRealtime === false) match = true;
+        // Phase 13B: checkThreshold/checkMaxBuild/checkValues -> threshold/maxBuild/allowedValues.
+        // Fallback auf die alten Feldnamen bleibt bestehen (Legacy-Kompatibilität), Bedeutung/Werte unverändert.
+        const impThreshold     = imp.threshold     ?? imp.checkThreshold;
+        const impMaxBuild      = imp.maxBuild      ?? imp.checkMaxBuild;
+        const impAllowedValues = imp.allowedValues ?? imp.checkValues;
+        if (imp.check === 'uptimeHours'      && (meta.Uptime_Hours||0) > impThreshold) match = true;
+        if (imp.check === 'diskFreePercent'  && meta.Disks?.some(d => d.Size_GB && (d.Free_GB/d.Size_GB*100) < impThreshold)) match = true;
+        if (imp.check === 'ramUsedPercent'   && meta.RAM_GB && meta.RAM_Used_GB && (meta.RAM_Used_GB/meta.RAM_GB*100) > impThreshold) match = true;
+        if (imp.check === 'ramBelowRecommended' && meta.RAM_GB && meta.RAM_GB < impThreshold) match = true;
+        // Phase 13C: errorCount/appCrashCount werden auf eine 24h-Rate normiert, statt
+        // den Absolutwert im (variablen) Sammelzeitraum zu vergleichen - sonst wäre die
+        // Regel bei einer 30-Tage-Sammlung unverhältnismäßig oft und bei 8h praktisch nie
+        // ausgelöst worden. Fehlt meta.HoursCollected (ältere Collector-Dateien), ergibt
+        // der Standardwert 24 exakt das bisherige Verhalten (Divisor 1) - keine Änderung
+        // für Bestandsdaten ohne dieses Feld.
+        const collectedHours = meta.HoursCollected || 24;
+        const periodFactor   = collectedHours / 24;
+        if (imp.check === 'errorCount'       && ((sum.Critical||0)+(sum.Error||0)) / periodFactor > impThreshold) match = true;
+        if (imp.check === 'powerPlan'        && meta.PowerPlan && impAllowedValues.some(v => meta.PowerPlan.toLowerCase().includes(v.toLowerCase()))) match = true;
+        if (imp.check === 'windowsBuild'     && meta.BuildNumber && Number(meta.BuildNumber) <= impMaxBuild) match = true;
+        // Phase 13C: defenderDisabled -> endpointProtection (siehe docs/eventlog-rule-schema.md).
+        // "Defender aus" ist für sich genommen kein Problem mehr - erst wenn KEIN Provider
+        // (Defender oder Drittanbieter) aktiven Schutz meldet, greift IMP_NO_ENDPOINT_PROTECTION.
+        // Fehlt meta.SecurityProtection (ältere Collector-Dateien) oder ist protectionStatus
+        // nicht ermittelbar, gilt "unknown" - es wird NIE aus fehlenden Daten ein Fehlerzustand
+        // abgeleitet (löst stattdessen höchstens IMP_ENDPOINT_PROTECTION_UNKNOWN als Info aus).
+        if (imp.check === 'endpointProtection') {
+          const protectionStatus = (meta.SecurityProtection && meta.SecurityProtection.protectionStatus) || 'unknown';
+          if (protectionStatus === imp.expectedStatus) match = true;
+        }
         if (imp.check === 'bitlockerOff'     && meta.BitLockerStatus && !meta.BitLockerStatus.includes('On')) match = true;
-        if (imp.check === 'appCrashCount'    && events.filter(e => Number(e.Id) === 1000).length > (imp.checkThreshold||5)) match = true;
-        if (imp.check === 'autostartCount'   && (meta.AutostartCount||0) > (imp.checkThreshold||20)) match = true;
+        if (imp.check === 'appCrashCount'    && events.filter(e => Number(e.Id) === 1000).length / periodFactor > (impThreshold||5)) match = true;
+        if (imp.check === 'autostartCount'   && (meta.AutostartCount||0) > (impThreshold||20)) match = true;
         if (imp.check === 'biosAgeYears'     && meta.BIOSDate) {
           const biosYear = new Date(meta.BIOSDate).getFullYear();
-          if (!isNaN(biosYear) && (new Date().getFullYear() - biosYear) > imp.checkThreshold) match = true;
+          if (!isNaN(biosYear) && (new Date().getFullYear() - biosYear) > impThreshold) match = true;
         }
         if (match) triggered.push(imp);
       });
@@ -1210,7 +1269,7 @@
         header.className = 'finding-header';
         const sevPill = document.createElement('span');
         sevPill.className = 'sev-pill sev-' + imp.severity;
-        sevPill.textContent = imp.severity === 'info' ? 'Tipp' : 'Hinweis';
+        sevPill.textContent = severityLabel(imp.severity);
         const title = document.createElement('span');
         title.className = 'finding-title';
         title.textContent = imp.name;
@@ -1287,26 +1346,56 @@
     }
 
     // ── Priority Logic ──────────────────────────────────────
-    function renderPriority(findings, meta, sum) {
+    // Phase 13D: der frühere Code prüfte eine hartkodierte Rule-ID-Allowlist, darunter
+    // 'IMP_DEFENDER_DISABLED' (ein Improvement, kann in "findings" - dem Ergebnis von
+    // analyzeEvents() - architektonisch NIEMALS auftauchen, seit jeher totes Signal) und
+    // 'DISK_IO_ERROR' (existiert als Rule-ID nie, gemeint war vermutlich 'DISK_ERROR' -
+    // ebenfalls seit jeher totes Signal). Beide ersatzlos entfernt statt durch neue
+    // Einzel-ID-Checks ersetzt. Stattdessen generischer, severity-basierter Scan über
+    // die tatsächlich vorliegenden Findings/Correlations plus die bereits vorhandenen
+    // Metadaten-Zustände - kein komplett neues Ranking-System, nur dieselbe einfache
+    // if-Kette wie vorher, jetzt aber über Arrays statt über einzelne Spezialfälle.
+    // Improvements fließen bewusst NICHT ein (Vorgabe Phase 13D Abschnitt 3): ein
+    // info-Improvement soll nicht wie ein kritisches Finding erscheinen.
+    //
+    // Verhaltensänderung: der vorherige Code beförderte 'WINDOWS_UPDATE_FAIL' (severity
+    // "warning") als einzige Ausnahme in diese Liste, obwohl kein anderes warning-Finding
+    // je diese Sonderbehandlung bekam - eine willkürliche Einzelfall-Regel. Der neue,
+    // einheitliche Severity-Schnitt (critical/error) verzichtet bewusst auf diese
+    // Ausnahme; WINDOWS_UPDATE_FAIL bleibt weiterhin reguär im Findings-Bereich sichtbar.
+    function renderPriority(findings, correlations, meta, sum) {
       const box  = document.getElementById('priority-box');
       const list = document.getElementById('priority-list');
       const steps = [];
 
-      const hasCritDisk = findings.some(f => f.rule.id === 'DISK_IO_ERROR');
-      const hasLowDisk  = meta.Disks?.some(d => d.Size_GB && (d.Free_GB/d.Size_GB) < 0.1);
-      const hasHighRAM  = (sum.Error||0) + (sum.Critical||0) > 20;
-      const hasUpdate   = findings.some(f => f.rule.id === 'WINDOWS_UPDATE_FAIL');
-      const hasKernel   = findings.some(f => f.rule.id === 'KERNEL_POWER_41');
-      const hasDefender = findings.some(f => f.rule.id === 'IMP_DEFENDER_DISABLED');
-      const highUptime  = (meta.Uptime_Hours||0) > 720;
+      // Kritische Findings zuerst (effectiveSeverity berücksichtigt eine mögliche
+      // Known-Harmless-Abschwächung, siehe applyHarmlessSeverityReduction()).
+      findings
+        .filter(f => (f.effectiveSeverity || f.rule.severity) === 'critical')
+        .forEach(f => steps.push('🔴 ' + f.rule.name));
 
-      if (hasCritDisk)  steps.push('🔴 Datenträgerfehler sofort analysieren – Datenverlust möglich');
-      if (hasLowDisk)   steps.push('🟠 Speicherplatz bereinigen – unter 10% freier Platz');
-      if (hasDefender)  steps.push('🔴 Echtzeit-Schutz wieder aktivieren');
-      if (hasKernel)    steps.push('🟠 Ungeplante Neustarts untersuchen (Temperaturen, RAM, Treiber)');
-      if (hasHighRAM)   steps.push('🟡 Fehlerquellen identifizieren – viele Fehler-Events');
-      if (hasUpdate)    steps.push('🟡 Windows Update Probleme beheben');
-      if (highUptime)   steps.push('⚪ Neustart für Wartungsfenster einplanen (>30 Tage Uptime)');
+      // Kritische/hohe Correlations
+      correlations
+        .filter(c => c.rule.severity === 'critical')
+        .forEach(c => steps.push('🔴 ' + c.rule.name + ' (erkanntes Muster, Score ' + c.score + ')'));
+
+      // Fehler-Findings (nicht kritisch, aber Handlungsbedarf)
+      findings
+        .filter(f => (f.effectiveSeverity || f.rule.severity) === 'error')
+        .forEach(f => steps.push('🟠 ' + f.rule.name));
+
+      correlations
+        .filter(c => c.rule.severity === 'error')
+        .forEach(c => steps.push('🟠 ' + c.rule.name + ' (erkanntes Muster, Score ' + c.score + ')'));
+
+      // Wesentliche Systemzustände - direkt aus bereits vorliegenden Metadaten/Summary,
+      // keine neuen Annahmen, keine neuen Schwellenwerte.
+      const hasLowDisk      = meta.Disks?.some(d => d.Size_GB && (d.Free_GB/d.Size_GB) < 0.1);
+      const manyTotalErrors = (sum.Error||0) + (sum.Critical||0) > 20;
+      const highUptime      = (meta.Uptime_Hours||0) > 720;
+      if (hasLowDisk)      steps.push('🟠 Speicherplatz bereinigen – unter 10% freier Platz');
+      if (manyTotalErrors) steps.push('🟡 Fehlerquellen identifizieren – viele Fehler-Events');
+      if (highUptime)      steps.push('⚪ Neustart für Wartungsfenster einplanen (>30 Tage Uptime)');
 
       box.hidden = steps.length < 2;
       list.replaceChildren();
@@ -1325,8 +1414,12 @@
         source:       filename || 'unknown',
         computer:     meta.ComputerName || '–',
         os:           meta.OS || '–',
-        rootCauses: (correlations||[]).map(c => ({
-          score:       c.score + '%',
+        // Phase 13D (Abschnitt 13): "confidenceScore" statt "score: '87%'" - der Wert ist
+        // eine interne 0-100-Konfidenz-/Relevanzbewertung der Correlation-Engine, KEINE
+        // mathematische Wahrscheinlichkeit. Das frühere Anhängen von "%" suggerierte genau
+        // das fälschlich. Nur ein Feld, kein paralleles "score" mit derselben Bedeutung.
+        correlations: (correlations||[]).map(c => ({
+          confidenceScore: c.score,
           name:        c.rule.name,
           category:    c.rule.category,
           severity:    c.rule.severity,
@@ -1334,7 +1427,7 @@
           description: c.rule.description,
         })),
         findings: findings.map(f => ({
-          severity:        f.rule.severity,
+          severity:        f.effectiveSeverity || f.rule.severity,
           name:            f.rule.name,
           category:        f.rule.category,
           occurrences:     f.events.length,
@@ -1356,7 +1449,7 @@
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
       a.href     = url;
-      a.download = `findings-${(meta.ComputerName||'export').replace(/[^a-zA-Z0-9]/g,'-')}-${now.slice(0,10)}.json`;
+      a.download = `eventlog-export-${(meta.ComputerName||'export').replace(/[^a-zA-Z0-9]/g,'-')}-${now.slice(0,10)}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -1371,11 +1464,11 @@
           const msgMatch = !rule.messageContains || rule.messageContains.some(m => (e.Message||'').toLowerCase().includes(m.toLowerCase()));
           return idMatch && srcMatch && msgMatch;
         });
-        if (matched.length < (rule.minOccurrences || 1)) return;
+        // Phase 13B: minOccurrences -> minCount (Legacy-Fallback bleibt bestehen).
+        if (matched.length < (rule.minCount || rule.minOccurrences || 1)) return;
         findings.push({ rule, events: matched });
       });
-      const ord = { critical:0, error:1, warning:2, info:3 };
-      return findings.sort((a,b) => (ord[a.rule.severity]||3) - (ord[b.rule.severity]||3));
+      return findings.sort((a,b) => (SEVERITY_ORDER[a.rule.severity]??3) - (SEVERITY_ORDER[b.rule.severity]??3));
     }
 
     // ── Event Clustering ─────────────────────────────────────
@@ -1455,47 +1548,6 @@
       });
 
       return clusters.sort((a,b) => b.count - a.count);
-    }
-
-    // ── Root Cause Chains ────────────────────────────────────
-    const ROOT_CAUSE_CHAINS = [
-      {
-        name: 'DNS-Fehler führt zu Login-Fehler',
-        chain: [
-          { id: 1014, label: 'DNS Timeout',        icon: '🌐' },
-          { id: 5719, label: 'DC nicht erreichbar', icon: '🖧' },
-          { id: 4625, label: 'Login fehlgeschlagen', icon: '❌' },
-        ]
-      },
-      {
-        name: 'Login-Flood führt zu Kontosperrung',
-        chain: [
-          { id: 4625, label: 'Login fehlgeschlagen', icon: '❌' },
-          { id: 4740, label: 'Konto gesperrt',       icon: '🔒' },
-        ]
-      },
-      {
-        name: 'WLAN-Drop führt zu AAD-Fehler',
-        chain: [
-          { id: 10001, label: 'WLAN Disconnect',     icon: '📶' },
-          { id: 1097,  label: 'Device-Kontext weg',  icon: '🔴' },
-          { id: 1098,  label: 'Token Refresh Fehler',icon: '🔴' },
-        ]
-      },
-      {
-        name: 'AAD Token-Fehler führen zu App-Absturz',
-        chain: [
-          { id: 1098, label: 'Token Refresh Fehler', icon: '🔴' },
-          { id: 1000, label: 'App-Absturz',          icon: '💥' },
-        ]
-      },
-    ];
-
-    function detectChains(events) {
-      const eventIdSet = new Set(events.map(e => Number(e.Id)));
-      return ROOT_CAUSE_CHAINS.filter(chain =>
-        chain.chain.every(step => eventIdSet.has(step.id))
-      );
     }
 
     // ── Timeline ──────────────────────────────────────────────
@@ -1580,41 +1632,23 @@
       if (!section || !wrap) return;
 
       const items  = buildTimeline(events, clusters);
-      const chains = detectChains(events);
       countEl.textContent = items.length;
       section.hidden = items.length === 0;
 
       let activeFilter = 'all';
 
-      function renderChainBanners() {
-        chains.forEach(chain => {
-          const banner = document.createElement('div');
-          banner.className = 'tl-chain';
-          const label = document.createElement('div');
-          label.className = 'tl-chain-label';
-          label.textContent = 'Erkannte Ursachenkette: ' + chain.name;
-          const steps = document.createElement('div');
-          steps.className = 'tl-chain-steps';
-          chain.chain.forEach((step, idx) => {
-            const stepEl = document.createElement('span');
-            stepEl.textContent = step.icon + ' ' + step.label;
-            steps.appendChild(stepEl);
-            if (idx < chain.chain.length - 1) {
-              const arrow = document.createElement('span');
-              arrow.className = 'tl-chain-arrow';
-              arrow.textContent = '→';
-              steps.appendChild(arrow);
-            }
-          });
-          banner.appendChild(label);
-          banner.appendChild(steps);
-          wrap.appendChild(banner);
-        });
-      }
+      // Phase 13D: die frühere, fest codierte ROOT_CAUSE_CHAINS-Bannerprüfung wurde
+      // entfernt (Konsolidierungs-Option A, siehe Abschlussbericht Phase 13D). 3 der
+      // 4 Chains dupliziererten bereits bestehende, besser parametrisierte Correlation-
+      // Regeln (ACCOUNT_LOCKOUT_PATTERN/SECURITY_BRUTE_FORCE, WLAN_DROP_AAD_CASCADE,
+      // AAD_TOKEN_AND_SERVICE_CRASH - jeweils mit echten minCount-Schwellen statt der
+      // reinen "mindestens 1×"-Prüfung der Chains). Die einzige fachlich neue Chain
+      // (DNS→DC→Login) wurde als reguläre Correlation-Regel DNS_DC_LOGIN_CHAIN in
+      // data/correlation-rules.json übernommen und erscheint jetzt mit echtem Score
+      // in der Correlations-Sektion statt als separates Timeline-Banner.
 
       function renderItems(filter) {
         wrap.replaceChildren();
-        renderChainBanners();
         const filtered = items.filter(item => {
           if (filter === 'all') return true;
           if (filter === 'cluster') return item.type === 'cluster';
@@ -1907,14 +1941,34 @@
     }
 
     // ── Correlation Engine ───────────────────────────────────
-    function correlateEvents(events, findings) {
+    // Phase 13D (Abschnitt 12): gemeinsame Normalisierungsschicht für alle vier
+    // Correlation-Typen. Jeder Typ behält seine eigene, spezifische Rohscore-Formel
+    // (siehe jeweiliger Block unten) - nur die für Anzeige/Sortierung/Export verwendete
+    // Zahl läuft durch diese eine Funktion. Vorher deckelten groupByProcess/groupBySource/
+    // correlation bei 98, timeBurst aber bei 100 - inkonsistent zwischen den Typen (ein
+    // "perfekter" timeBurst-Treffer hätte einen höheren Maximalwert erreichen können als
+    // ein "perfekter" AND-Correlation-Treffer, ohne dass das etwas über echte Beweisstärke
+    // aussagt). Jetzt einheitlich 98 als praktisches Maximum für alle Typen - bewusst nicht
+    // 100, um nie einen Wert zu zeigen der als "100% sicher" gelesen werden könnte (siehe
+    // Vorgabe Phase 13D Abschnitt 13: "keine falsche Statistik").
+    function normalizeCorrelationScore(rawScore) {
+      return Math.round(Math.min(98, Math.max(0, rawScore)));
+    }
+
+    // Phase 13D (Abschnitt 14): der zweite Parameter "findings" war laut Audit im
+    // gesamten Funktionskörper ungenutzt (keine echte Abhängigkeit auf Findings) -
+    // ersatzlos entfernt statt künstlich verwendet, macht die API ehrlicher. Aufrufer
+    // siehe renderResults(): correlateEvents(events).
+    function correlateEvents(events) {
       const results = [];
 
       CORRELATIONS.forEach(rule => {
 
         // ── Type: groupByProcess ────────────────────────────
         if (rule.type === 'groupByProcess') {
-          const matched = events.filter(e => Number(e.Id) === rule.eventId);
+          // Phase 13B: eventId (Singular) -> eventIds (Array), Legacy-Fallback bleibt bestehen.
+          const ruleEventIds = rule.eventIds || (rule.eventId !== undefined ? [rule.eventId] : []);
+          const matched = events.filter(e => ruleEventIds.includes(Number(e.Id)));
           if (!matched.length) return;
 
           const groups = {};
@@ -1935,13 +1989,13 @@
           const topProc = Object.entries(groups).sort((a,b) => b[1]-a[1])[0];
           if (!topProc || topProc[1] < rule.minCount) return;
 
-          const total = matched.length;
-          const pct   = Math.round((topProc[1] / total) * 100);
-          const score = Math.min(98, 40 + pct * 0.6);
+          const total   = matched.length;
+          const pct     = Math.round((topProc[1] / total) * 100);
+          const rawScore = 40 + pct * 0.6;
 
           results.push({
             rule,
-            score:       Math.round(score),
+            score:       normalizeCorrelationScore(rawScore),
             summary:     `${pct}% der Abstürze stammen von: ${topProc[0]} (${topProc[1]}× von ${total} Events)`,
             detail:      `Dominanter Prozess: ${topProc[0]}`,
             matchedCount: topProc[1],
@@ -1952,7 +2006,16 @@
 
         // ── Type: timeBurst ─────────────────────────────────
         if (rule.type === 'timeBurst') {
-          const errorEvents = events.filter(e => e.Level === 'Critical' || e.Level === 'Error');
+          // Phase 13D (Abschnitt 8): Events die als bekannt harmlos MIT affectsScore:false
+          // klassifiziert sind, fließen hier bewusst nicht in die generische Fehlerhäufungs-
+          // Zählung ein (sie werden nicht aus "events" gelöscht - siehe isHarmless()/
+          // matchesHarmlessRule -, andere, ID-spezifische Correlation-Typen zählen sie
+          // weiterhin normal, siehe Abschlussbericht Phase 13D für die Begründung dieser
+          // bewusst engen Anwendung nur auf die beiden generischen "Rauschvolumen"-Typen
+          // timeBurst/groupBySource).
+          const errorEvents = events
+            .filter(e => e.Level === 'Critical' || e.Level === 'Error')
+            .filter(e => { const h = isHarmless(e, events); return !(h.harmless && !h.affectsScore); });
           if (errorEvents.length < rule.minErrorsInWindow) return;
 
           // Slide a time window
@@ -1970,11 +2033,11 @@
           });
 
           if (maxBurst < rule.minErrorsInWindow) return;
-          const score = Math.min(100, 30 + maxBurst * 2);
+          const rawScore = 30 + maxBurst * 2;
 
           results.push({
             rule,
-            score:       Math.round(score),
+            score:       normalizeCorrelationScore(rawScore),
             summary:     `${maxBurst} Fehler in ${rule.windowMinutes} Minuten (ab ${(burstTime||'').substring(0,16).replace('T',' ')})`,
             detail:      `Ungewöhnliche Fehlerhäufung erkannt. Mögliche Ursache: Update, Dienst-Neustart oder Verbindungsabbruch.`,
             matchedCount: maxBurst,
@@ -1987,15 +2050,15 @@
           const operator   = rule.operator || 'AND';
           const conditions = rule.conditions || [];
           const condResults = conditions.map(cond => {
-            // Match by eventId, eventIds, category, source
+            // Match by eventIds, category, sources.
+            // Phase 13B: eventId/source (Singular) -> eventIds/sources (Array);
+            // Legacy-Fallback auf die Singular-Felder bleibt bestehen.
+            const condEventIds = cond.eventIds || (cond.eventId !== undefined ? [cond.eventId] : null);
+            const condSources  = cond.sources  || (cond.source  !== undefined ? [cond.source]  : null);
             const matched = events.filter(e => {
-              const idMatch = cond.eventId
-                ? Number(e.Id) === cond.eventId
-                : cond.eventIds
-                  ? cond.eventIds.includes(Number(e.Id))
-                  : true;
-              const srcMatch = cond.source
-                ? (e.ProviderName||'').toLowerCase().includes(cond.source.toLowerCase())
+              const idMatch = condEventIds ? condEventIds.includes(Number(e.Id)) : true;
+              const srcMatch = condSources
+                ? condSources.some(s => (e.ProviderName||'').toLowerCase().includes(s.toLowerCase()))
                 : true;
               const catMatch = cond.category
                 ? (e.Category||'') === cond.category
@@ -2012,10 +2075,10 @@
 
           const totalMatched = condResults.reduce((s, r) => s + r.count, 0);
           const metCount     = condResults.filter(r => r.met).length;
-          // Score: base 50 if OR, higher if more conditions met
-          const score = Math.min(100, operator === 'AND'
+          // Rohscore: Basis 50 bei OR, höher wenn mehr Bedingungen erfüllt sind
+          const rawScore = operator === 'AND'
             ? 55 + totalMatched * 2
-            : 40 + (metCount / conditions.length) * 40 + totalMatched);
+            : 40 + (metCount / conditions.length) * 40 + totalMatched;
 
           const condSummary = condResults
             .map(r => `${r.count}× ${r.cond.eventId || r.cond.eventIds?.join('/') || r.cond.category || '?'}`)
@@ -2023,7 +2086,7 @@
 
           results.push({
             rule,
-            score:       Math.round(Math.min(score, 98)),
+            score:       normalizeCorrelationScore(rawScore),
             summary:     condSummary,
             detail:      `${operator === 'AND' ? 'Alle' : 'Mindestens eine'} Bedingung erfüllt.`,
             matchedCount: totalMatched,
@@ -2033,9 +2096,11 @@
         // ── Type: groupBySource ─────────────────────────────
         // Erkennt wenn eine einzelne Quelle den Großteil aller Fehler verursacht
         if (rule.type === 'groupBySource') {
-          const errorEvents = events.filter(e =>
-            e.Level === 'Critical' || e.Level === 'Error'
-          );
+          // Phase 13D (Abschnitt 8): siehe Begründung beim timeBurst-Typ oben - dieselbe
+          // bewusst enge affectsScore-Filterung, nur für die beiden generischen Typen.
+          const errorEvents = events
+            .filter(e => e.Level === 'Critical' || e.Level === 'Error')
+            .filter(e => { const h = isHarmless(e, events); return !(h.harmless && !h.affectsScore); });
           if (errorEvents.length < (rule.minCount || 20)) return;
 
           // Gruppieren nach Provider
@@ -2051,10 +2116,10 @@
           const pct = Math.round((top[1] / errorEvents.length) * 100);
           if (pct < (rule.dominancePercent || 40)) return;
 
-          const score = Math.min(98, 35 + pct * 0.6);
+          const rawScore = 35 + pct * 0.6;
           results.push({
             rule,
-            score:        Math.round(score),
+            score:        normalizeCorrelationScore(rawScore),
             summary:      `${pct}% aller Fehler stammen von: ${top[0]} (${top[1]}× von ${errorEvents.length} Fehler-Events)`,
             detail:       `Dominante Fehlerquelle identifiziert.`,
             matchedCount: top[1],
@@ -2096,14 +2161,15 @@
 
         const scoreEl = document.createElement('div');
         scoreEl.className = 'corr-score sev-score-' + rule.severity;
-        scoreEl.textContent = res.score + '%';
+        scoreEl.textContent = res.score;
+        scoreEl.title = 'Konfidenz-Score der Correlation-Engine (heuristischer Wert)';
 
         const titleWrap = document.createElement('div');
         titleWrap.className = 'corr-title-wrap';
 
         const sevPill = document.createElement('span');
         sevPill.className = 'sev-pill sev-' + rule.severity;
-        sevPill.textContent = rule.severity;
+        sevPill.textContent = severityLabel(rule.severity);
 
         const title = document.createElement('span');
         title.className = 'corr-title';
@@ -2170,27 +2236,86 @@
     // corrResults wird gesetzt sobald correlateEvents läuft
     let _corrResults = [];
 
-    function isHarmless(event) {
-      const match = HARMLESS.find(h => {
-        const idMatch  = h.eventId === Number(event.Id);
-        const srcMatch = !h.source || (event.ProviderName||'').toLowerCase().includes(h.source.toLowerCase());
-        const excMatch = !h.excludeSources || !h.excludeSources.some(s =>
-          (event.ProviderName||'').toLowerCase().includes(s.toLowerCase()));
-        return idMatch && srcMatch && excMatch;
-      });
-      if (!match) return null;
+    // Phase 13B: eventId/source (Singular) -> eventIds/sources (Array); Legacy-Fallback
+    // auf die Singular-Felder bleibt bestehen. Aus isHarmless() extrahiert (Phase 13D),
+    // damit dieselbe Match-Logik auch für die minCountForConcern-Zählung über den
+    // gesamten Datensatz wiederverwendet werden kann, statt sie zu duplizieren.
+    function matchesHarmlessRule(h, event) {
+      const hIds  = h.eventIds || (h.eventId !== undefined ? [h.eventId] : []);
+      const hSrcs = h.sources  || (h.source  !== undefined ? [h.source]  : null);
+      const idMatch  = hIds.includes(Number(event.Id));
+      const srcMatch = !hSrcs || hSrcs.some(s => (event.ProviderName||'').toLowerCase().includes(s.toLowerCase()));
+      const excMatch = !h.excludeSources || !h.excludeSources.some(s =>
+        (event.ProviderName||'').toLowerCase().includes(s.toLowerCase()));
+      return idMatch && srcMatch && excMatch;
+    }
+
+    // Phase 13D: strukturiertes Ergebnis statt nur "Match-Objekt oder null" (siehe
+    // Abschlussbericht Phase 13D, Abschnitt "Known Harmless"). `allEventsForContext`
+    // ist optional (Legacy-Aufrufe ohne zweites Argument bleiben lauffähig, nur
+    // minCountForConcern kann dann nicht ausgewertet werden - fällt dann auf
+    // "harmless" ohne Schwellenprüfung zurück, keine neue Fehlklassifikation).
+    function isHarmless(event, allEventsForContext) {
+      const match = HARMLESS.find(h => matchesHarmlessRule(h, event));
+      if (!match) return { matched: false, harmless: false };
+
+      const result = {
+        matched:          true,
+        rule:             match,
+        harmless:         true,
+        reason:           match.reason,
+        reduceSeverity:   !!match.reduceSeverity,
+        affectsScore:     match.affectsScore !== false,
+        thresholdReached: false,
+      };
 
       // Context-Awareness: wenn eine Korrelation getriggert hat die diesen Event betrifft
-      // → NICHT als harmlos markieren
+      // → NICHT als harmlos markieren (unverändert seit Phase 13B/13C).
       if (match.onlyHarmlessIfNoCorrelation && match.correlationIds?.length) {
         const correlationActive = _corrResults.some(r =>
           match.correlationIds.includes(r.rule.id)
         );
-        if (correlationActive) return null; // im Kontext nicht harmlos
+        if (correlationActive) {
+          result.harmless = false;
+          result.reason   = 'Im Kontext einer aktiven Correlation (' + match.correlationIds.join(', ') + ') nicht mehr als harmlos gewertet.';
+          return result;
+        }
       }
 
-      // minCountForConcern: nur harmlos wenn einzeln – wird von Aufrufer geprüft
-      return match;
+      // minCountForConcern (Phase 13D, siehe docs/eventlog-rule-schema.md): bis zu dieser
+      // Anzahl an Vorkommen (gezählt über den GESAMTEN analysierten Datensatz, nicht nur
+      // die aktuell gefilterte/angezeigte Teilmenge) gilt das Event als bekannt harmlos -
+      // ab Erreichen der Schwelle nicht mehr automatisch.
+      if (match.minCountForConcern && allEventsForContext) {
+        const matchCount = allEventsForContext.filter(e2 => matchesHarmlessRule(match, e2)).length;
+        if (matchCount >= match.minCountForConcern) {
+          result.thresholdReached = true;
+          result.harmless = false;
+          result.reason   = `Schwelle überschritten: ${matchCount}× aufgetreten (ab ${match.minCountForConcern} nicht mehr automatisch harmlos).`;
+        }
+      }
+
+      return result;
+    }
+
+    // Phase 13D (Abschnitt 7): reduceSeverity wirkt auf die ANGEZEIGTE Finding-Severity,
+    // NICHT auf rule.severity selbst (das bleibt die unveränderte Originaldefinition).
+    // Ein Finding wird nur abgeschwächt, wenn ALLE seine gematchten Events durch eine
+    // aktive (harmless && reduceSeverity)-Klassifikation gedeckt sind - ein einzelnes
+    // nicht gedecktes Event genügt, um die volle Severity zu behalten. Muss NACH
+    // correlateEvents() (bzw. dem Setzen von _corrResults) aufgerufen werden, da
+    // isHarmless() für die Korrelations-Kontext-Awareness _corrResults benötigt.
+    function applyHarmlessSeverityReduction(findings, allEventsForContext) {
+      findings.forEach(finding => {
+        const allReduced = finding.events.length > 0 && finding.events.every(e => {
+          const h = isHarmless(e, allEventsForContext);
+          return h.harmless && h.reduceSeverity;
+        });
+        finding.effectiveSeverity = allReduced
+          ? (SEVERITY_REDUCTION_MAP[finding.rule.severity] || finding.rule.severity)
+          : finding.rule.severity;
+      });
+      findings.sort((a,b) => (SEVERITY_ORDER[a.effectiveSeverity]??3) - (SEVERITY_ORDER[b.effectiveSeverity]??3));
     }
 
     // ── Top Root Cause Banner ─────────────────────────────────
@@ -2210,11 +2335,12 @@
 
       const label = document.createElement('span');
       label.className = 'trc-label';
-      label.textContent = 'Wahrscheinlichste Ursache:';
+      label.textContent = 'Stärkste Korrelation · Konfidenz';
 
       const score = document.createElement('span');
       score.className = 'trc-score sev-score-' + top.rule.severity;
-      score.textContent = top.score + '%';
+      score.textContent = top.score;
+      score.title = 'Konfidenz-Score der Correlation-Engine (heuristischer Wert)';
 
       const text = document.createElement('span');
       text.className = 'trc-text';
@@ -2247,18 +2373,21 @@
       document.getElementById('no-findings').hidden = findings.length > 0;
       if (!findings.length) return;
 
-      findings.forEach(({ rule, events }) => {
+      findings.forEach(({ rule, events, effectiveSeverity }) => {
+        // Phase 13D: effectiveSeverity (Known-Harmless-Abschwächung) statt rule.severity
+        // für die ANZEIGE - rule.severity bleibt als Originaldefinition unangetastet.
+        const displaySeverity = effectiveSeverity || rule.severity;
         const card = document.createElement('div');
         card.className = 'finding-card';
         card.dataset.category = rule.category;
-        card.dataset.sev      = rule.severity;
+        card.dataset.sev      = displaySeverity;
 
         const header = document.createElement('div');
         header.className = 'finding-header';
 
         const sevPill = document.createElement('span');
-        sevPill.className = 'sev-pill sev-' + rule.severity;
-        sevPill.textContent = rule.severity;
+        sevPill.className = 'sev-pill sev-' + displaySeverity;
+        sevPill.textContent = severityLabel(displaySeverity);
 
         const title = document.createElement('span');
         title.className = 'finding-title';
@@ -2375,11 +2504,12 @@
           { text:(e.Message||'').substring(0,120), muted:true, maxw:'300px' },
         ];
 
-        // Harmless badge in last cell
-        const harmless = isHarmless(e);
-        if (harmless) {
+        // Harmless badge in last cell (Phase 13D: strukturiertes isHarmless()-Ergebnis,
+        // allEvents als Kontext für minCountForConcern über den Gesamtdatensatz).
+        const harmlessResult = isHarmless(e, allEvents);
+        if (harmlessResult.harmless) {
           const lastCell = cells[cells.length - 1];
-          lastCell.harmlessLabel = harmless.label;
+          lastCell.harmlessLabel = harmlessResult.rule.label;
         }
         cells.forEach(cell => {
           const td = document.createElement('td');

@@ -1,13 +1,15 @@
 {
   "version": "1.0",
-  "rules": [
+  "correlationRules": [
     {
       "id": "APP_CRASH_LOOP",
       "name": "Anwendung in Crash-Schleife",
       "type": "groupByProcess",
       "severity": "critical",
       "category": "Stabilität",
-      "eventId": 1000,
+      "eventIds": [
+        1000
+      ],
       "minCount": 5,
       "description": "Eine einzelne Anwendung stürzt wiederholt ab. Das deutet auf ein tieferes Problem hin: beschädigte Installation, fehlende Abhängigkeit, Speicherproblem oder inkompatibles Update.",
       "recommendations": [
@@ -39,8 +41,12 @@
       "category": "Netzwerk",
       "conditions": [
         {
-          "eventId": 5719,
-          "source": "NETLOGON",
+          "eventIds": [
+            5719
+          ],
+          "sources": [
+            "NETLOGON"
+          ],
           "minCount": 1
         },
         {
@@ -92,7 +98,9 @@
             52,
             153
           ],
-          "source": "disk",
+          "sources": [
+            "disk"
+          ],
           "minCount": 1
         },
         {
@@ -136,11 +144,15 @@
       "category": "Stabilität",
       "conditions": [
         {
-          "eventId": 41,
+          "eventIds": [
+            41
+          ],
           "minCount": 2
         },
         {
-          "eventId": 6008,
+          "eventIds": [
+            6008
+          ],
           "minCount": 2
         }
       ],
@@ -181,11 +193,15 @@
       "category": "Sicherheit",
       "conditions": [
         {
-          "eventId": 4625,
+          "eventIds": [
+            4625
+          ],
           "minCount": 20
         },
         {
-          "eventId": 4740,
+          "eventIds": [
+            4740
+          ],
           "minCount": 1
         }
       ],
@@ -287,8 +303,12 @@
       "category": "Netzwerk",
       "conditions": [
         {
-          "eventId": 5719,
-          "source": "NETLOGON",
+          "eventIds": [
+            5719
+          ],
+          "sources": [
+            "NETLOGON"
+          ],
           "minCount": 1
         },
         {
@@ -340,7 +360,9 @@
             1000,
             1001
           ],
-          "source": "WINWORD",
+          "sources": [
+            "WINWORD"
+          ],
           "minCount": 1
         },
         {
@@ -444,7 +466,9 @@
           "minCount": 3
         },
         {
-          "eventId": 1014,
+          "eventIds": [
+            1014
+          ],
           "minCount": 1
         }
       ],
@@ -597,7 +621,9 @@
             24,
             25
           ],
-          "source": "WindowsUpdateClient",
+          "sources": [
+            "WindowsUpdateClient"
+          ],
           "minCount": 2
         },
         {
@@ -606,7 +632,9 @@
             8,
             14
           ],
-          "source": "Microsoft-Windows-Servicing",
+          "sources": [
+            "Microsoft-Windows-Servicing"
+          ],
           "minCount": 1
         }
       ],
@@ -652,7 +680,9 @@
             5010,
             5012
           ],
-          "source": "Microsoft-Windows-Windows Defender",
+          "sources": [
+            "Microsoft-Windows-Windows Defender"
+          ],
           "minCount": 1
         },
         {
@@ -660,7 +690,9 @@
             3002,
             3007
           ],
-          "source": "Microsoft-Windows-Windows Defender",
+          "sources": [
+            "Microsoft-Windows-Windows Defender"
+          ],
           "minCount": 1
         }
       ],
@@ -701,11 +733,15 @@
       "category": "Sicherheit",
       "conditions": [
         {
-          "eventId": 4740,
+          "eventIds": [
+            4740
+          ],
           "minCount": 2
         },
         {
-          "eventId": 4625,
+          "eventIds": [
+            4625
+          ],
           "minCount": 15
         }
       ],
@@ -784,7 +820,9 @@
           "minCount": 2
         },
         {
-          "eventId": 6005,
+          "eventIds": [
+            6005
+          ],
           "minCount": 1
         }
       ],
@@ -833,7 +871,9 @@
           "minCount": 2
         },
         {
-          "eventId": 1014,
+          "eventIds": [
+            1014
+          ],
           "minCount": 1
         }
       ],
@@ -878,7 +918,9 @@
             1098,
             1104
           ],
-          "source": "Microsoft-Windows-AAD",
+          "sources": [
+            "Microsoft-Windows-AAD"
+          ],
           "minCount": 3
         },
         {
@@ -911,6 +953,58 @@
       ]
     },
     {
+      "id": "DNS_DC_LOGIN_CHAIN",
+      "name": "DNS-Fehler mit Folgeausfall bei Domänenanmeldung",
+      "type": "correlation",
+      "operator": "AND",
+      "severity": "error",
+      "category": "Netzwerk",
+      "conditions": [
+        {
+          "eventIds": [
+            1014
+          ],
+          "minCount": 1
+        },
+        {
+          "eventIds": [
+            5719
+          ],
+          "sources": [
+            "NETLOGON"
+          ],
+          "minCount": 1
+        },
+        {
+          "eventIds": [
+            4625
+          ],
+          "minCount": 1
+        }
+      ],
+      "description": "DNS-Auflösung schlägt fehl, der Domänencontroller ist über NETLOGON nicht erreichbar und eine Anmeldung schlägt fehl - klassische dreistufige Fehlerkette: DNS kann den DC nicht finden, dadurch scheitert die Domänenanmeldung. Phase 13D: konsolidiert aus der bisherigen, fest codierten Timeline-'Ursachenkette' DNS→DC→Login (Konsolidierungs-Option A) - fachlich identisch, jetzt Teil des einheitlichen Correlation-Schemas mit echter Score-Berechnung statt einer reinen Ja/Nein-Bannerprüfung.",
+      "recommendations": [
+        {
+          "text": "DC per DNS prüfen",
+          "cmd": "nslookup {domain}\nnltest /dsgetdc:{domain}",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "DNS-Cache leeren",
+          "cmd": "ipconfig /flushdns\nipconfig /registerdns",
+          "type": "fix",
+          "risk": "low"
+        },
+        {
+          "text": "Fehlgeschlagene Anmeldungen im betroffenen Zeitraum prüfen",
+          "cmd": "Get-WinEvent -FilterHashtable @{LogName='Security';Id=4625} -MaxEvents 20 -EA 0 | Select TimeCreated, @{n='User';e={$_.Properties[5].Value}} | Format-Table -AutoSize",
+          "type": "diagnose",
+          "risk": "low"
+        }
+      ]
+    },
+    {
       "id": "WLAN_DROP_AAD_CASCADE",
       "name": "WLAN-Verbindungsabbruch verursacht AAD Token-Fehler-Kaskade",
       "type": "correlation",
@@ -929,7 +1023,9 @@
             1097,
             1098
           ],
-          "source": "Microsoft-Windows-AAD",
+          "sources": [
+            "Microsoft-Windows-AAD"
+          ],
           "minCount": 10
         }
       ],

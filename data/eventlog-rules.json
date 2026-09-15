@@ -1,7 +1,7 @@
 {
   "version": "1.1",
   "lastUpdated": "2026-05-24",
-  "rules": [
+  "eventRules": [
     {
       "id": "KERNEL_POWER_41",
       "name": "Ungeplanter Neustart (Kernel-Power)",
@@ -13,7 +13,7 @@
       "sources": [
         "Microsoft-Windows-Kernel-Power"
       ],
-      "minOccurrences": 1,
+      "minCount": 1,
       "description": "Das System wurde unerwartet neu gestartet. Ursachen: instabiler Treiber, Überhitzung, defekter RAM oder Netzteil.",
       "recommendations": [
         {
@@ -69,7 +69,7 @@
       "sources": [
         "Application Error"
       ],
-      "minOccurrences": 1,
+      "minCount": 1,
       "description": "Eine Anwendung ist unerwartet abgestürzt. Die Fehlermeldung enthält den Prozessnamen und die fehlerhafte Modul-DLL.",
       "recommendations": [
         {
@@ -125,8 +125,8 @@
       "sources": [
         "Microsoft-Windows-WLAN-AutoConfig"
       ],
-      "minOccurrences": 2,
-      "timeWindowMinutes": 480,
+      "minCount": 2,
+      "windowMinutes": 480,
       "description": "WLAN-Adapter verliert die Verbindung, häufig nach dem Aufwachen aus dem Standby. Ursache: Energiesparmodus des Adapters.",
       "recommendations": [
         {
@@ -172,8 +172,8 @@
       "sources": [
         "Microsoft-Windows-DNS-Client"
       ],
-      "minOccurrences": 3,
-      "timeWindowMinutes": 60,
+      "minCount": 3,
+      "windowMinutes": 60,
       "description": "DNS-Abfragen schlagen wiederholt fehl. Netzwerkverbindung oder DNS-Server nicht erreichbar.",
       "recommendations": [
         {
@@ -226,7 +226,7 @@
       "sources": [
         "Service Control Manager"
       ],
-      "minOccurrences": 1,
+      "minCount": 1,
       "description": "Ein Windows-Dienst konnte nicht gestartet werden oder ist unerwartet beendet worden.",
       "recommendations": [
         {
@@ -279,7 +279,7 @@
         "Ntfs",
         "volmgr"
       ],
-      "minOccurrences": 1,
+      "minCount": 1,
       "description": "Fehler beim Lesen/Schreiben auf der Festplatte. Kann auf defekte Sektoren oder eine failing Festplatte hinweisen.",
       "recommendations": [
         {
@@ -326,7 +326,7 @@
       "sources": [
         "Microsoft-Windows-Security-Auditing"
       ],
-      "minOccurrences": 1,
+      "minCount": 1,
       "description": "Ein Benutzerkonto wurde durch zu viele fehlgeschlagene Anmeldeversuche gesperrt.",
       "recommendations": [
         {
@@ -373,7 +373,7 @@
       "sources": [
         "EventLog"
       ],
-      "minOccurrences": 1,
+      "minCount": 1,
       "description": "Windows wurde nicht ordnungsgemäß heruntergefahren. Häufig Stromausfall, Kernel-Panic oder Hardware-Fehler.",
       "recommendations": [
         {
@@ -421,8 +421,8 @@
       "sources": [
         "Microsoft-Windows-TerminalServices-RemoteConnectionManager"
       ],
-      "minOccurrences": 3,
-      "timeWindowMinutes": 60,
+      "minCount": 3,
+      "windowMinutes": 60,
       "description": "Mehrere fehlgeschlagene RDS-Verbindungsversuche. Ursachen: Lizenzproblem, Zertifikat abgelaufen oder Netzwerkproblem.",
       "recommendations": [
         {
@@ -473,7 +473,7 @@
         "VSS",
         "volsnap"
       ],
-      "minOccurrences": 1,
+      "minCount": 1,
       "description": "Volume Shadow Copy Service Fehler. Betrifft Backups, Systemwiederherstellung und Datei-Snapshots.",
       "recommendations": [
         {
@@ -528,7 +528,7 @@
         "mso.dll",
         "mso20win32client.dll"
       ],
-      "minOccurrences": 1,
+      "minCount": 1,
       "description": "Office-Anwendung stürzt auf einem RDS/Terminalserver ab – häufig durch falsche Lizenz oder fehlende SharedComputerActivation. Microsoft 365 Apps for Business ist NICHT für Terminalserver lizenziert, nur Apps for Enterprise.",
       "recommendations": [
         {
@@ -580,7 +580,7 @@
         "Microsoft-Windows-TerminalServices-Licensing",
         "TermServLicensing"
       ],
-      "minOccurrences": 1,
+      "minCount": 1,
       "description": "Der RDS-Lizenzserver ist nicht erreichbar oder die RDS-Lizenzen sind abgelaufen. Benutzer können sich nach der Karenzzeit (120 Tage) nicht mehr einloggen.",
       "recommendations": [
         {
@@ -629,8 +629,8 @@
       "sources": [
         "Microsoft-Windows-Security-Auditing"
       ],
-      "minOccurrences": 3,
-      "timeWindowMinutes": 120,
+      "minCount": 3,
+      "windowMinutes": 120,
       "description": "Dasselbe Konto wird wiederholt gesperrt. Typische Ursachen: gespeichertes altes Passwort in Outlook/VPN/geplanten Tasks, aktive Sessions auf anderem Gerät oder tatsächlicher Angriff.",
       "recommendations": [
         {
@@ -686,7 +686,7 @@
         "Microsoft-Windows-Resource-Exhaustion-Detector",
         "Application"
       ],
-      "minOccurrences": 1,
+      "minCount": 1,
       "description": "Eine Partition ist kritisch voll – besonders gefährlich bei SQL-Backup- oder Log-Partitionen. VSS-Schattenkopien, SQL-Backups und Transaktionslogs können fehlschlagen.",
       "recommendations": [
         {
@@ -746,8 +746,8 @@
         "Microsoft.AAD",
         "MicrosoftOfficeHub"
       ],
-      "minOccurrences": 2,
-      "timeWindowMinutes": 60,
+      "minCount": 2,
+      "windowMinutes": 60,
       "description": "OneDrive oder M365-Dienste können sich nicht authentifizieren. Häufig abgelaufener Token, Proxy-Probleme oder Conditional Access-Richtlinien.",
       "recommendations": [
         {
@@ -805,8 +805,8 @@
         "NETLOGON",
         "Microsoft-Windows-Security-Auditing"
       ],
-      "minOccurrences": 2,
-      "timeWindowMinutes": 30,
+      "minCount": 2,
+      "windowMinutes": 30,
       "description": "Der Client kann keine Verbindung zum Domänenkontroller aufbauen. Logins schlagen fehl, GPOs werden nicht angewendet, Kerberos-Tickets können nicht erneuert werden.",
       "recommendations": [
         {
@@ -863,7 +863,7 @@
         "Microsoft-Windows-Resource-Exhaustion-Detector",
         "srv"
       ],
-      "minOccurrences": 1,
+      "minCount": 1,
       "description": "Das System hat nicht genug freien Arbeitsspeicher oder der nicht-ausgelagerte Pool ist erschöpft. Führt zu Performance-Einbrüchen, Dienst-Abstürzen und kann zu BSOD führen.",
       "recommendations": [
         {
@@ -916,8 +916,8 @@
       "sources": [
         "Microsoft-Windows-WindowsUpdateClient"
       ],
-      "minOccurrences": 2,
-      "timeWindowMinutes": 1440,
+      "minCount": 2,
+      "windowMinutes": 1440,
       "description": "Windows Update schlägt wiederholt fehl. Kann auf beschädigte Update-Komponenten, Speichermangel oder Netzwerkprobleme hinweisen.",
       "recommendations": [
         {
@@ -969,7 +969,7 @@
         "Print Spooler",
         "Druckwarteschlange"
       ],
-      "minOccurrences": 1,
+      "minCount": 1,
       "description": "Der Druckspooler-Dienst ist abgestürzt oder wurde unerwartet beendet. Alle Druckaufträge werden blockiert bis der Dienst neu gestartet wird.",
       "recommendations": [
         {
@@ -1023,8 +1023,8 @@
         "SearchHost.exe",
         "StartMenuExperienceHost.exe"
       ],
-      "minOccurrences": 2,
-      "timeWindowMinutes": 60,
+      "minCount": 2,
+      "windowMinutes": 60,
       "description": "Windows Explorer oder Taskleisten-Komponenten stürzen wiederholt ab. Häufig nach fehlgeschlagenen Windows Updates oder durch defekte Shell-Erweiterungen.",
       "recommendations": [
         {
@@ -1072,7 +1072,7 @@
       "sources": [
         "Microsoft-Windows-AAD"
       ],
-      "minOccurrences": 1,
+      "minCount": 1,
       "recommendations": [
         {
           "text": "Benutzer vollständig abmelden und neu anmelden (alle Apps schließen)",
@@ -1116,7 +1116,7 @@
       "sources": [
         "Microsoft-Windows-AAD"
       ],
-      "minOccurrences": 3,
+      "minCount": 3,
       "recommendations": [
         {
           "text": "Benutzer auffordern sich erneut anzumelden",
@@ -1149,7 +1149,7 @@
       "sources": [
         "Microsoft-Windows-AAD"
       ],
-      "minOccurrences": 10,
+      "minCount": 10,
       "recommendations": [
         {
           "text": "Alle Microsoft-Apps schließen und AAD Token Cache leeren",
@@ -1188,7 +1188,7 @@
       "sources": [
         "Microsoft-Windows-AAD"
       ],
-      "minOccurrences": 5,
+      "minCount": 5,
       "recommendations": [
         {
           "text": "Gerätestatus prüfen – AzureAdJoined und AzureAdPrt müssen 'YES' sein",
@@ -1228,7 +1228,7 @@
       "sources": [
         "NETLOGON"
       ],
-      "minOccurrences": 2,
+      "minCount": 2,
       "recommendations": [
         {
           "text": "DC-Erreichbarkeit prüfen",

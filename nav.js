@@ -26,7 +26,7 @@
     {
       id:'analyzer', label:'Analyzer', icon:'📋', color:'#e8b339', group:true,
       children: [
-        { id:'eventlog', href:'eventlog.html', label:'Log Analyzer',   icon:'📋', color:'#e8b339', desc:'Windows Event Logs analysieren' },
+        { id:'eventlog', href:'eventlog.html', label:'Event Log Analyzer',   icon:'📋', color:'#e8b339', desc:'Windows Event Logs analysieren' },
         { id:'entra',    href:'entra.html',    label:'Entra Analyzer', icon:'🔐', color:'#7c8cf8', desc:'Sign-In Logs analysieren' },
         { id:'har',      href:'har.html',      label:'HAR Analyzer',   icon:'🌐', color:'#60a5fa', desc:'Browser Sessions analysieren' },
         { id:'gpo',      href:'gpo.html',      label:'GPO Analyzer',   icon:'🗂️', color:'#2dd4bf', desc:'GPO-Snapshots analysieren' },

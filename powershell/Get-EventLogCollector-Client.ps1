@@ -1,9 +1,9 @@
 #Requires -RunAsAdministrator
 <#
 .SYNOPSIS
-    Event Log Collector fuer Windows 11 Clients - AdminSheet Event Log Analyzer
+    Event Log Collector fuer Windows 11 Clients - support.sheet Event Log Analyzer
 .NOTES
-    Autor: AdminSheet | Version: 1.3
+    Autor: support.sheet | Version: 1.4
     Benoetigt: PowerShell 5.1+, Admin-Rechte
     Kompatibel: Windows 10/11
 #>
@@ -13,7 +13,7 @@ $ErrorActionPreference = 'SilentlyContinue'
 # --- Zeitraum-Auswahl ---
 Write-Host ""
 Write-Host "======================================================" -ForegroundColor Cyan
-Write-Host "   AdminSheet - Event Log Collector (Windows Client)  " -ForegroundColor Cyan
+Write-Host " support.sheet - Event Log Collector (Windows Client) " -ForegroundColor Cyan
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Zeitraum auswaehlen:" -ForegroundColor Yellow
@@ -165,6 +165,72 @@ try {
     $defenderRT = $mpStatus.RealTimeProtectionEnabled
 } catch {}
 
+# Security Protection / Endpoint-Schutz (Phase 13C)
+# Quelle: WMI-Namespace root\SecurityCenter2, Klasse AntiVirusProduct - dieselbe
+# Datenquelle, aus der auch das Windows Sicherheitscenter (Action Center) seine
+# Anzeige "Viren- und Bedrohungsschutz" speist. Liefert ALLE beim Betriebssystem
+# registrierten AV-/Endpoint-Produkte (Microsoft Defender UND Drittanbieter wie
+# ESET/Bitdefender/Sophos/SentinelOne/CrowdStrike/Trend Micro etc.), sofern diese
+# sich ordnungsgemaess registrieren - kein Raten anhand von Prozessnamen.
+$securityProviders = @()
+$securityProtectionSource = 'unavailable'
+
+try {
+    $avProducts = Get-CimInstance -Namespace 'root\SecurityCenter2' -ClassName AntiVirusProduct -ErrorAction Stop
+    $securityProtectionSource = 'SecurityCenter2'
+    foreach ($av in $avProducts) {
+        $isDefenderProduct = $av.displayName -match 'Windows Defender|Microsoft Defender'
+        # Best-effort-Interpretation des von Microsoft nicht offiziell dokumentierten
+        # WSC_SECURITY_PRODUCT_STATE-Bitmasks (productState) - seit Jahren in der
+        # Windows-Admin-Community etabliertes Verfahren: Bit 0x1000 zeigt an, ob der
+        # Echtzeitschutz des jeweiligen Produkts aktiv ist.
+        $isEnabled = (([int]$av.productState) -band 0x1000) -ne 0
+        $securityProviders += @{
+            name  = $av.displayName
+            type  = if ($isDefenderProduct) { 'defender' } else { 'thirdParty' }
+            state = if ($isEnabled) { 'active' } else { 'inactive' }
+        }
+    }
+} catch {
+    # root\SecurityCenter2 nicht verfuegbar - $securityProtectionSource bleibt 'unavailable'
+}
+
+# Falls SecurityCenter2 keine Defender-Zeile geliefert hat (Namespace nicht verfuegbar
+# oder Defender hat sich dort nicht registriert), Defender-Status ergaenzend ueber die
+# offiziell von Microsoft dokumentierte Quelle (Get-MpComputerStatus, s.o.) eintragen.
+if (-not ($securityProviders | Where-Object { $_.type -eq 'defender' })) {
+    if ($null -ne $defenderRT) {
+        $securityProviders += @{
+            name  = 'Windows Defender'
+            type  = 'defender'
+            state = if ($defenderRT) { 'active' } else { 'inactive' }
+        }
+        if ($securityProtectionSource -eq 'unavailable') { $securityProtectionSource = 'DefenderOnly' }
+    }
+}
+
+$protectionStatus = 'unknown'
+if ($securityProtectionSource -ne 'unavailable') {
+    $anyActive = [bool]($securityProviders | Where-Object { $_.state -eq 'active' })
+    if ($anyActive) {
+        $protectionStatus = 'active'
+    } elseif ($securityProtectionSource -eq 'SecurityCenter2') {
+        # SecurityCenter2 liefert alle registrierten Provider (auch inaktive) - wenn
+        # keiner aktiv ist, ist "kein Schutz" eine belastbare Aussage.
+        $protectionStatus = 'none'
+    } else {
+        # Nur der Defender-Status ist bekannt (Fallback) - ueber ggf. vorhandene
+        # Drittanbieter-Software liegt keine Information vor.
+        $protectionStatus = 'unknown'
+    }
+}
+
+$securityProtection = @{
+    source           = $securityProtectionSource
+    providers        = $securityProviders
+    protectionStatus = $protectionStatus
+}
+
 # BitLocker
 $bitlockerStatus = $null
 try {
@@ -206,7 +272,7 @@ $metadata = @{
     CollectedAt        = (Get-Date -Format "yyyy-MM-ddTHH:mm:ss")
     CollectedBy        = $env:USERNAME
     CollectorType      = "Windows11-Client"
-    CollectorVersion   = "1.3"
+    CollectorVersion   = "1.4"
     HoursCollected     = $Hours
     TimeRangeLabel     = $HoursLabel
     OS                 = "$($os.Caption) Build $($os.BuildNumber)"
@@ -220,6 +286,7 @@ $metadata = @{
     Disks              = $disk
     Domain             = $cs.Domain
     DefenderRealtime   = $defenderRT
+    SecurityProtection = $securityProtection
     BitLockerStatus    = $bitlockerStatus
     PowerPlan          = $powerPlan
     BIOSDate           = $biosDate
@@ -246,7 +313,7 @@ Write-Host ""
 Write-Host "  Datei gespeichert unter:" -ForegroundColor Green
 Write-Host "  $OutputPath"              -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  Jetzt auf AdminSheet hochladen:" -ForegroundColor Gray
+Write-Host "  Jetzt auf support.sheet hochladen:" -ForegroundColor Gray
 Write-Host "  https://jluenthus.github.io/support.sheet/eventlog.html" -ForegroundColor Gray
 Write-Host ""
 

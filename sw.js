@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260915-private-workspace-phase12-markdown-favorites';
+const CACHE_VERSION = '20260915-eventlog-phase13d-rule-engine-hardening';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [

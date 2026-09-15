@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "description": "Proaktive Systemoptimierung basierend auf Metadaten und Event-Mustern",
-  "improvements": [
+  "improvementRules": [
     {
       "id": "IMP_POWER_PLAN",
       "name": "Energieplan nicht optimal",
@@ -9,7 +9,7 @@
       "severity": "warning",
       "description": "Das System verwendet einen Energiesparplan statt Höchstleistung. Auf Workstations und Servern kann das die Performance deutlich reduzieren – besonders bei kurzen CPU-Spitzen.",
       "check": "powerPlan",
-      "checkValues": [
+      "allowedValues": [
         "balanced",
         "power saver",
         "ausbalanciert",
@@ -49,7 +49,7 @@
       "severity": "info",
       "description": "Das System wurde seit mehr als 30 Tagen nicht neu gestartet. Windows Update Patches werden erst nach einem Neustart vollständig aktiv. Treiber und Dienste können sich in diesem Zustand instabil verhalten.",
       "check": "uptimeHours",
-      "checkThreshold": 720,
+      "threshold": 720,
       "recommendations": [
         {
           "text": "Letzten Boot-Zeitpunkt prüfen",
@@ -72,7 +72,7 @@
       "severity": "warning",
       "description": "Ein Laufwerk hat weniger als 15% freien Speicherplatz. Windows benötigt freien Speicher für Updates, temporäre Dateien, Swap und Sicherungspunkte. Unter 10% können Fehler auftreten.",
       "check": "diskFreePercent",
-      "checkThreshold": 15,
+      "threshold": 15,
       "recommendations": [
         {
           "text": "Datenträgerspeicher analysieren",
@@ -101,7 +101,7 @@
       "severity": "warning",
       "description": "Das System nutzt mehr als 90% des verfügbaren Arbeitsspeichers. Bei über 95% kommt es regelmäßig zu Service-Abstürzen, besonders wenn geplante Tasks nachts zusätzlichen Speicher anfordern. Dienste wie COM+-Systemanwendung oder Drittanwendungen sind typische erste Opfer.",
       "check": "ramUsedPercent",
-      "checkThreshold": 90,
+      "threshold": 90,
       "recommendations": [
         {
           "text": "Top RAM-Verbraucher anzeigen",
@@ -135,7 +135,7 @@
       "severity": "warning",
       "description": "Das System läuft auf einer älteren Windows-Version. Ältere Versionen erhalten keine Sicherheitsupdates mehr und sind ein Sicherheitsrisiko.",
       "check": "windowsBuild",
-      "checkMaxBuild": 19044,
+      "maxBuild": 19044,
       "recommendations": [
         {
           "text": "Aktuelle Windows-Version prüfen",
@@ -156,9 +156,9 @@
       "name": "Überdurchschnittlich viele Fehler",
       "category": "System",
       "severity": "warning",
-      "description": "Das System hat im analysierten Zeitraum ungewöhnlich viele Fehler-Ereignisse. Das deutet auf ein zugrunde liegendes Problem hin das noch nicht erkannt wurde.",
+      "description": "Das System hat umgerechnet auf 24 Stunden ungewöhnlich viele Fehler-Ereignisse (Rate statt Absolutwert, damit unabhängig vom gewählten Sammelzeitraum vergleichbar). Das deutet auf ein zugrunde liegendes Problem hin das noch nicht erkannt wurde.",
       "check": "errorCount",
-      "checkThreshold": 50,
+      "threshold": 50,
       "recommendations": [
         {
           "text": "Häufigste Fehlerquellen anzeigen",
@@ -175,28 +175,46 @@
       ]
     },
     {
-      "id": "IMP_DEFENDER_DISABLED",
-      "name": "Windows Defender Echtzeit-Schutz deaktiviert",
+      "id": "IMP_NO_ENDPOINT_PROTECTION",
+      "name": "Kein aktiver Endpoint-Schutz erkannt",
       "category": "Sicherheit",
       "severity": "warning",
-      "description": "Der Echtzeit-Schutz von Windows Defender ist deaktiviert. Das System ist ohne aktiven Virenschutz. Klassischer MSP-Fall: Benutzer oder Software hat den Schutz abgeschaltet.",
-      "check": "defenderDisabled",
+      "description": "Weder Windows Defender noch ein registriertes Drittanbieter-Sicherheitsprodukt (z.B. ESET, Bitdefender, Sophos, SentinelOne, CrowdStrike, Trend Micro) melden aktiven Echtzeitschutz. Das System läuft ohne erkennbaren Virenschutz. Hinweis: Windows Defender allein deaktiviert zu sehen ist KEIN Problem, solange ein anderer Anbieter aktiv ist – erst das Fehlen jeglichen aktiven Schutzes löst diese Regel aus.",
+      "check": "endpointProtection",
+      "expectedStatus": "none",
       "recommendations": [
         {
-          "text": "Defender-Status prüfen",
+          "text": "Erkannte Security-Provider anzeigen (Quelle: Windows Sicherheitscenter)",
+          "cmd": "Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct | Select-Object displayName, productState",
+          "type": "diagnose",
+          "risk": "low"
+        },
+        {
+          "text": "Windows-Defender-Status prüfen",
           "cmd": "Get-MpComputerStatus | Select RealTimeProtectionEnabled, AntivirusEnabled, AMServiceEnabled",
           "type": "diagnose",
           "risk": "low"
         },
         {
-          "text": "Echtzeit-Schutz wieder aktivieren",
+          "text": "Windows Defender aktivieren (nur sinnvoll, falls kein anderer Endpoint-Schutz vorgesehen ist)",
           "cmd": "Set-MpPreference -DisableRealtimeMonitoring $false",
           "type": "fix",
           "risk": "low"
-        },
+        }
+      ]
+    },
+    {
+      "id": "IMP_ENDPOINT_PROTECTION_UNKNOWN",
+      "name": "Endpoint-Schutz-Status unbekannt",
+      "category": "Sicherheit",
+      "severity": "info",
+      "description": "Auf diesem System konnte keine belastbare Aussage zum aktiven Endpoint-Schutz ermittelt werden (z.B. weil der Collector älter ist, root\\SecurityCenter2 nicht verfügbar war, oder es sich um einen Windows Server ohne Security-Center-Dienst handelt). Das bedeutet NICHT automatisch, dass kein Schutz vorhanden ist – es ist lediglich unbekannt und sollte manuell geprüft werden.",
+      "check": "endpointProtection",
+      "expectedStatus": "unknown",
+      "recommendations": [
         {
-          "text": "Defender-Ereignisse prüfen",
-          "cmd": "Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Windows Defender/Operational'; Level=1,2,3} -MaxEvents 20 | Select TimeCreated, Message",
+          "text": "Endpoint-Schutz manuell prüfen",
+          "cmd": "Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct -ErrorAction SilentlyContinue | Select-Object displayName, productState; Get-MpComputerStatus | Select-Object RealTimeProtectionEnabled",
           "type": "diagnose",
           "risk": "low"
         }
@@ -235,9 +253,9 @@
       "name": "Viele Anwendungsabstürze",
       "category": "Stabilität",
       "severity": "warning",
-      "description": "Überdurchschnittlich viele Application Error Events (ID 1000) im Analysezeitraum. Das deutet auf instabile Software, fehlende Abhängigkeiten oder beschädigte Systemdateien hin.",
+      "description": "Überdurchschnittlich viele Application Error Events (ID 1000), umgerechnet auf 24 Stunden (Rate statt Absolutwert, damit unabhängig vom gewählten Sammelzeitraum vergleichbar). Das deutet auf instabile Software, fehlende Abhängigkeiten oder beschädigte Systemdateien hin.",
       "check": "appCrashCount",
-      "checkThreshold": 5,
+      "threshold": 5,
       "recommendations": [
         {
           "text": "Häufig abstürzende Anwendungen identifizieren",
@@ -266,7 +284,7 @@
       "severity": "info",
       "description": "Das System hat viele Autostart-Programme. Das verlängert die Boot-Zeit und belastet RAM und CPU dauerhaft. Klassischer Fall für Kundengeräte die über Jahre gewachsen sind.",
       "check": "autostartCount",
-      "checkThreshold": 20,
+      "threshold": 20,
       "recommendations": [
         {
           "text": "Autostart-Einträge anzeigen",
@@ -295,7 +313,7 @@
       "severity": "info",
       "description": "Das BIOS/UEFI-Datum ist mehr als 2 Jahre alt. Veraltete Firmware kann Sicherheitslücken enthalten oder Kompatibilitätsprobleme mit neuerer Hardware und Windows-Features verursachen.",
       "check": "biosAgeYears",
-      "checkThreshold": 2,
+      "threshold": 2,
       "recommendations": [
         {
           "text": "BIOS-Version und Datum anzeigen",
@@ -318,7 +336,7 @@
       "severity": "info",
       "description": "Das System hat weniger als 12 GB RAM. Die Windows 11 Mindestanforderung (4 GB) wird zwar erfüllt, für den produktiven Support-Alltag mit Teams, Browser, Office und AV/EDR-Software sind 8 GB jedoch knapp. Empfehlung: mindestens 16 GB RAM für flüssiges Arbeiten.",
       "check": "ramBelowRecommended",
-      "checkThreshold": 12,
+      "threshold": 12,
       "recommendations": [
         {
           "text": "Aktuelle RAM-Verbraucher anzeigen",
