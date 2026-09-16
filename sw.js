@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260916-news-curator-step8-a11y-fix';
+const CACHE_VERSION = '20260916-news-curator-bugfix-md-url-equality';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [

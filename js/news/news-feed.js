@@ -35,6 +35,23 @@
     return typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) && !isNaN(Date.parse(d));
   }
 
+  // Edge Case "Markdown-verpackte URLs" (Bugfix nach Abschluss aller 8
+  // Schritte): manche KI-Tools mit Websuche/Zitierfunktion liefern url/
+  // image_url trotz expliziter Prompt-Regel als Markdown-Link zurück, z. B.
+  // "[https://a.de/x](https://a.de/x)". Erkennt genau dieses Muster und
+  // schält die eigentliche URL heraus, sonst der String unverändert
+  // (nur getrimmt) zurück. Nachtrag: nur bereinigen, wenn Klammer- und
+  // Rundklammer-URL exakt identisch sind - bei Abweichung wäre unklar,
+  // welche der beiden echt ist, dann lieber unverändert lassen und über die
+  // normale https-Validierung als "Auffällig" auffallen, statt zu raten.
+  function stripMarkdownLink(str) {
+    if (typeof str !== 'string') return str;
+    const trimmed = str.trim();
+    const match = trimmed.match(/^\[(https?:\/\/[^\]]+)\]\((https?:\/\/[^)]+)\)$/);
+    if (match && match[1] === match[2]) return match[1];
+    return trimmed;
+  }
+
   function verifyArticle(article, settings) {
     const reasons = [];
     const urlOk = isValidHttpsUrl(article.url);
@@ -42,7 +59,13 @@
 
     const dateOk = isValidDate(article.published_at);
     if (!dateOk) reasons.push('Datum ungültig');
-    if (dateOk && (article.published_at < settings.dateFrom || article.published_at > window.NewsStorage.todayISO(0))) {
+    // Bugfix: Obergrenze muss gegen das eingestellte dateTo prüfen, nicht
+    // gegen "heute" - sonst rutscht bei einem bewusst historischen Zeitraum
+    // (z.B. Von 01.09./Bis 10.09.) ein Artikel vom 15.09. durch, weil er
+    // nicht "in der Zukunft" liegt. Fallback auf todayISO(0) nur falls
+    // dateTo ausnahmsweise fehlt/leer ist.
+    const dateTo = settings.dateTo || window.NewsStorage.todayISO(0);
+    if (dateOk && (article.published_at < settings.dateFrom || article.published_at > dateTo)) {
       reasons.push('Datum außerhalb Zeitraum');
     }
 
@@ -126,9 +149,12 @@
       // zusätzlich clientseitig auf diese Anzahl je Import gecappt.
       .slice(0, settings.maxArticles || undefined)
       .map(a => {
-        const check = verifyArticle(a, settings);
+        // Bereinigung VOR verifyArticle, sonst zeigt ein an sich seriöser
+        // Artikel nur wegen der Markdown-Verpackung fälschlich "Auffällig".
+        const cleaned = { ...a, url: stripMarkdownLink(a.url), image_url: stripMarkdownLink(a.image_url) };
+        const check = verifyArticle(cleaned, settings);
         return {
-          ...a,
+          ...cleaned,
           read: false, vote: 0, notRelevant: false,
           verified: check.verified, checkReasons: check.reasons,
           carried: false, carriedCount: 0,
@@ -229,7 +255,20 @@
     titleLink.target = '_blank';
     titleLink.rel = 'noopener noreferrer';
     titleLink.textContent = article.title;
-    titleLink.addEventListener('click', () => markRead(index));
+    // "Öffnen" absichern (Bugfix Markdown-verpackte URLs): trotz Bereinigung
+    // beim Import und trotz Verifizierung hier noch einmal explizit prüfen,
+    // statt dem nativen href-Klick blind zu vertrauen - sonst landet ein
+    // kaputter String als relativer Pfad auf der eigenen Domain (404) statt
+    // beim echten Artikel.
+    titleLink.addEventListener('click', e => {
+      e.preventDefault();
+      if (!isValidHttpsUrl(article.url)) {
+        if (typeof showToast === 'function') showToast('Ungültige URL, Artikel kann nicht geöffnet werden.', 'error');
+        return;
+      }
+      markRead(index);
+      window.open(article.url, '_blank', 'noopener,noreferrer');
+    });
     body.appendChild(titleLink);
 
     const meta = document.createElement('div');

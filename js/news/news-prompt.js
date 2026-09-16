@@ -66,6 +66,7 @@ Regeln:
 - Thematisch sinnvoll gruppieren (topic-Feld).
 - Zusätzlich maximal 3 kurze "highlights" (je ein Satz) mit den wichtigsten Kernpunkten über alle Artikel hinweg.
 - Pro Artikel, falls über die Websuche auffindbar, die URL des Artikelbilds mitliefern ("image_url"), sonst das Feld weglassen. Keine erfundenen Bild-URLs.
+- "url" und "image_url" immer als reiner String zurückgeben, niemals als Markdown-Link (kein "[Text](URL)"-Format).
 - Pro Artikel in einem Satz begründen, warum er zu den genannten Interessen passt ("why_relevant").
 - Pro Artikel eine grobe geschätzte Lesezeit in Minuten ("read_time_minutes").
 - Ausschließlich valides JSON zurückgeben, ohne Markdown-Codeblock, ohne

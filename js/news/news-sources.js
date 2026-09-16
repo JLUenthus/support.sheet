@@ -26,6 +26,14 @@
     return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   }
 
+  // Bugfix: rohe Eingabe wie "https://www.heise.de/" oder "www.heise.de"
+  // vorab auf den reinen Domainnamen normalisieren, sonst kann die spätere
+  // Domain-Prüfung in verifyArticle daran vorbeischrammen (der includes-
+  // Abgleich selbst bleibt bewusst pragmatisch, nur die Eingabe wird bereinigt).
+  function normalizeSourceInput(raw) {
+    return raw.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '');
+  }
+
   function buildSourceRow(source) {
     const row = document.createElement('div');
     row.className = 'news-source-row' + (source.active ? '' : ' news-source-row--inactive');
@@ -91,7 +99,7 @@
   function addSource() {
     const input = document.getElementById('news-source-input');
     if (!input) return;
-    const name = input.value.trim();
+    const name = normalizeSourceInput(input.value);
     if (!name) return;
     const id = slugify(name);
     if (!id) { input.value = ''; return; }
