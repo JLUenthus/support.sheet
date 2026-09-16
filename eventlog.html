@@ -368,6 +368,14 @@
     .sys-value.warn  { color:var(--amber); }
     .sys-value.bad   { color:var(--red); }
     .sys-value.good  { color:var(--green); }
+    /* Sys-Grid-Sektionen (logische Gruppierung, spannt alle Spalten) */
+    .sys-section-label {
+      grid-column: 1 / -1;
+      font-size: .68rem; font-weight: 700; color: var(--dim);
+      text-transform: uppercase; letter-spacing: .08em;
+      padding-top: 12px; margin-top: 2px; border-top: 1px solid var(--border);
+    }
+    .sys-section-label:first-child { padding-top: 0; margin-top: 0; border-top: none; }
 
     /* Summary pills */
     .summary-pills { display:flex; flex-wrap:wrap; gap:8px; }
@@ -997,6 +1005,92 @@
     initElNavHighlight();
 
     // ── System Grid ─────────────────────────────────────────
+    // ── Build-Aktualität (nur auf Klick) ─────────────────────
+    // Datenquelle: endoflife.date (community-gepflegt, NICHT offiziell Microsoft),
+    // öffentliche JSON-API, keine Zugangsdaten nötig. Bewusst KEIN automatischer Abruf
+    // beim Laden der Seite (auf Nutzerwunsch) - nur wenn der Technician aktiv auf die
+    // Kachel klickt, verlässt eine Anfrage den Rechner (und dann nur die öffentliche
+    // Build-Liste, keinerlei Event-/Kundendaten). Ergebnis wird 24h in localStorage
+    // gecacht, damit nicht bei jedem Klick erneut angefragt wird.
+    //
+    // Der Collector erfasst nur die Feature-Update-Build-Nummer (z.B. 26100), nicht die
+    // monatliche UBR-Patch-Revision (z.B. .2033) - "Generationen zurück" zählt daher
+    // Feature-Update-Generationen (23H2 -> 24H2 -> 25H2 -> ...), keine Cumulative-Update-
+    // Stände.
+    const WINDOWS_BUILD_CACHE_KEY     = 'eventlog_winbuild_ladder_v1';
+    const WINDOWS_BUILD_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
+
+    async function fetchWindowsBuildLadder() {
+      try {
+        const cached = JSON.parse(localStorage.getItem(WINDOWS_BUILD_CACHE_KEY) || 'null');
+        if (cached && (Date.now() - cached.fetchedAt) < WINDOWS_BUILD_CACHE_MAX_AGE) return cached;
+      } catch {}
+      const res = await fetch('https://endoflife.date/api/windows.json');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      const builds = [...new Set(
+        data.map(d => parseInt(String(d.latest).split('.').pop(), 10)).filter(n => !isNaN(n))
+      )].sort((a, b) => b - a);
+      const result = { builds, fetchedAt: Date.now() };
+      try { localStorage.setItem(WINDOWS_BUILD_CACHE_KEY, JSON.stringify(result)); } catch {}
+      return result;
+    }
+
+    function buildBuildFreshnessTile(buildNumber) {
+      const item = document.createElement('div');
+      item.className = 'sys-item';
+      const lbl = document.createElement('div');
+      lbl.className = 'sys-label';
+      lbl.textContent = '📦 Build-Aktualität';
+
+      const num = parseInt(buildNumber, 10);
+      const val = document.createElement('button');
+      val.type = 'button';
+      val.className = 'sys-value build-freshness-btn';
+      val.style.cssText = 'background:none;border:none;padding:0;font:inherit;color:inherit;cursor:pointer;text-decoration:underline dotted;text-align:left;';
+
+      if (isNaN(num)) {
+        val.textContent = '❔ Unbekannt (kein Build erfasst)';
+        val.disabled = true;
+        val.style.cursor = 'default';
+        val.style.textDecoration = 'none';
+      } else {
+        val.textContent = '❔ Build-Aktualität prüfen';
+        val.title = 'Klicken, um mit endoflife.date abzugleichen (externe Anfrage, nur auf Klick - siehe docs/eventlog-rule-schema.md)';
+        val.addEventListener('click', async () => {
+          val.textContent = '⏳ Prüfe…';
+          val.disabled = true;
+          try {
+            const { builds, fetchedAt } = await fetchWindowsBuildLadder();
+            const behind = builds.filter(b => b > num).length;
+            const stamp  = new Date(fetchedAt).toLocaleDateString('de-DE');
+            item.classList.remove('item-good', 'item-warn', 'item-bad');
+            if (behind === 0) {
+              item.classList.add('item-good');
+              val.textContent = '✅ Aktuell';
+            } else if (behind <= 5) {
+              item.classList.add('item-warn');
+              val.textContent = `🟡 ${behind} Feature-Update${behind === 1 ? '' : 's'} veraltet`;
+            } else {
+              item.classList.add('item-bad');
+              val.textContent = `🔴 ${behind} Feature-Updates veraltet`;
+            }
+            val.title = `Aktuellste bekannte Build-Generation: ${builds[0]} · Dieses System: Build ${num} · Quelle: endoflife.date (community-gepflegt, nicht offiziell Microsoft) · Stand: ${stamp}`;
+          } catch (err) {
+            item.classList.remove('item-good', 'item-warn', 'item-bad');
+            val.textContent = '❔ Unbekannt (Abgleich fehlgeschlagen)';
+            val.title = 'Live-Abgleich nicht möglich (offline oder endoflife.date nicht erreichbar). Erneut klicken zum Wiederholen.';
+          } finally {
+            val.disabled = false;
+          }
+        });
+      }
+
+      item.appendChild(lbl);
+      item.appendChild(val);
+      return item;
+    }
+
     function renderSysGrid(meta, sum, events) {
       const sysGrid = document.getElementById('sys-grid');
       sysGrid.replaceChildren();
@@ -1043,25 +1137,122 @@
         protCls = 'bad';
       }
 
-      const items = [
-        ['💻 Computer',       meta.ComputerName || '–',                                          ''],
-        ['🖥️ Betriebssystem', (meta.OS||'–').replace('Microsoft Windows ',''),                   ''],
-        ['🧠 RAM',             ramVal,                                                             ramCls],
-        ['⚡ CPU',             meta.CPU ? meta.CPU.replace(/\(R\)|\(TM\)/g,'').trim().substring(0,35) : '–', ''],
-        ['⏱️ Uptime',          uptimeDays,                                                        uptimeCls],
-        ['🔄 Letzter Boot',    (meta.LastBoot||'–').replace('T',' ').substring(0,16),             ''],
-        ['📋 Typ',             meta.CollectorType || '–',                                         ''],
-        ['🔍 Zeitraum',        meta.TimeRangeLabel || (meta.HoursCollected ? meta.HoursCollected+'h' : '–'), ''],
-        ['📊 Ereignisse',      totalEvents,                                                       ''],
-        ['❌ Fehler gesamt',   errorCount,                                                        errorCls],
-        ['🛡️ Endpoint-Schutz', protLabel,                                                         protCls],
-      ];
-
-      if (meta.DetectedRoles?.length) {
-        items.push(['🏢 Rollen', meta.DetectedRoles.join(', '), '']);
+      // Energieplan/BIOS-Alter/Autostart: dieselben Schwellenwerte wie die
+      // zugehörigen Improvement-Regeln (IMP_POWER_PLAN/IMP_BIOS_OLD/IMP_MANY_AUTOSTARTS)
+      // wiederverwendet statt dupliziert - eine einzige Quelle für den Grenzwert, damit
+      // Kachel und Optimierung-Empfehlung nie auseinanderlaufen können.
+      const powerPlanRule = IMPROVEMENTS.find(i => i.id === 'IMP_POWER_PLAN');
+      const powerPlanBad  = powerPlanRule?.allowedValues || ['balanced','power saver','ausbalanciert','energiesparmodus'];
+      let powerVal = meta.PowerPlan || '–', powerCls = '';
+      if (meta.PowerPlan) {
+        const isSuboptimal = powerPlanBad.some(v => meta.PowerPlan.toLowerCase().includes(v.toLowerCase()));
+        powerCls = isSuboptimal ? 'warn' : 'good';
       }
 
+      const biosThreshold = IMPROVEMENTS.find(i => i.id === 'IMP_BIOS_OLD')?.threshold ?? 2;
+      let biosVal = '–', biosCls = '';
+      if (meta.BIOSDate) {
+        const biosYear = new Date(meta.BIOSDate).getFullYear();
+        if (!isNaN(biosYear)) {
+          const ageYears = new Date().getFullYear() - biosYear;
+          biosVal = `${meta.BIOSDate} (${ageYears} Jahre)`;
+          biosCls = ageYears > biosThreshold ? 'warn' : 'good';
+        } else {
+          biosVal = meta.BIOSDate;
+        }
+      }
+
+      const autostartThreshold = IMPROVEMENTS.find(i => i.id === 'IMP_MANY_AUTOSTARTS')?.threshold ?? 20;
+      let autostartVal = '–', autostartCls = '';
+      if (meta.AutostartCount !== undefined && meta.AutostartCount !== null) {
+        autostartVal = String(meta.AutostartCount);
+        autostartCls = meta.AutostartCount > autostartThreshold ? 'warn' : 'good';
+      }
+
+      // Domain/Workgroup: rein informativ (kein Ampel-Zustand - Workgroup ist nicht
+      // per se "schlecht"), relevant für die Ersteinschätzung bei AD-/GPO-Themen.
+      const domainVal = meta.Domain
+        ? (meta.Domain.toUpperCase() === 'WORKGROUP' ? 'Workgroup (nicht domänengebunden)' : meta.Domain)
+        : '–';
+
+      // Erfasst von/am: kein Analyse-Wert, praktisch für den Support-Workflow.
+      const collectedParts = [meta.CollectedBy, meta.CollectedAt ? meta.CollectedAt.replace('T',' ').substring(0,16) : null].filter(Boolean);
+      const collectedVal = collectedParts.length ? collectedParts.join(' · ') : '–';
+
+      // Logische Gruppierung der Systemübersicht in 4 Sektionen (auf Nutzerwunsch):
+      // Identität & Kontext / Hardware & Performance / Sicherheit / Analyse-Ergebnis.
+      // '__SECTION__'-Einträge rendern eine spaltenübergreifende Sektions-Überschrift
+      // im selben CSS-Grid, statt die Kacheln auf mehrere separate Grids aufzuteilen.
+      const identityItems = [
+        ['💻 Computer',       meta.ComputerName || '–',                                          ''],
+        ['🖥️ Betriebssystem', (meta.OS||'–').replace('Microsoft Windows ',''),                   ''],
+        ['__BUILD_FRESHNESS__', meta.BuildNumber, ''],
+        ['🌐 Domain',          domainVal,                                                         ''],
+      ];
+      if (meta.DetectedRoles?.length) {
+        identityItems.push(['🏢 Rollen', meta.DetectedRoles.join(', '), '']);
+      }
+      identityItems.push(
+        ['📋 Typ',      meta.CollectorType || '–', ''],
+        ['🕒 Erfasst',  collectedVal,              ''],
+        ['🔍 Zeitraum', meta.TimeRangeLabel || (meta.HoursCollected ? meta.HoursCollected+'h' : '–'), '']
+      );
+
+      const items = [
+        ['__SECTION__', 'Identität & Kontext', ''],
+        ...identityItems,
+
+        ['__SECTION__', 'Hardware & Performance', ''],
+        ['🧠 RAM',             ramVal,                                                             ramCls],
+        ['⚡ CPU',             meta.CPU ? meta.CPU.replace(/\(R\)|\(TM\)/g,'').trim().substring(0,35) : '–', ''],
+        ['🔌 Energieplan',     powerVal,                                                          powerCls],
+        ['⏱️ Uptime',          uptimeDays,                                                        uptimeCls],
+        ['🔄 Letzter Boot',    (meta.LastBoot||'–').replace('T',' ').substring(0,16),             ''],
+        ['🧷 Autostarts',      autostartVal,                                                      autostartCls],
+        ['🧩 BIOS-Alter',      biosVal,                                                           biosCls],
+        ['__DISKS__', null, ''],
+
+        ['__SECTION__', 'Sicherheit', ''],
+        ['🛡️ Endpoint-Schutz', protLabel,                                                         protCls],
+
+        ['__SECTION__', 'Analyse-Ergebnis', ''],
+        ['📊 Ereignisse',      totalEvents,                                                       ''],
+        ['❌ Fehler gesamt',   errorCount,                                                        errorCls],
+      ];
+
       items.forEach(([label, value, cls]) => {
+        if (label === '__SECTION__') {
+          const section = document.createElement('div');
+          section.className = 'sys-section-label';
+          section.textContent = value;
+          sysGrid.appendChild(section);
+          return;
+        }
+        if (label === '__BUILD_FRESHNESS__') {
+          sysGrid.appendChild(buildBuildFreshnessTile(value));
+          return;
+        }
+        if (label === '__DISKS__') {
+          // Disk-Kacheln separat, damit jedes Laufwerk seine eigene Farbe bekommt.
+          if (diskItems.length) {
+            diskItems.forEach((disk, idx) => {
+              const item = document.createElement('div');
+              item.className = 'sys-item' + (disk.cls === 'bad' ? ' item-bad' : disk.cls === 'warn' ? ' item-warn' : disk.cls === 'good' ? ' item-good' : '');
+              const lbl = document.createElement('div'); lbl.className = 'sys-label'; lbl.textContent = idx === 0 ? '💾 Laufwerke' : '';
+              const val = document.createElement('div'); val.className = 'sys-value' + (disk.cls ? ' ' + disk.cls : ''); val.textContent = disk.label;
+              item.appendChild(lbl); item.appendChild(val);
+              sysGrid.appendChild(item);
+            });
+          } else {
+            const item = document.createElement('div');
+            item.className = 'sys-item';
+            const lbl = document.createElement('div'); lbl.className = 'sys-label'; lbl.textContent = '💾 Laufwerke';
+            const val = document.createElement('div'); val.className = 'sys-value'; val.textContent = '–';
+            item.appendChild(lbl); item.appendChild(val);
+            sysGrid.appendChild(item);
+          }
+          return;
+        }
         const item = document.createElement('div');
         item.className = 'sys-item' + (cls === 'bad' ? ' item-bad' : cls === 'warn' ? ' item-warn' : cls === 'good' ? ' item-good' : '');
         const lbl = document.createElement('div'); lbl.className = 'sys-label'; lbl.textContent = label;
@@ -1069,25 +1260,6 @@
         item.appendChild(lbl); item.appendChild(val);
         sysGrid.appendChild(item);
       });
-
-      // Disk items – separat damit jedes Laufwerk eigene Farbe bekommt
-      if (diskItems.length) {
-        diskItems.forEach((disk, idx) => {
-          const item = document.createElement('div');
-          item.className = 'sys-item' + (disk.cls === 'bad' ? ' item-bad' : disk.cls === 'warn' ? ' item-warn' : disk.cls === 'good' ? ' item-good' : '');
-          const lbl = document.createElement('div'); lbl.className = 'sys-label'; lbl.textContent = idx === 0 ? '💾 Laufwerke' : '';
-          const val = document.createElement('div'); val.className = 'sys-value' + (disk.cls ? ' ' + disk.cls : ''); val.textContent = disk.label;
-          item.appendChild(lbl); item.appendChild(val);
-          sysGrid.appendChild(item);
-        });
-      } else {
-        const item = document.createElement('div');
-        item.className = 'sys-item';
-        const lbl = document.createElement('div'); lbl.className = 'sys-label'; lbl.textContent = '💾 Laufwerke';
-        const val = document.createElement('div'); val.className = 'sys-value'; val.textContent = '–';
-        item.appendChild(lbl); item.appendChild(val);
-        sysGrid.appendChild(item);
-      }
 
       // Auth Events – separat auswerten und als eigene Sektion anzeigen
       const authEvents   = events.filter(e => (e.Category||'') === 'Auth');

@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260915-eventlog-phase13d-rule-engine-hardening';
+const CACHE_VERSION = '20260916-eventlog-sysgrid-sections';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
