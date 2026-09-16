@@ -37,7 +37,7 @@
 
   // "Später lesen"-Badge: reiner Zähler aus dem bereits initialisierten
   // news.saved-Array (siehe news-storage.js), keine Feed-/Board-Logik.
-  function initSavedBadge() {
+  function updateSavedBadge() {
     const badge = document.getElementById('news-saved-badge');
     if (!badge || !window.NewsStorage) return;
     const saved = window.NewsStorage.readJSON(window.NewsStorage.KEYS.saved, []);
@@ -46,6 +46,12 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     initNewsNavHighlight();
-    initSavedBadge();
+    updateSavedBadge();
   });
+
+  // Schritt 7: news-feed.js (Merken/Entfernen im Feed) und news-saved.js
+  // ("Entfernen" in der Später-lesen-Liste) rufen den Zähler nach jeder
+  // Änderung an news.saved erneut auf, damit er ohne Navigation/Reload
+  // sofort stimmt (derselbe Cross-Modul-Aufruf wie in Schritt 6b).
+  window.NewsNav = { updateSavedBadge };
 })();

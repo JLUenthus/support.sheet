@@ -164,16 +164,26 @@
           </div>
 
           <div id="news-feed-board"></div>
+          <div id="news-session-summary"></div>
         </section>
 
         <section class="news-section" id="news-saved-section">
           <h2 class="section-title">Später lesen</h2>
-          <p class="news-placeholder">Wird zusammen mit dem Feed in einem späteren Schritt gefüllt.</p>
+          <p class="news-section-lede">Artikel, die du dir aus dem Feed gemerkt hast. Bleibt über Sessions hinweg erhalten, unabhängig vom aktuellen Import oder einem „Fertig"-Klick.</p>
+          <div id="news-saved-list"></div>
         </section>
 
       </div>
     </div>
   </main>
+
+  <div class="news-progress-bar" id="news-progress-bar" hidden>
+    <div class="news-progress-text">
+      <strong id="news-progress-count"></strong>
+      <span>Unberührte Artikel werden beim Fertigstellen übertragen.</span>
+    </div>
+    <button type="button" class="news-btn-primary" id="news-finish-btn">Fertig</button>
+  </div>
 
   <script src="js/toast.js"></script>
   <script src="js/news/news-storage.js"></script>
@@ -184,6 +194,7 @@
   <script src="js/news/news-settings.js"></script>
   <script src="js/news/news-prompt.js"></script>
   <script src="js/news/news-feed.js"></script>
+  <script src="js/news/news-saved.js"></script>
   <script src="js/news/news-nav.js"></script>
 
   <script>

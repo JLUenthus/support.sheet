@@ -161,7 +161,19 @@ einleitenden oder abschließenden Text, exakt in diesem Schema:
     label.className = 'news-topic-label' + (topic.description ? ' news-topic-label--has-desc' : '');
     label.textContent = topic.name;
     if (topic.description) label.title = topic.description;
+    // Per Klick auswählbar, aber auch per Tastatur: role/tabindex + Enter/Space,
+    // sonst ist die Kernaktion des Pills (Auswahl umschalten) nicht per Tab
+    // erreichbar (Prompt 8, Tastaturfokus-Check).
+    label.setAttribute('role', 'button');
+    label.setAttribute('tabindex', '0');
+    label.setAttribute('aria-pressed', String(!!topic.selected));
     label.addEventListener('click', () => toggleTopic(index));
+    label.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleTopic(index);
+      }
+    });
 
     const editBtn = document.createElement('button');
     editBtn.type = 'button';

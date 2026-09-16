@@ -211,10 +211,13 @@
         if (data.feed && typeof data.feed === 'object') window.NewsStorage.writeJSON(KEYS.feed, data.feed);
 
         // Alle betroffenen Render-Funktionen sofort erneut aufrufen - kein
-        // manueller Reload nötig (Vorgabe Schritt 4, um Schritt 6a Feed ergänzt).
+        // manueller Reload nötig (Vorgabe Schritt 4, um Schritt 6a Feed und
+        // Schritt 7 Später-lesen/Nav-Zähler ergänzt).
         window.NewsSources?.render();
         window.NewsTopics?.render();
         window.NewsFeed?.render();
+        window.NewsSaved?.render();
+        window.NewsNav?.updateSavedBadge();
         renderDateFields();
         renderFeedbackOverview();
         interestsField?.render();
@@ -246,4 +249,8 @@
   }
 
   document.addEventListener('DOMContentLoaded', initSettingsSection);
+
+  // Schritt 6b ("Fertig") ruft renderFeedbackOverview() erneut auf, sonst
+  // zeigt das Panel bis zum nächsten Reload veraltete Zahlen.
+  window.NewsSettings = { renderFeedbackOverview };
 })();
