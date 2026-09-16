@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260916-eventlog-sysgrid-sections';
+const CACHE_VERSION = '20260916-news-curator-step6a-feed';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -40,6 +40,17 @@ const ASSETS = [
   './js/private-workspace.js',
   './js/private-renderer.js',
   './css/private.css',
+  './news.html',
+  './js/news/news-storage.js',
+  './js/news/news-json.js',
+  './js/news/news-sources.js',
+  './js/news/news-topics.js',
+  './js/news/news-tags.js',
+  './js/news/news-settings.js',
+  './js/news/news-prompt.js',
+  './js/news/news-feed.js',
+  './js/news/news-nav.js',
+  './css/news/news.css',
   './js/har.js',
   './js/entra.js',
   './css/har.css',

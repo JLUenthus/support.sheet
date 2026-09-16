@@ -33,6 +33,7 @@
       ]
     },
     { id:'private',  href:'private.html',  label:'Privat',          icon:'🔒', color:'#f87171', desc:'Lokaler privater Bereich' },
+    { id:'news',     href:'news.html',     label:'News Curator',    icon:'📰', color:'#fbbf24', desc:'Kuratierter Themenfeed statt zehn offener Tabs' },
     { id:'mitmachen',href:'mitmachen.html',label:'Mitmachen',    icon:'🤝', color:'#a78bfa', desc:'Ideen & Befehle einreichen' },
     { id:'tools',     href:'tools.html',     label:'support.tools', icon:'⚙️',  color:'#94a3b8', desc:'App installieren · Offline · Einstellungen', tools:true },
   ];
@@ -192,6 +193,7 @@
                  : currentPage.id === 'scripts'         ? '.scripts'
                  : currentPage.id === 'ticket'          ? '.ticket'
                  : currentPage.id === 'private'         ? '.privat'
+                 : currentPage.id === 'news'            ? '.news'
                  : currentPage.id === 'eventlog'        ? '.analyzer'
                  : currentPage.id === 'entra'           ? '.entra'
                  : currentPage.id === 'har'             ? '.har'

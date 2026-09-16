@@ -1,0 +1,283 @@
+/* ============================================================
+   news.css – News Curator (news.html)
+   ============================================================ */
+
+.news-section { margin-bottom: 32px; }
+
+.section-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+
+/* ── Seiten-Layout: Sidebar-Navigation + Hauptinhalt ──────────
+   Selbe Struktur wie eventlog.html/gpo.html (.el-layout/.el-page-nav
+   bzw. .gpo-layout) - "bestehendes App-Muster für mehrteilige Features",
+   nur unter dem news-Präfix. Desktop: 2-Spalten-Grid, Navigation sticky
+   links. Mobile: 1 Spalte, Navigation wird zur horizontal scrollbaren,
+   sticky Pill-Leiste. */
+.news-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 32px;
+  align-items: start;
+  padding-top: 24px;
+}
+.news-main-content { min-width: 0; }
+
+.news-page-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: sticky;
+  top: 74px;
+  align-self: start;
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+}
+.news-page-nav-title {
+  font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--dim); padding: 0 12px 8px;
+}
+.news-page-nav-link {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 12px; border-radius: var(--r); border: 1px solid transparent;
+  background: transparent; color: var(--muted); font-family: var(--font-ui);
+  font-size: .82rem; font-weight: 600; text-decoration: none; transition: all .15s;
+}
+.news-page-nav-link:hover { color: var(--text); background: var(--panel); }
+.news-page-nav-link--active { color: var(--accent); background: var(--accent-bg); border-color: rgba(124,140,248,.25); }
+
+.news-nav-num {
+  font-family: var(--font-mono); font-size: .72rem; color: var(--dim);
+  width: 1ch; flex-shrink: 0;
+}
+.news-page-nav-link--active .news-nav-num { color: var(--accent); }
+
+/* "Später lesen" hängt bewusst unnummeriert unter einem Trennstrich - kein
+   Schritt im Ablauf, sondern eine dauerhafte, sessionübergreifende Sammlung. */
+.news-page-nav-divider { height: 1px; background: var(--border); margin: 6px 12px; }
+.news-saved-badge {
+  margin-left: auto; font-family: var(--font-mono); font-size: .68rem;
+  color: var(--accent2); background: rgba(167,139,250,.12); border-radius: 999px; padding: 1px 7px;
+}
+.news-saved-badge:empty { display: none; }
+
+@media (max-width: 900px) {
+  .news-layout { grid-template-columns: 160px 1fr; gap: 20px; }
+}
+@media (max-width: 640px) {
+  .news-layout { grid-template-columns: 1fr; padding-top: 12px; }
+  .news-page-nav {
+    flex-direction: row; flex-wrap: nowrap; overflow-x: auto; overflow-y: visible;
+    max-height: none; gap: 8px; top: 58px; z-index: 20; padding: 10px 2px;
+    margin-bottom: 20px; background: rgba(15,17,23,.95); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .news-page-nav-title { display: none; }
+  .news-page-nav-divider { width: 1px; height: 20px; margin: 0 4px; background: var(--border); }
+  .news-page-nav-link {
+    flex-shrink: 0; border: 1px solid var(--border); background: var(--panel);
+    padding: 6px 14px; border-radius: 20px;
+  }
+}
+
+/* ── Platzhalter (Schritt 1 - Fundament) ──────────────────────
+   Wird Abschnitt für Abschnitt in den folgenden Schritten ersetzt. */
+.news-placeholder {
+  color: var(--muted); font-size: .88rem; border: 1px dashed var(--border);
+  border-radius: var(--r); padding: 22px; max-width: 60ch;
+}
+
+/* ── Gemeinsame Formular-Bausteine (Schritt 2 - Quellen) ──────
+   An bestehende Konventionen angelehnt (z.B. .event-search-input in
+   eventlog.html, .gpo-disclaimer-modal-btn in gpo.css), lokal unter dem
+   news-Präfix statt globaler Klassen, da main.css keine eigenen definiert. */
+.news-section-lede { color: var(--muted); font-size: .88rem; margin: 0 0 18px; max-width: 62ch; }
+
+.news-add-row { display: flex; gap: 10px; max-width: 420px; margin-bottom: 18px; }
+.news-text-input {
+  flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 7px;
+  padding: 8px 12px; color: var(--text); font-family: var(--font-ui); font-size: .85rem;
+  outline: none; transition: border-color .15s;
+}
+.news-text-input:focus { border-color: var(--accent); }
+.news-btn-primary {
+  padding: 8px 16px; border-radius: 7px; border: none; background: var(--accent);
+  color: #fff; font-family: var(--font-ui); font-size: .82rem; font-weight: 700;
+  cursor: pointer; transition: filter .15s; white-space: nowrap;
+}
+.news-btn-primary:hover { filter: brightness(1.08); }
+.news-btn-primary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ── Quellen-Liste ─────────────────────────────────────────── */
+.news-source-list { display: flex; flex-direction: column; gap: 8px; }
+.news-source-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--panel); transition: opacity .15s;
+}
+.news-source-row--inactive { opacity: .55; }
+.news-source-badge {
+  width: 34px; height: 34px; border-radius: 8px; background: var(--panel2);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  font-family: var(--font-mono); font-size: .72rem; font-weight: 700; color: var(--muted);
+}
+.news-source-info { flex: 1; min-width: 0; }
+.news-source-name { font-weight: 600; font-size: .9rem; color: var(--text); }
+.news-source-status { font-size: .76rem; color: var(--muted); margin-top: 2px; }
+.news-source-remove {
+  background: transparent; border: none; color: var(--dim); cursor: pointer;
+  width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0; border-radius: 6px; transition: all .15s;
+}
+.news-source-remove:hover { color: var(--red); background: var(--red-bg); }
+
+/* Ein/Aus-Schalter - in support.sheet existiert an keiner Stelle bereits ein
+   Toggle-Switch (geprüft, siehe news-sources.js), daher neu gebaut, aber mit
+   den echten App-Tokens statt dem Prototyp-Farbschema. */
+.news-switch { position: relative; display: inline-flex; width: 38px; height: 22px; flex-shrink: 0; cursor: pointer; }
+.news-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.news-switch-track {
+  position: absolute; inset: 0; background: var(--border2); border-radius: 999px;
+  transition: background .15s;
+}
+.news-switch-track::before {
+  content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px;
+  background: var(--text); border-radius: 50%; transition: transform .15s;
+}
+.news-switch input:checked + .news-switch-track { background: var(--accent); }
+.news-switch input:checked + .news-switch-track::before { transform: translateX(16px); background: #fff; }
+.news-switch input:focus-visible + .news-switch-track { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ── Sub-Überschriften/Hinweise (Schritt 3 - Themen) ──────────
+   .finding-sub-title aus eventlog.html gespiegelt (dort lokal definiert,
+   kein globaler Token in main.css). */
+.news-subheading {
+  font-size: .7rem; font-weight: 700; color: var(--dim); text-transform: uppercase;
+  letter-spacing: .06em; margin: 24px 0 8px;
+}
+.news-subheading:first-of-type { margin-top: 0; }
+.news-hint { color: var(--muted); font-size: .84rem; margin: 0 0 10px; max-width: 60ch; }
+
+.news-textarea {
+  width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 10px 12px; color: var(--text); font-family: var(--font-mono); font-size: .82rem;
+  line-height: 1.5; resize: vertical; outline: none; transition: border-color .15s;
+}
+.news-textarea:focus { border-color: var(--accent); }
+.news-textarea[readonly] { color: var(--muted); background: var(--panel2); }
+
+.news-btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 8px 0 4px; }
+.news-btn-secondary {
+  padding: 7px 16px; border-radius: 8px; font-family: var(--font-ui); font-size: .78rem; font-weight: 600;
+  cursor: pointer; border: 1px solid var(--border2); background: var(--panel2); color: var(--muted);
+  transition: all .15s;
+}
+.news-btn-secondary:hover { color: var(--text); border-color: var(--accent); }
+
+/* ── Themen-Pillen ─────────────────────────────────────────── */
+.news-topic-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 20px; }
+.news-topic-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--border); border-radius: 999px; padding: 6px 8px 6px 13px;
+  font-size: .8rem; color: var(--muted); background: transparent; transition: all .15s;
+}
+.news-topic-pill--on { background: var(--accent-bg); border-color: var(--accent); color: var(--text); }
+.news-topic-label { cursor: pointer; }
+.news-topic-label--has-desc { text-decoration: underline dotted var(--accent2); text-underline-offset: 3px; }
+.news-topic-icon-btn {
+  background: transparent; border: none; color: var(--muted); cursor: pointer;
+  width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;
+  font-size: .78rem; flex-shrink: 0; border-radius: 4px; transition: all .15s;
+}
+.news-topic-icon-btn:hover { color: var(--text); background: rgba(255,255,255,.06); }
+
+/* ── Tag-Input (Schritt 4 - Einstellungen) ────────────────────
+   Eigenständige Komponente (siehe news-tags.js) - visuell an das Chip-
+   Muster aus css/guides.css (.ge-tag-*) angelehnt, aber eigene Klassen und
+   ohne Übernahme der dortigen, modul-lokalen Implementierung. */
+.news-tag-box {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 8px 10px; min-height: 44px; max-width: 560px;
+}
+.news-tag-box:focus-within { border-color: var(--accent); }
+.news-tag-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--accent-bg); border: 1px solid var(--accent);
+  color: var(--text); border-radius: 999px; padding: 5px 6px 5px 13px; font-size: .82rem;
+}
+.news-tag-chip-remove {
+  background: transparent; border: none; color: var(--muted); cursor: pointer;
+  width: 17px; height: 17px; display: flex; align-items: center; justify-content: center;
+  font-size: .8rem; flex-shrink: 0;
+}
+.news-tag-chip-remove:hover { color: var(--red); }
+.news-tag-input {
+  flex: 1; min-width: 180px; border: none; background: transparent; color: var(--text);
+  font-family: var(--font-ui); font-size: .87rem; padding: 5px 2px; outline: none;
+}
+.news-tag-suggestions { display: flex; flex-wrap: wrap; gap: 7px; margin: 9px 0 4px; max-width: 560px; }
+.news-tag-suggestion {
+  border: 1px dashed var(--border2); border-radius: 999px; background: transparent;
+  color: var(--dim); font-size: .8rem; font-family: var(--font-ui); font-weight: 600;
+  padding: 6px 13px; cursor: pointer; transition: all .15s;
+}
+.news-tag-suggestion:hover { border-color: var(--accent); color: var(--text); }
+.news-tag-suggestion--on {
+  border-style: solid; border-color: var(--accent); background: var(--accent-bg); color: var(--text);
+}
+
+/* ── Formularfelder (Zeitraum/Max. Artikel) ───────────────────── */
+.news-field-row { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+.news-field { flex: 1; min-width: 140px; max-width: 200px; }
+.news-label { display: block; font-size: .78rem; color: var(--muted); margin-bottom: 5px; }
+
+/* ── Gelerntes Feedback ────────────────────────────────────── */
+.news-feedback-group { margin-bottom: 16px; }
+.news-feedback-group-head {
+  font-size: .7rem; font-weight: 700; color: var(--dim); text-transform: uppercase;
+  letter-spacing: .06em; margin-bottom: 6px;
+}
+.news-feedback-row { display: flex; justify-content: space-between; gap: 12px; font-size: .85rem; padding: 4px 0; color: var(--text); }
+.news-feedback-row--pos { color: var(--green); }
+.news-feedback-row--neg { color: var(--red); }
+.news-feedback-row--pending { color: var(--dim); }
+.news-feedback-score { font-family: var(--font-mono); font-size: .78rem; white-space: nowrap; color: inherit; }
+
+/* ── Feed / Themen-Board (Schritt 6a) ──────────────────────── */
+.news-highlights {
+  margin-bottom: 22px; padding: 14px 16px;
+  background: var(--panel); border: 1px solid var(--accent); border-radius: var(--r);
+}
+.news-highlights-head { font-family: var(--font-ui); font-weight: 700; font-size: .85rem; margin-bottom: 8px; color: var(--accent); }
+.news-highlight-item { font-size: .87rem; color: var(--text); padding: 3px 0; }
+
+.news-topic-group { margin-bottom: 26px; }
+.news-topic-group-head {
+  display: flex; align-items: center; gap: 9px;
+  font-weight: 700; font-size: .95rem; margin-bottom: 10px; color: var(--text);
+}
+.news-topic-dot { width: 8px; height: 8px; border-radius: 2px; background: var(--accent); flex-shrink: 0; }
+.news-topic-group-count { color: var(--dim); font-weight: 400; font-size: .82rem; }
+
+.news-article {
+  display: flex; gap: 14px; padding: 14px 4px 14px 14px;
+  border-left: 2px solid var(--border); margin-bottom: 2px;
+}
+.news-article--read { border-left-color: var(--accent); opacity: .72; }
+.news-article-body { flex: 1; min-width: 0; }
+.news-article-title { font-weight: 600; font-size: .94rem; color: var(--text); text-decoration: none; cursor: pointer; }
+.news-article-title:hover { text-decoration: underline; }
+.news-article-meta { font-family: var(--font-mono); font-size: .76rem; color: var(--dim); margin: 4px 0 6px; }
+.news-article-summary { color: var(--muted); font-size: .87rem; margin: 0; max-width: 64ch; }
+.news-article-why { color: var(--muted); font-size: .85rem; margin: 6px 0 0; max-width: 64ch; }
+.news-article-why strong { color: var(--accent); font-weight: 600; }
+.news-article-thumb { width: 64px; height: 64px; border-radius: var(--r); object-fit: cover; flex-shrink: 0; background: var(--panel2); }
+
+.news-verify-badge { display: inline-block; font-family: var(--font-mono); font-size: .68rem; padding: 1px 7px; border-radius: 999px; }
+.news-verify-badge--ok { color: var(--green); background: var(--green-bg); }
+.news-verify-badge--warn { color: var(--red); background: var(--red-bg); cursor: help; }
+.news-verify-badge--carried { color: var(--accent2); background: rgba(167,139,250,.12); }

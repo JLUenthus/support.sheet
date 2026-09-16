@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>support.sheet – News Curator</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/news/news.css">
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-icon" id="as-logo-icon">📰</div>
+      <div class="logo-text" id="as-logo-label">support<span>.news</span></div>
+    </a>
+    <div class="header-right">
+      <div class="pill pill-count" style="border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.08);color:#fbbf24;">📰 News Curator</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="news-layout">
+
+      <nav class="news-page-nav" id="news-page-nav" aria-label="Bereichsnavigation">
+        <div class="news-page-nav-title">News Curator</div>
+        <a href="#news-sources-section" class="news-page-nav-link"><span class="news-nav-num">1</span>Quellen</a>
+        <a href="#news-topics-section" class="news-page-nav-link"><span class="news-nav-num">2</span>Themen</a>
+        <a href="#news-settings-section" class="news-page-nav-link"><span class="news-nav-num">3</span>Einstellungen</a>
+        <a href="#news-prompt-section" class="news-page-nav-link"><span class="news-nav-num">4</span>Prompt</a>
+        <a href="#news-feed-section" class="news-page-nav-link"><span class="news-nav-num">5</span>Feed</a>
+        <div class="news-page-nav-divider"></div>
+        <a href="#news-saved-section" class="news-page-nav-link">
+          Später lesen
+          <span class="news-saved-badge" id="news-saved-badge"></span>
+        </a>
+      </nav>
+
+      <div class="news-main-content">
+
+        <section class="news-section" id="news-sources-section">
+          <h2 class="section-title">Quellen</h2>
+          <p class="news-section-lede">Newsseiten, die als Grundlage für Themen-Discovery und Content-Prompt dienen. Schalter aus = Quelle bleibt gespeichert, wird aber nicht verwendet.</p>
+
+          <div class="news-add-row">
+            <input type="text" id="news-source-input" class="news-text-input" placeholder="z. B. heise.de">
+            <button type="button" class="news-btn-primary" id="news-source-add-btn">Hinzufügen</button>
+          </div>
+
+          <div class="news-source-list" id="news-source-list"></div>
+        </section>
+
+        <section class="news-section" id="news-topics-section">
+          <h2 class="section-title">Themen</h2>
+          <p class="news-section-lede">Themenbereiche der aktiven Quellen erfassen und ankreuzen, was dich interessiert. Beim erneuten Ausführen werden nur neue Themen ergänzt, deine Auswahl bleibt erhalten.</p>
+
+          <h3 class="news-subheading">Themen-Prompt</h3>
+          <p class="news-hint">In eine KI mit Websuche einfügen, die Antwort unten importieren.</p>
+          <textarea id="news-discovery-prompt" class="news-textarea" rows="6" readonly></textarea>
+          <div class="news-btn-row">
+            <button type="button" class="news-btn-primary" id="news-discovery-generate-btn">Themen-Prompt generieren</button>
+            <button type="button" class="news-btn-secondary" id="news-discovery-copy-btn">Kopieren</button>
+          </div>
+
+          <h3 class="news-subheading">Antwort importieren</h3>
+          <textarea id="news-discovery-import" class="news-textarea" rows="4" placeholder='{"topics": ["IT-Security", "Cloud", ...]}'></textarea>
+          <div class="news-btn-row">
+            <button type="button" class="news-btn-primary" id="news-discovery-import-btn">Importieren</button>
+          </div>
+
+          <h3 class="news-subheading">Ausgewählte Themen</h3>
+          <p class="news-hint">Klick auf ein Thema wählt es ab, „✎" bearbeitet die Beschreibung, „×" entfernt es endgültig.</p>
+          <div class="news-add-row">
+            <input type="text" id="news-topic-input" class="news-text-input" placeholder="eigenes Thema hinzufügen">
+            <button type="button" class="news-btn-primary" id="news-topic-add-btn">Hinzufügen</button>
+          </div>
+          <div class="news-topic-grid" id="news-topics-selected"></div>
+
+          <div id="news-topics-unselected-wrap" hidden>
+            <h3 class="news-subheading">Nicht ausgewählt</h3>
+            <p class="news-hint">Klick wählt ein Thema wieder an.</p>
+            <div class="news-topic-grid" id="news-topics-unselected"></div>
+          </div>
+        </section>
+
+        <section class="news-section" id="news-settings-section">
+          <h2 class="section-title">Einstellungen</h2>
+
+          <h3 class="news-subheading">Zusätzliche Interessen</h3>
+          <p class="news-hint">Ergänzt die ausgewählten Themen um Freitext, der keine Themen-Rubrik trifft.</p>
+          <div class="news-tag-box" id="news-interests-tagbox">
+            <input type="text" id="news-interests-input" class="news-tag-input" placeholder="Tag eingeben (Enter, Komma oder Klick woanders)…">
+          </div>
+          <div class="news-tag-suggestions" id="news-interests-suggestions"></div>
+
+          <h3 class="news-subheading">Ausschluss-Keywords</h3>
+          <div class="news-tag-box" id="news-exclude-tagbox">
+            <input type="text" id="news-exclude-input" class="news-tag-input" placeholder="Tag eingeben (Enter, Komma oder Klick woanders)…">
+          </div>
+          <div class="news-tag-suggestions" id="news-exclude-suggestions"></div>
+
+          <h3 class="news-subheading">Zeitraum</h3>
+          <div class="news-btn-row">
+            <button type="button" class="news-btn-secondary" data-preset="since_last">Seit letztem Mal</button>
+            <button type="button" class="news-btn-secondary" data-preset="24h">Letzte 24 Std.</button>
+            <button type="button" class="news-btn-secondary" data-preset="7d">Letzte 7 Tage</button>
+          </div>
+          <p class="news-hint" id="news-last-run-hint"></p>
+          <div class="news-field-row">
+            <div class="news-field">
+              <label class="news-label" for="news-date-from">Von</label>
+              <input type="date" id="news-date-from" class="news-text-input">
+            </div>
+            <div class="news-field">
+              <label class="news-label" for="news-date-to">Bis</label>
+              <input type="date" id="news-date-to" class="news-text-input">
+            </div>
+            <div class="news-field">
+              <label class="news-label" for="news-max-articles">Max. Artikel</label>
+              <input type="number" id="news-max-articles" class="news-text-input" min="5" max="50">
+            </div>
+          </div>
+
+          <h3 class="news-subheading">Gelerntes Feedback</h3>
+          <p class="news-hint">Erst ab 3 Bewertungen fließt ein Thema, Schlagwort oder eine Quelle als bevorzugt oder gemieden in den Prompt ein.</p>
+          <div id="news-feedback-overview"></div>
+
+          <h3 class="news-subheading">Sichern &amp; wiederherstellen</h3>
+          <p class="news-hint">Exportiert Einstellungen, Themen, Quellen und bisheriges Feedback als Datei, unabhängig vom Browser-Speicher. Über „Backup importieren" jederzeit wieder einspielbar, auch in einem anderen Browser oder Gerät.</p>
+          <div class="news-btn-row">
+            <button type="button" class="news-btn-secondary" id="news-backup-export-btn">⬇️ Backup exportieren</button>
+            <button type="button" class="news-btn-secondary" id="news-backup-import-btn">⬆️ Backup importieren</button>
+            <input type="file" id="news-backup-file" accept=".json" style="display:none">
+          </div>
+        </section>
+
+        <section class="news-section" id="news-prompt-section">
+          <h2 class="section-title">Prompt</h2>
+          <p class="news-section-lede">Fasst ausgewählte Themen, Einstellungen und bisheriges Feedback zu einem Prompt zusammen.</p>
+
+          <div class="news-btn-row">
+            <button type="button" class="news-btn-primary" id="news-content-generate-btn">Prompt generieren</button>
+            <button type="button" class="news-btn-secondary" id="news-content-copy-btn">Kopieren</button>
+          </div>
+          <textarea id="news-content-prompt" class="news-textarea" rows="14" readonly></textarea>
+        </section>
+
+        <section class="news-section" id="news-feed-section">
+          <h2 class="section-title">Feed</h2>
+          <p class="news-section-lede">KI-Antwort einfügen, gruppiert nach Thema lesen. „Plausibel" heißt nur: gültige https-URL, Datum im angefragten Zeitraum, Quelle passt zur URL. Das beweist nicht, dass der Inhalt stimmt oder die Seite tatsächlich existiert, das kann diese Seite ohne eigenes Backend nicht prüfen. Bei „Auffällig" stimmt mindestens eins davon nicht, das kann ein harmloser Formatfehler oder eine Halluzination sein.</p>
+
+          <textarea id="news-feed-import" class="news-textarea" rows="4" placeholder='{"articles": [...]}'></textarea>
+          <div class="news-btn-row">
+            <button type="button" class="news-btn-primary" id="news-feed-import-btn">Importieren</button>
+          </div>
+
+          <div id="news-feed-board"></div>
+        </section>
+
+        <section class="news-section" id="news-saved-section">
+          <h2 class="section-title">Später lesen</h2>
+          <p class="news-placeholder">Wird zusammen mit dem Feed in einem späteren Schritt gefüllt.</p>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <script src="js/toast.js"></script>
+  <script src="js/news/news-storage.js"></script>
+  <script src="js/news/news-json.js"></script>
+  <script src="js/news/news-sources.js"></script>
+  <script src="js/news/news-topics.js"></script>
+  <script src="js/news/news-tags.js"></script>
+  <script src="js/news/news-settings.js"></script>
+  <script src="js/news/news-prompt.js"></script>
+  <script src="js/news/news-feed.js"></script>
+  <script src="js/news/news-nav.js"></script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+    }
+  </script>
+
+  <script src="nav.js"></script>
+
+</body>
+</html>
