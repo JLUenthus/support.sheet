@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260917-news-curator-prompt10-ui-polish';
+const CACHE_VERSION = '20260917-news-curator-prompt14-progressbar-layout';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [

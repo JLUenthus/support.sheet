@@ -503,23 +503,75 @@
   }
 
   // ── Fortschrittsleiste (Schritt 6b) ───────────────────────────
+  // Prompt 14: Layout-Feinschliff der fixierten Leiste. Per Messung statt
+  // starrem calc() gelöst, da .news-layout je nach Breakpoint eine andere
+  // linke Content-Position hat (200px/160px-Sidebar-Spalte, gar keine auf
+  // Mobile) - ein fest kodierter calc()-Wert müsste sonst pro Breakpoint
+  // separat nachgezogen werden und würde bei künftigen Layout-Änderungen
+  // leise falsch werden.
+  function syncProgressBarLayout(bar) {
+    const scrollTopBtn = document.querySelector('.as-scroll-top');
+    if (bar.hidden) {
+      bar.style.paddingLeft = '';
+      if (scrollTopBtn) scrollTopBtn.style.bottom = '';
+      return;
+    }
+    // "X erledigt..." linksbündig auf den Rand des übrigen Seiteninhalts
+    // (z.B. Artikel-Karten) ausrichten statt auf den reinen Viewport-Rand.
+    const content = document.querySelector('.news-main-content');
+    if (content) bar.style.paddingLeft = content.getBoundingClientRect().left + 'px';
+
+    // Globaler "Zurück nach oben"-Button (nav.js, .as-scroll-top, fixed
+    // bottom:32px) weicht oberhalb dieser Leiste aus, sobald sie sichtbar
+    // ist - sonst überlappen sich zwei fixierte Elemente am unteren
+    // Bildschirmrand. Bewusst hier im News-Modul gelöst statt in nav.js,
+    // damit der Button auf allen anderen Seiten unangetastet bleibt.
+    if (scrollTopBtn) scrollTopBtn.style.bottom = `calc(32px + ${bar.getBoundingClientRect().height}px + 16px)`;
+  }
+
   function renderProgressBar() {
     const bar = document.getElementById('news-progress-bar');
     if (!bar) return;
     const feed = getFeed();
     const total = feed.articles.length;
-    if (total === 0) { bar.hidden = true; return; }
+    if (total === 0) { bar.hidden = true; syncProgressBarLayout(bar); return; }
     const savedUrls = new Set(getSaved().map(s => s.url));
     const done = feed.articles.filter(a => isArticleDone(a, savedUrls)).length;
     const countEl = document.getElementById('news-progress-count');
     if (countEl) countEl.textContent = `${done} erledigt · ${total - done} offen`;
     bar.hidden = false;
+    syncProgressBarLayout(bar);
+  }
+
+  // ── Feed zurücksetzen (Prompt 12) ─────────────────────────────
+  // Sichtbar nur, wenn es tatsächlich etwas zum Zurücksetzen gibt - sonst
+  // suggeriert der Button eine Aktion, die nichts täte.
+  function renderResetButton() {
+    const btn = document.getElementById('news-feed-reset-btn');
+    if (!btn) return;
+    const feed = getFeed();
+    const carried = window.NewsStorage.readJSON(window.NewsStorage.KEYS.carried, []);
+    btn.hidden = feed.articles.length === 0 && carried.length === 0;
+  }
+
+  // Wirft NUR die laufende Session (news.feed) und übernommene, noch nicht
+  // gesehene Artikel (news.carried) weg - news.history/.feedback/.saved
+  // bleiben unangetastet (Datenpunkte außerhalb des Feeds selbst, siehe
+  // Plan "Nicht Teil dieses Schritts"). Selbes Bestätigungs-Muster wie die
+  // Themen-Massenlöschung (Prompt 11): destruktive Sammel-Aktion, die
+  // mehrere unabgeschlossene Bewertungen/Lesezustände auf einmal verwirft.
+  function resetFeed() {
+    if (!confirm('Feed zurücksetzen? Unabgeschlossene Bewertungen/Lesezustände der aktuellen Session sowie aus früheren Sessions übernommene Artikel gehen dabei verloren.')) return;
+    saveFeed({ articles: [], highlights: [] });
+    window.NewsStorage.writeJSON(window.NewsStorage.KEYS.carried, []);
+    refreshFeedUI();
   }
 
   function refreshFeedUI() {
     renderBoard();
     renderProgressBar();
     renderSessionSummary();
+    renderResetButton();
   }
 
   // ── "Fertig" (Schritt 6b) ─────────────────────────────────────
@@ -592,7 +644,15 @@
 
   function initFeedSection() {
     document.getElementById('news-feed-import-btn')?.addEventListener('click', importArticles);
+    document.getElementById('news-feed-reset-btn')?.addEventListener('click', resetFeed);
     document.getElementById('news-finish-btn')?.addEventListener('click', finishSession);
+    // Prompt 14: Content-Ausrichtung und Zurück-nach-oben-Ausweichen sind
+    // gemessen (siehe syncProgressBarLayout) statt starr berechnet, müssen
+    // also bei Viewport-/Breakpoint-Änderungen neu ermittelt werden.
+    window.addEventListener('resize', () => {
+      const bar = document.getElementById('news-progress-bar');
+      if (bar && !bar.hidden) syncProgressBarLayout(bar);
+    });
     refreshFeedUI();
   }
 

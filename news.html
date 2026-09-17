@@ -82,18 +82,32 @@
             <button type="button" class="news-btn-primary" id="news-discovery-import-btn">Importieren</button>
           </div>
 
-          <h3 class="news-subheading">Ausgewählte Themen</h3>
-          <p class="news-hint">Klick auf ein Thema wählt es ab, „✎" bearbeitet die Beschreibung, „×" entfernt es endgültig.</p>
+          <h3 class="news-subheading">Themen</h3>
+          <p class="news-hint">Checkbox pro Zeile für Mehrfachauswahl, „✎" bearbeitet die Beschreibung, Tooltip auf dem Namen zeigt sie an.</p>
           <div class="news-add-row">
             <input type="text" id="news-topic-input" class="news-text-input" placeholder="eigenes Thema hinzufügen">
             <button type="button" class="news-btn-primary" id="news-topic-add-btn">Hinzufügen</button>
           </div>
-          <div class="news-topic-grid" id="news-topics-selected"></div>
 
-          <div id="news-topics-unselected-wrap" hidden>
-            <h3 class="news-subheading">Nicht ausgewählt</h3>
-            <p class="news-hint">Klick wählt ein Thema wieder an.</p>
-            <div class="news-topic-grid" id="news-topics-unselected"></div>
+          <div class="news-topic-lists">
+            <div class="news-topic-list-col">
+              <h4 class="news-topic-list-title">Aktive Themen</h4>
+              <div class="news-topic-listbox" id="news-topics-active-list"></div>
+              <div class="news-btn-row">
+                <button type="button" class="news-btn-secondary" id="news-topics-active-selectall-btn">Alle auswählen</button>
+                <button type="button" class="news-btn-secondary" id="news-topics-active-deactivate-btn">Deaktivieren</button>
+                <button type="button" class="news-btn-secondary" id="news-topics-active-delete-btn">Ausgewählte löschen</button>
+              </div>
+            </div>
+            <div class="news-topic-list-col">
+              <h4 class="news-topic-list-title">Inaktive Themen</h4>
+              <div class="news-topic-listbox" id="news-topics-inactive-list"></div>
+              <div class="news-btn-row">
+                <button type="button" class="news-btn-secondary" id="news-topics-inactive-selectall-btn">Alle auswählen</button>
+                <button type="button" class="news-btn-secondary" id="news-topics-inactive-activate-btn">Aktivieren</button>
+                <button type="button" class="news-btn-secondary" id="news-topics-inactive-delete-btn">Ausgewählte löschen</button>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -171,6 +185,7 @@
           <textarea id="news-feed-import" class="news-textarea" rows="4" placeholder='{"articles": [...]}'></textarea>
           <div class="news-btn-row">
             <button type="button" class="news-btn-primary" id="news-feed-import-btn">Feed erstellen</button>
+            <button type="button" class="news-btn-secondary" id="news-feed-reset-btn" hidden>Feed zurücksetzen</button>
           </div>
 
           <div id="news-feed-board" class="news-feed-board"></div>

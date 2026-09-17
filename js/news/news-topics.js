@@ -126,19 +126,58 @@ einleitenden oder abschließenden Text, exakt in diesem Schema:
     renderTopics();
   }
 
-  // ── Mutationen ────────────────────────────────────────────
-  function toggleTopic(index) {
+  // ── Mutationen (Prompt 11 - Listenboxen mit Mehrfachauswahl) ──
+  // Kein bestehendes Muster für eine fest-hohe, intern scrollbare Checkbox-
+  // Listenbox mit Select-all + Massenaktionen gefunden (recherchiert:
+  // guides-manage.js' Import-Tabelle hat Select-all, aber keinen festen
+  // Scroll-Bereich; guides-overview.js' Kachel-Mehrfachauswahl hat eine
+  // Bulk-Aktionsleiste, aber kein Select-all und keinen Scroll-Bereich) -
+  // daher neu gebaut, angelehnt an mitmachen-merge.js' einfaches Muster
+  // "Checkbox-Zustand erst beim Klick auf die Aktion auslesen", statt einen
+  // zusätzlichen, separat zu synchronisierenden Auswahl-Zustand zu pflegen.
+  function getCheckedIndexes(listEl) {
+    return [...listEl.querySelectorAll('input[type="checkbox"]:checked')]
+      .map(cb => parseInt(cb.dataset.index, 10))
+      .filter(i => !isNaN(i));
+  }
+
+  // "Alle auswählen" ist ein echter Umschalter (an/aus), kein reines
+  // Ankreuzen - erneuter Klick hebt die Auswahl wieder komplett auf.
+  function toggleSelectAll(listId) {
+    const list = document.getElementById(listId);
+    if (!list) return;
+    const boxes = [...list.querySelectorAll('input[type="checkbox"]')];
+    if (!boxes.length) return;
+    const allChecked = boxes.every(cb => cb.checked);
+    boxes.forEach(cb => { cb.checked = !allChecked; });
+  }
+
+  // Verschieben (Aktivieren/Deaktivieren) für alle markierten Zeilen einer
+  // Box auf einmal - news.topics bleibt sonst unverändert (Reihenfolge,
+  // description etc.), nur "selected" der betroffenen Einträge kippt.
+  function bulkSetSelected(listId, value) {
+    const list = document.getElementById(listId);
+    if (!list) return;
+    const indexes = getCheckedIndexes(list);
+    if (!indexes.length) return;
     const topics = getTopics();
-    if (!topics[index]) return;
-    topics[index].selected = !topics[index].selected;
+    indexes.forEach(i => { if (topics[i]) topics[i].selected = value; });
     saveTopics(topics);
     renderTopics();
   }
 
-  function deleteTopic(index) {
-    const topics = getTopics();
-    if (!topics[index]) return;
-    topics.splice(index, 1);
+  // Massenlöschung: mehrere markierte Themen auf einmal endgültig aus
+  // news.topics entfernen. Da das mehrere, ggf. viele Einträge auf einen
+  // Schlag endgültig löscht (mehr als der bisherige Einzel-"×"), zur
+  // Sicherheit einmal nachfragen - selbes Muster wie beim Backup-Import.
+  function bulkDelete(listId) {
+    const list = document.getElementById(listId);
+    if (!list) return;
+    const indexes = getCheckedIndexes(list);
+    if (!indexes.length) return;
+    if (!confirm(`${indexes.length} ${indexes.length === 1 ? 'Thema' : 'Themen'} endgültig löschen?`)) return;
+    const toDelete = new Set(indexes);
+    const topics = getTopics().filter((_, i) => !toDelete.has(i));
     saveTopics(topics);
     renderTopics();
   }
@@ -158,27 +197,25 @@ einleitenden oder abschließenden Text, exakt in diesem Schema:
   }
 
   // ── Rendering ─────────────────────────────────────────────
-  function buildTopicPill(topic, index) {
-    const pill = document.createElement('span');
-    pill.className = 'news-topic-pill' + (topic.selected ? ' news-topic-pill--on' : '');
+  // Checkbox hier ist reiner, nicht persistenter Arbeits-Zustand für die
+  // Massenaktionen (siehe oben) - unabhängig von topic.selected, das nur
+  // bestimmt, in welcher der beiden Boxen eine Zeile überhaupt auftaucht.
+  function buildTopicRow(topic, index) {
+    const row = document.createElement('div');
+    row.className = 'news-topic-row';
 
-    const label = document.createElement('span');
-    label.className = 'news-topic-label' + (topic.description ? ' news-topic-label--has-desc' : '');
-    label.textContent = topic.name;
-    if (topic.description) label.title = topic.description;
-    // Per Klick auswählbar, aber auch per Tastatur: role/tabindex + Enter/Space,
-    // sonst ist die Kernaktion des Pills (Auswahl umschalten) nicht per Tab
-    // erreichbar (Prompt 8, Tastaturfokus-Check).
-    label.setAttribute('role', 'button');
-    label.setAttribute('tabindex', '0');
-    label.setAttribute('aria-pressed', String(!!topic.selected));
-    label.addEventListener('click', () => toggleTopic(index));
-    label.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        toggleTopic(index);
-      }
-    });
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'news-topic-row-checkbox';
+    checkbox.dataset.index = String(index);
+    checkbox.setAttribute('aria-label', topic.name + ' auswählen');
+    row.appendChild(checkbox);
+
+    const name = document.createElement('span');
+    name.className = 'news-topic-row-name' + (topic.description ? ' news-topic-row-name--has-desc' : '');
+    name.textContent = topic.name;
+    if (topic.description) name.title = topic.description;
+    row.appendChild(name);
 
     const editBtn = document.createElement('button');
     editBtn.type = 'button';
@@ -187,47 +224,34 @@ einleitenden oder abschließenden Text, exakt in diesem Schema:
     editBtn.setAttribute('aria-label', 'Beschreibung für ' + topic.name + ' bearbeiten');
     editBtn.textContent = '✎';
     editBtn.addEventListener('click', () => editTopicDescription(index));
+    row.appendChild(editBtn);
 
-    const removeBtn = document.createElement('button');
-    removeBtn.type = 'button';
-    removeBtn.className = 'news-topic-icon-btn';
-    removeBtn.title = 'Thema endgültig löschen';
-    removeBtn.setAttribute('aria-label', topic.name + ' endgültig löschen');
-    removeBtn.textContent = '×';
-    removeBtn.addEventListener('click', () => deleteTopic(index));
-
-    pill.appendChild(label);
-    pill.appendChild(editBtn);
-    pill.appendChild(removeBtn);
-    return pill;
+    return row;
   }
 
-  function renderTopics() {
-    const selectedEl = document.getElementById('news-topics-selected');
-    const unselectedEl = document.getElementById('news-topics-unselected');
-    const unselectedWrap = document.getElementById('news-topics-unselected-wrap');
-    if (!selectedEl || !unselectedEl || !unselectedWrap) return;
-
-    const topics = getTopics();
-    selectedEl.replaceChildren();
-    unselectedEl.replaceChildren();
-
-    const selectedIdx = [];
-    const unselectedIdx = [];
-    topics.forEach((t, i) => (t.selected ? selectedIdx : unselectedIdx).push(i));
-
-    if (!selectedIdx.length) {
+  function renderTopicList(listId, topics, indexes, emptyText) {
+    const list = document.getElementById(listId);
+    if (!list) return;
+    list.replaceChildren();
+    if (!indexes.length) {
       const empty = document.createElement('p');
       empty.className = 'news-hint';
       empty.style.margin = '0';
-      empty.textContent = 'Noch keine Themen ausgewählt.';
-      selectedEl.appendChild(empty);
-    } else {
-      selectedIdx.forEach(i => selectedEl.appendChild(buildTopicPill(topics[i], i)));
+      empty.textContent = emptyText;
+      list.appendChild(empty);
+      return;
     }
+    indexes.forEach(i => list.appendChild(buildTopicRow(topics[i], i)));
+  }
 
-    unselectedIdx.forEach(i => unselectedEl.appendChild(buildTopicPill(topics[i], i)));
-    unselectedWrap.hidden = unselectedIdx.length === 0;
+  function renderTopics() {
+    const topics = getTopics();
+    const activeIdx = [];
+    const inactiveIdx = [];
+    topics.forEach((t, i) => (t.selected ? activeIdx : inactiveIdx).push(i));
+
+    renderTopicList('news-topics-active-list', topics, activeIdx, 'Keine aktiven Themen.');
+    renderTopicList('news-topics-inactive-list', topics, inactiveIdx, 'Keine deaktivierten Themen.');
   }
 
   function initTopicsSection() {
@@ -241,13 +265,20 @@ einleitenden oder abschließenden Text, exakt in diesem Schema:
       if (e.key === 'Enter') { e.preventDefault(); addTopicManually(); }
     });
 
+    document.getElementById('news-topics-active-selectall-btn')?.addEventListener('click', () => toggleSelectAll('news-topics-active-list'));
+    document.getElementById('news-topics-inactive-selectall-btn')?.addEventListener('click', () => toggleSelectAll('news-topics-inactive-list'));
+    document.getElementById('news-topics-active-deactivate-btn')?.addEventListener('click', () => bulkSetSelected('news-topics-active-list', false));
+    document.getElementById('news-topics-inactive-activate-btn')?.addEventListener('click', () => bulkSetSelected('news-topics-inactive-list', true));
+    document.getElementById('news-topics-active-delete-btn')?.addEventListener('click', () => bulkDelete('news-topics-active-list'));
+    document.getElementById('news-topics-inactive-delete-btn')?.addEventListener('click', () => bulkDelete('news-topics-inactive-list'));
+
     renderTopics();
   }
 
   document.addEventListener('DOMContentLoaded', initTopicsSection);
 
   // Schritt 4 (Einstellungen/Backup-Import) ruft renderTopics() nach einem
-  // Restore erneut auf, damit die Pillen ohne Reload den wiederhergestellten
-  // Stand zeigen.
+  // Restore erneut auf, damit die Listenboxen ohne Reload den
+  // wiederhergestellten Stand zeigen.
   window.NewsTopics = { render: renderTopics };
 })();
