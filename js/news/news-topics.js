@@ -30,16 +30,19 @@
   function generateDiscoveryPrompt() {
     const settings = getSettings();
     const sources = (settings.sources || []).filter(s => s.active).map(s => s.name).join(', ');
-    return `Du hilfst mir, die Themenbereiche folgender Newsseiten zu erfassen:
+    return `WICHTIG: Antworte ausschließlich mit validem JSON, ohne Markdown-Codeblock, ohne einleitenden oder abschließenden Text.
+
+Du hilfst mir, die Themenbereiche folgender Newsseiten zu erfassen:
 ${sources}
 
 Liste für diese Seiten die Rubriken/Themenbereiche, in die sie ihre Inhalte
 typischerweise einteilen (Navigation, Kategorien, Tags). Fasse sehr ähnliche
 Rubriken über die Seiten hinweg zu einer zusammen, keine Duplikate.
 
-Gib AUSSCHLIESSLICH valides JSON zurück, ohne Markdown-Codeblock, ohne
-einleitenden oder abschließenden Text, exakt in diesem Schema:
+Prüfe vor der Antwort: ist die Ausgabe reines JSON, ohne \`\`\`-Codeblock, ohne
+Text davor oder danach?
 
+Exaktes Schema:
 {
   "topics": ["string", "string", ...]
 }`;

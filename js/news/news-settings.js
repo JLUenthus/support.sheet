@@ -29,10 +29,15 @@
   // definierbar (kein Verlauf/keine Quelle dafür im Datenmodell) - stattdessen
   // (Prompt 10, UI-Feinschliff) eine kleine, feste Starter-Vorschlagsliste
   // analog zu Ausschluss-Keywords, damit das Feld nicht unfertig wirkt.
-  // Für Ausschluss-Keywords die im Auftrag explizit vorgegebene feste Starter-Liste.
   let interestsField = null;
   let excludeField = null;
 
+  // Prompt 19: Ausschluss-Keywords bekommen eine eigene, kategorisierte
+  // Vorschlagsdarstellung (siehe renderExcludeCategories) statt der flachen
+  // Vorschlags-Pillen-Reihe von initTagField - deshalb hier bewusst KEINE
+  // suggestions/suggestionsId mehr übergeben, nur noch Chips + Eingabe.
+  // Kein Aktiv/Inaktiv-Konzept wie bei Quellen/Themen: ein Keyword ist
+  // einfach in excludeKeywords enthalten oder nicht.
   function initTagFields() {
     interestsField = window.NewsTags.initTagField({
       boxId: 'news-interests-tagbox',
@@ -45,10 +50,121 @@
     excludeField = window.NewsTags.initTagField({
       boxId: 'news-exclude-tagbox',
       inputId: 'news-exclude-input',
-      suggestionsId: 'news-exclude-suggestions',
-      suggestions: ['Gutschein', 'Rabattcode', 'Gewinnspiel', 'Sponsored Content', 'Werbung', 'Advertorial'],
       getValues: () => getSettings().excludeKeywords || [],
       setValues: (values) => { const s = getSettings(); s.excludeKeywords = values; saveSettings(s); },
+    });
+  }
+
+  // ── Ausschluss-Keywords: kategorisierte Vorschläge (Prompt 19) ───
+  // Ersetzt die bisherigen sechs flachen Einzelvorschläge. Wächst auf 32
+  // Begriffe in vier Kategorien, deshalb je Kategorie ein einklappbarer
+  // Bereich (dasselbe <details>/<summary>-Muster wie die ausklappbaren
+  // Prompt-Textfelder aus Prompt 10, .news-prompt-details/-summary
+  // wiederverwendet) statt einer einzigen langen Pillen-Reihe.
+  const EXCLUDE_KEYWORD_CATEGORIES = [
+    {
+      name: 'Kommerzielle Inhalte',
+      keywords: ['Kaufberatung', 'Kaufempfehlung', 'Angebote', 'Rabatte', 'Rabattcode', 'Gutschein', 'Preisvergleich', 'Deals', 'Schnäppchen', 'Affiliate'],
+    },
+    {
+      name: 'Werbung / PR',
+      keywords: ['gesponsert', 'Sponsored', 'Anzeige', 'Werbung', 'Advertorial', 'Pressemitteilung', 'PR', 'Promotion', 'Markenbotschafter'],
+    },
+    {
+      name: 'Content-Füller',
+      keywords: ['Die besten', 'Top 10', 'Ranking', 'Ratgeber', 'Tipps', 'Produktvergleich', 'Testbericht'],
+    },
+    {
+      name: 'Eigenwerbung / Sonstiges',
+      keywords: ['Gewinnspiel', 'Newsletter', 'Podcast', 'Veranstaltung', 'Webinar', 'Stellenanzeige'],
+    },
+  ];
+
+  function toggleExcludeKeyword(keyword) {
+    const s = getSettings();
+    const values = s.excludeKeywords || [];
+    const isOn = values.some(v => v.toLowerCase() === keyword.toLowerCase());
+    s.excludeKeywords = isOn ? values.filter(v => v.toLowerCase() !== keyword.toLowerCase()) : [...values, keyword];
+    saveSettings(s);
+    renderExcludeCategories();
+    excludeField?.render();
+  }
+
+  // "Alle auswählen"/"Alle abwählen" wirken auf die gesamte Kategorie auf
+  // einmal, statt jedes Keyword einzeln anklicken zu müssen.
+  function setExcludeCategory(keywords, shouldInclude) {
+    const s = getSettings();
+    let values = s.excludeKeywords || [];
+    if (shouldInclude) {
+      keywords.forEach(k => {
+        if (!values.some(v => v.toLowerCase() === k.toLowerCase())) values = [...values, k];
+      });
+    } else {
+      const lower = new Set(keywords.map(k => k.toLowerCase()));
+      values = values.filter(v => !lower.has(v.toLowerCase()));
+    }
+    s.excludeKeywords = values;
+    saveSettings(s);
+    renderExcludeCategories();
+    excludeField?.render();
+  }
+
+  function buildExcludeCategory(category) {
+    const values = getSettings().excludeKeywords || [];
+
+    const details = document.createElement('details');
+    details.className = 'news-prompt-details news-exclude-category';
+
+    const summary = document.createElement('summary');
+    summary.className = 'news-prompt-summary';
+    summary.textContent = `${category.name} (${category.keywords.length})`;
+    details.appendChild(summary);
+
+    const actions = document.createElement('div');
+    actions.className = 'news-btn-row';
+    const selectAllBtn = document.createElement('button');
+    selectAllBtn.type = 'button';
+    selectAllBtn.className = 'news-btn-secondary';
+    selectAllBtn.textContent = 'Alle auswählen';
+    selectAllBtn.addEventListener('click', () => setExcludeCategory(category.keywords, true));
+    const deselectAllBtn = document.createElement('button');
+    deselectAllBtn.type = 'button';
+    deselectAllBtn.className = 'news-btn-secondary';
+    deselectAllBtn.textContent = 'Alle abwählen';
+    deselectAllBtn.addEventListener('click', () => setExcludeCategory(category.keywords, false));
+    actions.appendChild(selectAllBtn);
+    actions.appendChild(deselectAllBtn);
+    details.appendChild(actions);
+
+    const pills = document.createElement('div');
+    pills.className = 'news-tag-suggestions';
+    category.keywords.forEach(k => {
+      const isOn = values.some(v => v.toLowerCase() === k.toLowerCase());
+      const pill = document.createElement('button');
+      pill.type = 'button';
+      pill.className = 'news-tag-suggestion' + (isOn ? ' news-tag-suggestion--on' : '');
+      pill.textContent = k;
+      pill.addEventListener('click', () => toggleExcludeKeyword(k));
+      pills.appendChild(pill);
+    });
+    details.appendChild(pills);
+
+    return details;
+  }
+
+  function renderExcludeCategories() {
+    const container = document.getElementById('news-exclude-categories');
+    if (!container) return;
+    // open-Zustand je Kategorie über einen Rebuild hinweg erhalten, sonst
+    // klappt jede Änderung (auch nur ein Pill-Klick) alle Kategorien wieder zu.
+    const openNames = new Set(
+      [...container.querySelectorAll('details[open]')].map(d => d.querySelector('summary')?.textContent)
+    );
+    container.replaceChildren();
+    EXCLUDE_KEYWORD_CATEGORIES.forEach(category => {
+      const el = buildExcludeCategory(category);
+      if (openNames.has(`${category.name} (${category.keywords.length})`)) el.open = true;
+      container.appendChild(el);
     });
   }
 
@@ -223,6 +339,7 @@
         renderFeedbackOverview();
         interestsField?.render();
         excludeField?.render();
+        renderExcludeCategories();
 
         if (typeof showToast === 'function') showToast('Backup importiert', 'success');
       } catch (err) {
@@ -244,6 +361,7 @@
 
   function initSettingsSection() {
     initTagFields();
+    renderExcludeCategories();
     initDateAndArticleFields();
     renderFeedbackOverview();
     initBackup();

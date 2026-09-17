@@ -43,9 +43,11 @@
     const activeSources = (settings.sources || []).filter(s => s.active).map(s => s.name).join(', ');
 
     // Textbaustein 1:1 aus news-sheet-plan.md ("Prompt-Templates -> Content-
-    // Prompt") übernommen - wird unverändert in eine externe KI eingefügt,
-    // daher wortwörtlich, nicht umformuliert.
-    return `Du bist ein Nachrichten-Kurator. Nutze deine Web-Suche, um aktuelle Nachrichten
+    // Prompt", Plan-Version 19) übernommen - wird unverändert in eine
+    // externe KI eingefügt, daher wortwörtlich, nicht umformuliert.
+    return `WICHTIG: Antworte ausschließlich mit validem JSON, ohne Markdown-Codeblock, ohne einleitenden oder abschließenden Text. Alle URL-Felder (url, image_url, source_url) als reiner String, niemals als Markdown-Link.
+
+Du bist ein Nachrichten-Kurator. Nutze deine Web-Suche, um aktuelle Nachrichten
 zu folgenden Themen zu finden, veröffentlicht zwischen ${settings.dateFrom} und ${settings.dateTo}:
 
 Interessen: ${interests}
@@ -58,23 +60,35 @@ Sponsored Content, sowie folgende Begriffe: ${(settings.excludeKeywords || []).j
 Bevorzugte Quellen (nicht ausschließlich): ${activeSources || '–'}
 Quellen mit bisher schwacher Resonanz (weniger stark gewichten, falls vorhanden): ${sourceWeights.avoid.join(', ') || '–'}
 
-Regeln:
+Kernregeln:
 - Maximal ${settings.maxArticles} Artikel insgesamt.
 - Nur echte, per Websuche gefundene URLs zurückgeben, keine erfundenen Links.
 - Bei derselben Meldung aus mehreren Quellen nur die beste Version behalten, keine Duplikate.
 - Jeder Artikel: Zusammenfassung in maximal 2 Sätzen.
 - Thematisch sinnvoll gruppieren (topic-Feld).
-- Zusätzlich maximal 3 kurze "highlights" (je ein Satz) mit den wichtigsten Kernpunkten über alle Artikel hinweg, jedes als Objekt mit "text" und, falls das Highlight sich auf einen bestimmten Artikel bezieht, "source_url" (muss exakt der "url" eines der obigen Artikel entsprechen, sonst weglassen).
-- Pro Artikel, falls über die Websuche auffindbar, die URL des Artikelbilds mitliefern ("image_url"), sonst das Feld weglassen. Keine erfundenen Bild-URLs.
-- "url" und "image_url" immer als reiner String zurückgeben, niemals als Markdown-Link (kein "[Text](URL)"-Format).
-- Pro Artikel in einem Satz begründen, warum er zu den genannten Interessen passt ("why_relevant").
-- Pro Artikel eine grobe geschätzte Lesezeit in Minuten ("read_time_minutes").
-- Ausschließlich valides JSON zurückgeben, ohne Markdown-Codeblock, ohne
-  einleitenden oder abschließenden Text, exakt in diesem Schema:
 
+Zusatzfelder pro Artikel:
+- "why_relevant": ein Satz, warum der Artikel zu den genannten Interessen passt.
+- "read_time_minutes": grobe geschätzte Lesezeit in Minuten.
+- "image_url": URL des Artikelbilds, falls über die Websuche auffindbar, sonst weglassen. Keine erfundenen Bild-URLs.
+- "likely_ai_written" (true/false), bei true zusätzlich "ai_written_reason": nur setzen, wenn der Ausgangsartikel selbst tatsächlich Anzeichen von KI-generiertem statt menschlich geschriebenem Text zeigt (fehlende Autorenangabe, generischer/templatehafter Aufbau, bekannte Content-Farm-Domain, auffällig gleichförmiger Stil), nicht routinemäßig oder geraten, sonst beide Felder weglassen.
+
+Format-Regeln (häufige Fehlerquelle, bitte genau beachten):
+- url, image_url und source_url immer als reiner String, z. B. "https://beispiel.de/artikel".
+  NICHT so: "[https://beispiel.de/artikel](https://beispiel.de/artikel)" (Markdown-Link-Format).
+- Maximal 3 kurze "highlights" (je ein Satz) mit den wichtigsten Kernpunkten über alle Artikel hinweg. Pro Highlight, falls er sich eindeutig auf einen der unten gelisteten Artikel bezieht, dessen exakte URL als "source_url" mitliefern (muss Zeichen für Zeichen einer der \`articles[].url\` entsprechen), sonst "source_url" weglassen.
+
+Prüfe vor der Antwort:
+- Ist jede URL ein echter, über die Websuche gefundener Link, kein erfundener?
+- Sind alle URL-Felder reine Strings, keine Markdown-Links?
+- Ist die Ausgabe reines JSON, ohne \`\`\`-Codeblock, ohne Text davor oder danach?
+
+Exaktes Schema:
 {
   "generated_at": "YYYY-MM-DDTHH:MM:SSZ",
-  "highlights": [{ "text": "string", "source_url": "string (optional)" }],
+  "highlights": [
+    { "text": "string", "source_url": "string (optional)" }
+  ],
   "articles": [
     {
       "title": "string",
@@ -86,7 +100,9 @@ Regeln:
       "published_at": "YYYY-MM-DD",
       "image_url": "string (optional)",
       "why_relevant": "string",
-      "read_time_minutes": "number"
+      "read_time_minutes": "number",
+      "likely_ai_written": "boolean (optional)",
+      "ai_written_reason": "string (optional, nur wenn likely_ai_written: true)"
     }
   ]
 }`;

@@ -66,6 +66,16 @@
       badge.title = (entry.checkReasons || []).join(', ');
       meta.appendChild(badge);
     }
+    // "KI-Verdacht" (Prompt 17): unabhängig von Plausibel/Auffällig, gilt
+    // auch für gemerkte Artikel (siehe toggleSave in news-feed.js).
+    if (entry.likely_ai_written) {
+      meta.appendChild(document.createTextNode(' · '));
+      const aiBadge = document.createElement('span');
+      aiBadge.className = 'news-verify-badge news-verify-badge--ai';
+      aiBadge.textContent = 'KI-Verdacht';
+      if (entry.ai_written_reason) aiBadge.title = entry.ai_written_reason;
+      meta.appendChild(aiBadge);
+    }
     body.appendChild(meta);
 
     const summary = document.createElement('p');

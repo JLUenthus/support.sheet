@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260917-news-curator-prompt16-scrolltop-over-finish';
+const CACHE_VERSION = '20260917-news-curator-prompt19-exclude-categories';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [

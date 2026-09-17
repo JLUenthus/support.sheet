@@ -220,6 +220,7 @@
         tags: article.tags, summary: article.summary, published_at: article.published_at,
         image_url: article.image_url, why_relevant: article.why_relevant, read_time_minutes: article.read_time_minutes,
         verified: article.verified, checkReasons: article.checkReasons,
+        likely_ai_written: article.likely_ai_written, ai_written_reason: article.ai_written_reason,
         savedAt: new Date().toISOString(),
       });
     }
@@ -313,6 +314,20 @@
       carriedBadge.textContent = 'Übertragen';
       carriedBadge.title = 'Aus der letzten Session nicht angesehen, wurde übernommen';
       meta.appendChild(carriedBadge);
+    }
+
+    // "KI-Verdacht" (Prompt 17): eigenständige Achse neben Plausibel/Auffällig
+    // - dort prüft die App selbst URL/Datum/Domain, hier ist es eine reine
+    // Texteinschätzung der kuratierenden KI, keine eigene Verifizierung.
+    // Fehlt das Feld oder ist es false, wird NICHTS angezeigt (kein "bestätigt
+    // menschlich"-Gegenstück, siehe Plan-Edge-Case).
+    if (article.likely_ai_written) {
+      meta.appendChild(document.createTextNode(' '));
+      const aiBadge = document.createElement('span');
+      aiBadge.className = 'news-verify-badge news-verify-badge--ai';
+      aiBadge.textContent = 'KI-Verdacht';
+      if (article.ai_written_reason) aiBadge.title = article.ai_written_reason;
+      meta.appendChild(aiBadge);
     }
     body.appendChild(meta);
 

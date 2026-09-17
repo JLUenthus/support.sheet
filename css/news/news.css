@@ -196,6 +196,18 @@
 .news-prompt-summary:hover { color: var(--text); }
 .news-prompt-details .news-textarea { margin-top: 8px; }
 
+/* ── Ausschluss-Keywords: kategorisierte Vorschläge (Prompt 19) ──────
+   Vier <details>-Blöcke (.news-prompt-details/-summary von oben wiederverwendet,
+   keine zweite Disclosure-Implementierung) zusammen in einem Container mit
+   fester Maximalhöhe, damit die Seite bei mehreren gleichzeitig geöffneten
+   Kategorien nicht beliebig in die Länge wächst. */
+.news-exclude-categories {
+  max-height: 320px; overflow-y: auto; border: 1px solid var(--border);
+  border-radius: var(--r); padding: 4px 12px; background: var(--panel);
+}
+.news-exclude-category { margin: 8px 0; }
+.news-exclude-category .news-btn-row { margin: 6px 0 8px; }
+
 .news-textarea {
   width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: var(--r);
   padding: 10px 12px; color: var(--text); font-family: var(--font-mono); font-size: .82rem;
@@ -372,6 +384,11 @@
 .news-verify-badge--ok { color: var(--green); background: var(--green-bg); }
 .news-verify-badge--warn { color: var(--red); background: var(--red-bg); cursor: help; }
 .news-verify-badge--carried { color: var(--accent2); background: rgba(167,139,250,.12); }
+/* "KI-Verdacht" (Prompt 17): eigene Farbe (Amber) statt Rot/Grün/Lila der
+   anderen Badges - eigenständige Achse (Einschätzung der kuratierenden KI,
+   keine App-eigene Verifizierung), soll nicht mit "Auffällig" (Rot,
+   strukturell durch die App geprüft) verwechselt werden. */
+.news-verify-badge--ai { color: var(--amber); background: rgba(251,191,36,.12); cursor: help; }
 
 /* ── Artikel-Interaktion: Bewerten/Merken/Nicht relevant (Schritt 6b) ── */
 .news-article--dismissed { opacity: .5; }
