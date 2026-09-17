@@ -95,16 +95,24 @@
               <div class="news-topic-listbox" id="news-topics-active-list"></div>
               <div class="news-btn-row">
                 <button type="button" class="news-btn-secondary" id="news-topics-active-selectall-btn">Alle auswählen</button>
-                <button type="button" class="news-btn-secondary" id="news-topics-active-deactivate-btn">Deaktivieren</button>
                 <button type="button" class="news-btn-secondary" id="news-topics-active-delete-btn">Ausgewählte löschen</button>
               </div>
             </div>
+
+            <div class="news-topic-move-col">
+              <button type="button" class="news-btn-secondary news-topic-move-btn" id="news-topics-activate-btn" title="Markierte inaktive Themen aktivieren" aria-label="Markierte inaktive Themen aktivieren">
+                <span class="news-topic-move-arrow" aria-hidden="true">‹</span> Aktivieren
+              </button>
+              <button type="button" class="news-btn-secondary news-topic-move-btn" id="news-topics-deactivate-btn" title="Markierte aktive Themen deaktivieren" aria-label="Markierte aktive Themen deaktivieren">
+                <span class="news-topic-move-arrow" aria-hidden="true">›</span> Deaktivieren
+              </button>
+            </div>
+
             <div class="news-topic-list-col">
               <h4 class="news-topic-list-title">Inaktive Themen</h4>
               <div class="news-topic-listbox" id="news-topics-inactive-list"></div>
               <div class="news-btn-row">
                 <button type="button" class="news-btn-secondary" id="news-topics-inactive-selectall-btn">Alle auswählen</button>
-                <button type="button" class="news-btn-secondary" id="news-topics-inactive-activate-btn">Aktivieren</button>
                 <button type="button" class="news-btn-secondary" id="news-topics-inactive-delete-btn">Ausgewählte löschen</button>
               </div>
             </div>

@@ -221,6 +221,16 @@
    640px-Mobile-Schwelle. */
 .news-topic-lists { display: flex; gap: 20px; margin: 4px 0 20px; }
 .news-topic-list-col { flex: 1; min-width: 0; }
+/* Prompt 15: gemeinsame Verschieben-Spalte zwischen den beiden Boxen statt
+   je einem Verschieben-Button in jeder Box-eigenen Aktionsleiste. align-self
+   (statt align-items auf dem Elternelement) hält nur diese Spalte vertikal
+   zentriert, ohne die beiden Listboxen-Spalten selbst zu beeinflussen. */
+.news-topic-move-col {
+  display: flex; flex-direction: column; gap: 10px; justify-content: center;
+  align-self: center; flex-shrink: 0;
+}
+.news-topic-move-btn { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.news-topic-move-arrow { font-size: 1rem; line-height: 1; }
 .news-topic-list-title {
   font-size: .78rem; font-weight: 700; color: var(--muted); margin: 0 0 8px;
 }
@@ -244,6 +254,11 @@
 
 @media (max-width: 640px) {
   .news-topic-lists { flex-direction: column; }
+  /* Mittlere Spalte liegt im DOM bereits zwischen den beiden Boxen, landet
+     beim Stapeln also automatisch dazwischen (oben/unten statt links/
+     rechts) - hier nur die beiden Buttons nebeneinander statt übereinander,
+     damit der Streifen zwischen den gestapelten Boxen kompakt bleibt. */
+  .news-topic-move-col { flex-direction: row; align-self: stretch; justify-content: center; }
 }
 
 /* ── Tag-Input (Schritt 4 - Einstellungen) ────────────────────

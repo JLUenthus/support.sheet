@@ -267,8 +267,11 @@ einleitenden oder abschließenden Text, exakt in diesem Schema:
 
     document.getElementById('news-topics-active-selectall-btn')?.addEventListener('click', () => toggleSelectAll('news-topics-active-list'));
     document.getElementById('news-topics-inactive-selectall-btn')?.addEventListener('click', () => toggleSelectAll('news-topics-inactive-list'));
-    document.getElementById('news-topics-active-deactivate-btn')?.addEventListener('click', () => bulkSetSelected('news-topics-active-list', false));
-    document.getElementById('news-topics-inactive-activate-btn')?.addEventListener('click', () => bulkSetSelected('news-topics-inactive-list', true));
+    // Prompt 15: die beiden Verschieben-Buttons sitzen jetzt gemeinsam in
+    // einer mittleren Spalte statt je einer pro Box - Verschieben-Logik
+    // selbst (bulkSetSelected) unverändert, nur die Button-Position/IDs.
+    document.getElementById('news-topics-deactivate-btn')?.addEventListener('click', () => bulkSetSelected('news-topics-active-list', false));
+    document.getElementById('news-topics-activate-btn')?.addEventListener('click', () => bulkSetSelected('news-topics-inactive-list', true));
     document.getElementById('news-topics-active-delete-btn')?.addEventListener('click', () => bulkDelete('news-topics-active-list'));
     document.getElementById('news-topics-inactive-delete-btn')?.addEventListener('click', () => bulkDelete('news-topics-inactive-list'));
 
