@@ -521,29 +521,30 @@
     const content = document.querySelector('.news-main-content');
     if (content) bar.style.paddingLeft = content.getBoundingClientRect().left + 'px';
 
-    // Prompt 15: globaler "Zurück nach oben"-Button (nav.js, .as-scroll-top)
-    // steht jetzt in einer Reihe mit "Fertig" statt (wie in Prompt 14) in
-    // einer eigenen Reihe darüber - vertikale Mitten beider Buttons
-    // angeglichen, mit Abstand unmittelbar links von Fertig. Bounding-Rects
-    // zur Laufzeit gemessen statt hartkodiert (gleiches Vorgehen wie die
-    // Höhen-Messung aus Prompt 14), da sich Fertig-Größe/Leisten-Höhe
-    // ändern können. Bewusst weiterhin hier im News-Modul gelöst, damit
-    // der Button auf allen anderen Seiten unangetastet bleibt.
+    // Prompt 16: zurück zu "oberhalb der Leiste schweben" (Prompt 14) statt
+    // daneben in einer Reihe (Prompt 15, nicht die gewünschte Richtung) -
+    // bottom wie in Prompt 14 (eigener Standard-Versatz + Leistenhöhe +
+    // Abstand), right diesmal aber so gemessen, dass das horizontale
+    // Zentrum des Pfeil-Buttons exakt mit dem von "Fertig" übereinstimmt,
+    // statt den Standard-right-Wert unverändert zu lassen. Bounding-Rects
+    // zur Laufzeit gemessen (gleiches Vorgehen wie die Höhen-Messung aus
+    // Prompt 14/15), da sich Fertig-Position/Leisten-Höhe ändern können.
+    // Bewusst weiterhin hier im News-Modul gelöst, damit der Button auf
+    // allen anderen Seiten unangetastet bleibt.
     const finishBtn = document.getElementById('news-finish-btn');
     if (scrollTopBtn && finishBtn) {
+      const barHeight = bar.getBoundingClientRect().height;
       const finishRect = finishBtn.getBoundingClientRect();
       const scrollRect = scrollTopBtn.getBoundingClientRect();
-      const gap = 16;
-      const finishCenterY = finishRect.top + finishRect.height / 2;
-      // documentElement.clientWidth/-Height statt window.innerWidth/-Height:
-      // Letzteres schließt die Scrollbar mit ein, getBoundingClientRect()
-      // (und damit die tatsächliche Fixed-Position von "right"/"bottom")
-      // bezieht sich aber auf den Viewport OHNE Scrollbar - sonst landet der
-      // Button sichtbar zu weit von Fertig entfernt (um die Scrollbarbreite).
+      const finishCenterX = finishRect.left + finishRect.width / 2;
+      // clientWidth statt window.innerWidth: schließt die Scrollbar nicht
+      // mit ein, passt also zur tatsächlichen Fixed-Position-Berechnung von
+      // getBoundingClientRect (siehe Prompt 15 - sonst landet der Button um
+      // die Scrollbarbreite daneben).
       const viewportW = document.documentElement.clientWidth;
-      const viewportH = document.documentElement.clientHeight;
-      scrollTopBtn.style.bottom = (viewportH - finishCenterY - scrollRect.height / 2) + 'px';
-      scrollTopBtn.style.right = (viewportW - finishRect.left + gap) + 'px';
+
+      scrollTopBtn.style.bottom = `calc(32px + ${barHeight}px + 16px)`;
+      scrollTopBtn.style.right = (viewportW - finishCenterX - scrollRect.width / 2) + 'px';
     }
   }
 
