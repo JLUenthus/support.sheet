@@ -34,14 +34,108 @@
     return raw.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '');
   }
 
+  // ── Favicon-Erkennung (Prompt 20) ──────────────────────────
+  // Nur der Hostname wird gebraucht, auch wenn der Quellenname einen Pfad
+  // enthält (z.B. "heise.de/newsticker"). new URL() übernimmt das Parsen,
+  // die bereits vorhandene Normalisierung aus Prompt 9 (kein http(s)://,
+  // kein www., kein abschließender /) hilft hier bereits vor, ersetzt eine
+  // eigene Parsing-Implementierung aber nicht vollständig (Pfade bleiben ja
+  // erlaubt), daher weiterhin über new URL() statt eigenem Regex.
+  function extractHostname(name) {
+    try {
+      return new URL('https://' + name).hostname;
+    } catch {
+      return null;
+    }
+  }
+
+  // Kein Byte-Caching der Bilddaten selbst hier (CORS/Canvas-Tainting,
+  // siehe Plan) - das Caching übernimmt der Service Worker (sw.js). Diese
+  // Funktion prüft nur per <img> onload/onerror, ob eine URL überhaupt lädt,
+  // und persistiert ausschließlich die erfolgreiche URL plus favicon_checked.
+  const faviconCheckInFlight = new Set();
+
+  function detectFavicon(id, name) {
+    const domain = extractHostname(name);
+
+    function finish(url) {
+      faviconCheckInFlight.delete(id);
+      const settings = getSettings();
+      const source = settings.sources.find(s => s.id === id);
+      if (!source) return; // Quelle wurde inzwischen gelöscht
+      source.favicon_checked = true;
+      source.favicon_url = url;
+      saveSettings(settings);
+      renderSources();
+    }
+
+    if (!domain) { finish(null); return; }
+
+    const directUrl = `https://${domain}/favicon.ico`;
+    const direct = new Image();
+    direct.onload = () => finish(directUrl);
+    direct.onerror = () => {
+      // Schritt 2: Google-Faviconservice als Fallback, erst NACH Fehlschlag
+      // von Schritt 1, nicht parallel (siehe Plan: dreistufige Kette).
+      const googleUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+      const viaGoogle = new Image();
+      viaGoogle.onload = () => finish(googleUrl);
+      viaGoogle.onerror = () => finish(null);
+      viaGoogle.src = googleUrl;
+    };
+    direct.src = directUrl;
+  }
+
+  // Läuft nach jedem renderSources()-Aufruf: prüft alle Quellen ohne
+  // favicon_checked:true (neu hinzugefügte UND einmalig nachgeholt für
+  // bereits bestehende Quellen aus vor diesem Prompt), übersprungen wird nur
+  // eine bereits laufende Prüfung derselben Quelle (faviconCheckInFlight),
+  // damit z.B. ein Umschalten der aktiv/inaktiv-Leiste keine doppelten
+  // Netzwerk-Anfragen für dieselbe, noch offene Prüfung auslöst.
+  function checkPendingFavicons() {
+    getSettings().sources.forEach(source => {
+      if (source.favicon_checked === true) return;
+      if (faviconCheckInFlight.has(source.id)) return;
+      faviconCheckInFlight.add(source.id);
+      detectFavicon(source.id, source.name);
+    });
+  }
+
+  function buildSourceBadge(source) {
+    const badge = document.createElement('span');
+    badge.className = 'news-source-badge';
+    badge.textContent = source.name.slice(0, 2).toUpperCase();
+    return badge;
+  }
+
   function buildSourceRow(source) {
     const row = document.createElement('div');
     row.className = 'news-source-row' + (source.active ? '' : ' news-source-row--inactive');
     row.dataset.id = source.id;
 
-    const badge = document.createElement('span');
-    badge.className = 'news-source-badge';
-    badge.textContent = source.name.slice(0, 2).toUpperCase();
+    let icon;
+    if (source.favicon_url) {
+      icon = document.createElement('img');
+      icon.className = 'news-source-favicon';
+      icon.src = source.favicon_url;
+      icon.alt = '';
+      icon.loading = 'lazy';
+      // Herkunft im Tooltip aus Transparenzgründen (Schritt 2 bedeutet eine
+      // Anfrage an einen Dritten) - aus der gespeicherten URL abgeleitet
+      // statt einem zusätzlichen Datenmodell-Feld, das die Aufgabe nicht
+      // vorsieht.
+      icon.title = source.favicon_url.includes('google.com/s2/favicons')
+        ? 'via Google'
+        : (extractHostname(source.name) || source.name);
+      // Schlägt ein bereits gespeichertes Favicon beim Rendern doch fehl
+      // (z.B. zwischenzeitlich entfernt), live auf das Kürzel-Badge
+      // zurückfallen, ohne favicon_checked/favicon_url anzurühren - kein
+      // erneuter Check bei jedem Laden, nur dieser eine Anzeige-Versuch war
+      // erfolglos.
+      icon.addEventListener('error', () => icon.replaceWith(buildSourceBadge(source)), { once: true });
+    } else {
+      icon = buildSourceBadge(source);
+    }
 
     const info = document.createElement('div');
     info.className = 'news-source-info';
@@ -74,7 +168,7 @@
     removeBtn.textContent = '×';
     removeBtn.addEventListener('click', () => deleteSource(source.id));
 
-    row.appendChild(badge);
+    row.appendChild(icon);
     row.appendChild(info);
     row.appendChild(switchLabel);
     row.appendChild(removeBtn);
@@ -114,6 +208,7 @@
     saveSettings(settings);
     input.value = '';
     renderSources();
+    checkPendingFavicons();
   }
 
   function toggleSource(id) {
@@ -141,6 +236,9 @@
       if (e.key === 'Enter') { e.preventDefault(); addSource(); }
     });
     renderSources();
+    // Einmalig für bereits bestehende Quellen ohne favicon_checked:true
+    // nachgeholt (z.B. aus der Zeit vor diesem Prompt).
+    checkPendingFavicons();
   }
 
   document.addEventListener('DOMContentLoaded', initSourcesSection);

@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260917-news-curator-prompt19-exclude-categories';
+const CACHE_VERSION = '20260917-news-curator-prompt20-favicon-waituntil-fix';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -219,6 +219,39 @@ self.addEventListener('fetch', e => {
           return res;
         })
         .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // ── Favicons (Prompt 20 - News Curator Quellen): Cache First ────────
+  // Sowohl der direkte {domain}/favicon.ico-Versuch (fremde Domain) als
+  // auch der Google-Faviconservice sind Cross-Origin-<img>-Anfragen und
+  // laufen daher im "no-cors"-Modus: die Antwort ist "opaque" (status 0,
+  // res.ok wäre hier fälschlich false), trotzdem cachebar und korrekt
+  // wiederverwendbar (auch offline) - deshalb zusätzlich auf
+  // res.type === 'opaque' geprüft statt nur auf res.ok. Kein Byte-Zugriff
+  // auf die Bilddaten selbst nötig, nur die rohe Response wird gespeichert
+  // (siehe Plan: CORS/Canvas-Tainting verhindert Base64-Caching).
+  if (url.pathname === '/favicon.ico' || (url.hostname === 'www.google.com' && url.pathname.startsWith('/s2/favicons'))) {
+    e.respondWith(
+      caches.match(e.request).then(cached => {
+        if (cached) return cached;
+        return fetch(e.request).then(res => {
+          if (res.ok || res.type === 'opaque') {
+            // res.clone() SOFORT/synchron aufrufen, nicht erst innerhalb des
+            // async caches.open().then(...) - sonst hat der Browser den
+            // Response-Body bei einer echten (langsameren) Cross-Origin-
+            // Anfrage teils schon an den ursprünglichen <img>/fetch-Aufrufer
+            // auszuliefern begonnen, bevor der verzögerte clone()-Aufruf
+            // drankommt ("Response body is already used", per Diagnose
+            // reproduziert). e.waitUntil() hält den Worker zusätzlich am
+            // Leben, bis der Cache-Schreibvorgang selbst abgeschlossen ist.
+            const resToCache = res.clone();
+            e.waitUntil(caches.open(CACHE_NAME).then(c => c.put(e.request, resToCache)));
+          }
+          return res;
+        });
+      })
     );
     return;
   }

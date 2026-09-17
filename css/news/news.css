@@ -142,6 +142,14 @@
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   font-family: var(--font-mono); font-size: .72rem; font-weight: 700; color: var(--muted);
 }
+/* Favicon-Erkennung (Prompt 20): selbe Größe/Form wie das Kürzel-Badge,
+   damit der Wechsel zwischen beiden (z.B. beim Live-Fallback bei einem
+   defekten Favicon) die Zeile nicht springen lässt. object-fit:contain,
+   da echte Favicons meist kleiner als 34px sind. */
+.news-source-favicon {
+  width: 34px; height: 34px; border-radius: 8px; background: var(--panel2);
+  flex-shrink: 0; object-fit: contain; padding: 5px; box-sizing: border-box;
+}
 .news-source-info { flex: 1; min-width: 0; }
 .news-source-name { font-weight: 600; font-size: .9rem; color: var(--text); }
 .news-source-status { font-size: .76rem; color: var(--muted); margin-top: 2px; }
