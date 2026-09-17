@@ -65,10 +65,15 @@
 
           <h3 class="news-subheading">Themen-Prompt</h3>
           <p class="news-hint">In eine KI mit Websuche einfügen, die Antwort unten importieren.</p>
-          <textarea id="news-discovery-prompt" class="news-textarea" rows="6" readonly></textarea>
           <div class="news-btn-row">
             <button type="button" class="news-btn-primary" id="news-discovery-generate-btn">Themen-Prompt generieren</button>
-            <button type="button" class="news-btn-secondary" id="news-discovery-copy-btn">Kopieren</button>
+          </div>
+          <details class="news-prompt-details" id="news-discovery-prompt-details">
+            <summary class="news-prompt-summary">Prompt anzeigen</summary>
+            <textarea id="news-discovery-prompt" class="news-textarea" rows="6" readonly></textarea>
+          </details>
+          <div class="news-btn-row">
+            <button type="button" class="news-btn-secondary" id="news-discovery-copy-btn">Prompt kopieren</button>
           </div>
 
           <h3 class="news-subheading">Antwort importieren</h3>
@@ -149,9 +154,14 @@
 
           <div class="news-btn-row">
             <button type="button" class="news-btn-primary" id="news-content-generate-btn">Prompt generieren</button>
-            <button type="button" class="news-btn-secondary" id="news-content-copy-btn">Kopieren</button>
           </div>
-          <textarea id="news-content-prompt" class="news-textarea" rows="14" readonly></textarea>
+          <details class="news-prompt-details" id="news-content-prompt-details">
+            <summary class="news-prompt-summary">Prompt anzeigen</summary>
+            <textarea id="news-content-prompt" class="news-textarea" rows="14" readonly></textarea>
+          </details>
+          <div class="news-btn-row">
+            <button type="button" class="news-btn-secondary" id="news-content-copy-btn">Prompt kopieren</button>
+          </div>
         </section>
 
         <section class="news-section" id="news-feed-section">
@@ -160,10 +170,10 @@
 
           <textarea id="news-feed-import" class="news-textarea" rows="4" placeholder='{"articles": [...]}'></textarea>
           <div class="news-btn-row">
-            <button type="button" class="news-btn-primary" id="news-feed-import-btn">Importieren</button>
+            <button type="button" class="news-btn-primary" id="news-feed-import-btn">Feed erstellen</button>
           </div>
 
-          <div id="news-feed-board"></div>
+          <div id="news-feed-board" class="news-feed-board"></div>
           <div id="news-session-summary"></div>
         </section>
 

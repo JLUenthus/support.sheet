@@ -106,10 +106,28 @@
     const saved = getSaved();
     const carried = window.NewsStorage.readJSON(window.NewsStorage.KEYS.carried, []);
 
-    // Highlights zusammenführen (Edge Case "Mehrfacher Import"): neueste
-    // zuerst, gedeckelt auf insgesamt 6, nicht überschrieben.
-    const newHighlights = Array.isArray(data.highlights) ? data.highlights : [];
-    feed.highlights = [...newHighlights, ...feed.highlights].slice(0, 6);
+    // Highlights (Prompt 10): jetzt Objekte {text, source_url} statt reiner
+    // Strings. source_url nur behalten, wenn sie (nach Markdown-Bereinigung)
+    // exakt der url eines Artikels DERSELBEN Antwort entspricht - sonst bleibt
+    // das Highlight normaler, nicht-interaktiver Text (kein Rateversuch).
+    const incomingForHighlights = Array.isArray(data.articles) ? data.articles : [];
+    const batchUrls = new Set(incomingForHighlights.map(a => stripMarkdownLink(a?.url)).filter(Boolean));
+    const rawHighlights = Array.isArray(data.highlights) ? data.highlights : [];
+    const newHighlights = rawHighlights.map(h => {
+      if (typeof h === 'string') return { text: h.trim(), source_url: null };
+      const text = String(h?.text || '').trim();
+      const cleanedSourceUrl = h?.source_url ? stripMarkdownLink(h.source_url) : null;
+      const source_url = cleanedSourceUrl && batchUrls.has(cleanedSourceUrl) ? cleanedSourceUrl : null;
+      return { text, source_url };
+    }).filter(h => h.text);
+
+    // Bereits gespeicherte Highlights können noch im alten String-Format
+    // vorliegen (Session, die vor diesem Schema-Wechsel begonnen hat) -
+    // beim Zusammenführen einmalig auf das Objekt-Format heben.
+    const existingHighlights = (feed.highlights || []).map(h => (typeof h === 'string' ? { text: h, source_url: null } : h));
+    // Zusammenführen (Edge Case "Mehrfacher Import"): neueste zuerst,
+    // gedeckelt auf insgesamt 6, nicht überschrieben.
+    feed.highlights = [...newHighlights, ...existingHighlights].slice(0, 6);
 
     // news.carried nur beim ALLERERSTEN Import einer Session vorne anhängen -
     // "erster Import dieser Session" heißt hier: feed.articles war vor diesem
@@ -232,6 +250,9 @@
     card.className = 'news-article'
       + (article.read ? ' news-article--read' : '')
       + (article.notRelevant ? ' news-article--dismissed' : '');
+    // Eindeutige Referenz für den Highlight-Sprung (Prompt 10) - es gab bisher
+    // keine ID pro Karte, Identifikation lief rein über den Array-Index.
+    card.dataset.articleUrl = article.url;
 
     if (article.image_url && isValidHttpsUrl(article.image_url)) {
       const img = document.createElement('img');
@@ -356,6 +377,21 @@
     return card;
   }
 
+  // Kurzüberblick-Fußnoten (Prompt 10): sanft zur passenden Artikel-Karte
+  // scrollen und sie kurz sichtbar aufblitzen lassen. Kein bisher bestehendes
+  // Scroll-und-Aufblitzen-Muster in support.sheet gefunden (siehe Recherche),
+  // daher neu gebaut - respektiert prefers-reduced-motion (siehe news.css).
+  function scrollToArticleCard(url) {
+    const board = document.getElementById('news-feed-board');
+    if (!board) return;
+    const card = [...board.querySelectorAll('.news-article')].find(el => el.dataset.articleUrl === url);
+    if (!card) return;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    card.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+    card.classList.add('news-article--flash');
+    setTimeout(() => card.classList.remove('news-article--flash'), 1600);
+  }
+
   function renderBoard() {
     const board = document.getElementById('news-feed-board');
     if (!board) return;
@@ -371,9 +407,26 @@
       head.textContent = 'Kurzüberblick';
       box.appendChild(head);
       feed.highlights.forEach(h => {
+        // Rückwärtskompatibel: ältere, noch nicht auf das Objekt-Format
+        // gehobene Sessions könnten hier theoretisch noch einen reinen
+        // String haben (siehe importArticles), defensiv abgefangen.
+        const highlight = typeof h === 'string' ? { text: h, source_url: null } : h;
         const item = document.createElement('div');
-        item.className = 'news-highlight-item';
-        item.textContent = h;
+        item.className = 'news-highlight-item' + (highlight.source_url ? ' news-highlight-item--linked' : '');
+        item.textContent = highlight.text;
+        if (highlight.source_url) {
+          // Nur Highlights mit einer beim Import bestätigten source_url
+          // werden interaktiv (siehe importArticles) - kein Öffnen der
+          // externen URL, nur Sprung zur zugehörigen Karte im Board.
+          item.setAttribute('role', 'button');
+          item.setAttribute('tabindex', '0');
+          item.title = 'Zum Artikel springen';
+          const jumpToCard = () => scrollToArticleCard(highlight.source_url);
+          item.addEventListener('click', jumpToCard);
+          item.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); jumpToCard(); }
+          });
+        }
         box.appendChild(item);
       });
       board.appendChild(box);

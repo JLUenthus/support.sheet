@@ -49,6 +49,11 @@ einleitenden oder abschließenden Text, exakt in diesem Schema:
     const textarea = document.getElementById('news-discovery-prompt');
     if (!textarea) return;
     textarea.value = generateDiscoveryPrompt();
+    // Prompt 10: ausklappbarer Bereich (Details, siehe news.html) automatisch
+    // öffnen, sonst verschwindet das frisch generierte Ergebnis unbemerkt
+    // hinter dem standardmäßig eingeklappten Zustand.
+    const details = document.getElementById('news-discovery-prompt-details');
+    if (details) details.open = true;
   }
 
   function handleCopyPrompt() {

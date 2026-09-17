@@ -164,6 +164,23 @@
 .news-subheading:first-of-type { margin-top: 0; }
 .news-hint { color: var(--muted); font-size: .84rem; margin: 0 0 10px; max-width: 60ch; }
 
+/* ── Ausklappbarer Prompt-Text (Prompt 10 - UI-Feinschliff) ────
+   Natives <details>/<summary> statt eigenem JS-Toggle - selbes, bereits
+   etablierte Muster wie z.B. .gpo-onboarding-collapsible in gpo.css, hier
+   nur unter dem news-Präfix. Standardmäßig eingeklappt (kein open-Attribut),
+   "Prompt generieren" öffnet es zusätzlich per JS, damit das frisch erzeugte
+   Ergebnis nicht unbemerkt hinter dem eingeklappten Bereich verschwindet. */
+.news-prompt-details { margin: 4px 0 8px; }
+.news-prompt-summary {
+  cursor: pointer; font-size: .82rem; font-weight: 600; color: var(--muted);
+  padding: 4px 0; list-style: none; user-select: none;
+}
+.news-prompt-summary::-webkit-details-marker { display: none; }
+.news-prompt-summary::before { content: '▸ '; color: var(--dim); }
+.news-prompt-details[open] > .news-prompt-summary::before { content: '▾ '; }
+.news-prompt-summary:hover { color: var(--text); }
+.news-prompt-details .news-textarea { margin-top: 8px; }
+
 .news-textarea {
   width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: var(--r);
   padding: 10px 12px; color: var(--text); font-family: var(--font-mono); font-size: .82rem;
@@ -252,12 +269,24 @@
 .news-feedback-score { font-family: var(--font-mono); font-size: .78rem; white-space: nowrap; color: inherit; }
 
 /* ── Feed / Themen-Board (Schritt 6a) ──────────────────────── */
+/* Prompt 10: sichtbar mehr Abstand zwischen "Feed erstellen"-Bereich und
+   dem Kurzüberblick-Block darunter (bzw. dem Board, falls kein Kurzüberblick
+   vorhanden ist). */
+.news-feed-board { margin-top: 24px; }
 .news-highlights {
   margin-bottom: 22px; padding: 14px 16px;
   background: var(--panel); border: 1px solid var(--accent); border-radius: var(--r);
 }
 .news-highlights-head { font-family: var(--font-ui); font-weight: 700; font-size: .85rem; margin-bottom: 8px; color: var(--accent); }
 .news-highlight-item { font-size: .87rem; color: var(--text); padding: 3px 0; }
+/* Fußnoten mit bestätigter source_url (Prompt 10): hover/klick/tastatur-
+   bedienbar, springt zur zugehörigen Artikel-Karte statt zu einer externen
+   Seite. Ohne gültige source_url bleibt ein Highlight schlichter Text. */
+.news-highlight-item--linked {
+  cursor: pointer; border-radius: 4px; text-decoration-thickness: 1px; text-underline-offset: 2px;
+}
+.news-highlight-item--linked:hover { text-decoration: underline; color: var(--accent); }
+.news-highlight-item--linked:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .news-topic-group { margin-bottom: 26px; }
 .news-topic-group-head {
@@ -272,6 +301,18 @@
   border-left: 2px solid var(--border); margin-bottom: 2px;
 }
 .news-article--read { border-left-color: var(--accent); opacity: .72; }
+/* Kurzes Aufblitzen beim Sprung von einer Kurzüberblick-Fußnote (Prompt 10).
+   Kein bestehendes Flash-Muster in support.sheet gefunden (siehe Recherche) -
+   respektiert prefers-reduced-motion mit einer statischen, aber weiterhin
+   sichtbaren Ersatz-Hervorhebung statt der Animation. */
+.news-article--flash { animation: news-article-flash 1.6s ease; }
+@keyframes news-article-flash {
+  0%   { background: var(--accent-bg); border-left-color: var(--accent); }
+  100% { background: transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .news-article--flash { animation: none; background: var(--accent-bg); border-left-color: var(--accent); }
+}
 .news-article-body { flex: 1; min-width: 0; }
 .news-article-title { font-weight: 600; font-size: .94rem; color: var(--text); text-decoration: none; cursor: pointer; }
 .news-article-title:hover { text-decoration: underline; }

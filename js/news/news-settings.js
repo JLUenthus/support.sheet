@@ -26,9 +26,10 @@
 
   // ── Tag-Felder (Interessen / Ausschluss-Keywords) ────────────
   // "bereits benutzte Werte" als Vorschläge sind für Interessen nicht sinnvoll
-  // definierbar (kein Verlauf/keine Quelle dafür im Datenmodell) - dort daher
-  // bewusst keine Vorschlagsliste (leeres Array). Für Ausschluss-Keywords
-  // die im Auftrag explizit vorgegebene feste Starter-Liste.
+  // definierbar (kein Verlauf/keine Quelle dafür im Datenmodell) - stattdessen
+  // (Prompt 10, UI-Feinschliff) eine kleine, feste Starter-Vorschlagsliste
+  // analog zu Ausschluss-Keywords, damit das Feld nicht unfertig wirkt.
+  // Für Ausschluss-Keywords die im Auftrag explizit vorgegebene feste Starter-Liste.
   let interestsField = null;
   let excludeField = null;
 
@@ -37,7 +38,7 @@
       boxId: 'news-interests-tagbox',
       inputId: 'news-interests-input',
       suggestionsId: 'news-interests-suggestions',
-      suggestions: [],
+      suggestions: ['PowerShell', 'Automatisierung', 'Security', 'Cloud'],
       getValues: () => getSettings().customInterests || [],
       setValues: (values) => { const s = getSettings(); s.customInterests = values; saveSettings(s); },
     });

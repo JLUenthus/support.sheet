@@ -64,7 +64,7 @@ Regeln:
 - Bei derselben Meldung aus mehreren Quellen nur die beste Version behalten, keine Duplikate.
 - Jeder Artikel: Zusammenfassung in maximal 2 Sätzen.
 - Thematisch sinnvoll gruppieren (topic-Feld).
-- Zusätzlich maximal 3 kurze "highlights" (je ein Satz) mit den wichtigsten Kernpunkten über alle Artikel hinweg.
+- Zusätzlich maximal 3 kurze "highlights" (je ein Satz) mit den wichtigsten Kernpunkten über alle Artikel hinweg, jedes als Objekt mit "text" und, falls das Highlight sich auf einen bestimmten Artikel bezieht, "source_url" (muss exakt der "url" eines der obigen Artikel entsprechen, sonst weglassen).
 - Pro Artikel, falls über die Websuche auffindbar, die URL des Artikelbilds mitliefern ("image_url"), sonst das Feld weglassen. Keine erfundenen Bild-URLs.
 - "url" und "image_url" immer als reiner String zurückgeben, niemals als Markdown-Link (kein "[Text](URL)"-Format).
 - Pro Artikel in einem Satz begründen, warum er zu den genannten Interessen passt ("why_relevant").
@@ -74,7 +74,7 @@ Regeln:
 
 {
   "generated_at": "YYYY-MM-DDTHH:MM:SSZ",
-  "highlights": ["string", "string"],
+  "highlights": [{ "text": "string", "source_url": "string (optional)" }],
   "articles": [
     {
       "title": "string",
@@ -96,6 +96,11 @@ Regeln:
     const textarea = document.getElementById('news-content-prompt');
     if (!textarea) return;
     textarea.value = generateContentPrompt();
+    // Prompt 10: ausklappbarer Bereich (Details, siehe news.html) automatisch
+    // öffnen, sonst verschwindet das frisch generierte Ergebnis unbemerkt
+    // hinter dem standardmäßig eingeklappten Zustand.
+    const details = document.getElementById('news-content-prompt-details');
+    if (details) details.open = true;
   }
 
   // Selbes Copy-Muster wie news-topics.js (Schritt 3): Clipboard-API mit
