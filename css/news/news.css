@@ -232,6 +232,17 @@
 }
 .news-btn-secondary:hover { color: var(--text); border-color: var(--accent); }
 
+/* ── Zeitraum-Erweiterungen (Prompt 23) ───────────────────────
+   Aktiver Preset-Button: JS tauscht in news-settings.js einfach die Klasse
+   .news-btn-secondary gegen .news-btn-primary (und zurück) - kein eigener
+   "aktiv"-Zustand nötig, nutzt die bereits vorhandene gefüllt/outline-Optik. */
+.news-date-custom-badge {
+  font-size: .78rem; font-weight: 600; color: var(--muted); padding: 7px 4px; white-space: nowrap;
+}
+.news-hint--inline { margin: 0; white-space: nowrap; }
+.news-date-days-input { max-width: 64px; }
+.news-date-warning { color: var(--red); font-size: .82rem; margin: -4px 0 10px; max-width: 60ch; }
+
 /* ── Themen-Listenboxen (Prompt 11) ────────────────────────────
    Ersetzt die vorherige Pillen-Darstellung. Kein bestehendes Muster für eine
    fest-hohe, intern scrollbare Checkbox-Liste mit Select-all + Massen-
@@ -289,6 +300,14 @@
   display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
   background: var(--panel); border: 1px solid var(--border); border-radius: var(--r);
   padding: 8px 10px; min-height: 44px; max-width: 560px;
+  /* Prompt 23: feste Maximalhöhe + interner Scroll, angelehnt an die
+     Ausschluss-Keywords-Kategorien-Box aus Prompt 19 (dort ebenfalls
+     max-height: 320px), damit die Box bei vielen aktiven Chips (z.B. nach
+     mehrfachem "Alle auswählen" bei den Ausschluss-Keywords) nicht
+     unbegrenzt wächst. Bei wenig Inhalt (deutlich unter 320px) ohne
+     sichtbaren Effekt, betrifft strukturell auch "Zusätzliche Interessen",
+     wirkt sich dort aber praktisch nicht aus (kein großer Vorschlagsbestand). */
+  max-height: 320px; overflow-y: auto;
 }
 .news-tag-box:focus-within { border-color: var(--accent); }
 .news-tag-chip {

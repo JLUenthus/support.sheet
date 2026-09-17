@@ -188,8 +188,72 @@
     renderDateFields();
   }
 
+  // Prompt 23: flexibles "Letzte N Tage" - eigenes Eingabefeld statt fixer
+  // Preset-Buttons, Wert wird nicht persistiert (nur beim Klick gelesen).
+  function applyCustomDaysPreset() {
+    const input = document.getElementById('news-date-preset-n-input');
+    if (!input) return;
+    const n = parseInt(input.value, 10);
+    if (isNaN(n) || n < 1) return;
+    const clamped = Math.min(90, Math.max(1, n));
+    const settings = getSettings();
+    settings.dateFrom = window.NewsStorage.todayISO(-clamped);
+    settings.dateTo = window.NewsStorage.todayISO(0);
+    saveSettings(settings);
+    renderDateFields();
+  }
+
+  // Prompt 23: welches der drei festen Presets (falls überhaupt eines)
+  // entspricht dem aktuell gespeicherten dateFrom/dateTo? "Seit letztem Mal"
+  // zählt nur, wenn tatsächlich ein lastCompletedAt existiert - ohne
+  // History ist der Zustand nicht von "Letzte 7 Tage" unterscheidbar und
+  // wird daher als solcher gewertet statt fälschlich als "seit letztem Mal".
+  function getActivePresetKind(settings, history) {
+    const todayISO = window.NewsStorage.todayISO;
+    if (settings.dateTo !== todayISO(0)) return null;
+    if (history.lastCompletedAt && settings.dateFrom === history.lastCompletedAt.slice(0, 10)) return 'since_last';
+    if (settings.dateFrom === todayISO(-1)) return '24h';
+    if (settings.dateFrom === todayISO(-7)) return '7d';
+    return null;
+  }
+
+  // Prompt 23: aktiven Preset-Button optisch hervorheben (gefüllt statt
+  // Outline) durch simplen Klassentausch zwischen den beiden bereits
+  // bestehenden Button-Stilen - kein neuer "aktiv"-CSS-Zustand nötig. Passt
+  // keines der drei Presets, erscheint stattdessen das "Benutzerdefiniert"-Label.
+  function renderPresetActiveState(settings, history) {
+    const active = getActivePresetKind(settings, history);
+    document.querySelectorAll('[data-preset]').forEach(btn => {
+      const isActive = btn.dataset.preset === active;
+      btn.classList.toggle('news-btn-primary', isActive);
+      btn.classList.toggle('news-btn-secondary', !isActive);
+    });
+    const customBadge = document.getElementById('news-date-custom-badge');
+    if (customBadge) customBadge.hidden = !!active;
+  }
+
+  // Prompt 23: Warnung bei dateFrom > dateTo (blockiert das Speichern nicht,
+  // ISO-Datumsstrings YYYY-MM-DD sind lexikografisch vergleichbar) sowie
+  // Live-Anzeige der Spannenlänge in Tagen, negativ im widersprüchlichen Fall.
+  function renderDateValidation(settings) {
+    const warning = document.getElementById('news-date-warning');
+    const hasInvalidRange = !!(settings.dateFrom && settings.dateTo && settings.dateFrom > settings.dateTo);
+    if (warning) warning.hidden = !hasInvalidRange;
+
+    const spanHint = document.getElementById('news-date-span-hint');
+    if (spanHint) {
+      if (settings.dateFrom && settings.dateTo) {
+        const days = Math.round((Date.parse(settings.dateTo) - Date.parse(settings.dateFrom)) / 86400000);
+        spanHint.textContent = `→ ${days} Tag${days === 1 ? '' : 'e'}`;
+      } else {
+        spanHint.textContent = '';
+      }
+    }
+  }
+
   function renderDateFields() {
     const settings = getSettings();
+    const history = getHistory();
     const dateFrom = document.getElementById('news-date-from');
     const dateTo = document.getElementById('news-date-to');
     const maxArticles = document.getElementById('news-max-articles');
@@ -199,22 +263,25 @@
 
     const hint = document.getElementById('news-last-run-hint');
     if (hint) {
-      const history = getHistory();
       hint.textContent = history.lastCompletedAt
         ? `Letzter Abschluss: ${new Date(history.lastCompletedAt).toLocaleString('de-DE')}`
         : 'Noch kein abgeschlossener Durchlauf, „Seit letztem Mal" fällt aktuell auf 7 Tage zurück.';
     }
+
+    renderPresetActiveState(settings, history);
+    renderDateValidation(settings);
   }
 
   function initDateAndArticleFields() {
     document.querySelectorAll('[data-preset]').forEach(btn => {
       btn.addEventListener('click', () => applyDatePreset(btn.dataset.preset));
     });
+    document.getElementById('news-date-preset-n-btn')?.addEventListener('click', applyCustomDaysPreset);
     document.getElementById('news-date-from')?.addEventListener('change', e => {
-      const s = getSettings(); s.dateFrom = e.target.value; saveSettings(s);
+      const s = getSettings(); s.dateFrom = e.target.value; saveSettings(s); renderDateFields();
     });
     document.getElementById('news-date-to')?.addEventListener('change', e => {
-      const s = getSettings(); s.dateTo = e.target.value; saveSettings(s);
+      const s = getSettings(); s.dateTo = e.target.value; saveSettings(s); renderDateFields();
     });
     document.getElementById('news-max-articles')?.addEventListener('change', e => {
       const s = getSettings();
@@ -370,6 +437,9 @@
   document.addEventListener('DOMContentLoaded', initSettingsSection);
 
   // Schritt 6b ("Fertig") ruft renderFeedbackOverview() erneut auf, sonst
-  // zeigt das Panel bis zum nächsten Reload veraltete Zahlen.
-  window.NewsSettings = { renderFeedbackOverview };
+  // zeigt das Panel bis zum nächsten Reload veraltete Zahlen. Prompt 23:
+  // ebenso renderDateFields(), da "Fertig" jetzt auch dateFrom/dateTo
+  // automatisch aktualisiert - die sichtbare Einstellungen-Anzeige (Felder,
+  // aktiver Preset, Tage-Spanne) soll ohne Reload sofort mitziehen.
+  window.NewsSettings = { renderFeedbackOverview, renderDateFields };
 })();

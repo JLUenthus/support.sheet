@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260917-news-curator-prompt21-json-quote-repair';
+const CACHE_VERSION = '20260917-news-curator-prompt23-date-range-tagbox-limit';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [

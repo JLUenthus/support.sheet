@@ -661,6 +661,13 @@
     history.lastCompletedAt = new Date().toISOString();
     window.NewsStorage.writeJSON(window.NewsStorage.KEYS.history, history);
 
+    // Prompt 23: Zeitraum direkt auf "seit diesem Abschluss" vorbelegen, ohne
+    // dass "Seit letztem Mal" danach extra angeklickt werden muss.
+    const settings = getSettings();
+    settings.dateFrom = history.lastCompletedAt.slice(0, 10);
+    settings.dateTo = window.NewsStorage.todayISO(0);
+    window.NewsStorage.writeJSON(window.NewsStorage.KEYS.settings, settings);
+
     window.NewsStorage.writeJSON(window.NewsStorage.KEYS.carried, newCarried);
     saveFeed({ articles: [], highlights: [] });
 
@@ -674,6 +681,9 @@
     refreshFeedUI();
     // Zeigt sonst bis zum nächsten Reload veraltete Zahlen (Vorgabe Schritt 6b).
     window.NewsSettings?.renderFeedbackOverview();
+    // Prompt 23: Einstellungen-Anzeige (Felder, aktiver Preset, Tage-Spanne)
+    // soll den neuen Zeitraum sofort zeigen, falls das Panel gerade offen ist.
+    window.NewsSettings?.renderDateFields();
   }
 
   function initFeedSection() {

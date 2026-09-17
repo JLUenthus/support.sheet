@@ -140,6 +140,13 @@
             <button type="button" class="news-btn-secondary" data-preset="since_last">Seit letztem Mal</button>
             <button type="button" class="news-btn-secondary" data-preset="24h">Letzte 24 Std.</button>
             <button type="button" class="news-btn-secondary" data-preset="7d">Letzte 7 Tage</button>
+            <span class="news-date-custom-badge" id="news-date-custom-badge" hidden>Benutzerdefiniert</span>
+          </div>
+          <div class="news-btn-row">
+            <label class="news-label" for="news-date-preset-n-input">Letzte</label>
+            <input type="number" id="news-date-preset-n-input" class="news-text-input news-date-days-input" min="1" max="90" value="7">
+            <span class="news-hint news-hint--inline">Tage</span>
+            <button type="button" class="news-btn-secondary" id="news-date-preset-n-btn">Anwenden</button>
           </div>
           <p class="news-hint" id="news-last-run-hint"></p>
           <div class="news-field-row">
@@ -156,6 +163,8 @@
               <input type="number" id="news-max-articles" class="news-text-input" min="5" max="50">
             </div>
           </div>
+          <p class="news-hint" id="news-date-span-hint"></p>
+          <p class="news-date-warning" id="news-date-warning" hidden>„Von" liegt nach „Bis" – der Zeitraum ist widersprüchlich. Wird trotzdem gespeichert.</p>
 
           <h3 class="news-subheading">Gelerntes Feedback</h3>
           <p class="news-hint">Erst ab 3 Bewertungen fließt ein Thema, Schlagwort oder eine Quelle als bevorzugt oder gemieden in den Prompt ein.</p>
