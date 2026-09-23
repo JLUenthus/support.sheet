@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>support.sheet – Dokuassistent</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/toast.css">
+  <style>
+    /* Gleiche Karten-/Grid-Klassen wie scripts.html (.scripts-grid/.script-card/
+       .script-header/.script-icon/.script-name/.script-desc), keine zweite
+       Layout-Variante. Nur .doku-prompt-text ist neu: scripts.html hat kein
+       Aequivalent, da der eigentliche Skriptinhalt dort im Overlay steckt,
+       hier aber der volle Prompt-Text direkt auf der Karte sichtbar sein soll. */
+    .doku-prompt-text {
+      background: var(--panel2); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 10px 12px; margin: 0; font-family: var(--font-mono, monospace); font-size: .78rem;
+      line-height: 1.5; color: var(--text); white-space: pre-wrap; word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-icon" id="as-logo-icon">📄</div>
+      <div class="logo-text" id="as-logo-label">support<span>.doku</span></div>
+    </a>
+    <div class="header-right">
+      <div class="pill pill-count"
+           style="border-color:rgba(251,146,60,.3);background:rgba(251,146,60,.08);color:#fb923c;">
+        📄 Dokuassistent
+      </div>
+    </div>
+  </header>
+
+  <!-- Tab-Bar wird von nav.js injiziert -->
+
+  <main>
+    <div class="hero">
+      <div class="hero-badge">🧪 In Erprobung</div>
+      <h1>Dokuassistent</h1>
+      <p>Fünf fertige Prompts zum Kopieren, für die Doku- und Ticket-Nacharbeit nach einem Chat. Die Formulierungen werden aktuell noch getestet und können sich noch ändern.</p>
+    </div>
+
+    <div class="scripts-grid" id="doku-prompt-container"></div>
+  </main>
+
+  <script>
+    // Prompt-Texte als einzige Quelle für Anzeige UND Kopieren (kein Auslesen
+    // aus dem gerenderten DOM) - schliesst aus, dass sich Anzeige- und
+    // Kopiertext durch spaetere DOM-Manipulation je auseinander entwickeln.
+    const DOKU_PROMPTS = [
+      {
+        icon: '📄',
+        title: 'Doku erstellen (strukturiert)',
+        desc: 'Ausführliche technische Dokumentation mit fester Gliederung.',
+        text: `Erstelle mir aus unserem Chat eine technische Dokumentation. Nutze
+ausschließlich das, was in diesem Chat tatsächlich besprochen/durchgeführt
+wurde, erfinde nichts hinzu. Gliedere wie folgt:
+
+1. Ausgangslage – worum ging es, was war das Problem/die Anforderung
+2. Durchgeführte Schritte – chronologisch, inkl. konkret verwendeter
+   Befehle/Einstellungen, soweit im Chat vorhanden
+3. Ergebnis – aktueller Status, was funktioniert jetzt
+4. Offene Punkte – falls etwas noch nicht abgeschlossen ist
+
+Format: Markdown mit Überschriften, technische Sprache, für
+IT-interne Weiterverwendung.`,
+      },
+      {
+        icon: '📝',
+        title: 'Doku erstellen (schnell)',
+        desc: 'Kurze, formlose Zusammenfassung ohne feste Gliederung.',
+        text: `Erstelle mir eine kurze Dokumentation zu dem, was wir in diesem Chat
+gemacht haben. Nur auf Basis der tatsächlichen Inhalte dieses Chats,
+nichts hinzuerfinden. Kurz und sachlich, keine ausführliche
+Gliederung nötig.`,
+      },
+      {
+        icon: '🎫',
+        title: 'Doku für Ticket',
+        desc: 'Interner, technischer Tickettext in fester 5-Punkte-Struktur.',
+        text: `Erstelle mir einen kurzen, internen Tickettext auf Basis dieses Chats.
+Technische Sprache, für IT-interne Dokumentation (nicht für den
+Kunden). Kurz halten, in dieser Struktur:
+
+1. Problembeschreibung
+2. Analyse
+3. Ursache
+4. Lösung/Behebung/Fix
+5. Tipp/Hinweis (nur falls sinnvoll, sonst weglassen)
+
+Nur auf Basis dessen, was tatsächlich in diesem Chat besprochen wurde.`,
+      },
+      {
+        icon: '💶',
+        title: 'Rechnungstext',
+        desc: 'Einfacher, stichwortartiger Text für die Rechnungsstellung.',
+        text: `Erstelle mir einen Rechnungstext auf Basis dieses Chats. Stichwortartig,
+kurz und einfach gehalten, keine tiefen technischen Details. Für die
+Rechnungsstellung an den Kunden geeignet – verständlich auch ohne
+IT-Fachwissen.`,
+      },
+      {
+        icon: '💬',
+        title: 'Antwort an Kunden',
+        desc: 'Kurze, freundliche Kundenantwort zum Ticketabschluss.',
+        text: `Erstelle mir eine kurze Kundenantwort zum Ticketabschluss, auf Basis
+dieses Chats. Freundlich, verständlich, ohne technisches Fachvokabular.
+Kurz halten – worum ging es, ist es gelöst, muss der Kunde noch etwas tun.`,
+      },
+    ];
+
+    // ── Kopieren: identischer Mechanismus wie js/render.js (Command-Karten,
+    // z.B. "Computerverwaltung" in windows.html) - navigator.clipboard mit
+    // execCommand-Fallback fuer unsichere Kontexte, Bestaetigung ueber
+    // showToast() (js/toast.js) + .copied/.copy-error-Klassen aus main.css.
+    // Bewusst als lokale Kopie statt render.js einzubinden: render.js haengt
+    // an windows.html-spezifischer Struktur (CATEGORY_MAP, Filter-Bar,
+    // Favoriten, #commands-container), die hier komplett ungenutzt waere -
+    // gleiches Vorgehen wie js/script-overlay.js, das den Kopieren-Button aus
+    // js/guides-view.js aus demselben Grund lokal spiegelt statt einzubinden.
+    function copyToClipboard(text, btn) {
+      const onSuccess = () => {
+        btn.classList.add('copied');
+        setTimeout(() => btn.classList.remove('copied'), 1500);
+        if (typeof showToast === 'function') showToast('Kopiert!', 'success');
+      };
+      const onError = err => {
+        console.warn('Kopieren fehlgeschlagen', err);
+        btn.classList.add('copy-error');
+        setTimeout(() => btn.classList.remove('copy-error'), 1500);
+        if (typeof showToast === 'function') showToast('Kopieren fehlgeschlagen', 'error');
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(onSuccess).catch(() => execCommandFallback(text, onSuccess, onError));
+      } else {
+        execCommandFallback(text, onSuccess, onError);
+      }
+    }
+
+    function execCommandFallback(text, onSuccess, onError) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length);
+      try {
+        document.execCommand('copy') ? onSuccess() : onError(new Error('execCommand returned false'));
+      } catch (err) {
+        onError(err);
+      } finally {
+        document.body.removeChild(ta);
+      }
+    }
+
+    function buildPromptCard(prompt) {
+      const card = document.createElement('div');
+      card.className = 'script-card';
+
+      const header = document.createElement('div');
+      header.className = 'script-header';
+      header.innerHTML = `
+        <div class="script-icon">${prompt.icon}</div>
+        <div>
+          <div class="script-name"></div>
+          <div class="script-desc"></div>
+        </div>
+      `;
+      header.querySelector('.script-name').textContent = prompt.title;
+      header.querySelector('.script-desc').textContent = prompt.desc;
+      card.appendChild(header);
+
+      const pre = document.createElement('pre');
+      pre.className = 'doku-prompt-text';
+      pre.textContent = prompt.text;
+      card.appendChild(pre);
+
+      const actions = document.createElement('div');
+      actions.className = 'script-card-actions';
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'copy-btn';
+      copyBtn.textContent = '📋 Kopieren';
+      copyBtn.addEventListener('click', () => copyToClipboard(prompt.text, copyBtn));
+      actions.appendChild(copyBtn);
+      card.appendChild(actions);
+
+      return card;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const container = document.getElementById('doku-prompt-container');
+      DOKU_PROMPTS.forEach(p => container.appendChild(buildPromptCard(p)));
+    });
+  </script>
+
+  <script src="js/toast.js"></script>
+  <script src="nav.js"></script>
+
+</body>
+</html>

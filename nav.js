@@ -13,7 +13,13 @@
       ]
     },
     { id:'scripts',  href:'scripts.html',  label:'PS Scripts',     icon:'💚', color:'#4ade80', desc:'Fertige .ps1 Skripte' },
-    { id:'ticket',   href:'ticketassistent.html', label:'Ticketassistent', icon:'🎫', color:'#fb923c', desc:'KI-gestützter Ticketassistent' },
+    {
+      id:'assistant', label:'Assistent', icon:'🎫', color:'#fb923c', group:true,
+      children: [
+        { id:'telefonassistent', href:'ticketassistent.html', label:'Telefonassistent', icon:'🎫', color:'#fb923c', desc:'KI-gestützter Telefonassistent' },
+        { id:'dokuassistent',    href:'dokuassistent.html',   label:'Dokuassistent',    icon:'📄', color:'#fb923c', desc:'Platzhalter – in Entwicklung' },
+      ]
+    },
     {
       id:'guides', label:'Guide', icon:'📚', color:'#4ade80', group:true,
       children: [
@@ -191,7 +197,8 @@
                  : currentPage.id === 'forti'           ? '.forti'
                  : currentPage.id === 'commands'        ? '.commands'
                  : currentPage.id === 'scripts'         ? '.scripts'
-                 : currentPage.id === 'ticket'          ? '.ticket'
+                 : currentPage.id === 'telefonassistent' ? '.telefon'
+                 : currentPage.id === 'dokuassistent'    ? '.doku'
                  : currentPage.id === 'private'         ? '.privat'
                  : currentPage.id === 'news'            ? '.news'
                  : currentPage.id === 'eventlog'        ? '.analyzer'
