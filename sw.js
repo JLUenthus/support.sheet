@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260923-dokuassistent-prompt-cards';
+const CACHE_VERSION = '20260923-dokuassistent-cmd-cards-overlay';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [

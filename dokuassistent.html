@@ -15,16 +15,30 @@
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
   <style>
-    /* Gleiche Karten-/Grid-Klassen wie scripts.html (.scripts-grid/.script-card/
-       .script-header/.script-icon/.script-name/.script-desc), keine zweite
-       Layout-Variante. Nur .doku-prompt-text ist neu: scripts.html hat kein
-       Aequivalent, da der eigentliche Skriptinhalt dort im Overlay steckt,
-       hier aber der volle Prompt-Text direkt auf der Karte sichtbar sein soll. */
-    .doku-prompt-text {
-      background: var(--panel2); border: 1px solid var(--border); border-radius: var(--r);
-      padding: 10px 12px; margin: 0; font-family: var(--font-mono, monospace); font-size: .78rem;
-      line-height: 1.5; color: var(--text); white-space: pre-wrap; word-break: break-word;
+    /* Kacheln/Grid identisch zu den Command-Karten (windows.html & Co.):
+       .cmd-grid/.command-card/.card-header/.card-footer, keine neue
+       Layout-Variante. Nur die zwei Footer-Buttons sind neu (analog zu
+       scripts.html's page-lokalem .script-guide-btn/.script-dl-btn),
+       da Command-Karten kein "Vollansicht oeffnen" kennen. */
+    .doku-view-btn, .doku-copy-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 6px 12px; border-radius: 7px; font-size: .76rem; font-weight: 600;
+      cursor: pointer; transition: all .15s; border: 1px solid transparent;
     }
+    .doku-view-btn {
+      border-color: rgba(124,140,248,.35); background: rgba(124,140,248,.08); color: var(--accent);
+    }
+    .doku-view-btn:hover { background: rgba(124,140,248,.18); }
+    .doku-copy-btn {
+      border-color: rgba(74,222,128,.35); background: rgba(74,222,128,.08); color: #4ade80;
+      margin-left: auto;
+    }
+    .doku-copy-btn:hover { background: rgba(74,222,128,.18); }
+
+    /* Voller Prompt-Text im Overlay - .guide-overlay-content pre ist per
+       Default nur horizontal scrollbar (fuer Code gedacht); hier soll der
+       Fliesstext stattdessen sauber umbrechen, nichts wird abgeschnitten. */
+    .doku-prompt-text { white-space: pre-wrap; word-break: break-word; }
   </style>
 </head>
 <body>
@@ -48,16 +62,37 @@
     <div class="hero">
       <div class="hero-badge">🧪 In Erprobung</div>
       <h1>Dokuassistent</h1>
-      <p>Fünf fertige Prompts zum Kopieren, für die Doku- und Ticket-Nacharbeit nach einem Chat. Die Formulierungen werden aktuell noch getestet und können sich noch ändern.</p>
+      <p>Fünf fertige Prompts für die Doku- und Ticket-Nacharbeit nach einem Chat. Die Formulierungen werden aktuell noch getestet und können sich noch ändern.</p>
     </div>
 
-    <div class="scripts-grid" id="doku-prompt-container"></div>
+    <div class="cmd-grid" id="doku-prompt-container"></div>
   </main>
 
+  <!-- Prompt-Overlay - eigenstaendige Kopie des Verhaltens von
+       js/script-overlay.js (Backdrop/Panel/Escape/Fokus/Scroll-Lock), selbe
+       .guide-overlay-*-Klassen aus css/main.css, kein neues Grundgeruest. -->
+  <div id="doku-prompt-overlay" class="guide-overlay" hidden aria-modal="true" role="dialog">
+    <div class="guide-overlay-backdrop"></div>
+    <div class="guide-overlay-panel">
+      <div class="guide-overlay-header">
+        <div class="guide-overlay-title" id="doku-prompt-overlay-title"></div>
+        <div class="guide-overlay-actions">
+          <button type="button" class="guide-overlay-open-btn copy-btn" id="doku-prompt-overlay-copy">📋 Kopieren</button>
+          <button class="guide-overlay-close" id="doku-prompt-overlay-close"
+                  aria-label="Schliessen" title="Schliessen">✕</button>
+        </div>
+      </div>
+      <div class="guide-overlay-content">
+        <pre class="doku-prompt-text" id="doku-prompt-overlay-text"></pre>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // Prompt-Texte als einzige Quelle für Anzeige UND Kopieren (kein Auslesen
-    // aus dem gerenderten DOM) - schliesst aus, dass sich Anzeige- und
-    // Kopiertext durch spaetere DOM-Manipulation je auseinander entwickeln.
+    // Prompt-Texte als einzige Quelle für Anzeige (Karte + Overlay) UND
+    // Kopieren (kein Auslesen aus dem gerenderten DOM) - schliesst aus, dass
+    // sich Anzeige- und Kopiertext durch spaetere DOM-Manipulation je
+    // auseinander entwickeln.
     const DOKU_PROMPTS = [
       {
         icon: '📄',
@@ -165,44 +200,82 @@ Kurz halten – worum ging es, ist es gelöst, muss der Kunde noch etwas tun.`,
       }
     }
 
+    // ── Prompt-Overlay: eigene, schlanke Kopie von ScriptOverlay.open()/close() -
+    // gleiche Interaktion (Backdrop-Klick, Escape, Fokus auf Schliessen-Button,
+    // body-Scroll-Lock), aber ohne den Rest von script-overlay.js (Skript-
+    // Download, SHA-256, data/script-guides.json), der hier nicht passt.
+    let _activePrompt = null;
+
+    function openPromptOverlay(prompt) {
+      _activePrompt = prompt;
+      document.getElementById('doku-prompt-overlay-title').textContent = prompt.title;
+      document.getElementById('doku-prompt-overlay-text').textContent = prompt.text;
+      const overlay = document.getElementById('doku-prompt-overlay');
+      overlay.hidden = false;
+      document.body.style.overflow = 'hidden';
+      document.getElementById('doku-prompt-overlay-close').focus();
+    }
+
+    function closePromptOverlay() {
+      document.getElementById('doku-prompt-overlay').hidden = true;
+      document.body.style.overflow = '';
+      _activePrompt = null;
+    }
+
+    function initPromptOverlay() {
+      const overlay = document.getElementById('doku-prompt-overlay');
+      const backdrop = overlay.querySelector('.guide-overlay-backdrop');
+      document.getElementById('doku-prompt-overlay-close').addEventListener('click', closePromptOverlay);
+      backdrop.addEventListener('click', closePromptOverlay);
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !overlay.hidden) closePromptOverlay();
+      });
+      document.getElementById('doku-prompt-overlay-copy').addEventListener('click', e => {
+        if (_activePrompt) copyToClipboard(_activePrompt.text, e.currentTarget);
+      });
+    }
+
+    // ── Karten im Command-Karten-Stil (.command-card/.card-header/.card-footer) ──
     function buildPromptCard(prompt) {
       const card = document.createElement('div');
-      card.className = 'script-card';
+      card.className = 'command-card';
 
       const header = document.createElement('div');
-      header.className = 'script-header';
-      header.innerHTML = `
-        <div class="script-icon">${prompt.icon}</div>
-        <div>
-          <div class="script-name"></div>
-          <div class="script-desc"></div>
-        </div>
-      `;
-      header.querySelector('.script-name').textContent = prompt.title;
-      header.querySelector('.script-desc').textContent = prompt.desc;
+      header.className = 'card-header';
+      const h3 = document.createElement('h3');
+      h3.textContent = `${prompt.icon} ${prompt.title}`;
+      header.appendChild(h3);
       card.appendChild(header);
 
-      const pre = document.createElement('pre');
-      pre.className = 'doku-prompt-text';
-      pre.textContent = prompt.text;
-      card.appendChild(pre);
+      const desc = document.createElement('p');
+      desc.textContent = prompt.desc;
+      card.appendChild(desc);
 
-      const actions = document.createElement('div');
-      actions.className = 'script-card-actions';
+      const footer = document.createElement('div');
+      footer.className = 'card-footer';
+
+      const viewBtn = document.createElement('button');
+      viewBtn.type = 'button';
+      viewBtn.className = 'doku-view-btn';
+      viewBtn.textContent = '👁 Prompt anzeigen';
+      viewBtn.addEventListener('click', () => openPromptOverlay(prompt));
+      footer.appendChild(viewBtn);
+
       const copyBtn = document.createElement('button');
       copyBtn.type = 'button';
-      copyBtn.className = 'copy-btn';
+      copyBtn.className = 'doku-copy-btn copy-btn';
       copyBtn.textContent = '📋 Kopieren';
       copyBtn.addEventListener('click', () => copyToClipboard(prompt.text, copyBtn));
-      actions.appendChild(copyBtn);
-      card.appendChild(actions);
+      footer.appendChild(copyBtn);
 
+      card.appendChild(footer);
       return card;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       const container = document.getElementById('doku-prompt-container');
       DOKU_PROMPTS.forEach(p => container.appendChild(buildPromptCard(p)));
+      initPromptOverlay();
     });
   </script>
 
