@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20261006-news-cve-template-1c';
+const CACHE_VERSION = '20261006-news-cve-template-1d';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
