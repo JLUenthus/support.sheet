@@ -361,6 +361,8 @@
       feed: window.NewsStorage.readJSON(KEYS.feed, { articles: [], highlights: [] }),
       // Teil 1 CVE-Bericht: news.cve.settings (null = nie gespeichert).
       cveSettings: window.NewsStorage.readJSON(KEYS.cveSettings, null),
+      // Teil 2: archivierte CVE-Berichte.
+      cveReports: window.NewsStorage.readJSON(KEYS.cveReports, []),
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -400,6 +402,9 @@
         if (data.cveSettings && typeof data.cveSettings === 'object' && !Array.isArray(data.cveSettings)) {
           window.NewsStorage.writeJSON(KEYS.cveSettings, data.cveSettings);
         }
+        // Gleiches für cveReports: fehlt das Feld (altes Backup), bleiben die
+        // vorhandenen Berichte unberührt.
+        if (Array.isArray(data.cveReports)) window.NewsStorage.writeJSON(KEYS.cveReports, data.cveReports);
 
         // Alle betroffenen Render-Funktionen sofort erneut aufrufen - kein
         // manueller Reload nötig (Vorgabe Schritt 4, um Schritt 6a Feed und
@@ -410,6 +415,7 @@
         window.NewsSaved?.render();
         window.NewsNav?.updateSavedBadge();
         window.NewsCve?.render();
+        window.NewsCveReports?.render();
         renderDateFields();
         renderFeedbackOverview();
         interestsField?.render();

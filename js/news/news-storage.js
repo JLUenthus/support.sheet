@@ -26,6 +26,8 @@
     // news.cve.*, damit "Feed zurücksetzen" und alle Feed-Resets ihn nicht
     // berühren. Von Anfang an in Init und Backup aufgenommen.
     cveSettings: 'news.cve.settings',
+    // CVE-Bericht Teil 2: gespeicherte Berichte (Archiv), neueste zuerst.
+    cveReports:  'news.cve.reports',
   };
 
   function todayISO(offsetDays) {
@@ -59,6 +61,7 @@
     // sein); fehlt es, bleibt der Key leer und news-cve.js fällt selbst auf
     // die Startwerte zurück.
     if (window.NewsCveCore) initIfMissing(KEYS.cveSettings, () => window.NewsCveCore.defaultSettings());
+    initIfMissing(KEYS.cveReports, () => []);
   }
 
   function readJSON(key, fallback) {

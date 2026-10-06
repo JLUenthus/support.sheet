@@ -179,7 +179,7 @@
           <div id="news-feedback-overview"></div>
 
           <h3 class="news-subheading">Sichern &amp; wiederherstellen</h3>
-          <p class="news-hint">Exportiert Einstellungen, Themen, Quellen, bisheriges Feedback und die CVE-Bericht-Einstellungen als Datei, unabhängig vom Browser-Speicher. Über „Backup importieren" jederzeit wieder einspielbar, auch in einem anderen Browser oder Gerät.</p>
+          <p class="news-hint">Exportiert Einstellungen, Themen, Quellen, bisheriges Feedback sowie CVE-Bericht-Einstellungen und -Archiv als Datei, unabhängig vom Browser-Speicher. Über „Backup importieren" jederzeit wieder einspielbar, auch in einem anderen Browser oder Gerät.</p>
           <div class="news-btn-row">
             <button type="button" class="news-btn-secondary" id="news-backup-export-btn">⬇️ Backup exportieren</button>
             <button type="button" class="news-btn-secondary" id="news-backup-import-btn">⬆️ Backup importieren</button>
@@ -279,6 +279,36 @@
           </div>
         </section>
 
+        <section class="news-section" id="news-cve-import-section">
+          <h2 class="section-title">Bericht einfügen</h2>
+          <p class="news-section-lede">Die Antwort der KI hier einfügen, am besten mit dem Kopieren-Button der KI-Antwort (nicht Text markieren), damit die Tabellen erhalten bleiben.</p>
+          <label class="news-label" for="news-cve-import-text">Bericht (Markdown)</label>
+          <textarea id="news-cve-import-text" class="news-textarea" rows="9" spellcheck="false" placeholder="# CVE-Sicherheitsbericht – KW 41/2026 …"></textarea>
+          <div class="news-btn-row">
+            <button type="button" class="news-btn-primary" id="news-cve-import-btn">Bericht übernehmen</button>
+          </div>
+          <div class="news-cve-import-msg" id="news-cve-import-msg" role="status" aria-live="polite" hidden></div>
+          <div class="news-cve-decision" id="news-cve-decision" role="group" aria-label="Rückfrage zum Einfügen" hidden>
+            <p class="news-cve-decision-text" id="news-cve-decision-text"></p>
+            <div class="news-btn-row" id="news-cve-decision-buttons"></div>
+          </div>
+        </section>
+
+        <section class="news-section" id="news-cve-viewer-section" hidden>
+          <div class="news-cve-viewer-head">
+            <h2 class="section-title" id="news-cve-viewer-title" tabindex="-1">Bericht</h2>
+            <button type="button" class="news-btn-secondary" id="news-cve-viewer-close">Schließen</button>
+          </div>
+          <p class="news-cve-ai-note" role="note">KI-generiert aus einer Websuche. Kritische Punkte vor Maßnahmen gegen die Herstellerseiten (Hersteller-Advisory, CISA KEV) prüfen.</p>
+          <div class="news-cve-report" id="news-cve-report"></div>
+        </section>
+
+        <section class="news-section" id="news-cve-archive-section">
+          <h2 class="section-title">Archiv</h2>
+          <p class="news-hint news-cve-archive-hint" id="news-cve-archive-hint" hidden></p>
+          <div class="news-cve-archive-list" id="news-cve-archive-list"></div>
+        </section>
+
       </div>
     </div>
   </main>
@@ -303,7 +333,10 @@
   <script src="js/news/news-feed.js"></script>
   <script src="js/news/news-saved.js"></script>
   <script src="js/news/news-nav.js"></script>
+  <script src="js/marked.min.js"></script>
+  <script src="js/news/news-cve-report-core.js"></script>
   <script src="js/news/news-cve.js"></script>
+  <script src="js/news/news-cve-reports.js"></script>
   <script src="js/news/news-tabs.js"></script>
 
   <script>
