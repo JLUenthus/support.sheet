@@ -179,7 +179,7 @@
           <div id="news-feedback-overview"></div>
 
           <h3 class="news-subheading">Sichern &amp; wiederherstellen</h3>
-          <p class="news-hint">Exportiert Einstellungen, Themen, Quellen, bisheriges Feedback sowie CVE-Bericht-Einstellungen und -Archiv als Datei, unabhängig vom Browser-Speicher. Über „Backup importieren" jederzeit wieder einspielbar, auch in einem anderen Browser oder Gerät.</p>
+          <p class="news-hint">Exportiert Einstellungen, Themen, Quellen, bisheriges Feedback sowie CVE-Bericht-Einstellungen, -Archiv und -Watchlist als Datei, unabhängig vom Browser-Speicher. Über „Backup importieren" jederzeit wieder einspielbar, auch in einem anderen Browser oder Gerät.</p>
           <div class="news-btn-row">
             <button type="button" class="news-btn-secondary" id="news-backup-export-btn">⬇️ Backup exportieren</button>
             <button type="button" class="news-btn-secondary" id="news-backup-import-btn">⬆️ Backup importieren</button>
@@ -292,13 +292,18 @@
             <p class="news-cve-decision-text" id="news-cve-decision-text"></p>
             <div class="news-btn-row" id="news-cve-decision-buttons"></div>
           </div>
+          <div class="news-cve-compare" id="news-cve-import-compare" hidden></div>
         </section>
 
         <section class="news-section" id="news-cve-viewer-section" hidden>
           <div class="news-cve-viewer-head">
             <h2 class="section-title" id="news-cve-viewer-title" tabindex="-1">Bericht</h2>
-            <button type="button" class="news-btn-secondary" id="news-cve-viewer-close">Schließen</button>
+            <div class="news-btn-row news-cve-viewer-actions">
+              <button type="button" class="news-btn-secondary" id="news-cve-viewer-compare-btn">Abgleich anzeigen</button>
+              <button type="button" class="news-btn-secondary" id="news-cve-viewer-close">Schließen</button>
+            </div>
           </div>
+          <div class="news-cve-compare" id="news-cve-viewer-compare" hidden></div>
           <p class="news-cve-ai-note" role="note">KI-generiert aus einer Websuche. Kritische Punkte vor Maßnahmen gegen die Herstellerseiten (Hersteller-Advisory, CISA KEV) prüfen.</p>
           <div class="news-cve-report" id="news-cve-report"></div>
         </section>
@@ -307,6 +312,25 @@
           <h2 class="section-title">Archiv</h2>
           <p class="news-hint news-cve-archive-hint" id="news-cve-archive-hint" hidden></p>
           <div class="news-cve-archive-list" id="news-cve-archive-list"></div>
+        </section>
+
+        <section class="news-section" id="news-cve-watch-section">
+          <h2 class="section-title">Watchlist</h2>
+          <p class="news-section-lede">Offene, aktiv ausgenutzte CVEs. Sie fließen als Prüfauftrag in den nächsten Prompt, damit ein ausgenutzter CVE nicht lautlos aus dem Bericht verschwindet.</p>
+          <p class="news-hint">Abgeleitet aus den archivierten Berichten. Wird ein Bericht gelöscht, verschwinden Einträge, die nur dort standen. Für Dauerhaftes manuell hinzufügen.</p>
+          <p class="news-hint" id="news-cve-watch-many" hidden></p>
+          <div class="news-cve-watch-list" id="news-cve-watch-list"></div>
+
+          <div class="news-add-row news-cve-add-row">
+            <input type="text" id="news-cve-watch-input" class="news-text-input" placeholder="CVE manuell hinzufügen, z. B. CVE-2026-81963" maxlength="40" autocomplete="off" spellcheck="false" aria-label="CVE-Nummer manuell hinzufügen">
+            <button type="button" class="news-btn-primary" id="news-cve-watch-add-btn">Hinzufügen</button>
+          </div>
+          <div class="news-cve-import-msg" id="news-cve-watch-msg" role="status" aria-live="polite" hidden></div>
+
+          <details class="news-prompt-details news-cve-resolved" id="news-cve-resolved-details">
+            <summary class="news-prompt-summary" id="news-cve-resolved-summary">Behoben</summary>
+            <div class="news-cve-watch-list" id="news-cve-resolved-list"></div>
+          </details>
         </section>
 
       </div>
@@ -335,8 +359,10 @@
   <script src="js/news/news-nav.js"></script>
   <script src="js/marked.min.js"></script>
   <script src="js/news/news-cve-report-core.js"></script>
+  <script src="js/news/news-cve-watch-core.js"></script>
   <script src="js/news/news-cve.js"></script>
   <script src="js/news/news-cve-reports.js"></script>
+  <script src="js/news/news-cve-watch.js"></script>
   <script src="js/news/news-tabs.js"></script>
 
   <script>

@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20261007-news-cve-reports-part2';
+const CACHE_VERSION = '20261007-news-cve-watchlist-part3';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -54,8 +54,10 @@ const ASSETS = [
   './js/news/news-saved.js',
   './js/news/news-nav.js',
   './js/news/news-cve-report-core.js',
+  './js/news/news-cve-watch-core.js',
   './js/news/news-cve.js',
   './js/news/news-cve-reports.js',
+  './js/news/news-cve-watch.js',
   './js/news/news-tabs.js',
   './css/news/news.css',
   './js/har.js',

@@ -28,6 +28,9 @@
     cveSettings: 'news.cve.settings',
     // CVE-Bericht Teil 2: gespeicherte Berichte (Archiv), neueste zuerst.
     cveReports:  'news.cve.reports',
+    // CVE-Bericht Teil 3: nur manuelle Watchlist-Einträge und Erledigtes,
+    // die Watchlist selbst wird bei Bedarf aus Berichten abgeleitet.
+    cveWatch:    'news.cve.watch',
   };
 
   function todayISO(offsetDays) {
@@ -62,6 +65,7 @@
     // die Startwerte zurück.
     if (window.NewsCveCore) initIfMissing(KEYS.cveSettings, () => window.NewsCveCore.defaultSettings());
     initIfMissing(KEYS.cveReports, () => []);
+    initIfMissing(KEYS.cveWatch, () => ({ version: 1, manual: [], resolved: {} }));
   }
 
   function readJSON(key, fallback) {

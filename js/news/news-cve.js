@@ -28,7 +28,12 @@
   function renderSummary() {
     const settings = getSettings();
     const summary = $('news-cve-summary');
-    if (summary) summary.textContent = core.formatSummary(settings, new Date());
+    if (summary) {
+      // Teil 3: Zahl der offenen Watchlist-CVEs, die in den Prompt einfließen.
+      const watchCount = window.NewsCveWatch ? window.NewsCveWatch.getOpenWatch().length : 0;
+      summary.textContent = core.formatSummary(settings, new Date())
+        + `, ${watchCount} ${watchCount === 1 ? 'CVE' : 'CVEs'} in der Watchlist`;
+    }
     const hasActive = core.countActive(settings) > 0;
     const empty = $('news-cve-empty');
     if (empty) empty.hidden = hasActive;
@@ -52,7 +57,8 @@
   }
 
   function handleGenerate() {
-    const result = core.buildCvePrompt(getSettings(), new Date());
+    const watchBlock = window.NewsCveWatch ? window.NewsCveWatch.getWatchBlock() : '';
+    const result = core.buildCvePrompt(getSettings(), new Date(), watchBlock);
     const textarea = $('news-cve-prompt');
     const stale = $('news-cve-stale');
     if (stale) stale.hidden = true;
@@ -253,5 +259,7 @@
   // render(): Backup-Import (news-settings.js). refreshSummary(): news-tabs.js,
   // damit Datum/KW beim Wechsel auf den Reiter aktuell sind (Seite kann über
   // Mitternacht offen geblieben sein).
-  window.NewsCve = { render, refreshSummary: renderSummary };
+  // onWatchChanged (Teil 3): jede Änderung der Watchlist verwirft einen
+  // erzeugten Prompt wie eine Einstellungsänderung.
+  window.NewsCve = { render, refreshSummary: renderSummary, onWatchChanged: markPromptStale };
 })();

@@ -626,3 +626,33 @@ body.news-tab-cve .news-progress-bar { display: none !important; }
   .news-cve-archive-item { align-items: stretch; }
   .news-cve-report h2 { margin-top: 22px; }
 }
+
+/* ── CVE-Bericht Teil 3: Watchlist und Abgleich ───────────────── */
+.news-cve-watch-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.news-cve-watch-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px 14px; flex-wrap: wrap;
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--r); padding: 9px 12px;
+}
+.news-cve-watch-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.news-cve-watch-id { font-family: var(--font-mono); font-size: .86rem; font-weight: 600; color: var(--text); background: none; border: none; padding: 0; overflow-wrap: anywhere; }
+.news-cve-watch-meta { font-size: .76rem; color: var(--muted); overflow-wrap: anywhere; }
+.news-cve-watch-item .news-btn-secondary { padding: 5px 12px; font-size: .74rem; }
+.news-cve-resolved { margin-top: 10px; }
+.news-cve-resolved .news-cve-watch-list { margin-top: 8px; }
+
+.news-cve-compare {
+  background: var(--panel); border: 1px solid var(--border2); border-radius: var(--r);
+  padding: 14px 16px; margin: 14px 0 0; max-width: 70ch;
+}
+.news-cve-viewer-section .news-cve-compare, #news-cve-viewer-section .news-cve-compare { margin: 0 0 16px; }
+.news-cve-compare-title { font-size: .92rem; font-weight: 700; color: var(--text); margin: 0 0 8px; }
+.news-cve-compare-text { margin: 0 0 8px; font-size: .86rem; line-height: 1.5; color: var(--muted); }
+.news-cve-compare-warn { color: var(--text); background: var(--amber-bg); border: 1px solid rgba(251,191,36,.35); border-radius: var(--r); padding: 8px 12px; }
+.news-cve-compare-block { margin: 0 0 10px; display: flex; flex-direction: column; gap: 6px; }
+.news-cve-compare-block-title { margin: 0; font-size: .8rem; font-weight: 700; }
+.news-cve-compare-missing .news-cve-compare-block-title { color: var(--red); font-size: .9rem; }
+.news-cve-compare-missing .news-cve-watch-item { border-color: rgba(248,113,113,.4); background: var(--red-bg); }
+.news-cve-compare-textonly .news-cve-compare-block-title { color: var(--muted); font-weight: 600; }
+.news-cve-compare-textonly .news-cve-watch-item, .news-cve-compare-added .news-cve-watch-item { background: transparent; padding: 5px 10px; }
+.news-cve-compare-added .news-cve-compare-block-title { color: var(--accent); font-weight: 600; }
+.news-cve-viewer-actions { margin: 0; }

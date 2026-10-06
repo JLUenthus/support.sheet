@@ -363,6 +363,8 @@
       cveSettings: window.NewsStorage.readJSON(KEYS.cveSettings, null),
       // Teil 2: archivierte CVE-Berichte.
       cveReports: window.NewsStorage.readJSON(KEYS.cveReports, []),
+      // Teil 3: manuelle Watchlist-Einträge und Erledigtes.
+      cveWatch: window.NewsStorage.readJSON(KEYS.cveWatch, null),
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -405,6 +407,10 @@
         // Gleiches für cveReports: fehlt das Feld (altes Backup), bleiben die
         // vorhandenen Berichte unberührt.
         if (Array.isArray(data.cveReports)) window.NewsStorage.writeJSON(KEYS.cveReports, data.cveReports);
+        // cveWatch: fehlt das Feld (Backup vor Teil 3), bleibt der Bestand unberührt.
+        if (data.cveWatch && typeof data.cveWatch === 'object' && !Array.isArray(data.cveWatch)) {
+          window.NewsStorage.writeJSON(KEYS.cveWatch, data.cveWatch);
+        }
 
         // Alle betroffenen Render-Funktionen sofort erneut aufrufen - kein
         // manueller Reload nötig (Vorgabe Schritt 4, um Schritt 6a Feed und
@@ -416,6 +422,7 @@
         window.NewsNav?.updateSavedBadge();
         window.NewsCve?.render();
         window.NewsCveReports?.render();
+        window.NewsCveWatch?.render();
         renderDateFields();
         renderFeedbackOverview();
         interestsField?.render();
