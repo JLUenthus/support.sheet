@@ -29,6 +29,14 @@
   </header>
 
   <main>
+    <div class="news-tabs" role="tablist" aria-label="Bereich des News Curators">
+      <button type="button" class="news-tab news-tab--active" role="tab" id="news-tab-news"
+              aria-controls="news-panel-news" aria-selected="true" tabindex="0">News</button>
+      <button type="button" class="news-tab" role="tab" id="news-tab-cve"
+              aria-controls="news-panel-cve" aria-selected="false" tabindex="-1">CVE-Bericht</button>
+    </div>
+
+    <div role="tabpanel" id="news-panel-news" aria-labelledby="news-tab-news">
     <div class="news-layout">
 
       <nav class="news-page-nav" id="news-page-nav" aria-label="Bereichsnavigation">
@@ -171,7 +179,7 @@
           <div id="news-feedback-overview"></div>
 
           <h3 class="news-subheading">Sichern &amp; wiederherstellen</h3>
-          <p class="news-hint">Exportiert Einstellungen, Themen, Quellen und bisheriges Feedback als Datei, unabhängig vom Browser-Speicher. Über „Backup importieren" jederzeit wieder einspielbar, auch in einem anderen Browser oder Gerät.</p>
+          <p class="news-hint">Exportiert Einstellungen, Themen, Quellen, bisheriges Feedback und die CVE-Bericht-Einstellungen als Datei, unabhängig vom Browser-Speicher. Über „Backup importieren" jederzeit wieder einspielbar, auch in einem anderen Browser oder Gerät.</p>
           <div class="news-btn-row">
             <button type="button" class="news-btn-secondary" id="news-backup-export-btn">⬇️ Backup exportieren</button>
             <button type="button" class="news-btn-secondary" id="news-backup-import-btn">⬆️ Backup importieren</button>
@@ -217,6 +225,62 @@
 
       </div>
     </div>
+    </div><!-- /news-panel-news -->
+
+    <div role="tabpanel" id="news-panel-cve" aria-labelledby="news-tab-cve" tabindex="0" hidden>
+      <div class="news-cve">
+
+        <section class="news-section" id="news-cve-settings-section">
+          <h2 class="section-title">Hersteller und Zeitraum</h2>
+          <p class="news-section-lede">Welche Hersteller und Produkte der Wochenbericht abdecken soll. Eine leere Produktliste heißt „alle Produkte des Herstellers". Die App fragt selbst keine CVE-Quellen ab, sie erzeugt nur den Prompt für eine KI mit Websuche.</p>
+
+          <div class="news-field">
+            <label class="news-label" for="news-cve-period">Zeitraum (endet heute)</label>
+            <select id="news-cve-period" class="news-text-input news-cve-period">
+              <option value="7">7 Tage</option>
+              <option value="14">14 Tage</option>
+              <option value="30">30 Tage</option>
+            </select>
+          </div>
+
+          <h3 class="news-subheading">Hersteller</h3>
+          <div class="news-cve-vendor-list" id="news-cve-vendor-list"></div>
+
+          <div class="news-add-row news-cve-add-row">
+            <input type="text" id="news-cve-vendor-input" class="news-text-input" placeholder="Hersteller hinzufügen, z. B. Zyxel" maxlength="80" aria-label="Neuer Hersteller">
+            <button type="button" class="news-btn-primary" id="news-cve-vendor-add-btn">Hinzufügen</button>
+          </div>
+          <div class="news-btn-row">
+            <button type="button" class="news-btn-secondary" id="news-cve-reset-btn">Auf Startwerte zurücksetzen</button>
+          </div>
+        </section>
+
+        <section class="news-section" id="news-cve-prompt-section">
+          <h2 class="section-title">Prompt</h2>
+          <p class="news-cve-summary" id="news-cve-summary" aria-live="polite"></p>
+
+          <div class="news-cve-warning" role="note">
+            <strong>Vor dem Einfügen in die KI die Websuche aktivieren.</strong>
+            Ohne Websuche erfindet eine KI CVE-Nummern. Der Prompt weist sie an abzubrechen, darauf allein verlassen gilt nicht. Jeder Bericht ist vor Maßnahmen gegen die Herstellerseiten zu prüfen.
+          </div>
+
+          <p class="news-cve-empty" id="news-cve-empty" role="alert" hidden>Kein Hersteller aktiv. Aktiviere mindestens einen Hersteller, dann lässt sich der Prompt erzeugen.</p>
+          <p class="news-hint" id="news-cve-stale" role="status" hidden>Einstellungen wurden geändert. Bitte den Prompt neu generieren.</p>
+
+          <div class="news-btn-row">
+            <button type="button" class="news-btn-primary" id="news-cve-generate-btn">Prompt generieren</button>
+          </div>
+          <details class="news-prompt-details" id="news-cve-prompt-details">
+            <summary class="news-prompt-summary">Prompt anzeigen</summary>
+            <textarea id="news-cve-prompt" class="news-textarea" rows="16" readonly></textarea>
+          </details>
+          <div class="news-btn-row">
+            <button type="button" class="news-btn-secondary" id="news-cve-copy-btn">Prompt kopieren</button>
+          </div>
+        </section>
+
+      </div>
+    </div>
   </main>
 
   <div class="news-progress-bar" id="news-progress-bar" hidden>
@@ -228,6 +292,7 @@
   </div>
 
   <script src="js/toast.js"></script>
+  <script src="js/news/news-cve-core.js"></script>
   <script src="js/news/news-storage.js"></script>
   <script src="js/news/news-json.js"></script>
   <script src="js/news/news-sources.js"></script>
@@ -238,6 +303,8 @@
   <script src="js/news/news-feed.js"></script>
   <script src="js/news/news-saved.js"></script>
   <script src="js/news/news-nav.js"></script>
+  <script src="js/news/news-cve.js"></script>
+  <script src="js/news/news-tabs.js"></script>
 
   <script>
     if ('serviceWorker' in navigator) {

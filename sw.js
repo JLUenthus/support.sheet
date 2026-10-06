@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20260923-dokuassistent-cmd-cards-overlay';
+const CACHE_VERSION = '20261006-news-cve-tab-part1';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -42,6 +42,7 @@ const ASSETS = [
   './js/private-renderer.js',
   './css/private.css',
   './news.html',
+  './js/news/news-cve-core.js',
   './js/news/news-storage.js',
   './js/news/news-json.js',
   './js/news/news-sources.js',
@@ -52,6 +53,8 @@ const ASSETS = [
   './js/news/news-feed.js',
   './js/news/news-saved.js',
   './js/news/news-nav.js',
+  './js/news/news-cve.js',
+  './js/news/news-tabs.js',
   './css/news/news.css',
   './js/har.js',
   './js/entra.js',

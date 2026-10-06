@@ -359,6 +359,8 @@
       carried: window.NewsStorage.readJSON(KEYS.carried, []),
       // news.feed kam erst mit Schritt 6a dazu, siehe news-storage.js.
       feed: window.NewsStorage.readJSON(KEYS.feed, { articles: [], highlights: [] }),
+      // Teil 1 CVE-Bericht: news.cve.settings (null = nie gespeichert).
+      cveSettings: window.NewsStorage.readJSON(KEYS.cveSettings, null),
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -393,6 +395,11 @@
         if (Array.isArray(data.saved)) window.NewsStorage.writeJSON(KEYS.saved, data.saved);
         if (Array.isArray(data.carried)) window.NewsStorage.writeJSON(KEYS.carried, data.carried);
         if (data.feed && typeof data.feed === 'object') window.NewsStorage.writeJSON(KEYS.feed, data.feed);
+        // Ältere Backups kennen cveSettings nicht: dann bleibt der bestehende
+        // Stand unberührt. Gelesen wird später immer über normalizeSettings().
+        if (data.cveSettings && typeof data.cveSettings === 'object' && !Array.isArray(data.cveSettings)) {
+          window.NewsStorage.writeJSON(KEYS.cveSettings, data.cveSettings);
+        }
 
         // Alle betroffenen Render-Funktionen sofort erneut aufrufen - kein
         // manueller Reload nötig (Vorgabe Schritt 4, um Schritt 6a Feed und
@@ -402,6 +409,7 @@
         window.NewsFeed?.render();
         window.NewsSaved?.render();
         window.NewsNav?.updateSavedBadge();
+        window.NewsCve?.render();
         renderDateFields();
         renderFeedbackOverview();
         interestsField?.render();

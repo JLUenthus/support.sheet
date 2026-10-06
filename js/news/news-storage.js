@@ -22,6 +22,10 @@
     // durchgehend mitgeschrieben statt nur im Speicher gehalten, damit ein
     // Reload während einer offenen Session nichts verliert).
     feed:     'news.feed',
+    // CVE-Bericht (eigener Reiter): bewusst unter eigenem Namensraum
+    // news.cve.*, damit "Feed zurücksetzen" und alle Feed-Resets ihn nicht
+    // berühren. Von Anfang an in Init und Backup aufgenommen.
+    cveSettings: 'news.cve.settings',
   };
 
   function todayISO(offsetDays) {
@@ -51,6 +55,10 @@
     initIfMissing(KEYS.saved, () => []);
     initIfMissing(KEYS.carried, () => []);
     initIfMissing(KEYS.feed, () => ({ articles: [], highlights: [] }));
+    // Startwerte stammen aus news-cve-core.js (muss vor dieser Datei geladen
+    // sein); fehlt es, bleibt der Key leer und news-cve.js fällt selbst auf
+    // die Startwerte zurück.
+    if (window.NewsCveCore) initIfMissing(KEYS.cveSettings, () => window.NewsCveCore.defaultSettings());
   }
 
   function readJSON(key, fallback) {

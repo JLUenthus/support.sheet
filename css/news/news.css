@@ -207,10 +207,12 @@
 /* ── Ausschluss-Keywords: kategorisierte Vorschläge (Prompt 19) ──────
    Vier <details>-Blöcke (.news-prompt-details/-summary von oben wiederverwendet,
    keine zweite Disclosure-Implementierung) zusammen in einem Container mit
-   fester Maximalhöhe, damit die Seite bei mehreren gleichzeitig geöffneten
-   Kategorien nicht beliebig in die Länge wächst. */
+   fester Höhe (Prompt 24: height statt max-height), damit die Seite bei
+   mehreren gleichzeitig geöffneten Kategorien nicht beliebig in die Länge
+   wächst - und damit die Box unabhängig vom Füllstand exakt so groß wie die
+   aktive Chip-Box (.news-tag-box) daneben bleibt. */
 .news-exclude-categories {
-  max-height: 320px; overflow-y: auto; border: 1px solid var(--border);
+  height: 320px; overflow-y: auto; border: 1px solid var(--border);
   border-radius: var(--r); padding: 4px 12px; background: var(--panel);
 }
 .news-exclude-category { margin: 8px 0; }
@@ -300,14 +302,16 @@
   display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
   background: var(--panel); border: 1px solid var(--border); border-radius: var(--r);
   padding: 8px 10px; min-height: 44px; max-width: 560px;
-  /* Prompt 23: feste Maximalhöhe + interner Scroll, angelehnt an die
-     Ausschluss-Keywords-Kategorien-Box aus Prompt 19 (dort ebenfalls
-     max-height: 320px), damit die Box bei vielen aktiven Chips (z.B. nach
-     mehrfachem "Alle auswählen" bei den Ausschluss-Keywords) nicht
-     unbegrenzt wächst. Bei wenig Inhalt (deutlich unter 320px) ohne
-     sichtbaren Effekt, betrifft strukturell auch "Zusätzliche Interessen",
-     wirkt sich dort aber praktisch nicht aus (kein großer Vorschlagsbestand). */
-  max-height: 320px; overflow-y: auto;
+  /* Prompt 23/24: feste Höhe (nicht nur Obergrenze) + interner Scroll,
+     angelehnt an die Ausschluss-Keywords-Kategorien-Box aus Prompt 19
+     (.news-exclude-categories, dieselben 320px). Seit Prompt 24 bewusst
+     `height` statt `max-height`, damit beide Boxen bei Ausschluss-Keywords
+     unabhängig vom aktuellen Füllstand (leer/wenig/viel, Kategorien ein-
+     oder aufgeklappt) exakt gleich groß bleiben - bei wenig Inhalt bleibt
+     entsprechend sichtbarer Leerraum, statt dass die Box schrumpft. Gilt
+     strukturell auch für "Zusätzliche Interessen" (dieselbe Klasse), dort
+     i.d.R. nur mit mehr Leerraum als vorher, aber ohne Funktionsverlust. */
+  height: 320px; overflow-y: auto;
 }
 .news-tag-box:focus-within { border-color: var(--accent); }
 .news-tag-chip {
@@ -491,3 +495,66 @@
 }
 .news-saved-body { flex: 1; min-width: 0; }
 .news-saved-remove { flex-shrink: 0; margin-top: 2px; }
+
+/* ── Reiter "News" | "CVE-Bericht" (CVE Teil 1) ───────────────
+   Tab-Leiste über dem bestehenden Layout, das unverändert im Panel
+   "News" liegt. Aktiver Reiter nur über Farbe + Unterstreichung, damit der
+   sichtbare Fokusrahmen (focus-visible) davon unabhängig bleibt. */
+.news-tabs { display: flex; gap: 4px; padding-top: 20px; border-bottom: 1px solid var(--border); }
+.news-tab {
+  padding: 9px 18px; border: 1px solid transparent; border-bottom: none;
+  border-radius: var(--r) var(--r) 0 0; background: transparent; color: var(--muted);
+  font-family: var(--font-ui); font-size: .85rem; font-weight: 600; cursor: pointer;
+  margin-bottom: -1px; transition: color .15s, background .15s;
+}
+.news-tab:hover { color: var(--text); background: var(--panel); }
+.news-tab--active { color: var(--accent); background: var(--panel); border-color: var(--border); box-shadow: inset 0 -2px 0 var(--accent); }
+.news-tab:focus-visible,
+[role="tabpanel"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Die fixierte Fortschrittsleiste gehört zum Feed, im CVE-Reiter ausblenden. */
+body.news-tab-cve .news-progress-bar { display: none !important; }
+
+/* ── CVE-Bericht: Einstellungen + Prompt ──────────────────────── */
+.news-cve { padding-top: 24px; padding-bottom: 60px; max-width: 860px; }
+.news-cve-period { flex: none; max-width: 160px; }
+.news-cve-vendor-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.news-cve-vendor {
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 12px 14px;
+}
+.news-cve-vendor-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.news-cve-vendor-toggle {
+  display: flex; align-items: center; gap: 10px; cursor: pointer; min-width: 0;
+  font-size: .9rem; font-weight: 600; color: var(--text);
+}
+.news-cve-vendor-toggle input { width: 16px; height: 16px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer; }
+.news-cve-vendor-name { overflow-wrap: anywhere; }
+.news-cve-vendor--off .news-cve-vendor-name { opacity: .5; }
+.news-cve-vendor--off .news-cve-tagbox { opacity: .6; }
+.news-cve-vendor-delete {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
+  background: transparent; color: var(--dim); cursor: pointer; font-size: .85rem; transition: all .15s;
+}
+.news-cve-vendor-delete:hover { color: var(--red); background: var(--red-bg); border-color: rgba(248,113,113,.3); }
+.news-cve-vendor-delete:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* .news-tag-box hat seit Prompt 24 eine feste Höhe (320px, für die großen
+   Ausschluss-Keywords-Boxen). Für die kleinen Produkt-Felder je Hersteller
+   hier bewusst überschrieben: wächst mit dem Inhalt, bis 160px, dann Scroll. */
+.news-tag-box.news-cve-tagbox { height: auto; min-height: 44px; max-height: 160px; max-width: none; margin-top: 10px; }
+.news-cve-add-row { margin-top: 4px; }
+.news-cve-summary { font-family: var(--font-mono); font-size: .85rem; color: var(--text); margin: 0 0 14px; }
+.news-cve-warning {
+  background: var(--amber-bg); border: 1px solid rgba(251,191,36,.35); border-left: 4px solid var(--amber);
+  border-radius: var(--r); padding: 12px 14px; margin: 0 0 16px; font-size: .86rem; line-height: 1.55; color: var(--text);
+}
+.news-cve-empty {
+  background: var(--red-bg); border: 1px solid rgba(248,113,113,.3); border-radius: var(--r);
+  padding: 10px 14px; margin: 0 0 14px; font-size: .86rem; color: var(--red);
+}
+@media (max-width: 640px) {
+  .news-tab { padding: 9px 14px; }
+  .news-cve { padding-top: 16px; }
+}
+/* Erster .news-subheading in einem Abschnitt bekommt sonst margin-top: 0
+   (:first-of-type, siehe oben) und klebt hier direkt am Zeitraum-Feld. */
+.news-cve .news-subheading { margin-top: 24px; }
