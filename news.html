@@ -227,7 +227,18 @@
     </div>
     </div><!-- /news-panel-news -->
 
-    <div role="tabpanel" id="news-panel-cve" aria-labelledby="news-tab-cve" tabindex="0" hidden>
+    <div role="tabpanel" id="news-panel-cve" aria-labelledby="news-tab-cve" hidden>
+      <div class="news-layout news-layout--cve">
+      <nav class="news-page-nav" id="news-cve-page-nav" aria-label="Bereichsnavigation CVE-Bericht">
+        <div class="news-page-nav-title">CVE-Bericht</div>
+        <a href="#news-cve-settings-section" class="news-page-nav-link"><span class="news-nav-num">1</span>Hersteller</a>
+        <a href="#news-cve-prompt-section" class="news-page-nav-link"><span class="news-nav-num">2</span>Prompt</a>
+        <a href="#news-cve-import-section" class="news-page-nav-link"><span class="news-nav-num">3</span>Bericht einfügen</a>
+        <a href="#news-cve-viewer-section" class="news-page-nav-link" id="news-cve-nav-viewer" hidden>Geöffneter Bericht</a>
+        <a href="#news-cve-archive-section" class="news-page-nav-link"><span class="news-nav-num">4</span>Archiv</a>
+        <a href="#news-cve-watch-section" class="news-page-nav-link"><span class="news-nav-num">5</span>Watchlist</a>
+      </nav>
+      <div class="news-main-content">
       <div class="news-cve">
 
         <section class="news-section" id="news-cve-settings-section">
@@ -334,6 +345,8 @@
         </section>
 
       </div>
+      </div><!-- /news-main-content -->
+      </div><!-- /news-layout--cve -->
     </div>
   </main>
 
@@ -363,6 +376,7 @@
   <script src="js/news/news-cve.js"></script>
   <script src="js/news/news-cve-reports.js"></script>
   <script src="js/news/news-cve-watch.js"></script>
+  <script src="js/news/news-cve-nav.js"></script>
   <script src="js/news/news-tabs.js"></script>
 
   <script>

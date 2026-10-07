@@ -41,8 +41,17 @@
     }
   }
 
+  // Ziel eines Hashs innerhalb des CVE-Panels (z. B. #news-cve-archive-section)?
+  function cveTargetFromHash() {
+    if (!location.hash || location.hash === '#cve') return null;
+    let id = location.hash.slice(1);
+    try { id = decodeURIComponent(id); } catch { /* kaputtes Escape: Rohwert verwenden */ }
+    const target = document.getElementById(id);
+    return target && target.closest('#news-panel-cve') ? target : null;
+  }
+
   function idFromHash() {
-    return location.hash === '#cve' ? 'cve' : 'news';
+    return location.hash === '#cve' || cveTargetFromHash() ? 'cve' : 'news';
   }
 
   function onKeydown(e) {
@@ -68,6 +77,11 @@
       select('news');
       target.scrollIntoView();
     }
+    // Gleiches für Abschnitte des CVE-Panels (Zurück/Vorwärts zwischen Reitern).
+    if (cveTargetFromHash() && activeId !== 'cve') {
+      select('cve');
+      cveTargetFromHash().scrollIntoView();
+    }
   }
 
   function init() {
@@ -77,6 +91,9 @@
       tabEl(t.id).addEventListener('keydown', onKeydown);
     });
     select(idFromHash());
+    // Beim Laden mit Hash auf einen CVE-Abschnitt war das Ziel noch verborgen,
+    // der Browser hat nicht gescrollt: nachholen.
+    cveTargetFromHash()?.scrollIntoView();
     window.addEventListener('hashchange', onHashChange);
   }
 

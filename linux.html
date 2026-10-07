@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>support.sheet – Linux Admin Cheatsheet</title>
+
+  <link rel="stylesheet" href="fonts/fonts.css">
+
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/recent.css">
+  <link rel="stylesheet" href="css/favorites.css">
+  <link rel="stylesheet" href="css/linux.css">
+</head>
+<body>
+
+  <!-- ── HEADER ──────────────────────────────────────────── -->
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-icon" id="as-logo-icon">🐧</div>
+      <div class="logo-text" id="as-logo-label">support<span>.linux</span></div>
+    </a>
+    <div class="header-right">
+      <div class="pill pill-count" id="cmd-count">0 Befehle</div>
+    </div>
+  </header>
+
+  <!-- ── MAIN ────────────────────────────────────────────── -->
+  <main>
+
+    <section id="favorites-section" hidden>
+      <h2 class="section-title">⭐ Meine Favoriten</h2>
+      <div id="favorites-container" class="cmd-grid"></div>
+    </section>
+
+    <div id="search-filter-bar">
+      <div class="linux-controls">
+        <fieldset class="linux-distro" id="linux-distro-group">
+          <legend class="linux-legend">Distribution</legend>
+        </fieldset>
+        <div class="safe-mode-bar linux-sudo-bar">
+          <label class="safe-mode-toggle">
+            <div class="safe-mode-switch">
+              <input type="checkbox" id="linux-sudo-checkbox" aria-label="sudo voranstellen">
+              <div class="safe-mode-track">
+                <div class="safe-mode-thumb"></div>
+              </div>
+            </div>
+            <span class="safe-mode-text">sudo voranstellen</span>
+            <span class="safe-mode-desc" id="linux-sudo-desc">an</span>
+          </label>
+        </div>
+      </div>
+      <p class="linux-count" id="linux-count" role="status" aria-live="polite"></p>
+      <div id="filter-bar"></div>
+    </div>
+
+    <div class="linux-error" id="linux-error" role="alert" hidden></div>
+    <div id="linux-container"></div>
+
+  </main>
+
+  <!-- ── SCRIPTS ─────────────────────────────────────────── -->
+  <!-- render.js liefert copyToClipboard() (Kopieren-Mechanismus der Windows-Seite,
+       Toast + .copied-Rückmeldung). Es lädt auf dieser Seite keine Befehle, da
+       #commands-container fehlt (gleiches Muster wie mitmachen.html). -->
+  <script src="js/toast.js"></script>
+  <script src="js/settings-store.js"></script>
+  <script src="js/variables.js"></script>
+  <script src="js/recent.js"></script>
+  <script src="js/favorites.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/linux-core.js"></script>
+  <script src="js/linux.js"></script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+
+  <script src="nav.js"></script>
+
+</body>
+</html>

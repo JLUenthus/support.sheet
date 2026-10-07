@@ -1,12 +1,13 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20261007-news-cve-watchlist-part3';
+const CACHE_VERSION = '20261008-linux-commands-page';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
   './index.html',
   './windows.html',
+  './linux.html',
   './exchange.html',
   './forti.html',
   './scripts.html',
@@ -19,6 +20,7 @@ const ASSETS = [
   './data/known-harmless.json',
   './data/correlation-rules.json',
   './data/commands.json',
+  './data/linux-commands.json',
   './data/support-guides.json',
   './data/forti-commands.json',
   './data/exchange-commands.json',
@@ -58,6 +60,7 @@ const ASSETS = [
   './js/news/news-cve.js',
   './js/news/news-cve-reports.js',
   './js/news/news-cve-watch.js',
+  './js/news/news-cve-nav.js',
   './js/news/news-tabs.js',
   './css/news/news.css',
   './js/har.js',
@@ -120,6 +123,9 @@ const ASSETS = [
   './js/favorites.js',
   './js/search.js',
   './js/render.js',
+  './js/linux-core.js',
+  './js/linux.js',
+  './css/linux.css',
   './js/settings-store.js',
   './js/tools.js',
   './powershell/Get-SystemInventory.ps1',

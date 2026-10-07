@@ -656,3 +656,18 @@ body.news-tab-cve .news-progress-bar { display: none !important; }
 .news-cve-compare-textonly .news-cve-watch-item, .news-cve-compare-added .news-cve-watch-item { background: transparent; padding: 5px 10px; }
 .news-cve-compare-added .news-cve-compare-block-title { color: var(--accent); font-weight: 600; }
 .news-cve-viewer-actions { margin: 0; }
+
+/* ── CVE-Bericht: Bereichsnavigation (gleiche Klassen wie im News-Reiter) ──
+   .news-layout liefert Grid, Sticky-Nav und Mobile-Pill-Leiste. Der CVE-Inhalt
+   bringt oben/unten bereits eigenes Padding mit (.news-cve), das sich sonst mit
+   dem Padding von .news-layout addieren würde. */
+.news-layout--cve { padding-top: 0; padding-bottom: 0; }
+/* Sprungziele: sticky Header (58px) + Tab-Leiste enden bei ca. 101px. Der
+   Versatz hält Abschnittsüberschriften nach einem Sprung darunter sichtbar. */
+.news-cve .news-section { scroll-margin-top: 112px; }
+@media (max-width: 640px) {
+  .news-cve .news-section { scroll-margin-top: 120px; }
+}
+/* .news-page-nav-link setzt display:flex und würde das hidden-Attribut
+   überstimmen ("Geöffneter Bericht" nur bei geöffnetem Bericht). */
+.news-page-nav-link[hidden] { display: none; }

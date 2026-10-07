@@ -1,0 +1,856 @@
+{
+  "version": 1,
+  "distros": [
+    {
+      "id": "debian",
+      "label": "Debian/Ubuntu",
+      "tag": "DEBIAN"
+    },
+    {
+      "id": "arch",
+      "label": "Arch",
+      "tag": "ARCH"
+    }
+  ],
+  "categories": [
+    "System",
+    "Dienste und Logs",
+    "Pakete",
+    "Netzwerk",
+    "Firewall",
+    "Benutzer",
+    "Datenträger",
+    "Prozesse",
+    "Dateien",
+    "SSH",
+    "Zeit und Cron"
+  ],
+  "commands": [
+    {
+      "id": "linux-sys-info",
+      "category": "System",
+      "title": "Systeminfo",
+      "desc": "Hostname, Kernel und Distribution.",
+      "tags": [
+        "BASH",
+        "INFO"
+      ],
+      "cmd": "hostnamectl && cat /etc/os-release"
+    },
+    {
+      "id": "linux-sys-uptime",
+      "category": "System",
+      "title": "Laufzeit und Last",
+      "desc": "Uptime und Load Average.",
+      "tags": [
+        "BASH",
+        "INFO"
+      ],
+      "cmd": "uptime"
+    },
+    {
+      "id": "linux-sys-mem",
+      "category": "System",
+      "title": "Arbeitsspeicher",
+      "desc": "RAM und Swap, lesbar formatiert.",
+      "tags": [
+        "BASH",
+        "INFO"
+      ],
+      "cmd": "free -h"
+    },
+    {
+      "id": "linux-sys-top-mem",
+      "category": "System",
+      "title": "Prozesse nach RAM",
+      "desc": "Die 15 größten Speicherverbraucher.",
+      "tags": [
+        "BASH",
+        "PROZESS"
+      ],
+      "cmd": "ps aux --sort=-%mem | head -n 15"
+    },
+    {
+      "id": "linux-sys-dmesg",
+      "category": "System",
+      "title": "Kernel-Warnungen und -Fehler",
+      "desc": "Letzte 50 Meldungen mit Zeitstempel.",
+      "tags": [
+        "BASH",
+        "ROOT"
+      ],
+      "cmd": "{sudo}dmesg -T --level=err,warn | tail -n 50"
+    },
+    {
+      "id": "linux-sys-reboot",
+      "category": "System",
+      "title": "Neustart nötig?",
+      "desc": "Prüft, ob ein Update einen Neustart verlangt.",
+      "tags": [
+        "INFO",
+        "PAKETE"
+      ],
+      "cmd": {
+        "debian": "[ -f /var/run/reboot-required ] && cat /var/run/reboot-required || echo \"Kein Neustart nötig\"",
+        "arch": "uname -r && pacman -Q linux"
+      },
+      "notes": {
+        "arch": "Weichen die zwei Versionen voneinander ab, läuft ein älterer Kernel als installiert, ein Neustart ist nötig. Bei linux-lts entsprechend pacman -Q linux-lts."
+      }
+    },
+    {
+      "id": "linux-svc-status",
+      "category": "Dienste und Logs",
+      "title": "Dienststatus",
+      "desc": "Status, letzte Logzeilen und Startzeit.",
+      "tags": [
+        "SYSTEMD"
+      ],
+      "cmd": "systemctl status {dienst}"
+    },
+    {
+      "id": "linux-svc-restart",
+      "category": "Dienste und Logs",
+      "title": "Dienst neu starten",
+      "desc": "",
+      "tags": [
+        "SYSTEMD",
+        "ROOT"
+      ],
+      "cmd": "{sudo}systemctl restart {dienst}"
+    },
+    {
+      "id": "linux-svc-enable",
+      "category": "Dienste und Logs",
+      "title": "Dienst aktivieren und starten",
+      "desc": "Startet sofort und beim Booten.",
+      "tags": [
+        "SYSTEMD",
+        "ROOT"
+      ],
+      "cmd": "{sudo}systemctl enable --now {dienst}"
+    },
+    {
+      "id": "linux-svc-failed",
+      "category": "Dienste und Logs",
+      "title": "Fehlgeschlagene Dienste",
+      "desc": "",
+      "tags": [
+        "SYSTEMD"
+      ],
+      "cmd": "systemctl --failed"
+    },
+    {
+      "id": "linux-log-unit",
+      "category": "Dienste und Logs",
+      "title": "Log eines Dienstes",
+      "desc": "Springt ans Ende des Logs.",
+      "tags": [
+        "SYSTEMD",
+        "LOG"
+      ],
+      "cmd": "journalctl -u {dienst} -e"
+    },
+    {
+      "id": "linux-log-follow",
+      "category": "Dienste und Logs",
+      "title": "Log live verfolgen",
+      "desc": "Beenden mit Strg+C.",
+      "tags": [
+        "SYSTEMD",
+        "LOG"
+      ],
+      "cmd": "journalctl -u {dienst} -f"
+    },
+    {
+      "id": "linux-log-errors",
+      "category": "Dienste und Logs",
+      "title": "Fehler seit dem letzten Start",
+      "desc": "",
+      "tags": [
+        "SYSTEMD",
+        "LOG"
+      ],
+      "cmd": "journalctl -p err -b"
+    },
+    {
+      "id": "linux-log-since",
+      "category": "Dienste und Logs",
+      "title": "Log der letzten Stunde",
+      "desc": "",
+      "tags": [
+        "SYSTEMD",
+        "LOG"
+      ],
+      "cmd": "journalctl --since \"1 hour ago\""
+    },
+    {
+      "id": "linux-log-ssh",
+      "category": "Dienste und Logs",
+      "title": "SSH-Anmeldungen heute",
+      "desc": "Deckt die Dienstnamen ssh und sshd ab.",
+      "tags": [
+        "SYSTEMD",
+        "LOG",
+        "ROOT"
+      ],
+      "cmd": "{sudo}journalctl -u ssh -u sshd --since today",
+      "note": "Ältere Debian/Ubuntu-Systeme mit rsyslog haben zusätzlich /var/log/auth.log. Auf neueren Installationen ohne rsyslog existiert die Datei nicht, dort gilt nur das Journal."
+    },
+    {
+      "id": "linux-log-vacuum",
+      "category": "Dienste und Logs",
+      "title": "Journal verkleinern",
+      "desc": "Löscht Einträge, die älter als 14 Tage sind.",
+      "tags": [
+        "SYSTEMD",
+        "LOG",
+        "ROOT"
+      ],
+      "cmd": "{sudo}journalctl --vacuum-time=14d"
+    },
+    {
+      "id": "linux-pkg-update",
+      "category": "Pakete",
+      "title": "System aktualisieren",
+      "desc": "Paketlisten holen und alle Pakete aktualisieren.",
+      "tags": [
+        "PAKETE",
+        "ROOT"
+      ],
+      "cmd": {
+        "debian": "{sudo}apt update && {sudo}apt upgrade",
+        "arch": "{sudo}pacman -Syu"
+      },
+      "notes": {
+        "debian": "Bleiben Pakete zurückgehalten (z. B. neue Kernel), hilft apt full-upgrade.",
+        "arch": "Nie nur pacman -Sy ausführen: Teilupdates werden nicht unterstützt."
+      }
+    },
+    {
+      "id": "linux-pkg-install",
+      "category": "Pakete",
+      "title": "Paket installieren",
+      "desc": "",
+      "tags": [
+        "PAKETE",
+        "ROOT"
+      ],
+      "cmd": {
+        "debian": "{sudo}apt install {paket}",
+        "arch": "{sudo}pacman -S {paket}"
+      }
+    },
+    {
+      "id": "linux-pkg-remove",
+      "category": "Pakete",
+      "title": "Paket entfernen",
+      "desc": "",
+      "tags": [
+        "PAKETE",
+        "ROOT"
+      ],
+      "cmd": {
+        "debian": "{sudo}apt remove {paket}",
+        "arch": "{sudo}pacman -Rs {paket}"
+      },
+      "notes": {
+        "debian": "apt purge entfernt zusätzlich die Konfigurationsdateien.",
+        "arch": "pacman -Rns entfernt zusätzlich gesicherte Konfigurationsdateien (.pacsave)."
+      }
+    },
+    {
+      "id": "linux-pkg-search",
+      "category": "Pakete",
+      "title": "Paket suchen",
+      "desc": "",
+      "tags": [
+        "PAKETE"
+      ],
+      "cmd": {
+        "debian": "apt search {begriff}",
+        "arch": "pacman -Ss {begriff}"
+      }
+    },
+    {
+      "id": "linux-pkg-info",
+      "category": "Pakete",
+      "title": "Paketinfo",
+      "desc": "Version, Abhängigkeiten, Beschreibung.",
+      "tags": [
+        "PAKETE"
+      ],
+      "cmd": {
+        "debian": "apt show {paket}",
+        "arch": "pacman -Si {paket}"
+      },
+      "notes": {
+        "arch": "Für bereits installierte Pakete pacman -Qi <paket>."
+      }
+    },
+    {
+      "id": "linux-pkg-installed",
+      "category": "Pakete",
+      "title": "Installierte Pakete",
+      "desc": "",
+      "tags": [
+        "PAKETE"
+      ],
+      "cmd": {
+        "debian": "apt list --installed",
+        "arch": "pacman -Q"
+      },
+      "notes": {
+        "arch": "Nur explizit installierte Pakete: pacman -Qe."
+      }
+    },
+    {
+      "id": "linux-pkg-owner",
+      "category": "Pakete",
+      "title": "Zu welchem Paket gehört eine Datei?",
+      "desc": "",
+      "tags": [
+        "PAKETE"
+      ],
+      "cmd": {
+        "debian": "dpkg -S {pfad}",
+        "arch": "pacman -Qo {pfad}"
+      }
+    },
+    {
+      "id": "linux-pkg-files",
+      "category": "Pakete",
+      "title": "Dateien eines Pakets",
+      "desc": "",
+      "tags": [
+        "PAKETE"
+      ],
+      "cmd": {
+        "debian": "dpkg -L {paket}",
+        "arch": "pacman -Ql {paket}"
+      }
+    },
+    {
+      "id": "linux-pkg-orphans",
+      "category": "Pakete",
+      "title": "Nicht mehr benötigte Pakete entfernen",
+      "desc": "",
+      "tags": [
+        "PAKETE",
+        "ROOT"
+      ],
+      "cmd": {
+        "debian": "{sudo}apt autoremove",
+        "arch": "pacman -Qdtq | {sudo}pacman -Rns -"
+      },
+      "notes": {
+        "arch": "Ist die Liste leer, meldet pacman einen Fehler wegen leerer Eingabe, das ist harmlos. Vorher prüfen mit pacman -Qdt."
+      }
+    },
+    {
+      "id": "linux-pkg-cache",
+      "category": "Pakete",
+      "title": "Paketcache leeren",
+      "desc": "",
+      "tags": [
+        "PAKETE",
+        "ROOT"
+      ],
+      "cmd": {
+        "debian": "{sudo}apt clean",
+        "arch": "{sudo}pacman -Sc"
+      },
+      "notes": {
+        "arch": "pacman -Sc fragt nach. paccache -r (Paket pacman-contrib) behält die letzten drei Versionen."
+      }
+    },
+    {
+      "id": "linux-pkg-history",
+      "category": "Pakete",
+      "title": "Zuletzt installierte und aktualisierte Pakete",
+      "desc": "Letzte 30 Einträge aus dem Paketlog.",
+      "tags": [
+        "PAKETE",
+        "LOG"
+      ],
+      "cmd": {
+        "debian": "grep -E \" (install|upgrade) \" /var/log/dpkg.log | tail -n 30",
+        "arch": "grep -E \"\\[ALPM\\] (installed|upgraded|removed)\" /var/log/pacman.log | tail -n 30"
+      },
+      "notes": {
+        "debian": "Rotierte Logs liegen in /var/log/dpkg.log.1 und den gz-Archiven."
+      }
+    },
+    {
+      "id": "linux-net-ip",
+      "category": "Netzwerk",
+      "title": "IP-Adressen",
+      "desc": "Kompakte Übersicht aller Schnittstellen.",
+      "tags": [
+        "NETZ"
+      ],
+      "cmd": "ip -br a"
+    },
+    {
+      "id": "linux-net-route",
+      "category": "Netzwerk",
+      "title": "Routing-Tabelle",
+      "desc": "",
+      "tags": [
+        "NETZ"
+      ],
+      "cmd": "ip route"
+    },
+    {
+      "id": "linux-net-ports",
+      "category": "Netzwerk",
+      "title": "Lauschende Ports",
+      "desc": "TCP und UDP mit Prozess.",
+      "tags": [
+        "NETZ",
+        "ROOT"
+      ],
+      "cmd": "{sudo}ss -tulpn"
+    },
+    {
+      "id": "linux-net-conn",
+      "category": "Netzwerk",
+      "title": "Aktive TCP-Verbindungen",
+      "desc": "",
+      "tags": [
+        "NETZ"
+      ],
+      "cmd": "ss -tn state established"
+    },
+    {
+      "id": "linux-net-dig",
+      "category": "Netzwerk",
+      "title": "DNS-Abfrage",
+      "desc": "Nur die Antwort.",
+      "tags": [
+        "NETZ",
+        "DNS"
+      ],
+      "cmd": "dig +short {host}",
+      "note": "Paket: Debian/Ubuntu bind9-dnsutils (älter dnsutils), Arch bind."
+    },
+    {
+      "id": "linux-net-getent",
+      "category": "Netzwerk",
+      "title": "Namensauflösung wie das System",
+      "desc": "Nutzt die Resolver-Konfiguration des Systems.",
+      "tags": [
+        "NETZ",
+        "DNS"
+      ],
+      "cmd": "getent hosts {host}"
+    },
+    {
+      "id": "linux-net-curl",
+      "category": "Netzwerk",
+      "title": "HTTP-Header prüfen",
+      "desc": "",
+      "tags": [
+        "NETZ"
+      ],
+      "cmd": "curl -sI https://{host}"
+    },
+    {
+      "id": "linux-net-netplan",
+      "category": "Netzwerk",
+      "title": "Netzwerkkonfiguration testen (Ubuntu)",
+      "desc": "Übernimmt die Änderung nur, wenn sie bestätigt wird.",
+      "tags": [
+        "NETZ",
+        "ROOT"
+      ],
+      "cmd": {
+        "debian": "{sudo}netplan try"
+      },
+      "notes": {
+        "debian": "Nur Ubuntu. Klassisches Debian nutzt /etc/network/interfaces."
+      }
+    },
+    {
+      "id": "linux-fw-rules",
+      "category": "Firewall",
+      "title": "Firewallregeln anzeigen",
+      "desc": "Gesamtes nftables-Regelwerk.",
+      "tags": [
+        "FIREWALL",
+        "ROOT"
+      ],
+      "cmd": "{sudo}nft list ruleset"
+    },
+    {
+      "id": "linux-fw-ufw",
+      "category": "Firewall",
+      "title": "ufw-Status",
+      "desc": "",
+      "tags": [
+        "FIREWALL",
+        "ROOT"
+      ],
+      "cmd": "{sudo}ufw status verbose",
+      "note": "Nur wenn ufw installiert ist (Ubuntu Standard)."
+    },
+    {
+      "id": "linux-fw-ufw-allow",
+      "category": "Firewall",
+      "title": "Port in ufw freigeben",
+      "desc": "",
+      "tags": [
+        "FIREWALL",
+        "ROOT"
+      ],
+      "cmd": "{sudo}ufw allow {port}/tcp",
+      "note": "Nur wenn ufw installiert ist (Ubuntu Standard)."
+    },
+    {
+      "id": "linux-usr-add",
+      "category": "Benutzer",
+      "title": "Benutzer anlegen",
+      "desc": "",
+      "tags": [
+        "BENUTZER",
+        "ROOT"
+      ],
+      "cmd": {
+        "debian": "{sudo}adduser {user}",
+        "arch": "{sudo}useradd -m -s /bin/bash {user} && {sudo}passwd {user}"
+      },
+      "notes": {
+        "debian": "adduser fragt interaktiv nach Passwort und Daten. Die Low-Level-Variante ist useradd."
+      }
+    },
+    {
+      "id": "linux-usr-sudo",
+      "category": "Benutzer",
+      "title": "Benutzer sudo-Rechte geben",
+      "desc": "",
+      "tags": [
+        "BENUTZER",
+        "ROOT"
+      ],
+      "cmd": {
+        "debian": "{sudo}usermod -aG sudo {user}",
+        "arch": "{sudo}usermod -aG wheel {user}"
+      },
+      "notes": {
+        "debian": "Auf minimalen Debian-Installationen fehlt das Paket sudo teilweise.",
+        "arch": "Die Zeile %wheel ALL=(ALL:ALL) ALL in der sudoers-Datei aktivieren (visudo)."
+      }
+    },
+    {
+      "id": "linux-usr-id",
+      "category": "Benutzer",
+      "title": "Benutzer und Gruppen anzeigen",
+      "desc": "",
+      "tags": [
+        "BENUTZER"
+      ],
+      "cmd": "id {user}"
+    },
+    {
+      "id": "linux-usr-last",
+      "category": "Benutzer",
+      "title": "Letzte Anmeldungen",
+      "desc": "",
+      "tags": [
+        "BENUTZER",
+        "LOG"
+      ],
+      "cmd": "last -n 20"
+    },
+    {
+      "id": "linux-disk-df",
+      "category": "Datenträger",
+      "title": "Belegung der Dateisysteme",
+      "desc": "Ohne tmpfs-Rauschen.",
+      "tags": [
+        "DISK"
+      ],
+      "cmd": "df -hT -x tmpfs -x devtmpfs"
+    },
+    {
+      "id": "linux-disk-lsblk",
+      "category": "Datenträger",
+      "title": "Blockgeräte und Dateisysteme",
+      "desc": "",
+      "tags": [
+        "DISK"
+      ],
+      "cmd": "lsblk -f"
+    },
+    {
+      "id": "linux-disk-du",
+      "category": "Datenträger",
+      "title": "Größte Ordner",
+      "desc": "Eine Ebene tief, auf einem Dateisystem.",
+      "tags": [
+        "DISK",
+        "ROOT"
+      ],
+      "cmd": "{sudo}du -xh --max-depth=1 {pfad} | sort -h | tail -n 15"
+    },
+    {
+      "id": "linux-disk-big",
+      "category": "Datenträger",
+      "title": "Große Dateien finden",
+      "desc": "Alle Dateien über 500 MB.",
+      "tags": [
+        "DISK",
+        "ROOT"
+      ],
+      "cmd": "{sudo}find {pfad} -xdev -type f -size +500M -exec ls -lh {} +"
+    },
+    {
+      "id": "linux-disk-findmnt",
+      "category": "Datenträger",
+      "title": "Einhängepunkte als Baum",
+      "desc": "",
+      "tags": [
+        "DISK"
+      ],
+      "cmd": "findmnt"
+    },
+    {
+      "id": "linux-disk-lvm",
+      "category": "Datenträger",
+      "title": "LVM-Status",
+      "desc": "Physische Volumes, Gruppen und Volumes.",
+      "tags": [
+        "DISK",
+        "LVM",
+        "ROOT"
+      ],
+      "cmd": "{sudo}pvs && {sudo}vgs && {sudo}lvs"
+    },
+    {
+      "id": "linux-disk-lvextend",
+      "category": "Datenträger",
+      "title": "Logical Volume vergrößern",
+      "desc": "Vergrößert auch das Dateisystem (-r).",
+      "tags": [
+        "DISK",
+        "LVM",
+        "ROOT"
+      ],
+      "cmd": "{sudo}lvextend -r -L +10G /dev/{vg}/{lv}"
+    },
+    {
+      "id": "linux-disk-nfs",
+      "category": "Datenträger",
+      "title": "NFS-Freigabe einhängen",
+      "desc": "",
+      "tags": [
+        "DISK",
+        "ROOT"
+      ],
+      "cmd": "{sudo}mount -t nfs {server}:/{export} {mountpunkt}",
+      "note": "Paket: Debian/Ubuntu nfs-common, Arch nfs-utils."
+    },
+    {
+      "id": "linux-disk-cifs",
+      "category": "Datenträger",
+      "title": "SMB/CIFS-Freigabe einhängen",
+      "desc": "",
+      "tags": [
+        "DISK",
+        "ROOT"
+      ],
+      "cmd": "{sudo}mount -t cifs //{server}/{freigabe} {mountpunkt} -o username={user}",
+      "note": "Paket cifs-utils (Debian/Ubuntu und Arch)."
+    },
+    {
+      "id": "linux-proc-find",
+      "category": "Prozesse",
+      "title": "Prozess nach Name finden",
+      "desc": "",
+      "tags": [
+        "PROZESS"
+      ],
+      "cmd": "pgrep -a {name}"
+    },
+    {
+      "id": "linux-proc-kill",
+      "category": "Prozesse",
+      "title": "Prozess beenden",
+      "desc": "Erst sauber beenden, mit kill -9 nur im Notfall.",
+      "tags": [
+        "PROZESS"
+      ],
+      "cmd": "kill {pid}"
+    },
+    {
+      "id": "linux-proc-port",
+      "category": "Prozesse",
+      "title": "Welcher Prozess nutzt einen Port?",
+      "desc": "",
+      "tags": [
+        "PROZESS",
+        "NETZ",
+        "ROOT"
+      ],
+      "cmd": "{sudo}ss -tlpn 'sport = :{port}'"
+    },
+    {
+      "id": "linux-file-find",
+      "category": "Dateien",
+      "title": "Datei nach Namen suchen",
+      "desc": "Groß/Kleinschreibung egal.",
+      "tags": [
+        "DATEI"
+      ],
+      "cmd": "find {pfad} -iname \"*{muster}*\""
+    },
+    {
+      "id": "linux-file-grep",
+      "category": "Dateien",
+      "title": "Text in Dateien suchen",
+      "desc": "Rekursiv, ohne Binärdateien.",
+      "tags": [
+        "DATEI"
+      ],
+      "cmd": "grep -rIn \"{text}\" {pfad}"
+    },
+    {
+      "id": "linux-file-tar",
+      "category": "Dateien",
+      "title": "Archiv erstellen",
+      "desc": "",
+      "tags": [
+        "DATEI"
+      ],
+      "cmd": "tar -czf {archiv}.tar.gz {pfad}"
+    },
+    {
+      "id": "linux-file-untar",
+      "category": "Dateien",
+      "title": "Archiv entpacken",
+      "desc": "",
+      "tags": [
+        "DATEI"
+      ],
+      "cmd": "tar -xzf {archiv}.tar.gz -C {ziel}"
+    },
+    {
+      "id": "linux-file-rsync",
+      "category": "Dateien",
+      "title": "Verzeichnis synchronisieren",
+      "desc": "Mit Fortschritt, behält Rechte und Zeiten.",
+      "tags": [
+        "DATEI"
+      ],
+      "cmd": "rsync -avP {quelle}/ {ziel}/"
+    },
+    {
+      "id": "linux-file-chown",
+      "category": "Dateien",
+      "title": "Besitzer rekursiv ändern",
+      "desc": "",
+      "tags": [
+        "DATEI",
+        "ROOT"
+      ],
+      "cmd": "{sudo}chown -R {user}:{gruppe} {pfad}"
+    },
+    {
+      "id": "linux-ssh-keygen",
+      "category": "SSH",
+      "title": "SSH-Schlüssel erzeugen",
+      "desc": "",
+      "tags": [
+        "SSH"
+      ],
+      "cmd": "ssh-keygen -t ed25519 -C \"{kommentar}\""
+    },
+    {
+      "id": "linux-ssh-copy",
+      "category": "SSH",
+      "title": "Schlüssel auf Server kopieren",
+      "desc": "",
+      "tags": [
+        "SSH"
+      ],
+      "cmd": "ssh-copy-id {user}@{host}"
+    },
+    {
+      "id": "linux-ssh-test",
+      "category": "SSH",
+      "title": "sshd-Konfiguration prüfen",
+      "desc": "Prüft die Syntax, bevor der Dienst neu startet.",
+      "tags": [
+        "SSH",
+        "ROOT"
+      ],
+      "cmd": "{sudo}sshd -t"
+    },
+    {
+      "id": "linux-ssh-tunnel",
+      "category": "SSH",
+      "title": "Port-Weiterleitung (Tunnel)",
+      "desc": "",
+      "tags": [
+        "SSH"
+      ],
+      "cmd": "ssh -L {lokalport}:{zielhost}:{zielport} {user}@{host}"
+    },
+    {
+      "id": "linux-time-status",
+      "category": "Zeit und Cron",
+      "title": "Zeit und Zeitzone",
+      "desc": "",
+      "tags": [
+        "ZEIT",
+        "SYSTEMD"
+      ],
+      "cmd": "timedatectl"
+    },
+    {
+      "id": "linux-time-zone",
+      "category": "Zeit und Cron",
+      "title": "Zeitzone setzen",
+      "desc": "",
+      "tags": [
+        "ZEIT",
+        "SYSTEMD",
+        "ROOT"
+      ],
+      "cmd": "{sudo}timedatectl set-timezone Europe/Berlin"
+    },
+    {
+      "id": "linux-time-sync",
+      "category": "Zeit und Cron",
+      "title": "Zeitsynchronisation prüfen",
+      "desc": "",
+      "tags": [
+        "ZEIT",
+        "SYSTEMD"
+      ],
+      "cmd": "timedatectl timesync-status",
+      "note": "Nur mit systemd-timesyncd. Bei chrony: chronyc tracking."
+    },
+    {
+      "id": "linux-cron-list",
+      "category": "Zeit und Cron",
+      "title": "Cronjobs des Benutzers",
+      "desc": "",
+      "tags": [
+        "CRON"
+      ],
+      "cmd": "crontab -l"
+    },
+    {
+      "id": "linux-timers-list",
+      "category": "Zeit und Cron",
+      "title": "systemd-Timer",
+      "desc": "",
+      "tags": [
+        "CRON",
+        "SYSTEMD"
+      ],
+      "cmd": "systemctl list-timers --all"
+    }
+  ]
+}

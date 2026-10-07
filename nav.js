@@ -8,6 +8,7 @@
       id:'commands', label:'Commands', icon:'💻', color:'#7c8cf8', group:true,
       children: [
         { id:'windows',  href:'windows.html',  label:'Windows',  icon:'⚡', color:'#7c8cf8', desc:'262 Befehle · 21 Kategorien' },
+        { id:'linux',    href:'linux.html',    label:'Linux',    icon:'🐧', color:'#2dd4bf', desc:'69 Befehle · Debian/Ubuntu & Arch' },
         { id:'exchange', href:'exchange.html', label:'Exchange', icon:'📧', color:'#e8b339', desc:'On-Prem & Exchange Online' },
         { id:'forti',    href:'forti.html',    label:'Fortinet', icon:'🔥', color:'#fb7124', desc:'FG · FMG · FAZ' },
       ]
@@ -193,6 +194,7 @@
     // "support" bleibt, nur der farbige Span ändert sich
     const suffix = currentPage.id === 'home'           ? '.sheet'
                  : currentPage.id === 'windows'         ? '.windows'
+                 : currentPage.id === 'linux'           ? '.linux'
                  : currentPage.id === 'exchange'        ? '.exchange'
                  : currentPage.id === 'forti'           ? '.forti'
                  : currentPage.id === 'commands'        ? '.commands'
@@ -285,6 +287,7 @@
     // Dynamische Befehlszähler aus JSON nachladen
     const COUNT_SOURCES = [
       { id: 'windows',  url: './data/commands.json',          label: (n, c) => `${n} Befehle · ${c} Kategorien` },
+      { id: 'linux',    url: './data/linux-commands.json',    label: (n)    => `${n} Befehle · Debian/Ubuntu & Arch` },
       { id: 'exchange', url: './data/exchange-commands.json', label: (n)    => `${n} Befehle · On-Prem & EXO` },
       { id: 'forti',    url: './data/forti-commands.json',    label: (n)    => `${n} Befehle · FG · FMG · FAZ` },
     ];
