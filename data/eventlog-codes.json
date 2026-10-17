@@ -1,0 +1,3356 @@
+{
+  "version": "1.4",
+  "lastUpdated": "2026-10-16",
+  "description": "Event-Code-Referenz: ein Eintrag je Kanal, Provider und Event-ID (künftige einzige Quelle für Beschreibung, Thema und Einstufung). Inhaltsstandard und Themenstand siehe .md/eventlog-referenz/DATENMODELL.md. verified = Tatsachen gegen Herstellerdokumentation geprüft, reviewed = Einstufung vom Auftraggeber bestätigt.",
+  "ratings": [
+    "critical",
+    "error",
+    "warning",
+    "info",
+    "noise"
+  ],
+  "ratingLabels": {
+    "critical": "Kritisch",
+    "error": "Fehler",
+    "warning": "Warnung",
+    "info": "Info",
+    "noise": "Rauschen"
+  },
+  "topics": [
+    "Absturz",
+    "System",
+    "Netzwerk",
+    "Energie",
+    "Hardware",
+    "Sicherheit",
+    "Update",
+    "Auth",
+    "ActiveDirectory",
+    "DNS",
+    "DHCP",
+    "RDS",
+    "HyperV",
+    "Backup",
+    "IIS"
+  ],
+  "codes": [
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": null,
+      "eventId": 1,
+      "topic": "System",
+      "title": "Kritischer Systemfehler (ID 1)",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": null,
+      "eventId": 3,
+      "topic": "System",
+      "title": "Kritischer Systemfehler (ID 3)",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": null,
+      "eventId": 6,
+      "topic": "System",
+      "title": "Kritischer Systemfehler (ID 6)",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Servicing"
+      ],
+      "eventId": 7,
+      "topic": "System",
+      "title": "Kritischer Systemfehler (ID 7)",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "WINDOWS_UPDATE_CASCADE (error): mindestens 1× (7/8/14) des Providers Microsoft-Windows-Servicing zusammen mit mindestens 2× (20/24/25) des Windows-Update-Clients.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Servicing"
+      ],
+      "eventId": 8,
+      "topic": "Update",
+      "title": "Servicing-Ereignis (ID 8)",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "WINDOWS_UPDATE_CASCADE (error): mindestens 1× (7/8/14) des Providers Microsoft-Windows-Servicing zusammen mit mindestens 2× (20/24/25) des Windows-Update-Clients.",
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": "Der Standard-Collector liefert diese ID nicht; sie steht nur in der Korrelationsregel WINDOWS_UPDATE_CASCADE. Provider-Hinweis aus der Korrelationsregel."
+    },
+    {
+      "channel": "System",
+      "provider": "Microsoft-Windows-Hyper-V-VmSwitch",
+      "providerHint": null,
+      "eventId": 9,
+      "topic": "HyperV",
+      "title": "Hyper-V-VmSwitch: Ereignis 9",
+      "description": null,
+      "rating": "info",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "export",
+      "notes": "Verwechslungsgefahr: Dieselbe ID gibt es auch bei disk (Regel DISK_ERROR): Datenträgerfehler laut Regel (keine offizielle Seite gefunden). Dieser Eintrag: Microsoft-Windows-Hyper-V-VmSwitch: nicht offiziell dokumentiert."
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "disk",
+        "Ntfs",
+        "volmgr"
+      ],
+      "eventId": 9,
+      "topic": "Hardware",
+      "title": "Festplatten / I/O Fehler",
+      "description": null,
+      "rating": "critical",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "DISK_ERROR"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": "Verwechslungsgefahr: Dieselbe ID gibt es auch bei Microsoft-Windows-Hyper-V-VmSwitch: nicht offiziell dokumentiert. Dieser Eintrag: Provider laut Regel: disk/Ntfs/volmgr: Datenträgerfehler laut Regel (keine offizielle Seite gefunden)."
+    },
+    {
+      "channel": "System",
+      "provider": "Microsoft-Windows-Security-Kerberos",
+      "providerHint": null,
+      "eventId": 11,
+      "topic": "Sicherheit",
+      "title": "Security-Kerberos: Ereignis 11",
+      "description": null,
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "export",
+      "notes": "Verwechslungsgefahr: Dieselbe ID gibt es auch bei disk (Regel DISK_ERROR, Harmlos-Eintrag \"Festplattenfehler (generisch)\"): Datenträgerfehler laut Regel (keine offizielle Seite gefunden). Dieser Eintrag: Microsoft-Windows-Security-Kerberos: nicht offiziell dokumentiert."
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "disk",
+        "Ntfs",
+        "volmgr"
+      ],
+      "eventId": 11,
+      "topic": "Hardware",
+      "title": "Festplattenfehler (generisch)",
+      "description": "Einzelne Einträge können durch kurze Verbindungsunterbrechungen entstehen und sind nicht immer kritisch. Erst bei wiederholtem Auftreten oder Kombination mit anderen Datenträger-Events beachtenswert.",
+      "rating": "critical",
+      "baseRating": "critical",
+      "contextual": true,
+      "escalation": "Harmlos-Regel (known-harmless): bis 2 Vorkommen im Datensatz als bekannt harmlos markiert, ab 3 nicht mehr; bei aktiver Korrelation DISK_AND_SYSTEM_ERRORS nie harmlos. Die Harmlos-Regel senkt den Schweregrad nicht (reduceSeverity false). DISK_ERROR (critical) schon bei einem Ereignis (9/11/51/52/55/153 mit Quelle disk, Ntfs oder volmgr); DISK_AND_SYSTEM_ERRORS (critical): mindestens 1× (9/11/51/52/153) mit Quelle disk zusammen mit mindestens 2× (7000/7001/7023/7031).",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "DISK_ERROR"
+      ],
+      "harmless": {
+        "reduceSeverity": false,
+        "minCountForConcern": 3,
+        "onlyHarmlessIfNoCorrelation": true
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "harmless",
+      "notes": "Verwechslungsgefahr: Dieselbe ID gibt es auch bei Microsoft-Windows-Security-Kerberos: nicht offiziell dokumentiert. Dieser Eintrag: Provider laut Regel: disk/Ntfs/volmgr: Datenträgerfehler laut Regel (keine offizielle Seite gefunden)."
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Servicing"
+      ],
+      "eventId": 14,
+      "topic": "System",
+      "title": "Kritischer Systemfehler (ID 14)",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "WINDOWS_UPDATE_CASCADE (error): mindestens 1× (7/8/14) des Providers Microsoft-Windows-Servicing zusammen mit mindestens 2× (20/24/25) des Windows-Update-Clients.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": null,
+      "eventId": 15,
+      "topic": "System",
+      "title": "Kritischer Systemfehler (ID 15)",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "Microsoft-Windows-WindowsUpdateClient/Operational",
+      "provider": "Microsoft-Windows-WindowsUpdateClient",
+      "providerHint": null,
+      "eventId": 19,
+      "topic": null,
+      "title": "Windows Update: Installation erfolgreich",
+      "description": "Windows Update hat ein Update erfolgreich installiert. Die Herstellerseite nennt das einen normalen Zustand, der keine Aktion verlangt.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/cc735630(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-16",
+      "reviewed": false,
+      "origin": "doc",
+      "notes": "Gegenstück zu ID 20 (Installationsfehler); steht in known-harmless.json als \"Windows Update installiert\". Provider und Meldung stehen auf der Seite zu Event 19, den Kanal Operational nennt die Seite zu Event 20 (Abschnitt \"Verify\": dort soll geprüft werden, ob ID 19 vorhanden ist). Für ID 19 liegt kein Export vor, und der Standard-Collector sammelt Windows Update nur im System-Log mit den IDs 20, 24, 25, 31, 34, 35. Die ID 19 im Kanal Application stammt von Windows Server Backup (Collector-Zeile \"Windows Server Backup Fehler\") und ist ein anderes Ereignis."
+    },
+    {
+      "channel": "System",
+      "provider": "Microsoft-Windows-WindowsUpdateClient",
+      "providerHint": null,
+      "eventId": 20,
+      "topic": "System",
+      "title": "Windows Update: Installation fehlgeschlagen",
+      "description": "Windows Update konnte ein Update nicht installieren. Das Ereignis nennt das betroffene Update und den Fehlercode.",
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "WINDOWS_UPDATE_FAIL (warning) ab 2 Ereignissen innerhalb von 1440 Minuten; WINDOWS_UPDATE_CASCADE (error) bei mindestens 2× (20/24/25) zusammen mit mindestens 1× (7/8/14) des Providers Microsoft-Windows-Servicing.",
+      "collector": [
+        "client"
+      ],
+      "ruleRefs": [
+        "WINDOWS_UPDATE_FAIL"
+      ],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/cc735642(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-16",
+      "reviewed": false,
+      "origin": "export",
+      "notes": "Die frühere Harmlos-Zuordnung der ID 20 (\"Windows Update installiert\") wurde am Stichtag der Engine-Korrektur (2026-10-16) auf die ID 19 korrigiert, denn die Herstellerseite beschreibt ID 20 als Installationsfehler. Die Seite verweist für die Prüfung auf den Kanal Microsoft-Windows-WindowsUpdateClient/Operational, im Export steht ID 20 im Kanal System."
+    },
+    {
+      "channel": "Microsoft-Windows-TerminalServices-LocalSessionManager/Operational",
+      "provider": "Microsoft-Windows-TerminalServices-LocalSessionManager",
+      "providerHint": null,
+      "eventId": 24,
+      "topic": "RDS",
+      "title": "Remote Desktop: Sitzung getrennt",
+      "description": "Eine Remote-Desktop-Sitzung wurde getrennt. Das Ereignis nennt Benutzer, Sitzungs-ID und Quelladresse.",
+      "rating": "info",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/ee907330(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-14",
+      "reviewed": false,
+      "origin": "export",
+      "notes": "Verwechslungsgefahr: Dieselbe ID gibt es auch bei Microsoft-Windows-WindowsUpdateClient: Deinstallation eines Updates fehlgeschlagen laut Doku. Dieser Eintrag: Microsoft-Windows-TerminalServices-LocalSessionManager: Sitzung getrennt laut Doku."
+    },
+    {
+      "channel": null,
+      "provider": "Microsoft-Windows-WindowsUpdateClient",
+      "providerHint": null,
+      "eventId": 24,
+      "topic": "System",
+      "title": "Windows Update: Deinstallation fehlgeschlagen",
+      "description": "Windows Update konnte ein Update nicht deinstallieren. Das Ereignis nennt das betroffene Update und den Fehlercode.",
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "WINDOWS_UPDATE_FAIL (warning) ab 2 Ereignissen innerhalb von 1440 Minuten; WINDOWS_UPDATE_CASCADE (error) bei mindestens 2× (20/24/25) zusammen mit mindestens 1× (7/8/14) des Providers Microsoft-Windows-Servicing.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "WINDOWS_UPDATE_FAIL"
+      ],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/cc735624(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "doc",
+      "notes": "Verwechslungsgefahr: Dieselbe ID gibt es auch bei Microsoft-Windows-TerminalServices-LocalSessionManager: Sitzung getrennt laut Doku. Dieser Eintrag: Microsoft-Windows-WindowsUpdateClient: Deinstallation eines Updates fehlgeschlagen laut Doku."
+    },
+    {
+      "channel": "Microsoft-Windows-TerminalServices-LocalSessionManager/Operational",
+      "provider": "Microsoft-Windows-TerminalServices-LocalSessionManager",
+      "providerHint": null,
+      "eventId": 25,
+      "topic": "RDS",
+      "title": "Remote Desktop: Sitzung wiederverbunden",
+      "description": "Eine getrennte Remote-Desktop-Sitzung wurde erfolgreich wiederverbunden. Laut Herstellerseite ist das ein normaler Zustand, der keine Aktion verlangt.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/ee891126(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-14",
+      "reviewed": false,
+      "origin": "export",
+      "notes": "Verwechslungsgefahr: Dieselbe ID gibt es auch bei Microsoft-Windows-WindowsUpdateClient: Suche nach Updates fehlgeschlagen laut Doku. Dieser Eintrag: Microsoft-Windows-TerminalServices-LocalSessionManager: Sitzung wiederverbunden laut Doku, normaler Zustand."
+    },
+    {
+      "channel": null,
+      "provider": "Microsoft-Windows-WindowsUpdateClient",
+      "providerHint": null,
+      "eventId": 25,
+      "topic": "System",
+      "title": "Windows Update: Suche nach Updates fehlgeschlagen",
+      "description": "Der Agent für automatische Updates konnte nicht nach Updates suchen. Das Ereignis nennt den Fehlercode.",
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "WINDOWS_UPDATE_FAIL (warning) ab 2 Ereignissen innerhalb von 1440 Minuten; WINDOWS_UPDATE_CASCADE (error) bei mindestens 2× (20/24/25) zusammen mit mindestens 1× (7/8/14) des Providers Microsoft-Windows-Servicing.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "WINDOWS_UPDATE_FAIL"
+      ],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/cc735633(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "doc",
+      "notes": "Verwechslungsgefahr: Dieselbe ID gibt es auch bei Microsoft-Windows-TerminalServices-LocalSessionManager: Sitzung wiederverbunden laut Doku, normaler Zustand. Dieser Eintrag: Microsoft-Windows-WindowsUpdateClient: Suche nach Updates fehlgeschlagen laut Doku."
+    },
+    {
+      "channel": "System",
+      "provider": "Microsoft-Windows-WindowsUpdateClient",
+      "providerHint": null,
+      "eventId": 31,
+      "topic": "System",
+      "title": "Windows Update: Download fehlgeschlagen",
+      "description": "Windows Update konnte ein Update nicht herunterladen.",
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "WINDOWS_UPDATE_FAIL (warning) ab 2 Ereignissen innerhalb von 1440 Minuten; WINDOWS_UPDATE_CASCADE (error) bei mindestens 2× (20/24/25) zusammen mit mindestens 1× (7/8/14) des Providers Microsoft-Windows-Servicing.",
+      "collector": [
+        "client"
+      ],
+      "ruleRefs": [
+        "WINDOWS_UPDATE_FAIL"
+      ],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/cc735613(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "doc",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": "Microsoft-Windows-WindowsUpdateClient",
+      "providerHint": null,
+      "eventId": 34,
+      "topic": "System",
+      "title": "Windows Update: Selbst-Update der Kernkomponente fehlgeschlagen",
+      "description": "Die Kernkomponente des Windows-Update-Clients konnte ein Selbst-Update nicht installieren. Das Ereignis nennt den Fehlercode.",
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "WINDOWS_UPDATE_FAIL (warning) ab 2 Ereignissen innerhalb von 1440 Minuten; WINDOWS_UPDATE_CASCADE (error) bei mindestens 2× (20/24/25) zusammen mit mindestens 1× (7/8/14) des Providers Microsoft-Windows-Servicing.",
+      "collector": [
+        "client"
+      ],
+      "ruleRefs": [
+        "WINDOWS_UPDATE_FAIL"
+      ],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/cc735640(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "doc",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": "Microsoft-Windows-WindowsUpdateClient",
+      "providerHint": null,
+      "eventId": 35,
+      "topic": "System",
+      "title": "Windows Update: Selbst-Update der Zusatzkomponente fehlgeschlagen",
+      "description": "Die Zusatzkomponente (Auxiliary) des Windows-Update-Clients konnte ein Selbst-Update nicht installieren. Das Ereignis nennt den Fehlercode.",
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "WINDOWS_UPDATE_FAIL (warning) ab 2 Ereignissen innerhalb von 1440 Minuten; WINDOWS_UPDATE_CASCADE (error) bei mindestens 2× (20/24/25) zusammen mit mindestens 1× (7/8/14) des Providers Microsoft-Windows-Servicing.",
+      "collector": [
+        "client"
+      ],
+      "ruleRefs": [
+        "WINDOWS_UPDATE_FAIL"
+      ],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/cc735616(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "doc",
+      "notes": null
+    },
+    {
+      "channel": "Microsoft-Windows-TerminalServices-LocalSessionManager/Operational",
+      "provider": "Microsoft-Windows-TerminalServices-LocalSessionManager",
+      "providerHint": null,
+      "eventId": 41,
+      "topic": "RDS",
+      "title": "TerminalServices-LocalSessionManager: Ereignis 41",
+      "description": null,
+      "rating": "info",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "export",
+      "notes": "Verwechslungsgefahr: Dieselbe ID gibt es auch bei Microsoft-Windows-Kernel-Power: Neustart ohne sauberes Herunterfahren laut Doku, Einstufung critical. Dieser Eintrag: Microsoft-Windows-TerminalServices-LocalSessionManager: nicht offiziell dokumentiert; die Doku-Seiten zu Remote Desktop Services Availability führen die IDs 16 bis 25 und 1100 bis 1105, nicht 41."
+    },
+    {
+      "channel": "System",
+      "provider": "Microsoft-Windows-Kernel-Power",
+      "providerHint": null,
+      "eventId": 41,
+      "topic": "Absturz",
+      "title": "Neustart ohne sauberes Herunterfahren",
+      "description": "Windows hat beim Start festgestellt, dass der Rechner nicht sauber heruntergefahren wurde, etwa nach einem Stromausfall oder einem Stop-Fehler (Bluescreen). Das Ereignis wird erst beim nächsten Start protokolliert.",
+      "rating": "critical",
+      "baseRating": "critical",
+      "contextual": true,
+      "escalation": "Ab 2 Vorkommen nicht mehr als einmalig gewertet (known-harmless); KERNEL_POWER_41 (critical) schon bei einem Ereignis; REPEATED_UNPLANNED_RESTART (critical) bei mindestens 2× 41 oder 2× 6008.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "KERNEL_POWER_41"
+      ],
+      "harmless": {
+        "reduceSeverity": false,
+        "minCountForConcern": 2,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": "https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/event-id-41-restart",
+      "sourceLegacy": false,
+      "verified": true,
+      "verifiedAt": "2026-10-14",
+      "reviewed": false,
+      "origin": "doc",
+      "notes": "Verwechslungsgefahr: Dieselbe ID gibt es auch bei Microsoft-Windows-TerminalServices-LocalSessionManager: nicht offiziell dokumentiert; die Doku-Seiten zu Remote Desktop Services Availability führen die IDs 16 bis 25 und 1100 bis 1105, nicht 41. Dieser Eintrag: Microsoft-Windows-Kernel-Power: Neustart ohne sauberes Herunterfahren laut Doku, Einstufung critical."
+    },
+    {
+      "channel": "System",
+      "provider": "Microsoft-Windows-WindowsUpdateClient",
+      "providerHint": null,
+      "eventId": 43,
+      "topic": "Update",
+      "title": "WindowsUpdateClient: Ereignis 43",
+      "description": null,
+      "rating": "info",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "client"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "export",
+      "notes": "Verwechslungsgefahr: Dieselbe ID gibt es auch bei Kernel-Power bzw. USB (Harmlos-Eintrag \"Kernel-Power Ruhezustand\", Collector-Label \"USB Geraet nicht erkannt\"): laut Harmlos-Liste Wechsel in den Ruhezustand, nicht belegt. Dieser Eintrag: Microsoft-Windows-WindowsUpdateClient: nicht offiziell dokumentiert (die Update-Seiten der Doku nennen die ID nicht)."
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Kernel-Power"
+      ],
+      "eventId": 43,
+      "topic": "Hardware",
+      "title": "Kernel-Power Ruhezustand",
+      "description": "System wechselt in Ruhezustand oder Standbymodus. Normales Systemereignis.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "client"
+      ],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": "Widerspruch (nicht aufgelöst): Collector-Label \"USB Geraet nicht erkannt\" (Kategorie Hardware) gegen Harmlos-Eintrag \"Kernel-Power Ruhezustand\" (Quelle Microsoft-Windows-Kernel-Power). Exportbefund: ID 43 kommt unter Microsoft-Windows-WindowsUpdateClient (Kanal System) vor. Verwechslungsgefahr: Dieselbe ID gibt es auch bei Microsoft-Windows-WindowsUpdateClient: nicht offiziell dokumentiert (die Update-Seiten der Doku nennen die ID nicht). Dieser Eintrag: Provider laut Regel: Microsoft-Windows-Kernel-Power: laut Harmlos-Liste Wechsel in den Ruhezustand, nicht belegt."
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "disk",
+        "Ntfs",
+        "volmgr"
+      ],
+      "eventId": 51,
+      "topic": "Hardware",
+      "title": "Festplatten / I/O Fehler",
+      "description": null,
+      "rating": "critical",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "DISK_ERROR"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "disk",
+        "Ntfs",
+        "volmgr"
+      ],
+      "eventId": 52,
+      "topic": "Hardware",
+      "title": "Festplatten / I/O Fehler",
+      "description": null,
+      "rating": "critical",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "DISK_ERROR"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": "Microsoft-Windows-Kernel-Processor-Power",
+      "providerHint": null,
+      "eventId": 55,
+      "topic": "Energie",
+      "title": "Kernel-Processor-Power: Ereignis 55",
+      "description": null,
+      "rating": "info",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "export",
+      "notes": "Verwechslungsgefahr: Dieselbe ID gibt es auch bei disk/Ntfs/volmgr (Regel DISK_ERROR): Dateisystemstruktur beschädigt, Chkdsk nötig laut Doku (Seite zu Datenträgerfehlern). Dieser Eintrag: Microsoft-Windows-Kernel-Processor-Power: nicht offiziell dokumentiert."
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "disk",
+        "Ntfs",
+        "volmgr"
+      ],
+      "eventId": 55,
+      "topic": "Hardware",
+      "title": "Festplatten / I/O Fehler",
+      "description": null,
+      "rating": "critical",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "DISK_ERROR"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "rule",
+      "notes": "Verwechslungsgefahr: Dieselbe ID gibt es auch bei Microsoft-Windows-Kernel-Processor-Power: nicht offiziell dokumentiert. Dieser Eintrag: Provider laut Regel: disk/Ntfs/volmgr: Dateisystemstruktur beschädigt, Chkdsk nötig laut Doku (Seite zu Datenträgerfehlern)."
+    },
+    {
+      "channel": "System",
+      "provider": "Microsoft-Windows-Ntfs",
+      "providerHint": null,
+      "eventId": 98,
+      "topic": "System",
+      "title": "Ntfs: Volume-Zustand (ID 98)",
+      "description": "Ntfs meldet einen Zustand zu einem Volume. In der in der Herstellerdokumentation beschriebenen Variante muss das Volume für ein vollständiges Chkdsk offline genommen werden.",
+      "rating": "info",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Laut Microsoft deuten NTFS-Ereignisse wie 55, 50, 140 und 98 auf Dateisystembeschädigung hin; die beschriebene Variante verlangt ein vollständiges Chkdsk.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/troubleshoot/windows-server/backup-and-storage/troubleshoot-data-corruption-and-disk-errors",
+      "sourceLegacy": false,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "export",
+      "notes": "Die Herstellerseite beschreibt eine Variante, die Chkdsk verlangt; in den Exporten kommt ID 98 mit Level Info vor. Ob beide Fälle dieselbe ID tragen, ist offen (nicht aufgelöst). Die Seite nennt Provider und Kanal nicht, beides stammt aus dem Export."
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Resource-Exhaustion-Detector",
+        "Srv"
+      ],
+      "eventId": 105,
+      "topic": "Hardware",
+      "title": "Festplatte kritisch voll (Backup/SQL Partition)",
+      "description": null,
+      "rating": "critical",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [
+        "DISK_SPACE_CRITICAL"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": "Die Regel DISK_SPACE_CRITICAL nennt als Quellen jetzt Microsoft-Windows-Resource-Exhaustion-Detector und Srv (früher stand dort der Kanalname \"Application\", im Korrekturschritt der Regeln entfernt). Der Standard-Collector sammelt diese ID weiterhin nicht; eine Herstellerseite zur Bedeutung der ID liegt nicht vor."
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-TWinUI"
+      ],
+      "eventId": 131,
+      "topic": null,
+      "title": "TWinUI Diagnose",
+      "description": "Windows Shell UI Diagnoseereignis. Kein Fehler im normalen Betrieb.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": "Microsoft-Windows-Kernel-Boot",
+      "providerHint": null,
+      "eventId": 153,
+      "topic": "System",
+      "title": "Kernel-Boot: Ereignis 153",
+      "description": null,
+      "rating": "info",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "export",
+      "notes": "Verwechslungsgefahr: Dieselbe ID gibt es auch bei disk (Regel DISK_ERROR): Ein-/Ausgabevorgang wurde wiederholt, Speichersystem überlastet laut Doku (Seite zu Datenträgerfehlern). Dieser Eintrag: Microsoft-Windows-Kernel-Boot: nicht offiziell dokumentiert."
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "disk",
+        "Ntfs",
+        "volmgr"
+      ],
+      "eventId": 153,
+      "topic": "Hardware",
+      "title": "Festplatten / I/O Fehler",
+      "description": null,
+      "rating": "critical",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "DISK_ERROR"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": "Verwechslungsgefahr: Dieselbe ID gibt es auch bei Microsoft-Windows-Kernel-Boot: nicht offiziell dokumentiert. Dieser Eintrag: Provider laut Regel: disk/Ntfs/volmgr: Ein-/Ausgabevorgang wurde wiederholt, Speichersystem überlastet laut Doku (Seite zu Datenträgerfehlern)."
+    },
+    {
+      "channel": "System",
+      "provider": "Microsoft-Windows-Kernel-PnP",
+      "providerHint": null,
+      "eventId": 219,
+      "topic": "System",
+      "title": "Treiber konnte nicht geladen werden (UMDF)",
+      "description": "Beim Anstecken eines UMDF-Geräts konnte der Treiber nicht geladen werden, weil der Dienst \"Windows Driver Foundation - User-mode Driver Framework\" noch nicht gestartet war. Windows versucht das Laden danach erneut.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Laut Microsoft unkritisch, solange das Ereignis nicht fortlaufend protokolliert wird. BOOT_DRIVER_FAILURES (error) wertet mindestens 2× (219/7000/7026) zusammen mit 6005.",
+      "collector": [
+        "client"
+      ],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": "https://learn.microsoft.com/en-us/troubleshoot/windows-client/setup-upgrade-and-drivers/event-id-219-when-device-plugged-in-windows-system",
+      "sourceLegacy": false,
+      "verified": true,
+      "verifiedAt": "2026-10-14",
+      "reviewed": false,
+      "origin": "export",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": null,
+      "eventId": 257,
+      "topic": "System",
+      "title": "Treiber konnte nicht geladen werden (ID 257)",
+      "description": null,
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Kernel-Processor-Power"
+      ],
+      "eventId": 258,
+      "topic": null,
+      "title": "CPU Energiezustand",
+      "description": "Prozessor wechselt Energiezustand (C-States). Normales Energieverwaltungsereignis, kein Fehler.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": "Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational",
+      "provider": "Microsoft-Windows-TerminalServices-RemoteConnectionManager",
+      "providerHint": null,
+      "eventId": 261,
+      "topic": "RDS",
+      "title": "RDS Verbindungsproblem",
+      "description": null,
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [
+        "RDS_SESSION_FAIL"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "export",
+      "notes": null
+    },
+    {
+      "channel": "Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational",
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-TerminalServices-RemoteConnectionManager"
+      ],
+      "eventId": 263,
+      "topic": "RDS",
+      "title": "RDS Verbindungsproblem",
+      "description": null,
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [
+        "RDS_SESSION_FAIL"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Kernel-Boot"
+      ],
+      "eventId": 537,
+      "topic": null,
+      "title": "Kernel-Boot Diagnose",
+      "description": "Normales Boot-Diagnoseereignis. Enthält Boot-Zeitmessungen und ist kein Fehler.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": "Microsoft-Windows-Kernel-Power",
+      "providerHint": null,
+      "eventId": 566,
+      "topic": "Energie",
+      "title": "Kernel-Power: Ereignis 566",
+      "description": null,
+      "rating": "info",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "client"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "export",
+      "notes": "Bedeutung nicht offiziell dokumentiert (keine Seite gefunden). Provider und Kanal aus den Exporten."
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": null,
+      "eventId": 570,
+      "topic": "Energie",
+      "title": "Energieverwaltung: Ereignis 570",
+      "description": null,
+      "rating": "info",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "client"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": "Bedeutung und Provider nicht offiziell dokumentiert (keine Seite gefunden, im Export nicht beobachtet)."
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Security-SPP"
+      ],
+      "eventId": 903,
+      "topic": null,
+      "title": "Windows Aktivierungsstatus",
+      "description": "Statusbericht der Windows-Aktivierung. Kein Fehler wenn Windows aktiviert ist.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": "Application",
+      "provider": "Application Error",
+      "providerHint": null,
+      "eventId": 1000,
+      "topic": "Absturz",
+      "title": "Anwendungsabsturz",
+      "description": "Eine Anwendung ist abgestürzt. Das Ereignis nennt die fehlerhafte Anwendung und das fehlerhafte Modul, den Ausnahmecode und den Fehleroffset.",
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Dieselbe ID wird je nach Kontext unterschiedlich eingestuft: APP_CRASH_1000 (error) schon bei einem Ereignis; OFFICE_RDS_LICENSE (error, nur Server), wenn die Meldung winword.exe, excel.exe, outlook.exe, mso.dll oder mso20win32client.dll nennt; TASKBAR_EXPLORER_CRASH (warning) ab 2 Ereignissen in 60 Minuten bei explorer.exe, ShellExperienceHost.exe, SearchHost.exe oder StartMenuExperienceHost.exe; APP_CRASH_LOOP (critical) ab 5 Abstürzen desselben Prozesses.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "APP_CRASH_1000",
+        "OFFICE_RDS_LICENSE",
+        "TASKBAR_EXPLORER_CRASH"
+      ],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/troubleshoot/windows-server/performance/troubleshoot-application-service-crashing-behavior",
+      "sourceLegacy": false,
+      "verified": true,
+      "verifiedAt": "2026-10-14",
+      "reviewed": false,
+      "origin": "export",
+      "notes": null
+    },
+    {
+      "channel": "Application",
+      "provider": null,
+      "providerHint": [
+        "Windows Error Reporting"
+      ],
+      "eventId": 1001,
+      "topic": "Absturz",
+      "title": "Windows Error Reporting: Problemereignis",
+      "description": "Windows Error Reporting protokolliert damit ein Ereignis im Anwendungsprotokoll, bei einem fehlgeschlagenen Setup mit Ergebnis- und Erweiterungscode. Zusammen mit Ereignis 1000 deutet es auf wiederholte Anwendungsabstürze hin.",
+      "rating": "info",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "AAD_TOKEN_AND_SERVICE_CRASH (critical): mindestens 2× (1000/1001) zusammen mit mindestens 3× (1098/1104); RDS_SHARED_ACTIVATION (error): mindestens 1× (1000/1001) mit Quelle WINWORD zusammen mit Lizenzereignissen.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/troubleshoot/windows-server/performance/troubleshoot-application-service-crashing-behavior",
+      "sourceLegacy": false,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "doc",
+      "notes": "Verwechslungsgefahr: Dieselbe ID gibt es auch im Kanal System (Provider laut Doku WER-SystemErrorReporting): Neustart nach einem Absturz mit Stoppcode. Dieser Eintrag: Kanal Application, Windows Error Reporting: Problemereignis einer Anwendung. Der Providername steht auf den Herstellerseiten nur als \"Windows Error Reporting\" umschrieben, nicht als Source. Hinweis zu den Regeln (nur dokumentiert): AAD_TOKEN_AND_SERVICE_CRASH zählt ID 1001 ohne Kanal- und Provider-Filter, also auch das System-Ereignis."
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "WER-SystemErrorReporting"
+      ],
+      "eventId": 1001,
+      "topic": "Absturz",
+      "title": "Neustart nach Absturz mit Stoppcode (BugCheck)",
+      "description": "Der Rechner wurde nach einem Absturz mit Stoppcode (Bug Check) neu gestartet. Das Ereignis nennt den Stoppcode mit vier Parametern, den Speicherort des Speicherabbilds und eine Berichts-ID.",
+      "rating": "critical",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "AAD_TOKEN_AND_SERVICE_CRASH (critical): mindestens 2× (1000/1001, ohne Kanal- oder Provider-Filter) zusammen mit mindestens 3× (1098/1104) des Providers Microsoft-Windows-AAD.",
+      "collector": [
+        "client"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/troubleshoot/windows-server/performance/troubleshoot-unexpected-reboots-system-event-logs",
+      "sourceLegacy": false,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "doc",
+      "notes": "Entwurf: Provider nur als Hinweis, weil die Herstellerseite die Source kurz als \"WER-SystemErrorReporting\" nennt und kein Export vorliegt, der den vollständigen Providernamen belegt; deshalb verified false. Verwechslungsgefahr: Dieselbe ID gibt es auch im Kanal Application (Windows Error Reporting, Anwendungsprobleme). Dieser Eintrag: Kanal System, Neustart nach Bug Check; die Seite führt ihn zusammen mit 41 (Kernel-Power) und 6008 (EventLog) als Zeichen eines unerwarteten Neustarts. Einstufung critical ist ein Vorschlag analog KERNEL_POWER_41; keine Event Rule vergibt für System 1001 einen Schweregrad."
+    },
+    {
+      "channel": "Application",
+      "provider": "Application Hang",
+      "providerHint": null,
+      "eventId": 1002,
+      "topic": "Absturz",
+      "title": "Application Hang: Ereignis 1002",
+      "description": null,
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "TASKBAR_EXPLORER_CRASH (warning) ab 2 Ereignissen in 60 Minuten, nur wenn die Meldung explorer.exe, ShellExperienceHost.exe, SearchHost.exe oder StartMenuExperienceHost.exe nennt; die Regel nennt für ID 1002 den Provider Application Hang.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "TASKBAR_EXPLORER_CRASH"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "export",
+      "notes": "Verwechslungsgefahr: Dieselbe ID 1002 steht auch im Regeleintrag mit den Providern Application Error und Application Hang. Dieser Eintrag: Application Hang: nicht offiziell dokumentiert. Die Regel TASKBAR_EXPLORER_CRASH nannte früher für 1002 fälschlich Application Error und nennt seit dem Korrekturschritt beide Provider (Application Error für 1000, Application Hang für 1002)."
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Application Error",
+        "Application Hang"
+      ],
+      "eventId": 1002,
+      "topic": "Absturz",
+      "title": "Windows Explorer / Taskleiste abgestürzt",
+      "description": null,
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "TASKBAR_EXPLORER_CRASH (warning) ab 2 Ereignissen in 60 Minuten, nur wenn die Meldung explorer.exe, ShellExperienceHost.exe, SearchHost.exe oder StartMenuExperienceHost.exe nennt.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "TASKBAR_EXPLORER_CRASH"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": "Verwechslungsgefahr: Dieselbe ID 1002 steht auch im Eintrag Application Hang (Provider aus dem Export). Dieser Eintrag: Provider laut Regel TASKBAR_EXPLORER_CRASH, die seit dem Korrekturschritt Application Error (ID 1000) und Application Hang (ID 1002) nennt; der frühere Widerspruch (nur Application Error) ist behoben. Zu ID 1002 gibt es keine Herstellerseite."
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Perflib"
+      ],
+      "eventId": 1008,
+      "topic": "DHCP",
+      "title": "Performance-Zähler Fehler",
+      "description": "Performance-Zähler-DLL konnte nicht geladen werden. Betrifft nur Leistungsüberwachung, nicht den normalen Betrieb. Häufig nach Deinstallation von Software.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": "Microsoft-Windows-DNS-Client",
+      "providerHint": null,
+      "eventId": 1014,
+      "topic": "Netzwerk",
+      "title": "DNS-Auflösung Timeout (einzeln)",
+      "description": "Einzelne DNS-Timeouts entstehen beim Boot bevor das Netzwerk vollständig initialisiert ist. Erst bei anhaltenden Timeouts im Betrieb relevant.",
+      "rating": "warning",
+      "baseRating": "warning",
+      "contextual": true,
+      "escalation": "Harmlos-Regel (known-harmless): bis 4 Vorkommen im Datensatz als bekannt harmlos markiert, ab 5 nicht mehr; sie senkt den Schweregrad nicht (reduceSeverity false). DNS_FAIL_1014 (warning) ab 3 Ereignissen in 60 Minuten; KERBEROS_DC_DNS_PROBLEM (error): mindestens 1× (1014/1015) zusammen mit mindestens 1× 5719 (Quelle NETLOGON); DNS_DC_LOGIN_CHAIN (error): mindestens 1× 1014 zusammen mit 5719 (NETLOGON) und 4625; UNSTABLE_WLAN (warning): mindestens 3× (10317/10314/10315) zusammen mit mindestens 1× 1014; NETWORK_ADAPTER_CASCADE (error): mindestens 2× (4201/4202/27) zusammen mit mindestens 1× 1014.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "DNS_FAIL_1014"
+      ],
+      "harmless": {
+        "reduceSeverity": false,
+        "minCountForConcern": 5,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "export",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-TerminalServices-Licensing",
+        "TermServLicensing"
+      ],
+      "eventId": 1058,
+      "topic": "RDS",
+      "title": "RDS Lizenzserver nicht erreichbar",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [
+        "RDS_LICENSE_SERVER"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "Microsoft-Windows-AAD/Operational",
+      "provider": "Microsoft-Windows-AAD",
+      "providerHint": null,
+      "eventId": 1097,
+      "topic": "Auth",
+      "title": "AAD Gerätestatus verloren – Device not joined (1097)",
+      "description": "EventID 1097 bedeutet dass Windows den Gerätestatus für den Entra-Tenant verloren hat ('Device information is missing' / 'Device is not joined to account's tenant'). Tritt typischerweise nach Netzwerkunterbrechungen auf wenn das Gerät den Tenant-Kontext nicht wiederherstellen kann. Folge: massenhaft 1098 Token-Refresh-Fehler und alle M365-Apps verlieren ihre Authentifizierung.",
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client"
+      ],
+      "ruleRefs": [
+        "AAD_DEVICE_NOT_JOINED"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "export",
+      "notes": null
+    },
+    {
+      "channel": "Microsoft-Windows-AAD/Operational",
+      "provider": "Microsoft-Windows-AAD",
+      "providerHint": null,
+      "eventId": 1098,
+      "topic": "Auth",
+      "title": "Entra ID Token Refresh fehlgeschlagen (1098)",
+      "description": "EventID 1098 im AAD-Log bedeutet dass ein Token-Refresh gescheitert ist. Betrifft alle Apps die Silent Authentication nutzen (Teams, Outlook, OneDrive, SharePoint). Häufige Ursachen: abgelaufenes Refresh-Token, Conditional Access Richtlinie, Gerät nicht mehr konform oder AAD-Join-Problem.",
+      "rating": "critical",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client"
+      ],
+      "ruleRefs": [
+        "AAD_TOKEN_REFRESH_FAIL",
+        "AAD_AUTH_LOOP"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "export",
+      "notes": null
+    },
+    {
+      "channel": "Security",
+      "provider": "Microsoft-Windows-Eventlog",
+      "providerHint": null,
+      "eventId": 1102,
+      "topic": "Sicherheit",
+      "title": "Sicherheitsprotokoll gelöscht",
+      "description": "Das Sicherheitsprotokoll (Audit-Log) von Windows wurde gelöscht. Das Ereignis entsteht bei jedem Löschen des Protokolls.",
+      "rating": "critical",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-1102",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-09",
+      "reviewed": false,
+      "origin": "doc",
+      "notes": null
+    },
+    {
+      "channel": "Microsoft-Windows-AAD/Operational",
+      "provider": "Microsoft-Windows-AAD",
+      "providerHint": null,
+      "eventId": 1104,
+      "topic": "Auth",
+      "title": "AAD Stiller Token Refresh Fehler (1104)",
+      "description": "EventID 1104 bedeutet dass ein stiller Token-Refresh (ohne Benutzerinteraktion) fehlgeschlagen ist. Apps fallen auf interaktive Anmeldung zurück – der Benutzer sieht einen Anmeldedialog obwohl er bereits angemeldet ist. Tritt häufig nach Passwortänderung oder MFA-Konfigurationsänderung auf.",
+      "rating": "critical",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client"
+      ],
+      "ruleRefs": [
+        "AAD_SILENT_TOKEN_FAIL",
+        "AAD_AUTH_LOOP"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "export",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-TerminalServices-Licensing",
+        "TermServLicensing"
+      ],
+      "eventId": 1130,
+      "topic": "RDS",
+      "title": "RDS Lizenzserver nicht erreichbar",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [
+        "RDS_LICENSE_SERVER"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational",
+      "provider": "Microsoft-Windows-TerminalServices-RemoteConnectionManager",
+      "providerHint": null,
+      "eventId": 1149,
+      "topic": "RDS",
+      "title": "RDS Verbindungsproblem",
+      "description": null,
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [
+        "RDS_SESSION_FAIL"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "export",
+      "notes": null
+    },
+    {
+      "channel": "Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational",
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-TerminalServices-RemoteConnectionManager"
+      ],
+      "eventId": 1158,
+      "topic": "RDS",
+      "title": "RDS Verbindungsproblem",
+      "description": null,
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [
+        "RDS_SESSION_FAIL"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-User Profiles Service"
+      ],
+      "eventId": 1530,
+      "topic": null,
+      "title": "Benutzerprofil wird noch verwendet",
+      "description": "Tritt beim Abmelden auf wenn Prozesse das Profil noch referenzieren. Auf Terminalservern häufig und meist harmlos.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Resource-Exhaustion-Detector",
+        "Srv"
+      ],
+      "eventId": 1534,
+      "topic": "Hardware",
+      "title": "Festplatte kritisch voll (Backup/SQL Partition)",
+      "description": null,
+      "rating": "critical",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [
+        "DISK_SPACE_CRITICAL"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": "Die Regel DISK_SPACE_CRITICAL nennt als Quellen jetzt Microsoft-Windows-Resource-Exhaustion-Detector und Srv (früher stand dort der Kanalname \"Application\", im Korrekturschritt der Regeln entfernt). Der Standard-Collector sammelt diese ID weiterhin nicht; eine Herstellerseite zur Bedeutung der ID liegt nicht vor."
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-PrintService"
+      ],
+      "eventId": 1796,
+      "topic": null,
+      "title": "Drucker-Treiber geladen",
+      "description": "Druckertreiber wurde beim Start geladen. Tritt auf jedem System mit installierten Druckern auf. Kein Fehler.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Resource-Exhaustion-Detector",
+        "srv"
+      ],
+      "eventId": 2004,
+      "topic": "System",
+      "title": "RAM-Mangel / Speicher erschöpft",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "MEMORY_EXHAUSTION"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": "Srv",
+      "providerHint": null,
+      "eventId": 2013,
+      "topic": "Hardware",
+      "title": "Srv: Datenträger fast voll",
+      "description": "Der Serverdienst meldet, dass ein Datenträger fast voll ist; die Meldung nennt den Laufwerksbuchstaben. Ausgelöst wird sie, wenn der freie Platz unter den Schwellenwert fällt (Standard 10 Prozent).",
+      "rating": "critical",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "DISK_SPACE_CRITICAL (critical) schon bei einem Ereignis; BACKUP_WILL_FAIL (error): mindestens 1× (12289/8193/8194) zusammen mit mindestens 1× (2013/105).",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "DISK_SPACE_CRITICAL"
+      ],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2003/cc786996(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-16",
+      "reviewed": false,
+      "origin": "doc",
+      "notes": "Die frühere Zuordnung zu MEMORY_EXHAUSTION (Speicher) wurde im Korrekturschritt der Regeln entfernt, der Widerspruch besteht nicht mehr: Die Herstellerseite (DiskSpaceThreshold, \"Srv Event ID 2013\", System-Log) beschreibt 2013 als Datenträger fast voll. Der Provider \"Srv\" steht so auf der Seite; im Export kommt ID 2013 nicht vor. Die Einstufung critical stammt aus der Regel DISK_SPACE_CRITICAL, die Seite selbst spricht nur von \"fast voll\". Die Collector-Zeile heißt noch \"Speicher/Pool Fehler\" (Collector-Schritt)."
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Resource-Exhaustion-Detector",
+        "srv"
+      ],
+      "eventId": 2019,
+      "topic": "System",
+      "title": "RAM-Mangel / Speicher erschöpft",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "MEMORY_EXHAUSTION"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": "SRV",
+      "providerHint": null,
+      "eventId": 2020,
+      "topic": "System",
+      "title": "Server: kein Speicher im ausgelagerten Systempool",
+      "description": "Der Serverdienst konnte keinen Speicher aus dem ausgelagerten Systempool (Paged Pool) belegen, weil der Pool leer war. Das Ereignis tritt bei hoher Last auf.",
+      "rating": "error",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "MEMORY_EXHAUSTION"
+      ],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/troubleshoot/windows-server/performance/unable-allocate-memory-system-paged-pool",
+      "sourceLegacy": false,
+      "verified": true,
+      "verifiedAt": "2026-10-14",
+      "reviewed": true,
+      "origin": "doc",
+      "notes": null
+    },
+    {
+      "channel": "Microsoft-Windows-Windows Defender/Operational",
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Windows Defender"
+      ],
+      "eventId": 3002,
+      "topic": "Sicherheit",
+      "title": "Defender: Echtzeitschutz-Funktion ausgefallen",
+      "description": "Eine Funktion des Echtzeitschutzes von Microsoft Defender Antivirus ist auf einen Fehler gelaufen und ausgefallen. Das Ereignis nennt die betroffene Funktion, einen Fehlercode und eine Fehlerbeschreibung.",
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Korrelation DEFENDER_DISABLED_UNPROTECTED (critical) löst bereits bei einem Vorkommen aus. Laut Dokumentation war der Ausfall vorübergehend, wenn ein Ereignis 3007 folgt.",
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-microsoft-defender-antivirus",
+      "sourceLegacy": false,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "doc",
+      "notes": "Der Standard-Collector liefert diese ID nicht (der Defender-Kanal wird nicht gesammelt); sie steht nur in der Korrelationsregel DEFENDER_DISABLED_UNPROTECTED. Kanal laut Herstellerseite, der Providername steht dort nicht (providerHint aus der Korrelationsregel)."
+    },
+    {
+      "channel": "Microsoft-Windows-Windows Defender/Operational",
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Windows Defender"
+      ],
+      "eventId": 3007,
+      "topic": "Sicherheit",
+      "title": "Defender: Echtzeitschutz-Funktion wiederhergestellt",
+      "description": "Eine zuvor ausgefallene Funktion des Echtzeitschutzes von Microsoft Defender Antivirus wurde neu gestartet und läuft wieder. Während des Ausfalls konnte Schutz fehlen.",
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Laut Dokumentation ist danach ein vollständiger Scan sinnvoll; wiederholt sich das Ereignis, empfiehlt Microsoft den Support zu kontaktieren. Korrelation DEFENDER_DISABLED_UNPROTECTED (critical) löst bereits bei einem Vorkommen aus.",
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-microsoft-defender-antivirus",
+      "sourceLegacy": false,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "doc",
+      "notes": "Der Standard-Collector liefert diese ID nicht (der Defender-Kanal wird nicht gesammelt); sie steht nur in der Korrelationsregel DEFENDER_DISABLED_UNPROTECTED. Kanal laut Herstellerseite, der Providername steht dort nicht (providerHint aus der Korrelationsregel)."
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-TerminalServices-Licensing",
+        "TermServLicensing"
+      ],
+      "eventId": 4105,
+      "topic": "RDS",
+      "title": "RDS Lizenzserver nicht erreichbar",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [
+        "RDS_LICENSE_SERVER"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-TerminalServices-Licensing",
+        "TermServLicensing"
+      ],
+      "eventId": 4106,
+      "topic": "RDS",
+      "title": "RDS Lizenzserver nicht erreichbar",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [
+        "RDS_LICENSE_SERVER"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Tcpip"
+      ],
+      "eventId": 4202,
+      "topic": null,
+      "title": "Netzwerkadapter getrennt (einzeln)",
+      "description": "Einzelne Trennung des Netzwerkadapters beim Boot oder durch Energiesparmodus. Erst bei wiederholtem Auftreten im Betrieb relevant.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": false,
+        "minCountForConcern": 5,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": "Security",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "providerHint": null,
+      "eventId": 4625,
+      "topic": "Sicherheit",
+      "title": "Fehlgeschlagene Anmeldung (einzeln)",
+      "description": "Eine Anmeldung ist fehlgeschlagen. Das Ereignis entsteht auf dem Rechner, auf dem der Anmeldeversuch stattfand (Arbeitsstation, Mitgliedsserver oder Domänencontroller).",
+      "rating": "error",
+      "baseRating": "error",
+      "contextual": true,
+      "escalation": "Ab 10 Vorkommen nicht mehr als harmlos (known-harmless); ACCOUNT_LOCKOUT_REPEATED (error) ab 3 Ereignissen (4625/4740) in 120 Minuten; ACCOUNT_LOCKOUT_PATTERN (warning) ab 15× 4625; SECURITY_BRUTE_FORCE (critical) bei mindestens 20× 4625 und mindestens 1× 4740.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "ACCOUNT_LOCKOUT_REPEATED",
+        "ONEDRIVE_AUTH_FAIL"
+      ],
+      "harmless": {
+        "reduceSeverity": false,
+        "minCountForConcern": 10,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4625",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-09",
+      "reviewed": false,
+      "origin": "export",
+      "notes": null
+    },
+    {
+      "channel": "Security",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "providerHint": null,
+      "eventId": 4648,
+      "topic": "Sicherheit",
+      "title": "Anmeldung mit ausdrücklichen Anmeldedaten",
+      "description": "Ein Prozess hat versucht, sich mit ausdrücklich angegebenen Anmeldedaten eines Kontos anzumelden, etwa bei geplanten Aufgaben oder mit RUNAS. Das Ereignis kommt auch im normalen Betrieb regelmäßig vor.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Laut Microsoft auffällig bei ungewöhnlichem Prozessnamen oder -pfad, bei Konten mit hohem Wert oder außerhalb einer Erlaubnisliste und bei unerwarteter Quelladresse.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4648",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-09",
+      "reviewed": false,
+      "origin": "export",
+      "notes": null
+    },
+    {
+      "channel": "Security",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "providerHint": null,
+      "eventId": 4672,
+      "topic": "Sicherheit",
+      "title": "Besondere Rechte für neue Anmeldung zugewiesen",
+      "description": "Einer neuen Anmeldesitzung wurden besonders sensible Rechte zugewiesen, zum Beispiel Programme debuggen, Dateien sichern oder Eigentum übernehmen. Das Ereignis tritt bei jeder Anmeldung des SYSTEM-Kontos auf und ist deshalb sehr häufig.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Laut Microsoft auffällig, wenn die Anmeldung nicht von LOCAL SYSTEM, NETWORK SERVICE oder LOCAL SERVICE stammt und das Konto kein erwartetes Administratorkonto ist oder wenn sensible Rechte wie SeDebugPrivilege an unerwartete Konten gehen.",
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4672",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-09",
+      "reviewed": false,
+      "origin": "export",
+      "notes": null
+    },
+    {
+      "channel": "Security",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "providerHint": null,
+      "eventId": 4720,
+      "topic": "Sicherheit",
+      "title": "Benutzerkonto erstellt",
+      "description": "Ein neues Benutzerkonto wurde angelegt. Das Ereignis entsteht auf Domänencontrollern, Mitgliedsservern und Arbeitsstationen.",
+      "rating": "info",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Laut Microsoft überwachen manche Organisationen jedes Ereignis; auffällig sind ein leerer oder \"-\" als Kontoname (SAM) oder Benutzerprinzipalname.",
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4720",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-09",
+      "reviewed": false,
+      "origin": "doc",
+      "notes": null
+    },
+    {
+      "channel": "Security",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "providerHint": null,
+      "eventId": 4722,
+      "topic": "Sicherheit",
+      "title": "Benutzerkonto aktiviert",
+      "description": "Ein Benutzer- oder Computerkonto wurde aktiviert. Bei Computerkonten entsteht das Ereignis nur auf Domänencontrollern.",
+      "rating": "info",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Laut Microsoft relevant für jedes Ereignis zu Konten mit hohem Wert, zu Konten, die nie aktiviert werden sollen, und zu lokalen Konten.",
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4722",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-09",
+      "reviewed": false,
+      "origin": "doc",
+      "notes": null
+    },
+    {
+      "channel": "Security",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "providerHint": null,
+      "eventId": 4723,
+      "topic": "Sicherheit",
+      "title": "Kennwortänderung versucht",
+      "description": "Ein Benutzer hat versucht, sein eigenes Kennwort zu ändern, mit Erfolg oder Fehlschlag. Stimmen Antragsteller und Zielkonto überein, ist das laut Microsoft normales Verhalten.",
+      "rating": "info",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Laut Microsoft relevant für Konten mit hohem Wert und für Konten, deren Kennwort nie geändert werden soll.",
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4723",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-09",
+      "reviewed": false,
+      "origin": "doc",
+      "notes": null
+    },
+    {
+      "channel": "Security",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "providerHint": null,
+      "eventId": 4724,
+      "topic": "Sicherheit",
+      "title": "Kennwortrücksetzung versucht",
+      "description": "Ein Konto hat versucht, das Kennwort eines anderen Kontos zurückzusetzen, mit Erfolg oder Fehlschlag. Auch das Zurücksetzen eines Computerkontos löst das Ereignis aus.",
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Laut Microsoft relevant für Konten mit hohem Wert, für Konten, deren Kennwort nie zurückgesetzt werden soll, und für lokale Konten.",
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4724",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-09",
+      "reviewed": false,
+      "origin": "doc",
+      "notes": null
+    },
+    {
+      "channel": "Security",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "providerHint": null,
+      "eventId": 4725,
+      "topic": "Sicherheit",
+      "title": "Benutzerkonto deaktiviert",
+      "description": "Ein Benutzer- oder Computerkonto wurde deaktiviert. Bei Computerkonten entsteht das Ereignis nur auf Domänencontrollern.",
+      "rating": "info",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Laut Microsoft relevant für Konten mit hohem Wert, für Konten, die nie deaktiviert werden sollen (zum Beispiel Dienstkonten), und für lokale Konten.",
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4725",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-09",
+      "reviewed": false,
+      "origin": "doc",
+      "notes": null
+    },
+    {
+      "channel": "Security",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "providerHint": null,
+      "eventId": 4726,
+      "topic": "Sicherheit",
+      "title": "Benutzerkonto gelöscht",
+      "description": "Ein Benutzerkonto wurde gelöscht. Das Ereignis entsteht auf Domänencontrollern, Mitgliedsservern und Arbeitsstationen.",
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Laut Microsoft relevant für Konten mit hohem Wert, für Konten, die nie gelöscht werden sollen (zum Beispiel Dienstkonten), und für lokale Konten.",
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4726",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-09",
+      "reviewed": false,
+      "origin": "doc",
+      "notes": null
+    },
+    {
+      "channel": "Security",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "providerHint": null,
+      "eventId": 4728,
+      "topic": "Sicherheit",
+      "title": "Mitglied zu globaler Sicherheitsgruppe hinzugefügt",
+      "description": "Ein Mitglied wurde einer sicherheitsaktivierten globalen Gruppe hinzugefügt. Das Ereignis gibt es nur für Domänengruppen, Aufbau und Felder entsprechen Ereignis 4732.",
+      "rating": "info",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Laut Microsoft meist ein Informationsereignis zur Durchsicht; relevant bei Aufnahme in kritische Gruppen (zum Beispiel Administratoren, Domain Admins, Enterprise Admins), bei Konten fremder Domänen und bei unpassendem Kontotyp für die Gruppe.",
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/audit-security-group-management",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-09",
+      "reviewed": false,
+      "origin": "doc",
+      "notes": "Provider und Kanal laut Herstellerseite wie bei Ereignis 4732 (die Seite nennt für diese ID dieselbe XML, nur der Gruppentyp unterscheidet sich); keine eigene XML-Beispielseite."
+    },
+    {
+      "channel": "Security",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "providerHint": null,
+      "eventId": 4732,
+      "topic": "Sicherheit",
+      "title": "Mitglied zu lokaler Sicherheitsgruppe hinzugefügt",
+      "description": "Ein Mitglied wurde einer sicherheitsaktivierten lokalen Gruppe hinzugefügt. Für jedes hinzugefügte Mitglied entsteht ein eigenes Ereignis.",
+      "rating": "info",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Laut Microsoft meist ein Informationsereignis zur Durchsicht; relevant bei Aufnahme in kritische Gruppen (zum Beispiel Administratoren, Domain Admins, Enterprise Admins), bei Konten fremder Domänen und bei unpassendem Kontotyp für die Gruppe.",
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4732",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-09",
+      "reviewed": false,
+      "origin": "doc",
+      "notes": null
+    },
+    {
+      "channel": "Security",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "providerHint": null,
+      "eventId": 4740,
+      "topic": "Sicherheit",
+      "title": "Konto gesperrt",
+      "description": "Ein Benutzerkonto wurde gesperrt. Das Ereignis entsteht auf Domänencontrollern, Mitgliedsservern und Arbeitsstationen.",
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "ACCOUNT_LOCKOUT_4740 (warning) schon bei einem Vorkommen; ACCOUNT_LOCKOUT_REPEATED (error) ab 3 Ereignissen (4740/4625) in 120 Minuten; ACCOUNT_LOCKOUT_PATTERN (warning) ab 2× 4740 oder 15× 4625; SECURITY_BRUTE_FORCE (critical) bei mindestens 1× 4740 und mindestens 20× 4625.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "ACCOUNT_LOCKOUT_4740",
+        "ACCOUNT_LOCKOUT_REPEATED"
+      ],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4740",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-09",
+      "reviewed": false,
+      "origin": "doc",
+      "notes": null
+    },
+    {
+      "channel": "Security",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "providerHint": null,
+      "eventId": 4756,
+      "topic": "Sicherheit",
+      "title": "Mitglied zu universeller Sicherheitsgruppe hinzugefügt",
+      "description": "Ein Mitglied wurde einer sicherheitsaktivierten universellen Gruppe hinzugefügt. Das Ereignis gibt es nur für Domänengruppen, Aufbau und Felder entsprechen Ereignis 4732.",
+      "rating": "info",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Laut Microsoft meist ein Informationsereignis zur Durchsicht; relevant bei Aufnahme in kritische Gruppen (zum Beispiel Administratoren, Domain Admins, Enterprise Admins), bei Konten fremder Domänen und bei unpassendem Kontotyp für die Gruppe.",
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/audit-security-group-management",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-09",
+      "reviewed": false,
+      "origin": "doc",
+      "notes": "Provider und Kanal laut Herstellerseite wie bei Ereignis 4732 (die Seite nennt für diese ID dieselbe XML, nur der Gruppentyp unterscheidet sich); keine eigene XML-Beispielseite."
+    },
+    {
+      "channel": "Microsoft-Windows-Windows Defender/Operational",
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Windows Defender"
+      ],
+      "eventId": 5001,
+      "topic": "Sicherheit",
+      "title": "Defender: Echtzeitschutz deaktiviert",
+      "description": "Der Echtzeitschutz von Microsoft Defender Antivirus (Scan auf Malware und potenziell unerwünschte Software) wurde deaktiviert. Das Gegenstück ist Ereignis 5000 (aktiviert).",
+      "rating": "critical",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Korrelation DEFENDER_DISABLED_UNPROTECTED (critical) löst bereits bei einem Vorkommen aus.",
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-microsoft-defender-antivirus",
+      "sourceLegacy": false,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "doc",
+      "notes": "Der Standard-Collector liefert diese ID nicht (der Defender-Kanal wird nicht gesammelt); sie steht nur in der Korrelationsregel DEFENDER_DISABLED_UNPROTECTED. Kanal laut Herstellerseite, der Providername steht dort nicht (providerHint aus der Korrelationsregel)."
+    },
+    {
+      "channel": "Microsoft-Windows-Windows Defender/Operational",
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Windows Defender"
+      ],
+      "eventId": 5010,
+      "topic": "Sicherheit",
+      "title": "Defender: Prüfung auf Malware deaktiviert",
+      "description": "Die Prüfung auf Malware und potenziell unerwünschte Software durch Microsoft Defender Antivirus wurde deaktiviert. Das Gegenstück ist Ereignis 5009 (aktiviert).",
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Korrelation DEFENDER_DISABLED_UNPROTECTED (critical) löst bereits bei einem Vorkommen aus.",
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-microsoft-defender-antivirus",
+      "sourceLegacy": false,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "doc",
+      "notes": "Der Standard-Collector liefert diese ID nicht (der Defender-Kanal wird nicht gesammelt); sie steht nur in der Korrelationsregel DEFENDER_DISABLED_UNPROTECTED. Kanal laut Herstellerseite, der Providername steht dort nicht (providerHint aus der Korrelationsregel)."
+    },
+    {
+      "channel": "Microsoft-Windows-Windows Defender/Operational",
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Windows Defender"
+      ],
+      "eventId": 5012,
+      "topic": "Sicherheit",
+      "title": "Defender: Virenprüfung deaktiviert",
+      "description": "Die Virenprüfung von Microsoft Defender Antivirus wurde deaktiviert. Das Gegenstück ist Ereignis 5011 (aktiviert).",
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Korrelation DEFENDER_DISABLED_UNPROTECTED (critical) löst bereits bei einem Vorkommen aus.",
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-microsoft-defender-antivirus",
+      "sourceLegacy": false,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "doc",
+      "notes": "Der Standard-Collector liefert diese ID nicht (der Defender-Kanal wird nicht gesammelt); sie steht nur in der Korrelationsregel DEFENDER_DISABLED_UNPROTECTED. Kanal laut Herstellerseite, der Providername steht dort nicht (providerHint aus der Korrelationsregel)."
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "NETLOGON",
+        "Microsoft-Windows-Security-Auditing"
+      ],
+      "eventId": 5719,
+      "topic": "Netzwerk",
+      "title": "Netlogon kann keine sichere DC-Session aufbauen (5719)",
+      "description": "EventID 5719 bedeutet dass Windows keine gesicherte Session zum Domänencontroller aufbauen kann. Direkte Folge von Netzwerkunterbrechungen – der DC ist kurz nicht erreichbar. Verursacht Gruppenrichtlinien-Fehler, Login-Probleme und SYSVOL-Zugriffsprobleme wenn es wiederholt auftritt.",
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "NETLOGON_DOMAIN",
+        "NETLOGON_DC_UNREACHABLE"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "NETLOGON",
+        "Microsoft-Windows-Security-Auditing"
+      ],
+      "eventId": 5722,
+      "topic": "Netzwerk",
+      "title": "Domänenkontroller nicht erreichbar / Netlogon-Fehler",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "NETLOGON_DOMAIN"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "NETLOGON",
+        "Microsoft-Windows-Security-Auditing"
+      ],
+      "eventId": 5723,
+      "topic": "Netzwerk",
+      "title": "Domänenkontroller nicht erreichbar / Netlogon-Fehler",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [
+        "NETLOGON_DOMAIN"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "NETLOGON",
+        "Microsoft-Windows-Security-Auditing"
+      ],
+      "eventId": 5783,
+      "topic": "Netzwerk",
+      "title": "Domänenkontroller nicht erreichbar / Netlogon-Fehler",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [
+        "NETLOGON_DOMAIN"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "NETLOGON",
+        "Microsoft-Windows-Security-Auditing"
+      ],
+      "eventId": 5807,
+      "topic": "Netzwerk",
+      "title": "Domänenkontroller nicht erreichbar / Netlogon-Fehler",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [
+        "NETLOGON_DOMAIN"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Immersive-Shell"
+      ],
+      "eventId": 5973,
+      "topic": null,
+      "title": "App-Aktivierung fehlgeschlagen",
+      "description": "UWP/Store App konnte nicht aktiviert werden. Tritt häufig nach Updates auf und löst sich meistens von selbst. Kein Systemfehler.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "EventLog"
+      ],
+      "eventId": 6005,
+      "topic": null,
+      "title": "Event Log Dienst gestartet",
+      "description": "Event Log Dienst wurde beim Systemstart initialisiert. Normales Boot-Ereignis.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "EventLog"
+      ],
+      "eventId": 6006,
+      "topic": null,
+      "title": "Event Log Dienst gestoppt",
+      "description": "Event Log Dienst wurde beim Herunterfahren gestoppt. Normales Shutdown-Ereignis.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "EventLog"
+      ],
+      "eventId": 6008,
+      "topic": "Absturz",
+      "title": "Unerwartetes Herunterfahren (einmalig)",
+      "description": "Beim nächsten Start wird gemeldet, dass das vorherige Herunterfahren unerwartet war. Laut Herstellerseite kann auch ein automatisch erzwungenes Herunterfahren bei gesperrtem Rechner der Auslöser sein.",
+      "rating": "error",
+      "baseRating": "error",
+      "contextual": true,
+      "escalation": "Ab 2 Vorkommen nicht mehr als einmalig gewertet (known-harmless); UNEXPECTED_SHUTDOWN_6008 (error) schon bei einem Ereignis; REPEATED_UNPLANNED_RESTART (critical) bei mindestens 2× 6008 oder 2× 41.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "UNEXPECTED_SHUTDOWN_6008"
+      ],
+      "harmless": {
+        "reduceSeverity": false,
+        "minCountForConcern": 2,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": "https://support.microsoft.com/en-us/topic/event-id-6008-is-unexpectedly-logged-to-the-system-event-log-after-you-shut-down-and-restart-your-computer-2e517ea0-e592-b3ad-d572-501c033f4567",
+      "sourceLegacy": false,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "EventLog"
+      ],
+      "eventId": 6013,
+      "topic": null,
+      "title": "System-Uptime Bericht",
+      "description": "Täglicher Uptime-Bericht des Systems in Sekunden. Kein Fehler, nur Diagnoseinformation.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "LsaSrv"
+      ],
+      "eventId": 6155,
+      "topic": null,
+      "title": "LSA Pakete geladen",
+      "description": "Normales Systemereignis beim Windows-Start. LSA Security-Pakete werden initialisiert. Kein Handlungsbedarf.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": "Service Control Manager",
+      "providerHint": null,
+      "eventId": 7000,
+      "topic": "System",
+      "title": "Dienst konnte nicht gestartet werden",
+      "description": "Ein Dienst konnte nicht gestartet werden. Das Ereignis nennt den Dienst und den Fehler, der den Start verhindert hat.",
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "SERVICE_CRASH (error) schon bei einem Ereignis; BOOT_DRIVER_FAILURES (error): mindestens 2× (219/7000/7026) zusammen mit 6005; DISK_AND_SYSTEM_ERRORS (critical): mindestens 2× (7000/7001/7023/7031) zusammen mit Datenträgerfehlern.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "SERVICE_CRASH"
+      ],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/dd349365(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-14",
+      "reviewed": false,
+      "origin": "export",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": "Service Control Manager",
+      "providerHint": null,
+      "eventId": 7001,
+      "topic": "System",
+      "title": "Dienst nicht gestartet: Abhängigkeit fehlgeschlagen",
+      "description": "Ein Dienst konnte nicht starten, weil ein Dienst, von dem er abhängt, nicht gestartet werden konnte. Das Ereignis nennt beide Dienste und den Fehler.",
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "SERVICE_CRASH (error) schon bei einem Ereignis; DISK_AND_SYSTEM_ERRORS (critical): mindestens 2× (7000/7001/7023/7031) zusammen mit Datenträgerfehlern.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "SERVICE_CRASH"
+      ],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/cc756332(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-14",
+      "reviewed": false,
+      "origin": "doc",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": "Service Control Manager",
+      "providerHint": null,
+      "eventId": 7009,
+      "topic": "System",
+      "title": "Dienst: Zeitlimit beim Verbinden",
+      "description": "Der Dienststeuerungs-Manager hat beim Start eines Dienstes zu lange auf dessen Verbindung gewartet und ist in ein Zeitlimit gelaufen.",
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "SERVICE_CRASH (error) schon bei einem Ereignis; SERVICE_TIMEOUT_CHAIN (error): mindestens 2× (7009/7011) zusammen mit mindestens 3× (7034/7031/7023).",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "SERVICE_CRASH"
+      ],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/dd349435(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-14",
+      "reviewed": false,
+      "origin": "export",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": "Service Control Manager",
+      "providerHint": null,
+      "eventId": 7011,
+      "topic": "System",
+      "title": "Dienst: Zeitlimit bei der Antwort",
+      "description": "Der Dienststeuerungs-Manager hat zu lange auf die Antwort eines Dienstes auf eine Anfrage gewartet und ist in ein Zeitlimit gelaufen.",
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "SERVICE_CRASH (error) schon bei einem Ereignis; SERVICE_TIMEOUT_CHAIN (error): mindestens 2× (7009/7011) zusammen mit mindestens 3× (7034/7031/7023).",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "SERVICE_CRASH"
+      ],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/dd349371(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "doc",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": "Service Control Manager",
+      "providerHint": null,
+      "eventId": 7023,
+      "topic": "System",
+      "title": "Dienst mit Fehler beendet",
+      "description": "Ein Dienst wurde mit einem Fehler beendet. Das Ereignis nennt den Dienst und die Fehlerbeschreibung.",
+      "rating": "error",
+      "baseRating": "error",
+      "contextual": true,
+      "escalation": "Bekannt harmlos (known-harmless) sind nur Meldungen, die SysMain oder Superfetch nennen; jedes andere 7023 ist ein Fehler und zählt in der Fehlerhäufung (BURST_OF_ERRORS, SINGLE_SOURCE_ERROR_FLOOD). SERVICE_CRASH (error) schon bei einem Ereignis; SERVICE_TIMEOUT_CHAIN (error): mindestens 2× (7009/7011) zusammen mit mindestens 3× (7034/7031/7023); DISK_AND_SYSTEM_ERRORS (critical): mindestens 2× (7000/7001/7023/7031) zusammen mit Datenträgerfehlern.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "SERVICE_CRASH"
+      ],
+      "harmless": {
+        "reduceSeverity": false,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false,
+        "messageContains": [
+          "SysMain",
+          "Superfetch"
+        ]
+      },
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/cc756318(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-14",
+      "reviewed": false,
+      "origin": "export",
+      "notes": "Die Harmlos-Regel gilt seit dem Korrekturschritt der Regeln nur noch für Meldungen, die SysMain oder Superfetch nennen (messageContains in known-harmless.json); früher galt wegen einer Providerprüfung jedes 7023 als bekannt harmlos."
+    },
+    {
+      "channel": "System",
+      "provider": "Service Control Manager",
+      "providerHint": null,
+      "eventId": 7024,
+      "topic": "System",
+      "title": "Dienst mit dienstspezifischem Fehler beendet",
+      "description": "Ein Dienst wurde mit einem dienstspezifischen Fehlercode beendet. Das Ereignis nennt den Dienst und den Code.",
+      "rating": "error",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "SERVICE_CRASH"
+      ],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/cc756369(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-14",
+      "reviewed": true,
+      "origin": "doc",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": "Service Control Manager",
+      "providerHint": null,
+      "eventId": 7031,
+      "topic": "System",
+      "title": "Dienst unerwartet beendet (mit Wiederherstellungsaktion)",
+      "description": "Ein Dienst wurde unerwartet beendet. Das Ereignis nennt, wie oft das schon vorkam und welche Wiederherstellungsaktion in wie vielen Millisekunden folgt.",
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Dieselbe ID wird je nach Kontext unterschiedlich eingestuft: SERVICE_CRASH (error) schon bei einem Ereignis; PRINT_SPOOLER (warning) schon bei einem Ereignis, wenn die Meldung \"Print Spooler\" oder \"Druckwarteschlange\" nennt; RAM_PRESSURE_SERVICE_CRASH (critical): mindestens 5× (7034/7031); SERVICE_TIMEOUT_CHAIN (error): mindestens 2× (7009/7011) zusammen mit mindestens 3× (7034/7031/7023); DISK_AND_SYSTEM_ERRORS (critical): mindestens 2× (7000/7001/7023/7031) zusammen mit Datenträgerfehlern.",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "SERVICE_CRASH",
+        "PRINT_SPOOLER"
+      ],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/cc756337(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-14",
+      "reviewed": false,
+      "origin": "export",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": "Service Control Manager",
+      "providerHint": null,
+      "eventId": 7034,
+      "topic": "System",
+      "title": "Dienst unerwartet beendet",
+      "description": "Ein Dienst wurde unerwartet beendet. Das Ereignis nennt den Dienst und wie oft das schon vorkam.",
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": "Dieselbe ID wird je nach Kontext unterschiedlich eingestuft: SERVICE_CRASH (error) schon bei einem Ereignis; PRINT_SPOOLER (warning) schon bei einem Ereignis, wenn die Meldung \"Print Spooler\" oder \"Druckwarteschlange\" nennt; RAM_PRESSURE_SERVICE_CRASH (critical): mindestens 5× (7034/7031); SERVICE_TIMEOUT_CHAIN (error): mindestens 2× (7009/7011) zusammen mit mindestens 3× (7034/7031/7023).",
+      "collector": [
+        "client",
+        "server"
+      ],
+      "ruleRefs": [
+        "SERVICE_CRASH",
+        "PRINT_SPOOLER"
+      ],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/cc756320(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": true,
+      "verifiedAt": "2026-10-14",
+      "reviewed": false,
+      "origin": "export",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Service Control Manager"
+      ],
+      "eventId": 7040,
+      "topic": null,
+      "title": "Dienst-Starttyp geändert",
+      "description": "Starttyp eines Dienstes wurde geändert (z.B. von Manuell auf Deaktiviert). Häufig durch Windows Update oder Software-Installation ausgelöst. Kein Fehler.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": "Service Control Manager",
+      "providerHint": null,
+      "eventId": 7043,
+      "topic": "System",
+      "title": "Dienst nicht ordnungsgemäß heruntergefahren",
+      "description": "Ein Dienst ist nach der Vor-Herunterfahren-Meldung (Preshutdown) nicht ordnungsgemäß heruntergefahren. Das Ereignis nennt den Dienst.",
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [],
+      "harmless": null,
+      "sourceUrl": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/cc756331(v=ws.10)",
+      "sourceLegacy": true,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "doc",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Browser"
+      ],
+      "eventId": 8003,
+      "topic": null,
+      "title": "Master-Browser-Konflikt",
+      "description": "In modernen Netzwerken mit Active Directory ist der Browser-Dienst irrelevant. Diese Events bedeuten auf AD-Umgebungen praktisch nichts.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": "Application",
+      "provider": null,
+      "providerHint": [
+        "VSS",
+        "volsnap"
+      ],
+      "eventId": 8193,
+      "topic": "Backup",
+      "title": "VSS / Schattenkopie Fehler",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [
+        "VSS_ERROR"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "Application",
+      "provider": null,
+      "providerHint": [
+        "VSS",
+        "volsnap"
+      ],
+      "eventId": 8194,
+      "topic": "Backup",
+      "title": "VSS / Schattenkopie Fehler",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [
+        "VSS_ERROR"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-DistributedCOM"
+      ],
+      "eventId": 10010,
+      "topic": null,
+      "title": "DCOM Server nicht registriert",
+      "description": "COM-Server konnte nicht registriert werden. Häufig durch Drittanbieter-Software oder deinstallierte Komponenten. Ohne begleitende Fehler meist harmlos.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-DistributedCOM"
+      ],
+      "eventId": 10016,
+      "topic": null,
+      "title": "DCOM-Berechtigungsfehler",
+      "description": "Bekannter Windows-Bug seit Jahren. Betrifft COM-Server-Berechtigungen für System-Komponenten. Microsoft hat bestätigt dass diese Events trotz Eintrags keine Auswirkungen auf die Systemfunktion haben.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-WLAN-AutoConfig"
+      ],
+      "eventId": 10314,
+      "topic": "Netzwerk",
+      "title": "WLAN-Verbindungsverlust nach Standby",
+      "description": null,
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client"
+      ],
+      "ruleRefs": [
+        "WLAN_DISCONNECT_10317"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-WLAN-AutoConfig"
+      ],
+      "eventId": 10315,
+      "topic": "Netzwerk",
+      "title": "WLAN-Verbindungsverlust nach Standby",
+      "description": null,
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client"
+      ],
+      "ruleRefs": [
+        "WLAN_DISCONNECT_10317"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "System",
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-WLAN-AutoConfig"
+      ],
+      "eventId": 10317,
+      "topic": "Netzwerk",
+      "title": "WLAN-Verbindungsverlust nach Standby",
+      "description": null,
+      "rating": "warning",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "client"
+      ],
+      "ruleRefs": [
+        "WLAN_DISCONNECT_10317"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "rule",
+      "notes": null
+    },
+    {
+      "channel": "Application",
+      "provider": "VSS",
+      "providerHint": null,
+      "eventId": 12289,
+      "topic": "Backup",
+      "title": "VSS / Schattenkopie Fehler",
+      "description": null,
+      "rating": "error",
+      "baseRating": null,
+      "contextual": true,
+      "escalation": null,
+      "collector": [
+        "server"
+      ],
+      "ruleRefs": [
+        "VSS_ERROR"
+      ],
+      "harmless": null,
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": false,
+      "origin": "export",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Security-SPP"
+      ],
+      "eventId": 16384,
+      "topic": null,
+      "title": "Software Protection Plattform",
+      "description": "Windows-Lizenzvalidierung im Hintergrund. Tritt regelmäßig auf und ist kein Fehler solange Windows aktiviert ist.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Microsoft-Windows-Security-SPP"
+      ],
+      "eventId": 16394,
+      "topic": null,
+      "title": "Software Protection – Ruhezustand",
+      "description": "Software Protection Dienst wechselt in Ruhezustand nach erfolgreicher Lizenzvalidierung. Normales Verhalten.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    },
+    {
+      "channel": null,
+      "provider": null,
+      "providerHint": [
+        "Schannel"
+      ],
+      "eventId": 36888,
+      "topic": null,
+      "title": "TLS-Warnung",
+      "description": "Einzelne TLS-Warnungen sind häufig auf veraltete TLS-Clients oder Kompatibilitätsprobleme zurückzuführen. Ohne weitere Fehler kein akuter Handlungsbedarf.",
+      "rating": "noise",
+      "baseRating": null,
+      "contextual": false,
+      "escalation": null,
+      "collector": [],
+      "ruleRefs": [],
+      "harmless": {
+        "reduceSeverity": true,
+        "minCountForConcern": null,
+        "onlyHarmlessIfNoCorrelation": false
+      },
+      "sourceUrl": null,
+      "sourceLegacy": null,
+      "verified": false,
+      "verifiedAt": null,
+      "reviewed": true,
+      "origin": "harmless",
+      "notes": null
+    }
+  ]
+}

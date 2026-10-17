@@ -40,6 +40,111 @@ if ('serviceWorker' in navigator) {
       return 'status-ok';
     }
 
+    // ── Eingabe prüfen und Ausgabe aufbauen ──────────────
+    // Die geladene Datei gilt als nicht vertrauenswürdig (Query-Parameter, Antwort-Bodies und Header stammen von Dritten). Werte aus der Datei
+    // gelangen nur über createElement und textContent (bzw. setAttribute mit dem rohen Wert) in die Seite, nie als HTML. CSS-Klassen kommen
+    // ausschließlich aus Whitelist-Abbildungen (statusCls, COND_SEVERITY, af-status-*). Feste Werte (Icons, Konstanten, Zahlen) dürfen im Template bleiben.
+    const MAX_TEXT = 100000;      // Obergrenze für Textfelder (URL, Header, Cookies), nur zum Schutz von Speicher und Darstellung
+    const MAX_BODY = 5000000;     // Obergrenze für Antwort-Bodies
+    const COND_SEVERITY = { info: 'info', warning: 'warning', error: 'error' };
+
+    function mkEl(tag, cls, text) {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text !== undefined && text !== null) n.textContent = text;
+      return n;
+    }
+    // Text aus beliebigem JSON-Wert: Text bleibt, Zahl/Boolean wird zu Text, alles andere zu leerem Text
+    function asText(v, max) {
+      if (typeof v === 'string') return max && v.length > max ? v.slice(0, max) : v;
+      if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+      return '';
+    }
+    function statusSpan(status) {
+      return mkEl('span', statusCls(status), String(status));
+    }
+
+    const pageZone = document.getElementById('upload-zone');
+    const UPLOAD_TEXT_DEFAULT = pageZone.querySelector('.upload-text').textContent;
+    // Meldung im Seitenkörper: kind 'error' (role="alert") oder 'note' (role="status")
+    function showPageMessage(kind, text) {
+      const id = kind === 'error' ? 'har-error' : 'har-note';
+      let n = document.getElementById(id);
+      if (!n) {
+        n = document.createElement('div');
+        n.id = id;
+        n.className = 'page-msg page-msg--' + kind;
+        n.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+        const anchor = document.getElementById('results-section');
+        anchor.parentNode.insertBefore(n, anchor);
+      }
+      n.textContent = text;
+    }
+    function clearPageMessages() {
+      ['har-error', 'har-note'].forEach(id => document.getElementById(id)?.remove());
+    }
+    // Sauberer Zustand: keine Reste eines vorherigen Uploads
+    function resetResults() {
+      ['stats-grid', 'auth-conditions', 'auth-flow-diagram', 'auth-chain-wrap', 'findings', 'auth-table', 'error-table', 'all-table']
+        .forEach(id => { const n = document.getElementById(id); if (n) n.replaceChildren(); });
+      ['findings-count', 'auth-count', 'errors-count'].forEach(id => { const n = document.getElementById(id); if (n) n.textContent = '0'; });
+      const ac = document.getElementById('all-count'); if (ac) ac.textContent = '';
+      document.getElementById('results-section').style.display = 'none';
+      document.getElementById('errors-section').style.display = 'none';
+      document.getElementById('auth-flow-section').hidden = true;
+      document.getElementById('auth-redirect-chain').hidden = true;
+      const si = document.getElementById('search-input'); if (si) si.value = '';
+      allHarRows = [];
+      pageZone.classList.remove('done');
+      pageZone.querySelector('.upload-text').textContent = UPLOAD_TEXT_DEFAULT;
+      clearPageMessages();
+    }
+
+    // Prüft den Aufbau direkt nach dem Parsen, vor jedem anderen Zugriff. Wirft bei falschem Aufbau. Ungültige Einträge werden übersprungen
+    // und gezählt (report.skipped), bereinigte Felder ebenfalls (report.fixed). Die Einträge behalten die Form der HAR-Datei.
+    function normalizeHar(raw) {
+      const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+      if (!isObj(raw) || !isObj(raw.log)) throw new Error('Keine gültige HAR-Datei (das Objekt "log" fehlt).');
+      if (!Array.isArray(raw.log.entries)) throw new Error('Keine gültige HAR-Datei ("log.entries" fehlt oder ist keine Liste).');
+      const report = { skipped: 0, fixed: 0 };
+      const text = (v, max) => {
+        if (typeof v === 'string') return v.length > max ? v.slice(0, max) : v;
+        if (v === null || v === undefined) return '';
+        report.fixed++;
+        return asText(v, max);
+      };
+      const num = v => {
+        if (typeof v === 'number' && isFinite(v)) return v;
+        if (v !== null && v !== undefined) report.fixed++;
+        return 0;
+      };
+      const status = v => {
+        if (v === null || v === undefined) return 0;
+        if (typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 999) return v;
+        report.fixed++;
+        return (typeof v === 'string' && /^\s*\d{1,3}\s*$/.test(v)) ? Number(v) : 0;
+      };
+      const objOrEmpty = v => { if (isObj(v)) return v; if (v !== null && v !== undefined) report.fixed++; return {}; };
+      const list = v => { if (Array.isArray(v)) return v; if (v !== null && v !== undefined) report.fixed++; return []; };
+      const entries = [];
+      raw.log.entries.forEach(en => {
+        if (!isObj(en) || !isObj(en.request)) { report.skipped++; return; }
+        const res = objOrEmpty(en.response);
+        const cont = objOrEmpty(res.content);
+        const headers = list(res.headers).filter(h => { if (!isObj(h)) report.fixed++; return isObj(h); })
+          .map(h => ({ name: text(h.name, MAX_TEXT), value: text(h.value, MAX_TEXT) }));
+        const cookies = list(res.cookies).filter(c => { if (!isObj(c)) report.fixed++; return isObj(c); })
+          .map(c => ({ name: text(c.name, MAX_TEXT), domain: text(c.domain, MAX_TEXT), expires: text(c.expires, 200), secure: c.secure === true }));
+        entries.push({
+          startedDateTime: text(en.startedDateTime, 200),
+          time: num(en.time),
+          request: { method: text(en.request.method, 50), url: text(en.request.url, MAX_TEXT) },
+          response: { status: status(res.status), headers, cookies, content: { size: num(cont.size), text: text(cont.text, MAX_BODY) } },
+        });
+      });
+      return { entries, report };
+    }
+
     // ── Upload ────────────────────────────────────────────
     const zone  = document.getElementById('upload-zone');
     const input = document.getElementById('file-input');
@@ -69,9 +174,12 @@ if ('serviceWorker' in navigator) {
         setProgress(40);
         _harProcessTimer1 = setTimeout(() => {
           try {
-            const har = JSON.parse(e.target.result);
+            const raw = JSON.parse(e.target.result);
+            const norm = normalizeHar(raw);      // wirft bei falschem Aufbau, gerendert wird erst danach
+            if (!norm.entries.length) throw new Error('Die Datei enthält keine auswertbaren Einträge' + (norm.report.skipped ? ' (' + norm.report.skipped + ' ungültige übersprungen)' : '') + '.');
             setProgress(80);
-            analyze(har, file.name);
+            resetResults();
+            analyze(norm.entries, file.name, norm.report);
             setProgress(100);
             _harProcessTimer2 = setTimeout(() => {
               document.getElementById('progress-wrap').style.display = 'none';
@@ -80,11 +188,18 @@ if ('serviceWorker' in navigator) {
               zone.style.opacity = '1';
             }, 300);
           } catch(err) {
-            alert('Fehler beim Lesen: ' + err.message);
+            resetResults();
+            showPageMessage('error', 'Fehler beim Lesen: ' + err.message);
             zone.style.opacity = '1';
             document.getElementById('progress-wrap').style.display = 'none';
           }
         }, 50);
+      };
+      reader.onerror = () => {
+        resetResults();
+        showPageMessage('error', 'Fehler beim Lesen: Die Datei konnte nicht gelesen werden.');
+        zone.style.opacity = '1';
+        document.getElementById('progress-wrap').style.display = 'none';
       };
       reader.readAsText(file);
     }
@@ -160,8 +275,8 @@ if ('serviceWorker' in navigator) {
         const body = entry.response?.content?.text || '';
         if (body && body.includes('"error"')) {
           const parsed = JSON.parse(body);
-          errorCode = parsed.error || null;
-          errorDesc = parsed.error_description?.split('\r')[0] || null;
+          errorCode = asText(parsed.error) || null;
+          errorDesc = (typeof parsed.error_description === 'string' ? parsed.error_description : '').split('\r')[0] || null;
         }
       } catch {}
 
@@ -197,8 +312,7 @@ if ('serviceWorker' in navigator) {
       };
     }
 
-    function analyze(har, filename) {
-      const entries = har.log?.entries || [];
+    function analyze(entries, filename, report) {
       let errors = [], authReqs = [], cookies = new Map();
       let first401Time = null;
 
@@ -275,6 +389,10 @@ if ('serviceWorker' in navigator) {
 
       renderAuthFlow(authReqs);
 
+      const noteParts = [];
+      if (report && report.skipped > 0) noteParts.push(report.skipped + (report.skipped === 1 ? ' Eintrag' : ' Einträge') + ' mit ungültigen Feldern übersprungen');
+      if (report && report.fixed > 0) noteParts.push(report.fixed + (report.fixed === 1 ? ' Feld' : ' Felder') + ' bereinigt');
+      if (noteParts.length) showPageMessage('note', noteParts.join(', '));
       document.getElementById('results-section').style.display = '';
       setTimeout(() => document.getElementById('results-section').scrollIntoView({ behavior:'smooth', block:'start' }), 150);
     }
@@ -408,14 +526,12 @@ if ('serviceWorker' in navigator) {
       condContainer.replaceChildren();
       conditions.forEach(c => {
         const badge = document.createElement('div');
-        badge.className = `auth-condition auth-condition--${c.severity}`;
-        badge.innerHTML = `
-          <span class="auth-cond-icon">${c.icon}</span>
-          <div class="auth-cond-body">
-            <div class="auth-cond-label">${c.label}</div>
-            <div class="auth-cond-desc">${c.desc}</div>
-          </div>
-        `;
+        badge.className = 'auth-condition auth-condition--' + (COND_SEVERITY[c.severity] || 'info');
+        badge.appendChild(mkEl('span', 'auth-cond-icon', c.icon));
+        const condBody = mkEl('div', 'auth-cond-body');
+        condBody.appendChild(mkEl('div', 'auth-cond-label', c.label));
+        condBody.appendChild(mkEl('div', 'auth-cond-desc', c.desc));
+        badge.appendChild(condBody);
         condContainer.appendChild(badge);
       });
 
@@ -462,28 +578,15 @@ if ('serviceWorker' in navigator) {
           (item.isMfa     ? ' af-node--mfa'     : '');
 
         if (item.step === '__success__') {
-          node.innerHTML = `
-            <div class="af-node-icon">✅</div>
-            <div class="af-node-label">Success</div>
-          `;
+          node.appendChild(mkEl('div', 'af-node-icon', '✅'));
+          node.appendChild(mkEl('div', 'af-node-label', 'Success'));
         } else {
           const cfg = AUTH_STEPS[item.step] || AUTH_STEPS['auth-request'];
-          node.innerHTML = `
-            <div class="af-node-icon">${cfg.icon}</div>
-            <div class="af-node-label">${cfg.label}</div>
-            ${item.count > 1
-              ? `<div class="af-node-count">${item.count}×</div>`
-              : ''}
-            ${item.hasError
-              ? `<div class="af-node-error">${item.errorCode || 'Fehler'}</div>`
-              : ''}
-            ${item.status
-              ? `<div class="af-node-status af-status-${
-                  item.status >= 400 ? 'err' :
-                  item.status >= 300 ? 'redir' : 'ok'
-                }">${item.status}</div>`
-              : ''}
-          `;
+          node.appendChild(mkEl('div', 'af-node-icon', cfg.icon));
+          node.appendChild(mkEl('div', 'af-node-label', cfg.label));
+          if (item.count > 1) node.appendChild(mkEl('div', 'af-node-count', item.count + '×'));
+          if (item.hasError) node.appendChild(mkEl('div', 'af-node-error', item.errorCode || 'Fehler'));
+          if (item.status) node.appendChild(mkEl('div', 'af-node-status af-status-' + (item.status >= 400 ? 'err' : item.status >= 300 ? 'redir' : 'ok'), String(item.status)));
         }
         flowWrap.appendChild(node);
 
@@ -506,18 +609,12 @@ if ('serviceWorker' in navigator) {
         redirectChain.forEach((r, idx) => {
           const row = document.createElement('div');
           row.className = 'af-chain-row';
-          row.innerHTML = `
-            <span class="af-chain-idx">${idx + 1}</span>
-            <span class="af-chain-url" title="${r.url}">
-              ${fmtUrl(r.url)}
-            </span>
-            <span class="af-chain-status af-status-${
-              r.status >= 400 ? 'err' : 'redir'
-            }">${r.status}</span>
-            ${r.redirectTo
-              ? `<span class="af-chain-to">→ ${fmtUrl(r.redirectTo)}</span>`
-              : ''}
-          `;
+          row.appendChild(mkEl('span', 'af-chain-idx', String(idx + 1)));
+          const urlCell = mkEl('span', 'af-chain-url', fmtUrl(r.url));
+          urlCell.setAttribute('title', r.url);          // roher Wert, nur als Attributwert
+          row.appendChild(urlCell);
+          row.appendChild(mkEl('span', 'af-chain-status af-status-' + (r.status >= 400 ? 'err' : 'redir'), String(r.status)));
+          if (r.redirectTo) row.appendChild(mkEl('span', 'af-chain-to', '→ ' + fmtUrl(r.redirectTo)));
           chainWrap.appendChild(row);
         });
       } else {
@@ -716,12 +813,12 @@ if ('serviceWorker' in navigator) {
           const tr = document.createElement('tr');
           [
             { text: fmtTime(r.time), mono:true },
-            { html: `<span class="${statusCls(r.status)}">${r.status}</span>` },
+            { node: statusSpan(r.status) },
             { text: fmtUrl(r.url), cls:'url-cell' },
             { text: r.dur + 'ms', mono:true },
           ].forEach(cell => {
             const td = document.createElement('td');
-            if (cell.html) { td.innerHTML = cell.html; }
+            if (cell.node) { td.appendChild(cell.node); }
             else { td.textContent = cell.text; if (cell.mono) td.style.fontFamily='var(--font-mono)'; if (cell.cls) td.className=cell.cls; }
             tr.appendChild(td);
           });
@@ -739,14 +836,14 @@ if ('serviceWorker' in navigator) {
         if (r.noise) tr.style.opacity = '0.45';
         [
           { text: fmtTime(r.time), mono:true },
-          { html: `<span class="${statusCls(r.status)}">${r.status}</span>` },
+          { node: statusSpan(r.status) },
           { text: r.method, mono:true },
           { text: fmtUrl(r.url), cls:'url-cell' },
           { text: (r.size/1024).toFixed(1)+'KB', mono:true },
           { text: r.dur+'ms', mono:true },
         ].forEach(cell => {
           const td = document.createElement('td');
-          if (cell.html) { td.innerHTML = cell.html; }
+          if (cell.node) { td.appendChild(cell.node); }
           else { td.textContent = cell.text||''; if (cell.mono) td.style.fontFamily='var(--font-mono)'; if (cell.cls) td.className=cell.cls; }
           tr.appendChild(td);
         });

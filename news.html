@@ -34,6 +34,8 @@
               aria-controls="news-panel-news" aria-selected="true" tabindex="0">News</button>
       <button type="button" class="news-tab" role="tab" id="news-tab-cve"
               aria-controls="news-panel-cve" aria-selected="false" tabindex="-1">CVE-Bericht</button>
+      <button type="button" class="news-tab" role="tab" id="news-tab-patch"
+              aria-controls="news-panel-patch" aria-selected="false" tabindex="-1">Patchday</button>
     </div>
 
     <div role="tabpanel" id="news-panel-news" aria-labelledby="news-tab-news">
@@ -348,6 +350,103 @@
       </div><!-- /news-main-content -->
       </div><!-- /news-layout--cve -->
     </div>
+
+    <div role="tabpanel" id="news-panel-patch" aria-labelledby="news-tab-patch" hidden>
+      <div class="news-layout news-layout--cve">
+      <nav class="news-page-nav" id="news-patch-page-nav" aria-label="Bereichsnavigation Patchday">
+        <div class="news-page-nav-title">Patchday</div>
+        <a href="#news-patch-settings-section" class="news-page-nav-link"><span class="news-nav-num">1</span>Produkte</a>
+        <a href="#news-patch-prompt-section" class="news-page-nav-link"><span class="news-nav-num">2</span>Prompt</a>
+        <a href="#news-patch-import-section" class="news-page-nav-link"><span class="news-nav-num">3</span>Bericht einfügen</a>
+        <a href="#news-patch-viewer-section" class="news-page-nav-link" id="news-patch-nav-viewer" hidden>Geöffneter Bericht</a>
+        <a href="#news-patch-archive-section" class="news-page-nav-link"><span class="news-nav-num">4</span>Archiv</a>
+      </nav>
+      <div class="news-main-content">
+      <div class="news-cve news-patch">
+
+        <section class="news-section" id="news-patch-settings-section">
+          <h2 class="section-title">Produkte und Patchday</h2>
+          <p class="news-section-lede">Welche Microsoft-Produkte der Patchday-Bericht abdecken soll. Ein leeres Detailfeld heißt „alle unterstützten Versionen". Die App fragt selbst keine Quellen ab, sie erzeugt nur den Prompt für eine KI mit Websuche. Zu einzelnen CVEs gibt es den CVE-Bericht, der Patchday-Bericht zählt sie nur.</p>
+
+          <div class="news-field news-patch-field">
+            <label class="news-label" for="news-patch-offset">Patchday</label>
+            <select id="news-patch-offset" class="news-text-input news-patch-offset"></select>
+          </div>
+
+          <h3 class="news-subheading">Produkte</h3>
+          <div class="news-cve-vendor-list" id="news-patch-product-list"></div>
+
+          <div class="news-add-row news-cve-add-row">
+            <input type="text" id="news-patch-product-input" class="news-text-input" placeholder="Produkt hinzufügen, z. B. Microsoft Teams" maxlength="80" aria-label="Neues Produkt">
+            <button type="button" class="news-btn-primary" id="news-patch-product-add-btn">Hinzufügen</button>
+          </div>
+          <div class="news-btn-row">
+            <button type="button" class="news-btn-secondary" id="news-patch-reset-btn">Auf Startwerte zurücksetzen</button>
+          </div>
+        </section>
+
+        <section class="news-section" id="news-patch-prompt-section">
+          <h2 class="section-title">Prompt</h2>
+          <p class="news-cve-summary" id="news-patch-summary" aria-live="polite"></p>
+          <p class="news-hint" id="news-patch-hint"></p>
+
+          <div class="news-cve-warning" role="note">
+            <strong>Vor dem Einfügen in die KI die Websuche aktivieren.</strong>
+            Ohne Websuche erfindet eine KI KB-Nummern und Probleme. Der Prompt weist sie an abzubrechen, darauf allein verlassen gilt nicht. Jeder Bericht ist vor dem Rollout gegen Windows release health, die KB-Artikel und den Security Update Guide zu prüfen.
+          </div>
+          <p class="news-hint">Microsoft veröffentlicht die Updates am Patchday gegen 10 Uhr Pazifischer Zeit (abends deutscher Zeit). Eine frühere Abfrage kann unvollständig sein.</p>
+
+          <p class="news-cve-empty" id="news-patch-empty" role="alert" hidden>Kein Produkt aktiv. Aktiviere mindestens ein Produkt, dann lässt sich der Prompt erzeugen.</p>
+          <p class="news-hint" id="news-patch-stale" role="status" hidden>Einstellungen wurden geändert. Bitte den Prompt neu generieren.</p>
+
+          <div class="news-btn-row">
+            <button type="button" class="news-btn-primary" id="news-patch-generate-btn">Prompt generieren</button>
+          </div>
+          <details class="news-prompt-details" id="news-patch-prompt-details">
+            <summary class="news-prompt-summary">Prompt anzeigen</summary>
+            <textarea id="news-patch-prompt" class="news-textarea" rows="16" readonly></textarea>
+          </details>
+          <div class="news-btn-row">
+            <button type="button" class="news-btn-secondary" id="news-patch-copy-btn">Prompt kopieren</button>
+          </div>
+        </section>
+
+        <section class="news-section" id="news-patch-import-section">
+          <h2 class="section-title">Bericht einfügen</h2>
+          <p class="news-section-lede">Die Antwort der KI hier einfügen, am besten mit dem Kopieren-Button der KI-Antwort (nicht Text markieren), damit die Tabellen erhalten bleiben.</p>
+          <label class="news-label" for="news-patch-import-text">Bericht (Markdown)</label>
+          <textarea id="news-patch-import-text" class="news-textarea" rows="9" spellcheck="false" placeholder="# Patchday-Bericht – Oktober 2026 …"></textarea>
+          <div class="news-btn-row">
+            <button type="button" class="news-btn-primary" id="news-patch-import-btn">Bericht übernehmen</button>
+          </div>
+          <div class="news-cve-import-msg" id="news-patch-import-msg" role="status" aria-live="polite" hidden></div>
+          <div class="news-cve-decision" id="news-patch-decision" role="group" aria-label="Rückfrage zum Einfügen" hidden>
+            <p class="news-cve-decision-text" id="news-patch-decision-text"></p>
+            <div class="news-btn-row" id="news-patch-decision-buttons"></div>
+          </div>
+        </section>
+
+        <section class="news-section" id="news-patch-viewer-section" hidden>
+          <div class="news-cve-viewer-head">
+            <h2 class="section-title" id="news-patch-viewer-title" tabindex="-1">Bericht</h2>
+            <div class="news-btn-row news-cve-viewer-actions">
+              <button type="button" class="news-btn-secondary" id="news-patch-viewer-close">Schließen</button>
+            </div>
+          </div>
+          <p class="news-cve-ai-note" role="note">KI-generiert aus einer Websuche. Updates, Builds und bekannte Probleme vor dem Rollout gegen Windows release health, KB-Artikel und Security Update Guide prüfen.</p>
+          <div class="news-cve-report news-patch-report" id="news-patch-report"></div>
+        </section>
+
+        <section class="news-section" id="news-patch-archive-section">
+          <h2 class="section-title">Archiv</h2>
+          <p class="news-hint news-cve-archive-hint" id="news-patch-archive-hint" hidden></p>
+          <div class="news-cve-archive-list" id="news-patch-archive-list"></div>
+        </section>
+
+      </div>
+      </div><!-- /news-main-content -->
+      </div><!-- /news-layout--cve -->
+    </div>
   </main>
 
   <div class="news-progress-bar" id="news-progress-bar" hidden>
@@ -360,6 +459,7 @@
 
   <script src="js/toast.js"></script>
   <script src="js/news/news-cve-core.js"></script>
+  <script src="js/news/news-patch-core.js"></script>
   <script src="js/news/news-storage.js"></script>
   <script src="js/news/news-json.js"></script>
   <script src="js/news/news-sources.js"></script>
@@ -371,12 +471,16 @@
   <script src="js/news/news-saved.js"></script>
   <script src="js/news/news-nav.js"></script>
   <script src="js/marked.min.js"></script>
+  <script src="js/safe-markdown.js"></script>
   <script src="js/news/news-cve-report-core.js"></script>
   <script src="js/news/news-cve-watch-core.js"></script>
   <script src="js/news/news-cve.js"></script>
   <script src="js/news/news-cve-reports.js"></script>
   <script src="js/news/news-cve-watch.js"></script>
   <script src="js/news/news-cve-nav.js"></script>
+  <script src="js/news/news-patch.js"></script>
+  <script src="js/news/news-patch-reports.js"></script>
+  <script src="js/news/news-patch-nav.js"></script>
   <script src="js/news/news-tabs.js"></script>
 
   <script>

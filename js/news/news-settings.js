@@ -365,6 +365,9 @@
       cveReports: window.NewsStorage.readJSON(KEYS.cveReports, []),
       // Teil 3: manuelle Watchlist-Einträge und Erledigtes.
       cveWatch: window.NewsStorage.readJSON(KEYS.cveWatch, null),
+      // Patchday-Bericht: Einstellungen (null = nie gespeichert) und archivierte Berichte.
+      patchSettings: window.NewsStorage.readJSON(KEYS.patchSettings, null),
+      patchReports: window.NewsStorage.readJSON(KEYS.patchReports, []),
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -411,6 +414,12 @@
         if (data.cveWatch && typeof data.cveWatch === 'object' && !Array.isArray(data.cveWatch)) {
           window.NewsStorage.writeJSON(KEYS.cveWatch, data.cveWatch);
         }
+        // Patchday-Bericht: fehlen die Felder (Backup vor dem Patchday-Reiter), bleibt der Bestand unberührt.
+        // Gelesen wird später immer über NewsPatchCore.normalizeSettings()/normalizeReports().
+        if (data.patchSettings && typeof data.patchSettings === 'object' && !Array.isArray(data.patchSettings)) {
+          window.NewsStorage.writeJSON(KEYS.patchSettings, data.patchSettings);
+        }
+        if (Array.isArray(data.patchReports)) window.NewsStorage.writeJSON(KEYS.patchReports, data.patchReports);
 
         // Alle betroffenen Render-Funktionen sofort erneut aufrufen - kein
         // manueller Reload nötig (Vorgabe Schritt 4, um Schritt 6a Feed und
@@ -423,6 +432,8 @@
         window.NewsCve?.render();
         window.NewsCveReports?.render();
         window.NewsCveWatch?.render();
+        window.NewsPatch?.render();
+        window.NewsPatchReports?.render();
         renderDateFields();
         renderFeedbackOverview();
         interestsField?.render();

@@ -21,12 +21,39 @@ if ('serviceWorker' in navigator) {
     dropZone.addEventListener('click', () => fileInput.click());
     dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag'); });
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+    // Meldung im Seitenkörper: kind 'error' (role="alert") oder 'note' (role="status"); Werte nur über textContent
+    function showPageMessage(kind, text) {
+      const id = kind === 'error' ? 'entra-error' : 'entra-note';
+      let n = document.getElementById(id);
+      if (!n) {
+        n = document.createElement('div');
+        n.id = id;
+        n.className = 'page-msg page-msg--' + kind;
+        n.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+        const anchor = document.getElementById('entra-file-list');
+        anchor.parentNode.insertBefore(n, anchor);
+      }
+      n.textContent = text;
+    }
+    function clearPageMessages() {
+      ['entra-error', 'entra-note'].forEach(id => document.getElementById(id)?.remove());
+    }
+
+    // Nur .csv-Dateien (Groß-/Kleinschreibung egal), beim Dateidialog wie beim Ablegen; andere Dateien erzeugen eine Meldung
+    function acceptFiles(files) {
+      clearPageMessages();
+      const all = [...files];
+      const csv = all.filter(f => /\.csv$/i.test(f.name));
+      const ignored = all.length - csv.length;
+      if (ignored > 0) showPageMessage('error', ignored + (ignored === 1 ? ' Datei' : ' Dateien') + ' ignoriert: Es werden nur .csv-Dateien gelesen.');
+      csv.forEach(readFile);
+    }
     dropZone.addEventListener('drop', e => {
       e.preventDefault(); dropZone.classList.remove('drag');
-      [...e.dataTransfer.files].filter(f => f.name.endsWith('.csv')).forEach(readFile);
+      acceptFiles(e.dataTransfer.files);
     });
     fileInput.addEventListener('change', e => {
-      [...e.target.files].forEach(readFile);
+      acceptFiles(e.target.files);
       e.target.value = '';
     });
 
@@ -46,13 +73,15 @@ if ('serviceWorker' in navigator) {
 
       const reader = new FileReader();
       reader.onload = e => {
-        const rows = parseCSV(e.target.result);
-        if (!rows.length) return;
+        const check = inspectCSV(e.target.result);
+        if (check.problem) { showPageMessage('error', file.name + ': ' + check.problem); return; }
+        const rows = check.rows;
         const type = detectType(file.name);
         loadedFiles.push({ name: file.name, size: file.size, rows, type });
         updateFileList();
         updateAnalyzeBtn();
       };
+      reader.onerror = () => showPageMessage('error', file.name + ': Die Datei konnte nicht gelesen werden.');
       reader.readAsText(file, 'UTF-8');
     }
 
@@ -108,9 +137,12 @@ if ('serviceWorker' in navigator) {
     }
 
     function clearAll() {
+      clearPageMessages();
       loadedFiles = [];
       updateFileList();
       updateAnalyzeBtn();
+      // keine Reste der letzten Auswertung im Dokument
+      ['overview-grid', 'status-pills', 'findings', 'sign-in-table'].forEach(id => document.getElementById(id)?.replaceChildren());
       document.getElementById('results-section').style.display = 'none';
     }
 
@@ -134,6 +166,23 @@ if ('serviceWorker' in navigator) {
         headers.forEach((h, i) => { obj[h.trim()] = (vals[i] || '').trim(); });
         return obj;
       }).filter(r => Object.values(r).some(v => v));
+    }
+
+    // Spalten, die der Analyzer liest (siehe F unten)
+    const KNOWN_COLUMNS = ['Datum (UTC)', 'Datum', 'Status', 'Code des Anmeldefehlers', 'Fehlerursache', 'Benutzer', 'Benutzername', 'Dienstprinzipalname',
+      'Anwendung', 'Ressource', 'Bedingter Zugriff', 'Ergebnis der Multi-Faktor-Authentifizierung', 'IP-Adresse', 'Standort'];
+    // Prüft Kopfzeile und Spalten; liefert die Zeilen oder eine verständliche Fehlerbeschreibung
+    function inspectCSV(text) {
+      let t = String(text);
+      if (t.charCodeAt(0) === 0xFEFF) t = t.slice(1);
+      const lines = t.split('\n').filter(l => l.trim());
+      if (!lines.length) return { rows: [], problem: 'Die Datei ist leer.' };
+      const headers = parseCSVLine(lines[0]).map(h => h.trim());
+      if (!headers.some(h => KNOWN_COLUMNS.includes(h))) return { rows: [], problem: 'Keine bekannten Spalten gefunden (erwartet zum Beispiel "Status", "Benutzer", "Anwendung").' };
+      if (lines.length < 2) return { rows: [], problem: 'Die Datei enthält nur eine Kopfzeile und keine Anmeldungen.' };
+      const rows = parseCSV(t);
+      if (!rows.length) return { rows: [], problem: 'Die Datei enthält keine auswertbaren Zeilen.' };
+      return { rows, problem: null };
     }
 
     function parseCSVLine(line) {
@@ -412,26 +461,31 @@ if ('serviceWorker' in navigator) {
     }
 
     // ── Render Table ──────────────────────────────────────
+    const STATUS_CLASS = { 'Fehler': 'status-error', 'Unterbrochen': 'status-interrupt', 'Erfolg': 'status-success' };
     function renderTable(rows) {
       const tbody = document.getElementById('sign-in-table');
       const frag  = document.createDocumentFragment();
       rows.slice(0, 500).forEach(r => {
         const tr = document.createElement('tr');
         const status = F.status(r);
-        const statusCls = status === 'Fehler' ? 'status-error' : status === 'Unterbrochen' ? 'status-interrupt' : 'status-success';
+        // bekannte Werte haben eine eigene Klasse, alles andere eine neutrale (der Wert selbst erscheint nur als Text)
+        const statusCls = Object.prototype.hasOwnProperty.call(STATUS_CLASS, status) ? STATUS_CLASS[status] : 'status-unknown';
         const code = F.code(r);
+        const statusNode = document.createElement('span'); statusNode.className = statusCls; statusNode.textContent = status;
+        let codeNode = null;
+        if (code && code !== '0') { codeNode = document.createElement('span'); codeNode.className = 'err-code'; codeNode.textContent = code; }
 
         [
           { text: (F.date(r)||'').replace('T',' ').substring(0,19), mono:true },
-          { html: `<span class="${statusCls}">${status}</span>` },
-          { html: code && code !== '0' ? `<span class="err-code">${code}</span>` : '' },
+          { node: statusNode },
+          { node: codeNode },
           { text: F.user(r), muted:true },
           { text: F.app(r),  muted:true },
           { text: F.resource(r), muted:true },
           { text: (F.reason(r)||'').substring(0,80), muted:true },
         ].forEach(cell => {
           const td = document.createElement('td');
-          if (cell.html !== undefined) { td.innerHTML = cell.html; }
+          if (cell.node !== undefined) { if (cell.node) td.appendChild(cell.node); }
           else {
             td.textContent = cell.text || '';
             if (cell.mono) td.style.fontFamily = 'var(--font-mono)';

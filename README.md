@@ -20,6 +20,7 @@ Mittlerweile mehr als nur Commands: Log-/Sign-In-/HAR-Analyzer, ein Ticketassist
 | [Fortinet](forti.html) | FortiGate, FortiManager, FortiAnalyzer CLI | 78 |
 | [PS Scripts](scripts.html) | Fertige .ps1 Skripte zum Download | 9 |
 | [Event Log Analyzer](eventlog.html) | Event Log JSON hochladen → automatische Analyse mit Correlation Engine | – |
+| [Event-Referenz](eventlog-referenz.html) | Event-IDs nach Thema, Einstufung und Provider nachschlagen (liest `data/eventlog-codes.json`) | – |
 | [Entra Analyzer](entra.html) | Sign-In Logs als CSV hochladen, Fehlermuster erkennen | – |
 | [HAR Analyzer](har.html) | Browser-Sessions/Auth-Flows aus HAR-Export analysieren | – |
 | [Ticketassistent](ticketassistent.html) | KI-gestützt Tickets formulieren | – |
@@ -125,7 +126,7 @@ Platzhalter in geschweiften Klammern werden beim Kopieren per Dialog ersetzt:
 support.sheet/
 ├── index.html          ← Startseite / Kachel-Übersicht
 ├── windows.html / exchange.html / forti.html / scripts.html
-├── eventlog.html / entra.html / har.html
+├── eventlog.html / eventlog-referenz.html / entra.html / har.html
 ├── ticketassistent.html / guides*.html / private.html
 ├── mitmachen.html / tools.html
 ├── nav.js              ← Navigation (alle Seiten)

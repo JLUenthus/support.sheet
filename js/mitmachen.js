@@ -1401,8 +1401,9 @@
   function updateGuidePreview() {
     const md = gfEl('mm-gf-textarea').value;
     const preview = gfEl('mm-gf-preview');
-    if (typeof marked !== 'undefined') {
-      preview.innerHTML = marked.parse(md);
+    if (window.SafeMarkdown) {
+      // Vorschlagstext kann Fremdinhalt enthalten: gefiltert rendern (siehe js/safe-markdown.js)
+      window.SafeMarkdown.renderInto(preview, md);
     } else {
       preview.textContent = md;
     }

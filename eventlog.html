@@ -64,6 +64,8 @@
         <div class="upload-sub">Erwartet: EventLog_Client_*.json oder EventLog_Server_*.json</div>
         <input type="file" id="file-input" accept=".json" style="display:none">
       </div>
+      <!-- Fehlermeldung beim Einlesen (nur Text, per textContent befüllt) -->
+      <div id="el-upload-error" class="el-upload-error" role="alert" hidden></div>
 
       <!-- Was dich erwartet – nur vor Upload sichtbar -->
       <div class="upload-preview" id="upload-preview">
@@ -113,6 +115,8 @@
         <h2 class="section-title">Systemübersicht</h2>
         <div class="sys-grid" id="sys-grid"></div>
         <div class="summary-pills" id="summary-pills"></div>
+        <!-- Hinweis, wenn beim Einlesen Ereignisse übersprungen / Felder bereinigt wurden -->
+        <div class="el-normalize-note" id="el-normalize-note" hidden></div>
       </section>
 
       <!-- Severity Summary + Priorität + Export -->
@@ -281,6 +285,8 @@
 
   <style>
     .el-section { margin-bottom: 32px; }
+    .el-upload-error { margin-top:12px; padding:10px 14px; border:1px solid rgba(248,113,113,.35); border-left:3px solid var(--red); border-radius:var(--r); background:rgba(248,113,113,.06); color:var(--red); font-size:.82rem; overflow-wrap:anywhere; }
+    .el-normalize-note { margin-top:10px; font-size:.72rem; color:var(--muted); }
 
     /* ── Seiten-Layout: Sidebar-Navigation + Hauptinhalt (analog gpo.html) ──
        Desktop: 2-Spalten-Grid, Navigation sticky links. Mobile: 1 Spalte,
@@ -895,22 +901,188 @@
     zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag'); if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]); });
     input.addEventListener('change', e => { if (e.target.files[0]) processFile(e.target.files[0]); });
 
+    // ── Eingabe-Normalisierung (Sicherheitsaudit "Ereignisdarstellung") ──────────────
+    // Die hochgeladene JSON ist nicht vertrauenswürdig: Ereignisfelder enthalten Text, den Dritte
+    // kontrollieren (Benutzernamen, Providernamen, Meldungstexte). Vor jedem anderen Zugriff werden
+    // deshalb Typen und Werte auf das Erwartbare gebracht - gültige Collector-Dateien bleiben dabei
+    // unverändert. Ausgegeben werden Ereigniswerte zusätzlich ausschließlich per textContent
+    // (siehe S1-S5 unten); die Normalisierung ist die zweite, unabhängige Schutzschicht.
+    //
+    // Erwartete Level: aus Code (TIMELINE_ICONS/Filter/renderSevSummary) und den Echtexporten
+    // abgeleitet. Der Collector liefert Critical/Error/Warning/Info; "Information" und die deutschen
+    // Bezeichnungen kommen im Code (Filter, Icons) ebenfalls vor und bleiben daher gültig.
+    const NORM_LEVELS = new Set(['Critical', 'Error', 'Warning', 'Info', 'Information', 'Fehler', 'Kritisch', 'Warnung']);
+    const NORM_EVENT_TEXT = ['TimeCreated', 'LogName', 'ProviderName', 'Category', 'Message'];
+    const NORM_META_TEXT = ['ComputerName', 'CollectedAt', 'CollectedBy', 'CollectorType', 'CollectorVersion', 'TimeRangeLabel',
+      'OS', 'BuildNumber', 'Architecture', 'CPU', 'LastBoot', 'Domain', 'BitLockerStatus', 'PowerPlan', 'BIOSDate'];
+    const NORM_META_NUM = ['HoursCollected', 'RAM_GB', 'RAM_Used_GB', 'Uptime_Hours', 'AutostartCount'];
+    const NORM_SUMMARY_NUM = ['Critical', 'Error', 'Warning', 'Info', 'Total'];
+
+    function normalizeCollectorData(raw) {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Keine gültige Collector-Datei (JSON-Objekt erwartet).');
+      const rawEvents = raw.Events || raw.events;
+      if (!rawEvents) throw new Error('Kein Events-Feld gefunden');
+      if (!Array.isArray(rawEvents)) throw new Error('Das Feld Events ist keine Liste.');
+      const report = { skippedEvents: 0, fixedFields: 0 };
+      const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+      // Text: Zeichenkette bleibt, Zahl/Bool -> Text, Objekt/Array -> leer. null bleibt null (fehlender Wert).
+      const asText = v => {
+        if (typeof v === 'string' || v === null || v === undefined) return v;
+        report.fixedFields++;
+        return (typeof v === 'number' || typeof v === 'boolean') ? String(v) : '';
+      };
+      // Zahl: endliche Zahl bleibt, Zahlentext -> Zahl, null bleibt; alles andere entfällt (undefined).
+      const asNum = v => {
+        if (v === null || (typeof v === 'number' && isFinite(v))) return v;
+        if (typeof v === 'string' && v.trim() !== '' && isFinite(Number(v))) { report.fixedFields++; return Number(v); }
+        report.fixedFields++;
+        return undefined;
+      };
+
+      const events = [];
+      rawEvents.forEach(e => {
+        if (!isObj(e)) { report.skippedEvents++; return; }
+        // Id: ganze Zahl. Zahlentext wird umgewandelt; alles andere (HTML, Objekt, Array, leer, Bruch, negativ) -> Ereignis überspringen.
+        let id = e.Id;
+        if (typeof id === 'string' && /^\s*\d+\s*$/.test(id)) { id = Number(id); report.fixedFields++; }
+        if (typeof id !== 'number' || !Number.isSafeInteger(id) || id < 0 || id > 4294967295) { report.skippedEvents++; return; }
+        const o = {};
+        // Reihenfolge der Quelle bleibt erhalten; unbekannte Felder werden nicht übernommen.
+        Object.keys(e).forEach(k => {
+          if (k === 'Id') o.Id = id;
+          else if (k === 'Level') { if (NORM_LEVELS.has(e.Level)) o.Level = e.Level; else { o.Level = 'Unbekannt'; report.fixedFields++; } }
+          else if (NORM_EVENT_TEXT.includes(k)) o[k] = asText(e[k]);
+        });
+        if (!('Level' in o)) { o.Level = 'Unbekannt'; report.fixedFields++; }
+        events.push(o);
+      });
+
+      const rawMeta = raw.Metadata || raw.metadata;
+      const meta = {};
+      if (isObj(rawMeta)) {
+        Object.keys(rawMeta).forEach(k => {
+          const v = rawMeta[k];
+          if (NORM_META_TEXT.includes(k)) meta[k] = asText(v);
+          else if (NORM_META_NUM.includes(k)) { const n = asNum(v); if (n !== undefined) meta[k] = n; }
+          else if (k === 'DefenderRealtime') { if (typeof v === 'boolean' || v === null) meta[k] = v; else report.fixedFields++; }
+          else if (k === 'DetectedRoles') {
+            const list = Array.isArray(v) ? v : (typeof v === 'string' ? [v] : []);
+            if (!Array.isArray(v)) report.fixedFields++;
+            meta[k] = list.filter(x => { const ok = typeof x === 'string' || typeof x === 'number' || typeof x === 'boolean'; if (!ok) report.fixedFields++; return ok; }).map(x => asText(x));
+          }
+          else if (k === 'Disks') {
+            // PowerShell liefert bei einem Laufwerk ein Objekt statt Array
+            const list = Array.isArray(v) ? v : (isObj(v) ? [v] : []);
+            if (!Array.isArray(v) && !isObj(v)) report.fixedFields++;   // Einzelobjekt ist der bekannte PowerShell-Fall, kein Fehler
+            meta[k] = list.filter(d => { if (!isObj(d)) report.fixedFields++; return isObj(d); }).map(d => {
+              const dd = {};
+              Object.keys(d).forEach(dk => {
+                if (dk === 'DeviceID') dd.DeviceID = asText(d.DeviceID);
+                else if (dk === 'Size_GB' || dk === 'Free_GB') { const n = asNum(d[dk]); if (n !== undefined) dd[dk] = n; }
+              });
+              return dd;
+            });
+          }
+          else if (k === 'SecurityProtection') {
+            if (!isObj(v)) { report.fixedFields++; return; }
+            const sp = {};
+            Object.keys(v).forEach(sk => {
+              if (sk === 'source' || sk === 'protectionStatus') sp[sk] = asText(v[sk]);
+              else if (sk === 'providers') {
+                const list = Array.isArray(v.providers) ? v.providers : [];
+                if (!Array.isArray(v.providers)) report.fixedFields++;
+                sp.providers = list.filter(p => { if (!isObj(p)) report.fixedFields++; return isObj(p); }).map(p => {
+                  const pp = {};
+                  Object.keys(p).forEach(pk => { if (pk === 'name' || pk === 'type' || pk === 'state') pp[pk] = asText(p[pk]); });
+                  return pp;
+                });
+              }
+            });
+            meta[k] = sp;
+          }
+        });
+      } else if (rawMeta !== undefined && rawMeta !== null) report.fixedFields++;
+
+      const rawSum = raw.Summary || raw.summary;
+      const sum = {};
+      if (isObj(rawSum)) {
+        Object.keys(rawSum).forEach(k => { if (NORM_SUMMARY_NUM.includes(k)) { const n = asNum(rawSum[k]); if (n !== undefined && n !== null) sum[k] = n; else if (n === null) report.fixedFields++; } });
+      } else if (rawSum !== undefined && rawSum !== null) report.fixedFields++;
+
+      return { data: { Metadata: meta, Summary: sum, Events: events }, report };
+    }
+
+    // ── Fehlerpfad / Zurücksetzen (kein alert, keine halb gerenderte Oberfläche, keine Reste) ──
+    const RESULT_CONTAINER_IDS = ['sys-grid', 'summary-pills', 'auth-events-table', 'auth-grid', 'timeline-wrap', 'cluster-container',
+      'correlations', 'findings', 'improvements', 'event-table', 'event-filter-pills', 'cat-bar', 'priority-list'];
+    const UPLOAD_TEXT_DEFAULT = zone.querySelector('.upload-text').textContent;
+
+    function resetResults() {
+      RESULT_CONTAINER_IDS.forEach(id => { const n = document.getElementById(id); if (n) n.replaceChildren(); });
+      document.getElementById('top-root-cause')?.remove();
+      ['timeline-section', 'cluster-section', 'correlation-section', 'improvements-section'].forEach(id => { const n = document.getElementById(id); if (n) n.hidden = true; });
+      const authBlock = document.getElementById('auth-block'); if (authBlock) authBlock.style.display = 'none';
+      const prio = document.getElementById('priority-box'); if (prio) prio.hidden = true;
+      const note = document.getElementById('el-normalize-note'); if (note) { note.hidden = true; note.textContent = ''; }
+      ['findings-count', 'timeline-count', 'cluster-count', 'correlation-count', 'improvements-count'].forEach(id => { const n = document.getElementById(id); if (n) n.textContent = '0'; });
+      const ec = document.getElementById('event-count'); if (ec) ec.textContent = '';
+      allEvents = [];
+      _corrResults = [];
+      _activeEventFilter = 'all';
+      document.getElementById('results-section').className = 'results-hidden';
+      zone.classList.remove('done');
+      zone.querySelector('.upload-text').textContent = UPLOAD_TEXT_DEFAULT;
+      const preview = document.getElementById('upload-preview'); if (preview) preview.style.display = '';
+      syncElNavVisibility();
+    }
+    function hideUploadError() {
+      const er = document.getElementById('el-upload-error');
+      if (er) { er.hidden = true; er.textContent = ''; }
+    }
+    function showUploadError(message) {
+      resetResults();
+      const er = document.getElementById('el-upload-error');
+      if (!er) return;
+      er.textContent = String(message);        // nur Text
+      er.hidden = false;
+    }
+
     function processFile(file) {
       const reader = new FileReader();
       reader.onload = e => {
+        let norm;
         try {
-          const data = JSON.parse(e.target.result);
-          if (!data.Events && !data.events) throw new Error('Kein Events-Feld gefunden');
-          renderResults(data, file.name);
-        } catch(err) {
-          alert('Fehler beim Lesen: ' + err.message);
+          norm = normalizeCollectorData(JSON.parse(e.target.result));
+        } catch (err) {
+          showUploadError('Fehler beim Lesen: ' + err.message);
+          return;
+        }
+        // Erst nach erfolgreicher Normalisierung/Validierung wird gerendert; Reste eines vorherigen Uploads vorher entfernen.
+        hideUploadError();
+        resetResults();
+        try {
+          renderResults(norm.data, file.name, norm.report);
+        } catch (err) {
+          showUploadError('Fehler bei der Darstellung: ' + err.message);
         }
       };
+      reader.onerror = () => showUploadError('Fehler beim Lesen: Datei konnte nicht gelesen werden.');
       reader.readAsText(file, 'UTF-8');
     }
 
+    function renderNormalizeNote(report) {
+      const note = document.getElementById('el-normalize-note');
+      if (!note) return;
+      const parts = [];
+      if (report && report.skippedEvents > 0) parts.push(report.skippedEvents + (report.skippedEvents === 1 ? ' Ereignis' : ' Ereignisse') + ' mit ungültigen Feldern übersprungen');
+      if (report && report.fixedFields > 0) parts.push(report.fixedFields + (report.fixedFields === 1 ? ' Feld' : ' Felder') + ' bereinigt');
+      note.textContent = parts.join(', ');
+      note.hidden = parts.length === 0;
+    }
+
     // ── Render Results ──────────────────────────────────────
-    function renderResults(data, filename) {
+    function renderResults(data, filename, normReport) {
       const meta   = data.Metadata || data.metadata || {};
       const sum    = data.Summary  || data.summary  || {};
       const events = data.Events   || data.events   || [];
@@ -938,6 +1110,7 @@
       renderFindings(findings);
       renderCategoryFilter(findings);
       renderEventTable(events);
+      renderNormalizeNote(normReport);
 
       // Export button
       document.getElementById('export-btn').onclick = () => exportFindings(findings, improvements, corrResults, meta, filename);
@@ -1335,19 +1508,22 @@
               if (is1098) tr.style.background = 'rgba(248,113,113,.06)';
               if (is1097) tr.style.background = 'rgba(251,146,60,.06)';
 
+              // S1: Id wird als Text in einem per DOM erzeugten <span> ausgegeben (kein innerHTML).
+              const idSpan = document.createElement('span');
+              idSpan.textContent = (is1098 || is1097) ? `${e.Id} ⚠️` : String(e.Id);
+              idSpan.style.fontFamily = 'var(--font-mono)';
+              if (is1098)      { idSpan.style.fontWeight = '700'; idSpan.style.color = 'var(--red)'; }
+              else if (is1097) { idSpan.style.fontWeight = '700'; idSpan.style.color = '#fb923c'; }
+              else             { idSpan.style.color = 'var(--accent)'; }
               [
                 { text: (e.TimeCreated||'').replace('T',' ').substring(0,19), mono:true },
-                { html: is1098
-                    ? `<span style="font-family:var(--font-mono);font-weight:700;color:var(--red)">${e.Id} ⚠️</span>`
-                    : is1097
-                    ? `<span style="font-family:var(--font-mono);font-weight:700;color:#fb923c">${e.Id} ⚠️</span>`
-                    : `<span style="font-family:var(--font-mono);color:var(--accent)">${e.Id}</span>` },
+                { node: idSpan },
                 { text: e.Level || '' },
                 { text: (e.ProviderName||'').replace('Microsoft-Windows-',''), muted:true },
                 { text: (e.Message||'').substring(0,100), muted:true },
               ].forEach(cell => {
                 const td = document.createElement('td');
-                if (cell.html) td.innerHTML = cell.html;
+                if (cell.node) td.appendChild(cell.node);
                 else {
                   td.textContent = cell.text || '';
                   if (cell.mono) td.style.fontFamily = 'var(--font-mono)';
@@ -1476,11 +1652,15 @@
     // ── Severity Summary + Event Filter Pills ──────────────
     let _activeEventFilter = 'all'; // 'all' | 'Critical' | 'Error' | 'Warning' | 'Info'
 
+    // Der Collector liefert das Level "Info", ältere Exporte "Information": beide Schreibweisen zählen als Info
+    // (Zählung des Pills und Filter der Tabelle benutzen denselben Schlüssel "Information").
+    function levelKey(level) { return level === 'Info' ? 'Information' : level; }
+
     function renderSevSummary(findings, improvements, corrResults) {
       // Count events by level from allEvents
       const evCounts = { all: allEvents.length, Critical:0, Error:0, Warning:0, Information:0 };
       allEvents.forEach(e => {
-        const lvl = e.Level || '';
+        const lvl = levelKey(e.Level || '');
         if (evCounts[lvl] !== undefined) evCounts[lvl]++;
       });
 
@@ -1506,7 +1686,7 @@
           pillsEl.querySelectorAll('.event-filter-pill').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
           // Filter table
-          const filtered = level ? allEvents.filter(e => e.Level === level) : allEvents;
+          const filtered = level ? allEvents.filter(e => levelKey(e.Level) === level) : allEvents;
           document.getElementById('event-count').textContent = filtered.length + ' Ereignisse';
           renderEventTable(filtered);
           // Clear search
@@ -1797,6 +1977,21 @@
       });
     }
 
+    // DOM-Helfer: Element mit Klasse und Text (textContent) - Ereigniswerte gelangen nur so ins DOM.
+    function mkEl(tag, cls, text) {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text !== undefined && text !== null) n.textContent = text;
+      return n;
+    }
+
+    // Hängt Kinder mit je einem Leerzeichen-Textknoten dazwischen an (wie im früheren Template: gleicher
+    // sichtbarer/kopierter Text, gleiche Abstände bei Inline-Elementen).
+    function appendSp(parent, ...kids) {
+      kids.forEach((k, i) => { if (i) parent.appendChild(document.createTextNode(' ')); parent.appendChild(k); });
+      return parent;
+    }
+
     function renderTimeline(events, clusters) {
       const section   = document.getElementById('timeline-section');
       const wrap      = document.getElementById('timeline-wrap');
@@ -1846,26 +2041,20 @@
           const row = document.createElement('div');
 
           if (item.type === 'cluster') {
+            // S2: Cluster-Zeile - Id, Benutzer und Quelle stammen aus der hochgeladenen JSON und werden
+            // nur per textContent ausgegeben (kein innerHTML).
             row.className = 'tl-row tl-row--cluster';
-            row.innerHTML = `
-              <div class="tl-line-wrap">
-                <div class="tl-dot tl-dot--cluster"></div>
-                ${idx < filtered.length-1 ? '<div class="tl-line"></div>' : ''}
-              </div>
-              <div class="tl-content">
-                <div class="tl-cluster-badge">
-                  🔗 ${item.cluster.count}× EventID ${item.cluster.id}
-                  ${item.cluster.user
-                    ? `<span class="tl-user">${item.cluster.user}</span>`
-                    : ''}
-                </div>
-                <div class="tl-cluster-time">
-                  ${fmtTime(item.cluster.firstTime)} –
-                  ${fmtTime(item.cluster.lastTime)}
-                </div>
-                <div class="tl-source">${item.cluster.source}</div>
-              </div>
-            `;
+            const c = item.cluster;
+            const lineWrap = mkEl('div', 'tl-line-wrap');
+            appendSp(lineWrap, ...[mkEl('div', 'tl-dot tl-dot--cluster'), idx < filtered.length-1 ? mkEl('div', 'tl-line') : null].filter(Boolean));
+            const content = mkEl('div', 'tl-content');
+            const badge = mkEl('div', 'tl-cluster-badge', `🔗 ${c.count}× EventID ${c.id}`);
+            if (c.user) {
+              badge.appendChild(document.createTextNode(' '));
+              badge.appendChild(mkEl('span', 'tl-user', c.user));
+            }
+            appendSp(content, badge, mkEl('div', 'tl-cluster-time', `${fmtTime(c.firstTime)} – ${fmtTime(c.lastTime)}`), mkEl('div', 'tl-source', c.source));
+            appendSp(row, lineWrap, content);
           } else {
             const e    = item.event;
             const icon = getTimelineIcon(e);
@@ -1876,23 +2065,14 @@
               lvl.includes('krit')   || lvl.includes('crit') ? 'critical' :
               'info'
             }`;
-            row.innerHTML = `
-              <div class="tl-line-wrap">
-                <div class="tl-dot">${icon}</div>
-                ${idx < filtered.length-1 ? '<div class="tl-line"></div>' : ''}
-              </div>
-              <div class="tl-content">
-                <div class="tl-row-header">
-                  <span class="tl-time">${fmtTime(item.time)}</span>
-                  <span class="tl-id">ID ${e.Id}</span>
-                  <span class="tl-level">${e.Level||''}</span>
-                </div>
-                <div class="tl-msg">${
-                  (e.Message||'').substring(0,120).replace(/</g,'&lt;')
-                }${e.Message?.length > 120 ? '…' : ''}</div>
-                <div class="tl-source">${e.ProviderName||''}</div>
-              </div>
-            `;
+            // S3: Einzelereignis - Id, Level, Message und ProviderName nur per textContent.
+            const lineWrap = mkEl('div', 'tl-line-wrap');
+            appendSp(lineWrap, ...[mkEl('div', 'tl-dot', icon), idx < filtered.length-1 ? mkEl('div', 'tl-line') : null].filter(Boolean));
+            const content = mkEl('div', 'tl-content');
+            const header = mkEl('div', 'tl-row-header');
+            appendSp(header, mkEl('span', 'tl-time', fmtTime(item.time)), mkEl('span', 'tl-id', `ID ${e.Id}`), mkEl('span', 'tl-level', e.Level || ''));
+            appendSp(content, header, mkEl('div', 'tl-msg', (e.Message||'').substring(0,120) + (e.Message?.length > 120 ? '…' : '')), mkEl('div', 'tl-source', e.ProviderName || ''));
+            appendSp(row, lineWrap, content);
           }
           wrap.appendChild(row);
         });
@@ -1937,43 +2117,31 @@
         const card = document.createElement('div');
         card.className = 'cluster-card';
 
-        card.innerHTML = `
-          <div class="cluster-header">
-            <div class="cluster-title">
-              ❌ <strong>${c.count}×</strong> EventID ${c.id}
-              ${c.user
-                ? `<span class="cluster-user">👤 ${c.user}</span>`
-                : ''}
-            </div>
-            <div class="cluster-time">
-              ${fmtTime(c.firstTime)} – ${fmtTime(c.lastTime)}
-              <span class="cluster-duration">(${
-                Math.round((c.lastTime - c.firstTime) / 60000)
-              } Min.)</span>
-            </div>
-          </div>
-          <div class="cluster-source">${c.source}</div>
-          <details class="cluster-events">
-            <summary>${c.count} Events anzeigen</summary>
-            <div class="cluster-event-list">
-              ${c.events.slice(0, 20).map(e => `
-                <div class="cluster-event-row">
-                  <span class="cluster-event-time">
-                    ${fmtTime(new Date(e.TimeCreated))}
-                  </span>
-                  <span class="cluster-event-msg">
-                    ${(e.Message||'').substring(0,80).replace(/</g,'&lt;')}
-                  </span>
-                </div>
-              `).join('')}
-              ${c.events.length > 20
-                ? `<div class="cluster-more">
-                   + ${c.events.length-20} weitere Events
-                   </div>`
-                : ''}
-            </div>
-          </details>
-        `;
+        // S4: Cluster-Karte - Id, Benutzer, Quelle und Meldungstexte stammen aus der hochgeladenen
+        // JSON und werden nur per textContent ausgegeben (kein innerHTML).
+        const header = mkEl('div', 'cluster-header');
+        const title = mkEl('div', 'cluster-title');
+        title.appendChild(document.createTextNode('❌ '));
+        title.appendChild(mkEl('strong', null, `${c.count}×`));
+        title.appendChild(document.createTextNode(` EventID ${c.id}`));
+        if (c.user) {
+          title.appendChild(document.createTextNode(' '));
+          title.appendChild(mkEl('span', 'cluster-user', `👤 ${c.user}`));
+        }
+        const time = mkEl('div', 'cluster-time');
+        time.appendChild(document.createTextNode(`${fmtTime(c.firstTime)} – ${fmtTime(c.lastTime)} `));
+        time.appendChild(mkEl('span', 'cluster-duration', `(${Math.round((c.lastTime - c.firstTime) / 60000)} Min.)`));
+        appendSp(header, title, time);
+
+        const details = mkEl('details', 'cluster-events');
+        const evRows = c.events.slice(0, 20).map(e => appendSp(mkEl('div', 'cluster-event-row'),
+          mkEl('span', 'cluster-event-time', fmtTime(new Date(e.TimeCreated))),
+          mkEl('span', 'cluster-event-msg', (e.Message||'').substring(0,80))));
+        if (c.events.length > 20) evRows.push(mkEl('div', 'cluster-more', `+ ${c.events.length-20} weitere Events`));
+        const list = appendSp(mkEl('div', 'cluster-event-list'), ...evRows);
+        appendSp(details, mkEl('summary', null, `${c.count} Events anzeigen`), list);
+
+        appendSp(card, header, mkEl('div', 'cluster-source', c.source), details);
         container.appendChild(card);
       });
     }
@@ -1989,6 +2157,15 @@
       medium: { label: 'Mittel',  cls: 'rec-risk--medium' },
       high:   { label: 'Hoch',    cls: 'rec-risk--high'   },
     };
+
+    // Absicherung für Empfehlungs-Links: relativer Pfad ohne Schema oder https. Alles andere
+    // (javascript:, data:, http:, //host, leer, kein String) wird nicht als Link ausgegeben.
+    function isSafeRecLink(link) {
+      if (typeof link !== 'string' || !link || link !== link.trim()) return false;
+      if (/^https:\/\/[^\s]+$/i.test(link)) return true;
+      if (/^\/\//.test(link) || /^[a-z][a-z0-9+.\-]*:/i.test(link)) return false;   // protokollrelativ oder anderes Schema
+      return /^[^\s:]+$/.test(link);                                               // relativer Pfad, kein Doppelpunkt/Leerraum
+    }
 
     function buildRecList(recommendations) {
       const recList = document.createElement('div');
@@ -2031,7 +2208,8 @@
 
         // Fix command row (cmd und/oder link)
         const cmd  = typeof rec === 'object' ? rec.cmd  : null;
-        const link = typeof rec === 'object' ? rec.link : null;
+        // Link nur anzeigen, wenn relativer Pfad ohne Schema oder https (siehe isSafeRecLink)
+        const link = (typeof rec === 'object' && isSafeRecLink(rec.link)) ? rec.link : null;
 
         if (cmd || link) {
           const cmdRow = document.createElement('div');
@@ -2419,7 +2597,11 @@
       const srcMatch = !hSrcs || hSrcs.some(s => (event.ProviderName||'').toLowerCase().includes(s.toLowerCase()));
       const excMatch = !h.excludeSources || !h.excludeSources.some(s =>
         (event.ProviderName||'').toLowerCase().includes(s.toLowerCase()));
-      return idMatch && srcMatch && excMatch;
+      // messageContains (wie bei den Event Rules): der Eintrag gilt nur, wenn die Meldung einen der Begriffe nennt
+      // (7023: nur die Dienste SysMain/Superfetch, nicht jeder Dienstfehler des Service Control Manager).
+      const msgMatch = !h.messageContains || h.messageContains.some(m =>
+        (event.Message||'').toLowerCase().includes(m.toLowerCase()));
+      return idMatch && srcMatch && excMatch && msgMatch;
     }
 
     // Phase 13D: strukturiertes Ergebnis statt nur "Match-Objekt oder null" (siehe
@@ -2660,17 +2842,24 @@
     }
 
     // ── Event Table ─────────────────────────────────────────
+    // CSS-Klasse des Level-Badges nur über diese Whitelist (nie aus Zeichen des Ereigniswerts).
+    // Werte entsprechen den bisherigen Klassen lv-<erstes Zeichen> der gültigen Level; "u" = unbekannt (ohne Stil).
+    const LEVEL_BADGE_CLASS = { Critical:'c', Error:'e', Warning:'w', Info:'i', Information:'i', Fehler:'f', Kritisch:'k', Warnung:'w' };
+
     function renderEventTable(events) {
       const tbody = document.getElementById('event-table');
       document.getElementById('event-count').textContent = events.length + ' Ereignisse';
       const frag = document.createDocumentFragment();
       events.slice(0,300).forEach(e => {
         const tr  = document.createElement('tr');
-        const lvl = (e.Level||'i')[0].toLowerCase();
+        // S5: Level-Badge per DOM erzeugt, Text per textContent, Klasse aus Whitelist (kein innerHTML).
+        const lvlText  = e.Level || 'Info';
+        const lvlClass = Object.prototype.hasOwnProperty.call(LEVEL_BADGE_CLASS, lvlText) ? LEVEL_BADGE_CLASS[lvlText] : 'u';
+        const lvBadge  = mkEl('span', 'lv lv-' + lvlClass, String(lvlText));
         const cells = [
           { text:(e.TimeCreated||'').replace('T',' ').substring(0,19), mono:true },
           { text:String(e.Id||''), mono:true, accent:true },
-          { html:`<span class="lv lv-${lvl}">${e.Level||'Info'}</span>` },
+          { node:lvBadge },
           { text:e.ProviderName||'', maxw:'140px' },
           { text:e.Category||'' },
           { text:(e.Message||'').substring(0,120), muted:true, maxw:'300px' },
@@ -2685,7 +2874,7 @@
         }
         cells.forEach(cell => {
           const td = document.createElement('td');
-          if (cell.html) { td.innerHTML = cell.html; }
+          if (cell.node) { td.appendChild(cell.node); }
           else {
             td.textContent = cell.text;
             if (cell.mono)   td.style.fontFamily = 'var(--font-mono)';
@@ -2712,7 +2901,7 @@
       const lvl = _activeEventFilter !== 'all' ? _activeEventFilter : null;
 
       let filtered = allEvents;
-      if (lvl)  filtered = filtered.filter(e => e.Level === lvl);
+      if (lvl)  filtered = filtered.filter(e => levelKey(e.Level) === lvl);
       if (q)    filtered = filtered.filter(e =>
         String(e.Id).includes(q) || (e.ProviderName||'').toLowerCase().includes(q) ||
         (e.Message||'').toLowerCase().includes(q) || (e.Category||'').toLowerCase().includes(q)

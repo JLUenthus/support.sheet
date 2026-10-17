@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20261008-linux-commands-page';
+const CACHE_VERSION = '20261017-patchday-5';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -15,7 +15,11 @@ const ASSETS = [
   './mitmachen-merge.html',
   './tools.html',
   './eventlog.html',
+  './eventlog-referenz.html',
+  './js/eventlog-referenz.js',
+  './css/eventlog-referenz.css',
   './data/eventlog-rules.json',
+  './data/eventlog-codes.json',
   './data/improvement-rules.json',
   './data/known-harmless.json',
   './data/correlation-rules.json',
@@ -61,6 +65,10 @@ const ASSETS = [
   './js/news/news-cve-reports.js',
   './js/news/news-cve-watch.js',
   './js/news/news-cve-nav.js',
+  './js/news/news-patch-core.js',
+  './js/news/news-patch.js',
+  './js/news/news-patch-reports.js',
+  './js/news/news-patch-nav.js',
   './js/news/news-tabs.js',
   './css/news/news.css',
   './js/har.js',
@@ -84,6 +92,7 @@ const ASSETS = [
   './js/guides-editor.js',
   './js/guides-manage.js',
   './js/marked.min.js',
+  './js/safe-markdown.js',
   './js/mammoth.min.js',
   './js/turndown.min.js',
   './js/jszip.min.js',

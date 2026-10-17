@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>support.sheet – Event-Referenz</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/eventlog-referenz.css">
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-icon" id="as-logo-icon">📖</div>
+      <div class="logo-text" id="as-logo-label">support<span>.referenz</span></div>
+    </a>
+    <div class="header-right">
+      <div class="pill pill-count" style="border-color:rgba(232,179,57,.3);background:rgba(232,179,57,.08);color:#e8b339;">📖 Event-Referenz</div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Inhalt wird von js/eventlog-referenz.js aus data/eventlog-codes.json aufgebaut -->
+    <div id="er-root" data-src="data/eventlog-codes.json">
+      <noscript><p>Die Event-Referenz benötigt JavaScript.</p></noscript>
+    </div>
+  </main>
+
+  <script src="js/eventlog-referenz.js"></script>
+  <script src="nav.js"></script>
+</body>
+</html>

@@ -31,6 +31,11 @@
     // CVE-Bericht Teil 3: nur manuelle Watchlist-Einträge und Erledigtes,
     // die Watchlist selbst wird bei Bedarf aus Berichten abgeleitet.
     cveWatch:    'news.cve.watch',
+    // Patchday-Bericht (eigener Reiter): ebenfalls eigener Namensraum, damit
+    // "Feed zurücksetzen" und alle Feed-Resets ihn nicht berühren. In Init und
+    // Backup (patchSettings, patchReports) aufgenommen.
+    patchSettings: 'news.patch.settings',
+    patchReports:  'news.patch.reports',
   };
 
   function todayISO(offsetDays) {
@@ -66,6 +71,11 @@
     if (window.NewsCveCore) initIfMissing(KEYS.cveSettings, () => window.NewsCveCore.defaultSettings());
     initIfMissing(KEYS.cveReports, () => []);
     initIfMissing(KEYS.cveWatch, () => ({ version: 1, manual: [], resolved: {} }));
+    // Startwerte stammen aus news-patch-core.js (muss vor dieser Datei geladen
+    // sein); fehlt es, bleibt der Key leer und news-patch.js fällt selbst auf
+    // die Startwerte zurück.
+    if (window.NewsPatchCore) initIfMissing(KEYS.patchSettings, () => window.NewsPatchCore.defaultSettings());
+    initIfMissing(KEYS.patchReports, () => []);
   }
 
   function readJSON(key, fallback) {

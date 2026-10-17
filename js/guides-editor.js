@@ -3,7 +3,7 @@
 // Neu anlegen ODER bearbeiten (?id=), Markdown-Toolbar, Live-Vorschau,
 // Bild-Upload, Entwurf (localStorage), MD/TXT/DOCX-Import.
 // Nutzt ausschließlich GuidesDB für Persistenz.
-// Erwartet vor dieser Datei: guides-db.js, marked.min.js,
+// Erwartet vor dieser Datei: guides-db.js, marked.min.js, safe-markdown.js,
 // mammoth.min.js, turndown.min.js.
 // ============================================================
 (function() {
@@ -829,9 +829,10 @@
 
   async function updatePreview() {
     const md = textarea.value;
-    if (typeof marked !== 'undefined') {
+    if (window.SafeMarkdown) {
+      // Auch der eigene Text kann eingefügten oder importierten Fremdinhalt enthalten: gefiltert rendern (siehe js/safe-markdown.js)
       const resolved = await resolveAssetsForPreview(md);
-      preview.innerHTML = marked.parse(preserveBlankLines(resolved));
+      window.SafeMarkdown.renderInto(preview, preserveBlankLines(resolved));
     } else {
       const pre = document.createElement('pre');
       pre.textContent = md;

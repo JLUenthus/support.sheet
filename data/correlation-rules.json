@@ -147,6 +147,9 @@
           "eventIds": [
             41
           ],
+          "sources": [
+            "Kernel-Power"
+          ],
           "minCount": 2
         },
         {
@@ -927,6 +930,10 @@
           "eventIds": [
             1000,
             1001
+          ],
+          "sources": [
+            "Application Error",
+            "Windows Error Reporting"
           ],
           "minCount": 2
         }

@@ -2,7 +2,7 @@
 // guide.sheet – guides-view.js (Phase 4 – Guide-Ansicht)
 // Lädt einen einzelnen Guide über GuidesDB, rendert Markdown +
 // Assets, und behandelt Favorit/Bearbeiten/Löschen.
-// Erwartet js/guides-db.js und js/marked.min.js VOR dieser Datei.
+// Erwartet js/guides-db.js, js/marked.min.js und js/safe-markdown.js VOR dieser Datei.
 // ============================================================
 (function() {
   let currentId = null;
@@ -252,12 +252,8 @@
   }
 
   function enhanceCodeBlocks(container) {
+    // Die Code-Hervorhebung (hljs) läuft schon in SafeMarkdown.renderInto(…, { highlight: true }), also nach der Bereinigung auf den sicheren Knoten.
     container.querySelectorAll('pre').forEach(pre => {
-      const code = pre.querySelector('code');
-      if (window.hljs && code) {
-        try { hljs.highlightElement(code); } catch { /* Sprache nicht erkannt – Rohtext bleibt */ }
-      }
-
       const wrap = document.createElement('div');
       wrap.className = 'gv-code-block';
       pre.parentNode.insertBefore(wrap, pre);
@@ -913,9 +909,10 @@
     updateFavButton();
 
     const contentEl = document.getElementById('gv-content');
-    if (typeof marked !== 'undefined') {
+    if (window.SafeMarkdown) {
+      // Inhalt aus IndexedDB, einem (ggf. gemeinsam genutzten) Ordner oder einem Import: nie ungefiltert in innerHTML (siehe js/safe-markdown.js)
       const resolved = await resolveAssetUrls(currentId, currentContent);
-      contentEl.innerHTML = marked.parse(preserveBlankLines(resolved));
+      window.SafeMarkdown.renderInto(contentEl, preserveBlankLines(resolved), { highlight: true });
     } else {
       const pre = document.createElement('pre');
       pre.textContent = currentContent;

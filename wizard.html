@@ -74,6 +74,7 @@
   <script src="js/loader.js"></script>
   <script src="js/toast.js"></script>
   <script src="js/marked.min.js"></script>
+  <script src="js/safe-markdown.js"></script>
   <script src="js/guide-overlay.js"></script>
   <script src="js/settings-store.js"></script>
   <script src="js/variables.js"></script>
@@ -132,9 +133,9 @@
 
       // 6. Callbacks
       const callbacks = {
-        onAnswer: (value) => {
+        onAnswer: (value, matchedRule = null) => {
           if (!currentSession || !currentWizard) return null;
-          const res = WizardEngine.submitAnswer(currentSession, currentWizard, value);
+          const res = WizardEngine.submitAnswer(currentSession, currentWizard, value, matchedRule);
           if (!res.success) {
             // INVALID_ANSWER wird vom Renderer bereits inline im Frage-Step
             // angezeigt (siehe renderQuestion() in wizard-renderer.js) –
@@ -170,8 +171,14 @@
           const step = WizardEngine.getCurrentStep(currentSession, currentWizard);
           const evalResult = WizardEngine.evaluateAnalyzerStep(step, events);
           const nextId = evalResult.firstMatchNext || step.skipNext;
+          // Die tatsächlich gematchte Regel direkt weiterreichen, statt sie
+          // von submitAnswer() über next===value rückwärts suchen zu lassen
+          // (Phase 8A/8B – behebt Mehrdeutigkeit bei geteiltem next unter
+          // mehreren detect-Regeln). Beim Skip-Fall (kein Match) gibt es
+          // keine Regel, matchedRule bleibt null.
+          const matchedRule = evalResult.matched?.[0]?.rule ?? null;
           if (nextId) {
-            callbacks.onAnswer(nextId);
+            callbacks.onAnswer(nextId, matchedRule);
           }
         },
       };

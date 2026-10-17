@@ -29,15 +29,6 @@ window.GuideOverlay = (function() {
     return _guides.find(g => g.id === id) || null;
   }
 
-  // HTML-Escaping fuer Links (Titel/URL koennen Sonderzeichen enthalten)
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
   // Guide-Objekt ins Overlay rendern (Titel, Inhalt, Links)
   function renderGuide(guide) {
     const overlay  = document.getElementById('guide-overlay');
@@ -52,30 +43,45 @@ window.GuideOverlay = (function() {
     openBtn.removeAttribute('target'); // direkt navigieren statt neuer Tab
     openBtn.title = 'Guide in guide.sheet öffnen';
 
-    // Markdown rendern falls marked.js verfuegbar
-    let html;
-    if (typeof marked !== 'undefined') {
-      html = marked.parse(guide.content || '');
+    // Markdown gefiltert rendern (js/safe-markdown.js): auch die Support-Guides laufen über denselben Weg wie die übrigen Guides.
+    // Ohne das Modul bleibt nur Text.
+    if (window.SafeMarkdown) {
+      window.SafeMarkdown.renderInto(contentEl, guide.content || '');
     } else {
-      // Fallback: plain text mit <br> fuer Zeilenumbrueche
-      html = '<pre style="white-space:pre-wrap;font-family:var(--font-ui)">'
-        + escapeHtml(guide.content || '') + '</pre>';
+      const pre = document.createElement('pre');
+      pre.style.cssText = 'white-space:pre-wrap;font-family:var(--font-ui)';
+      pre.textContent = guide.content || '';
+      contentEl.replaceChildren(pre);
     }
 
-    // Links anhaengen, falls vorhanden
+    // Links anhaengen, falls vorhanden (nur Textknoten und geprüfte Ziele, kein innerHTML)
     const links = Array.isArray(guide.links) ? guide.links.filter(l => l && l.url) : [];
     if (links.length) {
-      html += '<div class="guide-overlay-links">'
-        + '<h3>🔗 Links</h3><ul>'
-        + links.map(l => {
-            const label = l.text && l.text.trim() ? l.text.trim() : l.url;
-            return '<li><a href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener">'
-              + escapeHtml(label) + '</a></li>';
-          }).join('')
-        + '</ul></div>';
+      const box = document.createElement('div');
+      box.className = 'guide-overlay-links';
+      const h3 = document.createElement('h3');
+      h3.textContent = '🔗 Links';
+      const ul = document.createElement('ul');
+      links.forEach(l => {
+        const url = String(l.url);
+        const label = typeof l.text === 'string' && l.text.trim() ? l.text.trim() : url;
+        const li = document.createElement('li');
+        const safe = window.SafeMarkdown && window.SafeMarkdown.safeLink(url);
+        if (safe) {
+          const a = document.createElement('a');
+          a.setAttribute('href', safe.href);
+          if (safe.external) { a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener noreferrer'); }
+          a.textContent = label;
+          li.appendChild(a);
+        } else {
+          li.textContent = label;   // unsicheres oder ungültiges Ziel: nur als Text
+        }
+        ul.appendChild(li);
+      });
+      box.appendChild(h3);
+      box.appendChild(ul);
+      contentEl.appendChild(box);
     }
-
-    contentEl.innerHTML = html;
 
     overlay.hidden = false;
     document.body.style.overflow = 'hidden';

@@ -1,5 +1,5 @@
 // ============================================================
-// News Curator – Reiter "News" | "CVE-Bericht"
+// News Curator – Reiter "News" | "CVE-Bericht" | "Patchday"
 // ============================================================
 // WAI-ARIA-Tabs-Muster mit automatischer Aktivierung: Pfeiltasten (links/
 // rechts, mit Umbruch), Home/End; Enter/Leertaste wirken über den normalen
@@ -7,11 +7,14 @@
 // erreichbar. Die Reiter-Buttons sind statisch und werden nie neu
 // aufgebaut, dadurch kann der Fokus nicht verloren gehen (der Fokus-Bug der
 // Themen-Pillen aus Prompt 8 entsteht durch Neuaufbau beim Rendern).
-// Direktaufruf: news.html#cve öffnet den CVE-Reiter.
+// Direktaufruf: news.html#cve öffnet den CVE-Reiter, news.html#patch den
+// Patchday-Reiter. Ein Hash auf einen Abschnitt innerhalb eines Panels
+// (z. B. #news-cve-archive-section) öffnet das zugehörige Panel.
 (function () {
   const TABS = [
     { id: 'news', hash: '' },
     { id: 'cve', hash: '#cve' },
+    { id: 'patch', hash: '#patch' },
   ];
   let activeId = 'news';
 
@@ -33,7 +36,9 @@
     });
     // Die fixierte Fortschrittsleiste gehört zum Feed (News-Reiter).
     document.body.classList.toggle('news-tab-cve', id === 'cve');
+    document.body.classList.toggle('news-tab-patch', id === 'patch');
     if (id === 'cve') window.NewsCve?.refreshSummary();
+    if (id === 'patch') window.NewsPatch?.refreshSummary();
     if (options.focus) tabEl(id)?.focus();
     if (options.updateHash) {
       const target = TABS.find(t => t.id === id).hash;
@@ -41,17 +46,21 @@
     }
   }
 
-  // Ziel eines Hashs innerhalb des CVE-Panels (z. B. #news-cve-archive-section)?
-  function cveTargetFromHash() {
-    if (!location.hash || location.hash === '#cve') return null;
+  // Ziel eines Hashs innerhalb des Panels dieses Reiters (z. B. #news-cve-archive-section)?
+  function targetInPanel(tabId) {
+    const own = TABS.find(t => t.id === tabId).hash;
+    if (!location.hash || location.hash === own) return null;
     let id = location.hash.slice(1);
     try { id = decodeURIComponent(id); } catch { /* kaputtes Escape: Rohwert verwenden */ }
     const target = document.getElementById(id);
-    return target && target.closest('#news-panel-cve') ? target : null;
+    return target && target.closest('#news-panel-' + tabId) ? target : null;
   }
 
   function idFromHash() {
-    return location.hash === '#cve' || cveTargetFromHash() ? 'cve' : 'news';
+    for (const t of TABS) {
+      if (t.hash && (location.hash === t.hash || targetInPanel(t.id))) return t.id;
+    }
+    return 'news';
   }
 
   function onKeydown(e) {
@@ -68,32 +77,38 @@
   }
 
   function onHashChange() {
-    if (location.hash === '#cve') { select('cve'); return; }
+    const direct = TABS.find(t => t.hash && t.hash === location.hash);
+    if (direct) { select(direct.id); return; }
     if (!location.hash) { select('news'); return; }
-    // Anker aus dem News-Bereich: war der CVE-Reiter offen, war das Ziel
+    // Anker aus dem News-Bereich: war ein anderer Reiter offen, war das Ziel
     // verborgen und der Browser hat nicht gescrollt, also nachholen.
     const target = document.getElementById(location.hash.slice(1));
     if (target && target.closest('#news-panel-news') && activeId !== 'news') {
       select('news');
       target.scrollIntoView();
     }
-    // Gleiches für Abschnitte des CVE-Panels (Zurück/Vorwärts zwischen Reitern).
-    if (cveTargetFromHash() && activeId !== 'cve') {
-      select('cve');
-      cveTargetFromHash().scrollIntoView();
-    }
+    // Gleiches für Abschnitte des CVE- und des Patchday-Panels (Zurück/Vorwärts zwischen Reitern).
+    TABS.forEach(t => {
+      if (!t.hash) return;
+      const inPanel = targetInPanel(t.id);
+      if (inPanel && activeId !== t.id) {
+        select(t.id);
+        inPanel.scrollIntoView();
+      }
+    });
   }
 
   function init() {
-    if (!tabEl('news') || !tabEl('cve')) return;
+    if (!TABS.every(t => tabEl(t.id))) return;
     TABS.forEach(t => {
       tabEl(t.id).addEventListener('click', () => select(t.id, { updateHash: true }));
       tabEl(t.id).addEventListener('keydown', onKeydown);
     });
-    select(idFromHash());
-    // Beim Laden mit Hash auf einen CVE-Abschnitt war das Ziel noch verborgen,
-    // der Browser hat nicht gescrollt: nachholen.
-    cveTargetFromHash()?.scrollIntoView();
+    const initial = idFromHash();
+    select(initial);
+    // Beim Laden mit Hash auf einen Abschnitt eines Panels war das Ziel noch
+    // verborgen, der Browser hat nicht gescrollt: nachholen.
+    if (initial !== 'news') targetInPanel(initial)?.scrollIntoView();
     window.addEventListener('hashchange', onHashChange);
   }
 
