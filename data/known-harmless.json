@@ -54,7 +54,7 @@
       "reason": "Bestimmte Dienste (z.B. superfetch/sysmain auf SSDs) werden absichtlich gestoppt oder schlagen harmlos fehl. Erst relevant wenn kritische Dienste betroffen sind.",
       "reduceSeverity": false,
       "affectsScore": false,
-      "excludeSources": [
+      "messageContains": [
         "SysMain",
         "Superfetch"
       ]
@@ -269,7 +269,7 @@
     },
     {
       "eventIds": [
-        20
+        19
       ],
       "sources": [
         "Microsoft-Windows-WindowsUpdateClient"

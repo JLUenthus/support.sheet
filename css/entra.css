@@ -151,3 +151,9 @@
   background:var(--panel2); color:var(--muted); transition:all .15s;
 }
 .export-btn:hover { color:var(--text); border-color:var(--accent); }
+
+/* Meldungen im Seitenkörper (Dateifehler, ignorierte Dateien) und neutraler Status für unbekannte Werte */
+.page-msg { margin: 12px 0; padding: 10px 14px; border-radius: var(--r); font-size: .82rem; line-height: 1.5; overflow-wrap: anywhere; border: 1px solid var(--border2); border-left-width: 3px; background: var(--panel); color: var(--text); }
+.page-msg--error { border-color: rgba(248,113,113,.35); border-left-color: var(--red); background: rgba(248,113,113,.06); }
+.page-msg--note  { border-color: rgba(251,191,36,.3); border-left-color: var(--amber); background: rgba(251,191,36,.05); color: var(--muted); }
+.status-unknown { color: var(--muted); font-weight: 700; font-size: .75rem; }

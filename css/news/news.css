@@ -671,3 +671,16 @@ body.news-tab-cve .news-progress-bar { display: none !important; }
 /* .news-page-nav-link setzt display:flex und würde das hidden-Attribut
    überstimmen ("Geöffneter Bericht" nur bei geöffnetem Bericht). */
 .news-page-nav-link[hidden] { display: none; }
+
+/* ── Patchday-Bericht (dritter Reiter) ─────────────────────────
+   Nutzt die Klassen des CVE-Reiters (Hersteller-/Produktzeilen, Meldungen, Archiv, Bericht), die hier
+   unverändert bleiben. Eigene Regeln nur für das, was neu ist. */
+body.news-tab-patch .news-progress-bar { display: none !important; }
+.news-patch-field { max-width: 440px; }   /* .news-field ist sonst auf 200px begrenzt */
+.news-patch-offset { width: 100%; }
+/* Tabellen des Berichts: scrollender Container (.news-cve-table-wrap), Zellen brechen auch lange Wörter und URLs um. */
+.news-patch-report th, .news-patch-report td { overflow-wrap: anywhere; word-break: break-word; }
+/* Lange Details (Tags) und Namen dürfen umbrechen statt die Seite zu verbreitern (375 px). */
+.news-patch .news-tag-box { min-width: 0; }
+.news-patch .news-tag-chip { max-width: 100%; min-width: 0; }
+.news-patch .news-tag-chip > span:first-child { min-width: 0; overflow-wrap: anywhere; }
