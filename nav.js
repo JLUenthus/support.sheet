@@ -29,6 +29,7 @@
         { id:'guides-manage',   href:'guides-manage.html',label:'Lokale DB | Einstellungen', icon:'🗄️', color:'#4ade80', desc:'Backup, Restore, Merge, Papierkorb' },
       ]
     },
+    { id:'quicknotes', href:'quicknotes.html', label:'Quicknotes', icon:'📝', color:'#f472b6', desc:'Schnelle Notizen mit Tabs' },
     { id:'wizard',   href:'wizard.html', label:'Wizard', icon:'🔍', color:'#a78bfa', desc:'Geführte Fehlerdiagnose' },
     {
       id:'analyzer', label:'Analyzer', icon:'📋', color:'#e8b339', group:true,
@@ -212,6 +213,7 @@
                  : currentPage.id === 'guides-overview' ? '.guides'
                  : currentPage.id === 'guides-create'   ? '.guides'
                  : currentPage.id === 'guides-manage'   ? '.guides'
+                 : currentPage.id === 'quicknotes'      ? '.notes'
                  : currentPage.id === 'mitmachen'       ? '.mitmachen'
                  : currentPage.id === 'wizard'           ? '.wizard'
                  : '.tools';

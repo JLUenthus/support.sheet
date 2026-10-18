@@ -25,6 +25,7 @@ Mittlerweile mehr als nur Commands: Log-/Sign-In-/HAR-Analyzer, ein Ticketassist
 | [HAR Analyzer](har.html) | Browser-Sessions/Auth-Flows aus HAR-Export analysieren | – |
 | [Ticketassistent](ticketassistent.html) | KI-gestützt Tickets formulieren | – |
 | [guide.sheet](guides.html) | Eigene Guides anlegen und lokal verwalten | – |
+| [Quicknotes](quicknotes.html) | Schnelle Notizen in Tabs (wie ein Texteditor), Autosave im Browser-Speicher, ZIP-Sicherung; erscheint auch als ausgeblendete Gruppe in der Guide-Übersicht | – |
 | [Mitmachen](mitmachen.html) | Commands einreichen, Feedback geben | – |
 | [support.tools](tools.html) | Einstellungen, Backup/Restore, PWA, Dokumentation | – |
 
@@ -127,7 +128,7 @@ support.sheet/
 ├── index.html          ← Startseite / Kachel-Übersicht
 ├── windows.html / exchange.html / forti.html / scripts.html
 ├── eventlog.html / eventlog-referenz.html / entra.html / har.html
-├── ticketassistent.html / guides*.html / private.html
+├── ticketassistent.html / guides*.html / quicknotes.html / private.html
 ├── mitmachen.html / tools.html
 ├── nav.js              ← Navigation (alle Seiten)
 ├── sw.js               ← Service Worker (Offline-Cache)
@@ -139,6 +140,7 @@ support.sheet/
 │   ├── variables.js / favorites.js / recent.js
 │   ├── toast.js / tools.js / fuse.min.js
 │   ├── guides*.js          ← guide.sheet, eigene lokale Datenhaltung
+│   ├── quicknotes*.js      ← Quicknotes (eigene Datenbank quicknotes-db, getrennt von guide.sheet)
 │   └── entra.js / har.js   ← Analyzer-Logik
 ├── data/               ← Commands + Analyzer-Regeln als JSON
 ├── powershell/         ← 9 fertige .ps1 Skripte

@@ -1,0 +1,363 @@
+/* ============================================================
+   quicknotes.css – Quicknotes (quicknotes.html) und die Gruppe "Quicknotes" in der Guide-Übersicht (guides.html)
+   Nutzt die Tokens aus main.css. Akzentfarbe: Pink (--pink). Texte nie in --dim (zu wenig Kontrast), nur --text/--muted.
+   ============================================================ */
+
+:root { --qn-accent: #f472b6; --qn-accent-bg: rgba(244, 114, 182, .10); }
+
+/* Der Hochscrollen-Knopf der Navigation passt nicht zu einem festen Editor-Layout */
+body.page-quicknotes .as-scroll-top { display: none; }
+
+/* ── Layout: ein Panel in Fensterhöhe ─────────────────────── */
+.qn-layout {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 154px);
+  min-height: 420px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.qn-layout [hidden] { display: none !important; }
+
+/* ── Tab-Leiste ───────────────────────────────────────────── */
+.qn-tabbar {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 6px 6px 0;
+}
+.qn-tabstrip {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 2px;
+}
+.qn-tabstrip::-webkit-scrollbar { display: none; }
+.qn-iconbtn {
+  flex: none;
+  min-width: 30px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px 6px 0 0;
+  color: var(--muted);
+  font: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0 8px;
+}
+.qn-iconbtn:hover { color: var(--text); background: var(--panel); }
+.qn-iconbtn--add { color: var(--qn-accent); font-weight: 700; }
+
+.qn-tab {
+  display: flex;
+  align-items: center;
+  flex: none;
+  max-width: 220px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  margin-bottom: -1px;
+  position: relative;
+}
+.qn-tab:hover { background: #262b44; }
+.qn-tab--active { background: var(--panel); border-top: 2px solid var(--qn-accent); }
+.qn-tab--dragging { opacity: .5; }
+.qn-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 600;
+  padding: 8px 4px 8px 12px;
+  cursor: pointer;
+  text-align: left;
+}
+.qn-tab--active .qn-tab-btn { color: var(--text); }
+.qn-tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
+.qn-tab-dot { display: none; color: var(--amber); font-size: .6rem; line-height: 1; }
+.qn-tab--unsaved .qn-tab-dot { display: inline; }
+.qn-tab[data-state="error"] .qn-tab-dot,
+.qn-tab[data-state="conflict"] .qn-tab-dot { color: var(--red); }
+.qn-tab-close {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.qn-tab-close:hover { color: var(--red); background: var(--red-bg); }
+.qn-tab-rename {
+  width: 150px;
+  margin: 4px 6px;
+  padding: 4px 6px;
+  background: var(--bg);
+  border: 1px solid var(--qn-accent);
+  border-radius: 4px;
+  color: var(--text);
+  font: inherit;
+  font-size: .8rem;
+}
+
+/* sichtbarer Fokus */
+.qn-layout button:focus-visible,
+.qn-layout input:focus-visible,
+.qn-layout textarea:focus-visible,
+.qn-modal button:focus-visible,
+.gs-qn-section button:focus-visible,
+.gs-qn-section a:focus-visible {
+  outline: 2px solid var(--qn-accent);
+  outline-offset: 1px;
+}
+
+/* ── Menü (Liste aller Notizen) ───────────────────────────── */
+.qn-menuwrap { position: relative; display: flex; }
+.qn-menu {
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 0;
+  z-index: 60;
+  width: min(360px, 90vw);
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--panel2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 4px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .5);
+}
+.qn-menu-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  font-size: .82rem;
+  padding: 7px 10px;
+  cursor: pointer;
+  text-align: left;
+}
+.qn-menu-item:hover { background: rgba(255, 255, 255, .06); }
+.qn-menu-item--open .qn-menu-title { color: var(--qn-accent); }
+.qn-menu-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qn-menu-time { flex: none; color: var(--muted); font-size: .72rem; }
+.qn-menu-empty { color: var(--muted); font-size: .82rem; padding: 8px 10px; }
+
+/* ── Werkzeugleiste und Knöpfe ────────────────────────────── */
+.qn-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.qn-toolbar-sep { width: 1px; height: 18px; background: var(--border2); margin: 0 4px; }
+.qn-btn {
+  background: var(--panel2);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  font-size: .76rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.qn-btn:hover:not(:disabled) { border-color: var(--qn-accent); }
+.qn-btn:disabled { opacity: .5; cursor: default; }
+.qn-btn[aria-pressed="true"] { background: var(--qn-accent-bg); border-color: var(--qn-accent); color: var(--qn-accent); }
+.qn-btn--primary { background: var(--qn-accent-bg); border-color: var(--qn-accent); color: var(--qn-accent); }
+.qn-btn--danger:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
+.qn-badge {
+  display: inline-block;
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  color: var(--muted);
+  font-size: .68rem;
+  text-align: center;
+}
+
+/* ── Meldungen ────────────────────────────────────────────── */
+.qn-banners { display: flex; flex-direction: column; }
+.qn-banners:empty { display: none; }
+.qn-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  border-left: 4px solid var(--muted);
+  background: var(--panel2);
+  font-size: .8rem;
+}
+.qn-banner--error { border-left-color: var(--red); background: #2a1c26; }
+.qn-banner--warn { border-left-color: var(--amber); background: #2a2620; }
+.qn-banner--info { border-left-color: var(--accent); }
+.qn-banner-text { flex: 1 1 320px; color: var(--text); line-height: 1.45; overflow-wrap: anywhere; }
+.qn-banner-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ── Editor ───────────────────────────────────────────────── */
+.qn-editors { flex: 1; min-height: 0; display: flex; background: #0d1117; }
+.qn-pane { --qn-fs: 14px; flex: 1; min-width: 0; display: flex; }
+.qn-pane[hidden] { display: none; }
+.qn-gutter {
+  flex: none;
+  overflow: hidden;
+  padding: 8px 8px 8px 10px;
+  text-align: right;
+  white-space: pre;
+  user-select: none;
+  background: #11151d;
+  border-right: 1px solid var(--border);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--qn-fs);
+  line-height: 1.5;
+}
+.qn-pane--wrap .qn-gutter { display: none; }
+.qn-editor {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  border: 0;
+  outline: 0;
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--qn-fs);
+  line-height: 1.5;
+  tab-size: 4;
+  white-space: pre;
+  overflow: auto;
+}
+.qn-pane--wrap .qn-editor { white-space: pre-wrap; overflow-wrap: anywhere; }
+.qn-editor:focus-visible { outline: 2px solid var(--qn-accent); outline-offset: -2px; }
+
+.qn-fallback { flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 12px; min-height: 0; }
+.qn-fallback-text { color: var(--text); }
+.qn-fallback-area {
+  flex: 1;
+  min-height: 160px;
+  resize: none;
+  background: #0d1117;
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  padding: 8px 12px;
+}
+.qn-fallback .qn-btn { align-self: flex-start; }
+
+.qn-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--muted); }
+
+/* ── Hinweise und Statusleiste ────────────────────────────── */
+.qn-hint { padding: 6px 12px; font-size: .74rem; color: var(--muted); border-top: 1px solid var(--border); }
+.qn-hint--storage { color: var(--text); background: var(--amber-bg); }
+.qn-statusbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  align-items: center;
+  padding: 6px 12px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  font-size: .74rem;
+  color: var(--muted);
+}
+.qn-st { white-space: nowrap; }
+.qn-st--btn { background: transparent; border: 0; padding: 0; font: inherit; color: var(--muted); cursor: pointer; text-decoration: underline dotted; }
+.qn-st--btn[data-persisted="0"] { color: var(--amber); }
+.qn-st--btn[data-persisted="1"] { color: var(--green); }
+.qn-st--save[data-state="error"], .qn-st--save[data-state="conflict"] { color: var(--red); font-weight: 700; }
+.qn-st--save[data-state="saved"] { color: var(--green); }
+.qn-st--save[data-state="dirty"], .qn-st--save[data-state="saving"] { color: var(--amber); }
+.qn-st--tab { margin-left: auto; }
+
+/* ── Papierkorb-Dialog ────────────────────────────────────── */
+.qn-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, .6);
+}
+.qn-modal-box {
+  width: min(640px, 100%);
+  max-height: 80vh;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-lg);
+  padding: 18px;
+}
+.qn-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.qn-modal-title { font-size: 1.05rem; color: var(--text); }
+.qn-modal-sub { color: var(--muted); font-size: .8rem; margin-bottom: 12px; }
+.qn-trash-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.qn-trash-info { flex: 1 1 200px; display: flex; flex-direction: column; min-width: 0; }
+.qn-trash-title { color: var(--text); font-weight: 600; overflow-wrap: anywhere; }
+.qn-trash-meta { color: var(--muted); font-size: .74rem; }
+
+/* ── schmale Bildschirme ──────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Layout wächst mit dem Inhalt, der Editor behält eine feste, gut nutzbare Höhe */
+  .qn-layout { height: auto; min-height: calc(100vh - 140px); border-radius: var(--r); }
+  .qn-editors { flex: none; height: 55vh; min-height: 240px; }
+  .qn-toolbar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .qn-toolbar::-webkit-scrollbar { display: none; }
+  .qn-toolbar .qn-btn { flex: none; white-space: nowrap; }
+  .qn-toolbar-sep { display: none; }
+  .qn-btn { padding: 6px 9px; }
+  .qn-tab { max-width: 170px; }
+  .qn-tab-title { max-width: 110px; }
+  .qn-st--tab { display: none; }
+  .qn-statusbar { gap: 2px 12px; }
+}
+
+/* ── Gruppe "Quicknotes" in der Guide-Übersicht (Aufbau und Klassen wie die Gruppe "Support") ── */
+.gs-qn-section.gs-support-section { margin-top: 4px; margin-bottom: 20px; padding-top: 16px; }
+.gs-qn-section .gs-support-header { margin-bottom: 0; }
+.gs-qn-section.gs-qn-section--open .gs-support-header { margin-bottom: 12px; }
+.gs-qn-actions { display: flex; align-items: center; gap: 8px; }
+.gs-qn-new { color: var(--qn-accent); border-color: rgba(244, 114, 182, .5); }
+.gs-qn-new:hover { color: var(--text); border-color: var(--qn-accent); }
+.gs-qn-note { font-size: .74rem; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+.gs-qn-note a { color: var(--qn-accent); }
+.gs-qn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.gs-qn-section [hidden] { display: none !important; }   /* .gs-support-toggle setzt display:flex und schlüge sonst das hidden-Attribut */
+.gs-qn-tile { text-decoration: none; color: inherit; --gg-cat-color: var(--qn-accent); }
+.gs-qn-badge { --gg-cat-color: var(--qn-accent); color: var(--qn-accent); }
+.gs-qn-time { font-size: .7rem; color: var(--muted); }
+.gs-qn-empty, .gs-qn-error { font-size: .82rem; color: var(--muted); padding: 10px 0; }
+.gs-qn-error { color: var(--red); }

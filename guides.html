@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
   <link rel="stylesheet" href="css/guides.css">
+  <link rel="stylesheet" href="css/quicknotes.css">
 </head>
 <body data-gs-page="overview">
 
@@ -138,6 +139,29 @@
           </div>
         </div>
 
+        <!-- ── QUICKNOTES (Gruppe wie "Support", oben, standardmäßig ausgeblendet; liest nur aus quicknotes-db) ── -->
+        <section class="gs-support-section gs-qn-section" id="gs-qn-section">
+          <div class="gs-support-header">
+            <div class="gs-support-title">
+              <span class="gs-support-icon">📝</span>
+              <span>Quicknotes</span>
+              <span class="gs-support-count" id="gs-qn-count"></span>
+            </div>
+            <div class="gs-qn-actions">
+              <button type="button" class="gs-support-toggle gs-qn-new" id="gs-qn-new" hidden>+ Neue Quicknote</button>
+              <button type="button" class="gs-support-toggle" id="gs-qn-toggle" aria-expanded="false" aria-controls="gs-qn-body">
+                <span class="gs-support-toggle-label" id="gs-qn-toggle-label">einblenden</span>
+                <span class="gs-support-chevron">▾</span>
+              </button>
+            </div>
+          </div>
+          <div class="gs-qn-body" id="gs-qn-body" hidden>
+            <p class="gs-qn-note">Quicknotes liegen im Browser-Speicher dieses Geräts. Sie sind nicht im Guide-Ordner und nicht in der Guide-Sicherung. Sichern: <a href="quicknotes.html">Alle Notizen sichern</a>.</p>
+            <p class="gs-qn-error" id="gs-qn-error" role="alert" hidden></p>
+            <div class="gs-qn-grid" id="gs-qn-grid"><!-- Kacheln werden per JS eingefügt --></div>
+          </div>
+        </section>
+
         <div class="gg-skeleton" id="gg-skeleton">
           <div class="gg-skeleton-tile"></div>
           <div class="gg-skeleton-tile"></div>
@@ -237,6 +261,8 @@
   <script src="js/safe-markdown.js"></script>
   <script src="js/guide-overlay.js"></script>
   <script src="js/guides-overview.js"></script>
+  <script src="js/quicknotes-db.js"></script>
+  <script src="js/quicknotes-overview.js"></script>
   <script src="nav.js"></script>
 
 </body>

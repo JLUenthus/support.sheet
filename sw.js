@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20261018-viewfiles-10';
+const CACHE_VERSION = '20261018-quicknotes-11';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -83,6 +83,12 @@ const ASSETS = [
   './guides-howto.html',
   './guides-create.html',
   './guides-manage.html',
+  './quicknotes.html',
+  './css/quicknotes.css',
+  './js/quicknotes-db.js',
+  './js/quicknotes-io.js',
+  './js/quicknotes.js',
+  './js/quicknotes-overview.js',
   './guides-view.html',
   './css/guides.css',
   './js/guides.js',
@@ -228,7 +234,7 @@ self.addEventListener('fetch', e => {
           }
           return res;
         })
-        .catch(() => caches.match(e.request))
+        .catch(() => caches.match(e.request).then(hit => hit || (url.search ? caches.match(e.request, { ignoreSearch: true }) : undefined)))
     );
     return;
   }

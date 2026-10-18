@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>support.sheet – Quicknotes</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/quicknotes.css">
+</head>
+<body data-qn-page="1">
+
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-icon" id="as-logo-icon">📝</div>
+      <div class="logo-text" id="as-logo-label">support<span>.notes</span></div>
+    </a>
+    <div class="header-right">
+      <div class="pill pill-count" style="border-color:rgba(244,114,182,.3);background:rgba(244,114,182,.08);color:#f472b6;">📝 Quicknotes</div>
+    </div>
+  </header>
+
+  <main class="qn-main">
+    <div class="qn-layout" id="qn-layout">
+
+      <!-- Tab-Leiste -->
+      <div class="qn-tabbar">
+        <button type="button" class="qn-iconbtn" id="qn-tabs-left" aria-label="Tabs nach links scrollen" title="Tabs nach links scrollen">‹</button>
+        <div class="qn-tabstrip" id="qn-tabstrip" role="tablist" aria-label="Geöffnete Notizen"></div>
+        <button type="button" class="qn-iconbtn" id="qn-tabs-right" aria-label="Tabs nach rechts scrollen" title="Tabs nach rechts scrollen">›</button>
+        <button type="button" class="qn-iconbtn qn-iconbtn--add" id="qn-new" aria-label="Neue Notiz (Alt+N)" title="Neue Notiz (Alt+N)">+</button>
+        <div class="qn-menuwrap">
+          <button type="button" class="qn-iconbtn" id="qn-list-btn" aria-haspopup="true" aria-expanded="false" aria-controls="qn-list-menu" aria-label="Alle Notizen" title="Alle Notizen">▾</button>
+          <div class="qn-menu" id="qn-list-menu" role="menu" aria-label="Alle Notizen" hidden></div>
+        </div>
+      </div>
+
+      <!-- Werkzeugleiste -->
+      <div class="qn-toolbar" id="qn-toolbar" role="toolbar" aria-label="Notiz-Aktionen">
+        <button type="button" class="qn-btn" id="qn-rename" title="Notiz umbenennen (F2)">✎ Umbenennen</button>
+        <button type="button" class="qn-btn" id="qn-wrap" aria-pressed="false" title="Zeilenumbruch ein-/ausschalten">↩ Zeilenumbruch</button>
+        <button type="button" class="qn-btn" id="qn-export-one" title="Als .txt speichern (UTF-8, Windows-Zeilenenden)">⬇ Als .txt speichern</button>
+        <button type="button" class="qn-btn qn-btn--danger" id="qn-delete" title="Notiz in den Papierkorb legen">🗑 Notiz löschen</button>
+        <span class="qn-toolbar-sep" aria-hidden="true"></span>
+        <button type="button" class="qn-btn" id="qn-backup" title="ZIP mit einer .txt je Notiz und quicknotes.json">📦 Alle Notizen sichern</button>
+        <button type="button" class="qn-btn" id="qn-import" title=".txt-Dateien oder eine ZIP-Sicherung einlesen">⬆ Importieren</button>
+        <button type="button" class="qn-btn" id="qn-trash-btn" title="Papierkorb öffnen">♻ Papierkorb <span class="qn-badge" id="qn-trash-count">0</span></button>
+        <input type="file" id="qn-import-file" accept=".txt,.zip,text/plain,application/zip" multiple hidden>
+      </div>
+
+      <!-- Meldungen (Fehler, Konflikt, Wiederherstellung) -->
+      <div class="qn-banners" id="qn-banners"></div>
+
+      <!-- Editoren: je Notiz ein Bereich (Zeilennummern + Textfeld) -->
+      <div class="qn-editors" id="qn-editors"></div>
+
+      <!-- Notbetrieb: Datenbank nicht verfügbar -->
+      <div class="qn-fallback" id="qn-fallback" hidden>
+        <p class="qn-fallback-text">Dieser Text wird <strong>nicht gespeichert</strong>. Sichere ihn als Datei, bevor du die Seite schließt.</p>
+        <textarea id="qn-fallback-text" class="qn-fallback-area" aria-label="Notiztext (wird nicht gespeichert)" spellcheck="false"></textarea>
+        <button type="button" class="qn-btn" id="qn-fallback-save">⬇ Als Datei sichern (.txt)</button>
+      </div>
+
+      <!-- Leerer Zustand: alle Tabs geschlossen -->
+      <div class="qn-empty" id="qn-empty" hidden>
+        <p>Keine Notiz geöffnet.</p>
+        <button type="button" class="qn-btn qn-btn--primary" id="qn-empty-new">+ Neue Notiz</button>
+        <button type="button" class="qn-btn" id="qn-empty-list">Alle Notizen anzeigen</button>
+      </div>
+
+      <p class="qn-hint">Quicknotes liegen im Browser-Speicher dieses Geräts. Sie sind nicht im Guide-Ordner und nicht in der Guide-Sicherung. Sichern: <strong>Alle Notizen sichern</strong>.</p>
+      <p class="qn-hint qn-hint--storage" id="qn-persist-hint" hidden></p>
+
+      <!-- Statusleiste -->
+      <div class="qn-statusbar" id="qn-statusbar" role="status" aria-live="off">
+        <span class="qn-st" id="qn-st-pos">Zeile 1, Spalte 1</span>
+        <span class="qn-st" id="qn-st-count">0 Zeichen · 0 Wörter</span>
+        <span class="qn-st qn-st--save" id="qn-st-save" aria-live="polite">–</span>
+        <button type="button" class="qn-st qn-st--btn" id="qn-st-persist" aria-expanded="false" aria-controls="qn-persist-hint">Speicher: wird geprüft …</button>
+        <span class="qn-st" id="qn-st-backup">Letzte Sicherung: noch nie</span>
+        <span class="qn-st qn-st--tab" id="qn-st-tab">Tab-Taste rückt ein · Esc, dann Tab verlässt das Feld</span>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+    }
+  </script>
+
+  <script src="js/toast.js"></script>
+  <script src="js/jszip.min.js"></script>
+  <script src="js/quicknotes-db.js"></script>
+  <script src="js/quicknotes-io.js"></script>
+  <script src="js/quicknotes.js"></script>
+  <script src="nav.js"></script>
+
+</body>
+</html>
