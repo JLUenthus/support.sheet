@@ -121,7 +121,8 @@
     setTimeout(() => URL.revokeObjectURL(url), 30000);
   }
 
-  function textBlob(text) { return new Blob([encodeUtf8(toCrlf(text))], { type: 'text/plain;charset=utf-8' }); }
+  // crlf === false: Text unveraendert (UTF-8), z. B. fuer .md-Dateien
+  function textBlob(text, crlf) { return new Blob([encodeUtf8(crlf === false ? String(text) : toCrlf(text))], { type: 'text/plain;charset=utf-8' }); }
 
   window.QuickNotesIO = {
     decodeText, toCrlf, normalizeNewlines, safeFileName, uniqueName, fileTitle, buildBackup, readImportFile, download, textBlob, validNote,

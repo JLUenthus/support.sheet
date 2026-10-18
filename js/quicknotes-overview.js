@@ -55,6 +55,12 @@
     badge.className = 'gg-cat-badge gs-qn-badge';
     badge.textContent = 'QUICKNOTE';
     badges.appendChild(badge);
+    if (note.convertedGuideId) {
+      const conv = document.createElement('span');
+      conv.className = 'gg-cat-badge gs-qn-badge gs-qn-badge--conv';
+      conv.textContent = 'UMGEWANDELT';
+      badges.appendChild(conv);
+    }
 
     const prev = document.createElement('p');
     prev.className = 'gg-tile-preview';

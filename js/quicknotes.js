@@ -91,6 +91,7 @@
       state: 'saved', error: null, conflict: null, conflictHidden: false, remoteChanged: null, remoteTrashed: false,
       timer: null, retryTimer: null, retries: 0, queue: Promise.resolve(), pendingTimer: null, lastPendingWrite: 0, pendingFailed: false,
       pane: null, gutter: null, ta: null, lineCount: 0,
+      convertedGuideId: note.convertedGuideId || null, convertedAt: note.convertedAt || null,   // optionale Felder (Umwandlung in einen Guide)
     };
   }
   const isClean = (doc) => doc.text === doc.savedText && doc.title === doc.savedTitle;
@@ -166,6 +167,7 @@
   function loadFromRecord(doc, rec) {
     doc.text = rec.text; doc.savedText = rec.text; doc.title = rec.title; doc.savedTitle = rec.title;
     doc.savedRev = rec.rev; doc.savedAt = rec.updatedAt;
+    doc.convertedGuideId = rec.convertedGuideId || null; doc.convertedAt = rec.convertedAt || null;
     doc.error = null; doc.conflict = null; doc.conflictHidden = false; doc.remoteChanged = null; doc.retries = 0;
     clearTimeout(doc.timer); clearTimeout(doc.retryTimer); doc.timer = doc.retryTimer = null;
     removePending(doc);
@@ -184,9 +186,9 @@
     if (actions && actions.length) {
       const row = el('div', 'qn-banner-actions');
       actions.forEach((a) => {
-        const btn = el('button', 'qn-btn' + (a.primary ? ' qn-btn--primary' : ''), a.label);
-        btn.type = 'button';
-        btn.addEventListener('click', a.onClick);
+        let btn;
+        if (a.href) { btn = el('a', 'qn-btn' + (a.primary ? ' qn-btn--primary' : ''), a.label); btn.href = a.href; }   // echter Link (Text per textContent)
+        else { btn = el('button', 'qn-btn' + (a.primary ? ' qn-btn--primary' : ''), a.label); btn.type = 'button'; btn.addEventListener('click', a.onClick); }
         row.appendChild(btn);
       });
       b.appendChild(row);
@@ -724,6 +726,7 @@
       sv.dataset.state = doc.state;
     }
     $('qn-st-tab').textContent = tabEscape ? 'Tab-Taste frei: Der nächste Tab verlässt das Feld' : 'Tab-Taste rückt ein · Esc, dann Tab verlässt das Feld';
+    if (window.QuickNotesConvert) window.QuickNotesConvert.refreshUi();   // Knopf "In Guide umwandeln" und Statuszeile der Umwandlung
   }
 
   function updatePersistStatus() {
@@ -761,7 +764,9 @@
       b.type = 'button';
       b.setAttribute('role', 'menuitem');
       b.dataset.id = n.id;
-      b.append(el('span', 'qn-menu-title', n.title), el('span', 'qn-menu-time', dateTime(n.updatedAt)));
+      b.append(el('span', 'qn-menu-title', n.title));
+      if (n.convertedGuideId) { const f = el('span', 'qn-menu-flag', '⇒ Guide'); f.title = 'In einen Guide umgewandelt am ' + dateTime(n.convertedAt || n.updatedAt); b.appendChild(f); }
+      b.append(el('span', 'qn-menu-time', dateTime(n.updatedAt)));
       b.addEventListener('click', () => { closeListMenu(); openNote(n, { activate: true }); });
       menu.appendChild(b);
     });
@@ -891,6 +896,8 @@
             updatedAt: Number.isFinite(b.updatedAt) ? b.updatedAt : now,
             rev: 1, trashedAt: Number.isFinite(b.trashedAt) ? b.trashedAt : null, lastOpenedAt: Number.isFinite(b.lastOpenedAt) ? b.lastOpenedAt : now,
           };
+          // optionale Felder der Umwandlung in einen Guide: verlustfrei uebernehmen (aeltere Sicherungen haben sie nicht)
+          if (typeof b.convertedGuideId === 'string' && b.convertedGuideId) { note.convertedGuideId = b.convertedGuideId; note.convertedAt = Number.isFinite(b.convertedAt) ? b.convertedAt : now; }
           toAdd.push(note);
           if (ex) summary.renamed++; else summary.restored++;
         } else {
@@ -924,6 +931,7 @@
     if (rec.rev > doc.savedRev) {
       if (rec.text === doc.savedText) {                         // nur Titel/Kennzeichen geaendert: still uebernehmen
         doc.savedRev = rec.rev;
+        doc.convertedGuideId = rec.convertedGuideId || null; doc.convertedAt = rec.convertedAt || null;
         if (doc.title === doc.savedTitle) { doc.title = rec.title; }
         doc.savedTitle = rec.title;
         renderTabs();
@@ -1078,6 +1086,27 @@
     });
     document.addEventListener('selectionchange', () => { if (document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('qn-editor')) updateStatus(); });
   }
+
+  // Umwandlung in einen Guide (js/quicknotes-convert.js): die Notiz wurde aktualisiert (convertedGuideId, ggf. Papierkorb)
+  function adoptConverted(rec) {
+    const doc = docs.get(rec.id);
+    if (!doc) { refreshTrashCount(); refreshListMenu(); return; }
+    doc.savedRev = rec.rev;
+    doc.convertedGuideId = rec.convertedGuideId || null; doc.convertedAt = rec.convertedAt || null;
+    if (rec.trashedAt) { removeDocFromUi(doc); refreshTrashCount(); refreshListMenu(); return; }
+    updateStatus(); refreshListMenu();
+  }
+
+  // Schnittstelle fuer js/quicknotes-convert.js
+  window.QuickNotesPageInternal = {
+    activeDoc: () => docs.get(activeId) || null,
+    docById: (id) => docs.get(id) || null,
+    flush: (doc) => flush(doc),
+    adoptConverted,
+    banner: (key, kind, text, actions) => addGlobalBanner(key, kind, text, actions),
+    removeBanner: (key) => removeGlobalBanner(key),
+    download: (text, name) => IO.download(IO.textBlob(text, false), name),
+  };
 
   window.QuickNotesPage = { flushAll, openNote, activate, closeTab, newNote, RETRY_BASE_MS, DEBOUNCE_MS, get activeId() { return activeId; } };
 

@@ -329,6 +329,43 @@ body.page-quicknotes .as-scroll-top { display: none; }
 .qn-trash-title { color: var(--text); font-weight: 600; overflow-wrap: anywhere; }
 .qn-trash-meta { color: var(--muted); font-size: .74rem; }
 
+/* ── Dialog "In Guide umwandeln" ──────────────────────────── */
+.qn-dialog {
+  width: min(560px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  margin: auto;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-lg);
+  padding: 18px;
+}
+.qn-dialog::backdrop { background: rgba(0, 0, 0, .6); }
+.qn-cv-form { display: flex; flex-direction: column; gap: 12px; }
+.qn-cv-note { color: var(--muted); font-size: .8rem; }
+.qn-cv-msg { color: var(--amber); font-size: .8rem; line-height: 1.45; }
+.qn-cv-err { color: var(--red); font-size: .82rem; font-weight: 600; }
+.qn-cv-field > label, .qn-cv-field > legend { display: block; margin-bottom: 4px; color: var(--muted); font-size: .76rem; font-weight: 600; }
+.qn-cv-field input[type="text"], .qn-cv-field select {
+  width: 100%;
+  padding: 7px 9px;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+}
+.qn-cv-formats { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border: 1px solid var(--border2); border-radius: 8px; }
+.qn-cv-formats label { display: flex; align-items: flex-start; gap: 8px; color: var(--text); font-size: .82rem; }
+.qn-cv-hint { color: var(--muted); font-size: .72rem; }
+.qn-cv-check { display: flex; align-items: center; gap: 8px; font-size: .82rem; }
+.qn-cv-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.qn-dialog button:focus-visible, .qn-dialog input:focus-visible, .qn-dialog select:focus-visible { outline: 2px solid var(--qn-accent); outline-offset: 1px; }
+.qn-menu-flag { flex: none; color: var(--qn-accent); font-size: .68rem; font-weight: 700; }
+.qn-st--conv a { color: var(--qn-accent); }
+.gs-qn-badge--conv { --gg-cat-color: var(--green); color: var(--green); }
+
 /* ── schmale Bildschirme ──────────────────────────────────── */
 @media (max-width: 640px) {
   /* Layout wächst mit dem Inhalt, der Editor behält eine feste, gut nutzbare Höhe */

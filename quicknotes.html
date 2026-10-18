@@ -48,6 +48,7 @@
         <button type="button" class="qn-btn" id="qn-rename" title="Notiz umbenennen (F2)">✎ Umbenennen</button>
         <button type="button" class="qn-btn" id="qn-wrap" aria-pressed="false" title="Zeilenumbruch ein-/ausschalten">↩ Zeilenumbruch</button>
         <button type="button" class="qn-btn" id="qn-export-one" title="Als .txt speichern (UTF-8, Windows-Zeilenenden)">⬇ Als .txt speichern</button>
+        <button type="button" class="qn-btn" id="qn-convert" disabled title="Aus dieser Notiz einen neuen Guide anlegen">⇒ In Guide umwandeln</button>
         <button type="button" class="qn-btn qn-btn--danger" id="qn-delete" title="Notiz in den Papierkorb legen">🗑 Notiz löschen</button>
         <span class="qn-toolbar-sep" aria-hidden="true"></span>
         <button type="button" class="qn-btn" id="qn-backup" title="ZIP mit einer .txt je Notiz und quicknotes.json">📦 Alle Notizen sichern</button>
@@ -86,10 +87,49 @@
         <span class="qn-st qn-st--save" id="qn-st-save" aria-live="polite">–</span>
         <button type="button" class="qn-st qn-st--btn" id="qn-st-persist" aria-expanded="false" aria-controls="qn-persist-hint">Speicher: wird geprüft …</button>
         <span class="qn-st" id="qn-st-backup">Letzte Sicherung: noch nie</span>
+        <span class="qn-st qn-st--conv" id="qn-st-conv" hidden></span>
         <span class="qn-st qn-st--tab" id="qn-st-tab">Tab-Taste rückt ein · Esc, dann Tab verlässt das Feld</span>
       </div>
 
     </div>
+
+    <!-- Dialog: Quicknote in einen neuen Guide umwandeln (Logik: js/quicknotes-convert.js) -->
+    <dialog class="qn-dialog" id="qn-convert-dialog" aria-labelledby="qn-cv-heading">
+      <form class="qn-cv-form" id="qn-cv-form" method="dialog" novalidate>
+        <h2 class="qn-modal-title" id="qn-cv-heading">In Guide umwandeln</h2>
+        <p class="qn-cv-note">Es entsteht ein neuer Guide. Die Notiz wird erst verändert, nachdem der Guide gespeichert und geprüft ist.</p>
+        <p class="qn-cv-msg" id="qn-cv-msg" hidden></p>
+        <p class="qn-cv-err" id="qn-cv-err" role="alert" hidden></p>
+        <div class="qn-cv-field">
+          <label for="qn-cv-titlein">Titel</label>
+          <input type="text" id="qn-cv-titlein" maxlength="120" required autocomplete="off">
+        </div>
+        <div class="qn-cv-field">
+          <label for="qn-cv-cat">Kategorie</label>
+          <select id="qn-cv-cat"></select>
+        </div>
+        <div class="qn-cv-field">
+          <label for="qn-cv-sub">Unterkategorie (optional)</label>
+          <input type="text" id="qn-cv-sub" autocomplete="off">
+        </div>
+        <div class="qn-cv-field">
+          <label for="qn-cv-tags">Tags (optional, durch Komma getrennt)</label>
+          <input type="text" id="qn-cv-tags" autocomplete="off">
+        </div>
+        <fieldset class="qn-cv-field qn-cv-formats">
+          <legend>Format des Textes</legend>
+          <label><input type="radio" name="qn-cv-format" value="markdown" checked> Als Markdown unverändert</label>
+          <label><input type="radio" name="qn-cv-format" value="breaks"> Zeilenumbrüche erhalten <span class="qn-cv-hint">(einzelne Umbrüche außerhalb von Codeblöcken werden zu harten Umbrüchen)</span></label>
+          <label><input type="radio" name="qn-cv-format" value="code"> Als Codeblock <span class="qn-cv-hint">(der ganze Text in einem Codeblock)</span></label>
+        </fieldset>
+        <label class="qn-cv-check"><input type="checkbox" id="qn-cv-trash" checked> Quicknote danach in den Papierkorb legen</label>
+        <label class="qn-cv-check"><input type="checkbox" id="qn-cv-open" checked> Guide danach im Editor öffnen</label>
+        <div class="qn-cv-actions">
+          <button type="button" class="qn-btn" id="qn-cv-cancel">Abbrechen</button>
+          <button type="submit" class="qn-btn qn-btn--primary" id="qn-cv-ok">Guide erstellen</button>
+        </div>
+      </form>
+    </dialog>
   </main>
 
   <script>
@@ -103,6 +143,7 @@
   <script src="js/quicknotes-db.js"></script>
   <script src="js/quicknotes-io.js"></script>
   <script src="js/quicknotes.js"></script>
+  <script src="js/quicknotes-convert.js"></script>
   <script src="nav.js"></script>
 
 </body>

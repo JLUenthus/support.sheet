@@ -169,6 +169,28 @@
     return res;
   }
 
+  // Vermerkt die Umwandlung in einen Guide (convertedGuideId, convertedAt) – und legt die Notiz auf Wunsch in den Papierkorb
+  // (weich, trashedAt) – in EINER Transaktion mit Revisionspruefung. Der Text der Notiz bleibt unveraendert; rev zaehlt wie
+  // bei jedem Speichern hoch. Wird erst aufgerufen, nachdem der Guide nachweislich gespeichert und zurueckgelesen ist.
+  // Rueckgabe wie save(): { ok, note } | { ok:false, conflict, current } | { ok:false, missing }
+  async function markConverted(id, expectedRev, guideId, trash) {
+    const res = await runTx('readwrite', (store, setResult, guard) => {
+      const g = store.get(id);
+      g.onsuccess = guard(() => {
+        const rec = g.result;
+        if (!rec) { setResult({ ok: false, missing: true }); return; }
+        if (rec.rev !== expectedRev) { setResult({ ok: false, conflict: true, current: rec }); return; }
+        const now = Date.now();
+        const next = Object.assign({}, rec, { convertedGuideId: guideId, convertedAt: now, rev: rec.rev + 1 });
+        if (trash) next.trashedAt = now;
+        const p = store.put(next);
+        p.onsuccess = guard(() => setResult({ ok: true, note: next }));
+      });
+    });
+    if (res.ok) notify({ type: 'changed', id, rev: res.note.rev });
+    return res;
+  }
+
   // Endgueltig loeschen – nur aus dem Papierkorb-Dialog, nach Bestaetigung.
   async function purge(id) {
     await runTx('readwrite', (store, setResult, guard) => {
@@ -210,7 +232,7 @@
   }
 
   window.QuickNotesDB = {
-    open, exists, list, get, create, save, setTrashed, purge, markOpened, addMany, onChange,
+    open, exists, list, get, create, save, setTrashed, markConverted, purge, markOpened, addMany, onChange,
     defaultTitle, clampTitle, TITLE_MAX, WINDOW_ID, DB_NAME, STORE,
   };
 })();
