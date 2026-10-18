@@ -85,6 +85,7 @@
       <section class="gs-main gm-main">
         <h1>Lokale DB | Einstellungen</h1>
         <p class="gs-main-sub">Backup, Restore, Merge, Papierkorb, Statistik.</p>
+        <div class="gm-result" id="gm-result" role="status" hidden></div>
 
         <!-- 1. Datenbankstatus -->
         <div class="gm-card">
@@ -94,12 +95,21 @@
             <div class="gm-stat"><span class="gm-stat-label">Guides</span><span class="gm-stat-value" id="gm-status-guides">–</span></div>
             <div class="gm-stat"><span class="gm-stat-label">Kategorien</span><span class="gm-stat-value" id="gm-status-categories">–</span></div>
             <div class="gm-stat"><span class="gm-stat-label">Assets</span><span class="gm-stat-value" id="gm-status-assets">–</span></div>
-            <div class="gm-stat"><span class="gm-stat-label">Letzter Export</span><span class="gm-stat-value" id="gm-status-lastexport">–</span></div>
+            <div class="gm-stat"><span class="gm-stat-label">Letzte Sicherung</span><span class="gm-stat-value" id="gm-status-lastbackup">–</span></div>
           </div>
           <div class="gm-status-actions">
             <button type="button" class="gs-folder-btn" id="gm-switch-folder">📁 Ordner wechseln</button>
             <button type="button" class="gs-folder-btn gv-delete-btn" id="gm-disconnect-folder">🔌 Ordner trennen</button>
-            <button type="button" class="gs-folder-btn" id="gm-cleanup-assets">🧹 Verwaiste Assets aufräumen</button>
+            <button type="button" class="gs-folder-btn" id="gm-cleanup-assets">🧹 Verwaiste Assets prüfen</button>
+          </div>
+          <div class="gm-orphans" id="gm-orphans-panel" hidden>
+            <p class="gm-orphans-summary" id="gm-orphans-summary"></p>
+            <div class="gm-orphans-list" id="gm-orphans-list"></div>
+            <div class="gm-status-actions">
+              <button type="button" class="gs-folder-btn gv-delete-btn" id="gm-orphans-trash" hidden>🗑️ Ausgewählte in den Papierkorb verschieben</button>
+              <button type="button" class="gs-folder-btn" id="gm-orphans-close">Schließen</button>
+            </div>
+            <p class="gm-quick-backup-hint">Es wird nichts gelöscht, bevor du bestätigst – und auch dann nur in den Papierkorb (unten), von wo sich Dateien wiederherstellen lassen.</p>
           </div>
         </div>
 
@@ -116,7 +126,7 @@
             <h2 class="gm-card-title">📤 Export</h2>
             <button type="button" class="gs-folder-btn" id="gm-quick-backup-btn">⚡ Jetzt Backup erstellen</button>
           </div>
-          <p class="gm-quick-backup-hint">Sichert sofort alle Guides als lesbares Archiv, ohne die Optionen unten anzupassen.</p>
+          <p class="gm-quick-backup-hint">Sichert sofort alle Guides (inklusive Papierkorb, Kategorienbaum und privaten Notizen) als vollständige, geprüfte Sicherung. <strong>Enthält private Notizen. Nicht weitergeben.</strong></p>
 
           <div class="gm-export-row">
             <div class="gm-export-group">
@@ -128,10 +138,16 @@
 
             <div class="gm-export-group">
               <div class="gm-group-label">Format</div>
-              <label class="gm-radio"><input type="radio" name="gm-format" value="readable" checked> Lesbar / Archiv (Markdown + ZIP)</label>
-              <label class="gm-radio"><input type="radio" name="gm-format" value="package"> Merge-Paket (für guide.sheet)</label>
+              <label class="gm-radio"><input type="radio" name="gm-format" value="full" checked> Sicherung (vollständig)</label>
+              <label class="gm-radio"><input type="radio" name="gm-format" value="share"> Weitergabe (ohne private Notiz)</label>
+              <label class="gm-radio"><input type="radio" name="gm-format" value="readable"> Lesbar (nur Texte und Bilder – Informationen gehen verloren)</label>
             </div>
           </div>
+
+          <p class="gm-notice gm-notice--ok" id="gm-notice-full">🔒 Enthält private Notizen. Nicht weitergeben. Alle Felder, Kategorienbaum und Papierkorb sind enthalten; die Datei wird nach dem Erstellen gegen Prüfsummen geprüft.</p>
+          <p class="gm-notice" id="gm-notice-share" hidden>Wie die Sicherung, aber ohne private Notizen und ohne Papierkorb – zum Weitergeben an Kolleginnen und Kollegen.</p>
+          <p class="gm-notice gm-notice--error" id="gm-readable-warning" hidden>⚠️ <strong>Kein Backup.</strong> Das lesbare Archiv enthält nur Texte und Bilder. Es gehen verloren: Tags, Favoriten, Zeitstempel (erstellt/geändert), Unterkategorien, private Notizen, Anhänge und Links als eigene Felder (nur als Textabschnitt), Kategorienbaum samt Farben und Guides im Papierkorb. Titel und Kategorienamen werden in Dateinamen umgewandelt (Sonderzeichen entfallen) und können sich beim Import verändern.</p>
+          <p class="gm-notice gm-notice--warn" id="gm-notice-partial" hidden>Teil-Sicherung: nicht alle Guides – sie setzt „Letztes Backup“ nicht.</p>
 
           <div class="gm-export-name">
             <label for="gm-export-name">Dein Name (für Import-Tag)</label>
@@ -148,12 +164,14 @@
           <div class="gm-import-zone" id="gm-import-zone">
             <div class="gm-import-icon">📦</div>
             <div class="gm-import-text">ZIP-Datei hier ablegen oder klicken</div>
-            <div class="gm-import-sub">Lesbares Archiv oder Merge-Paket wird automatisch erkannt</div>
+            <div class="gm-import-sub">Sicherung, Weitergabe-Paket, älteres Merge-Paket oder lesbares Archiv wird automatisch erkannt</div>
             <input type="file" id="gm-import-file" accept=".zip" hidden>
           </div>
 
           <div class="gm-import-preview" id="gm-import-preview" hidden>
             <div class="gm-import-preview-title" id="gm-import-preview-title"></div>
+            <p class="gm-notice gm-notice--warn" id="gm-import-warning" hidden></p>
+            <p class="gm-notice" id="gm-import-integrity" hidden></p>
 
             <div class="gm-import-tag-all">
               <label for="gm-import-tag-all">Tag für alle ausgewählten Guides (optional)</label>
@@ -194,6 +212,8 @@
             <button type="button" class="gv-delete-btn gs-folder-btn" id="gm-empty-trash">🗑️ Papierkorb leeren</button>
           </div>
           <div class="gm-trash-list" id="gm-trash-list"></div>
+          <h3 class="gm-trash-subtitle" id="gm-trash-assets-title" hidden>Gelöschte Dateien (Assets)</h3>
+          <div class="gm-trash-list" id="gm-trash-assets-list"></div>
           <p class="gm-trash-empty" id="gm-trash-empty" hidden>Papierkorb ist leer.</p>
         </div>
 
@@ -218,6 +238,7 @@
   <script src="js/toast.js"></script>
   <script src="js/jszip.min.js"></script>
   <script src="js/guides-db.js"></script>
+  <script src="js/guides-backup.js"></script>
   <script src="js/guides.js"></script>
   <script src="js/guides-manage.js"></script>
   <script src="nav.js"></script>

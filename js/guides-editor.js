@@ -7,8 +7,19 @@
 // mammoth.min.js, turndown.min.js.
 // ============================================================
 (function() {
-  const DRAFTS_KEY = 'gs-drafts'; // Sammlung statt Einzel-Key – mehrere Entwürfe können parallel existieren
-  let currentDraftId = null; // wird beim ersten Autosave dieser Session vergeben (oder beim Wiederherstellen übernommen)
+  // Entwürfe: siehe js/guides-drafts.js (ein Entwurf je Guide) und den Block "Entwurf (localStorage)" unten
+  let newDraftKey    = null;  // Entwurfsschluessel eines NEUEN Guides in dieser Sitzung (gs-draft:new:<uuid>)
+  let editorReady    = false; // erst wenn Grundzustand (baseline) feststeht, werden Entwuerfe geschrieben
+  let recoveryPending = false; // gefundener Entwurf zu diesem Guide ist noch unentschieden: nie ueberschreiben, Formular gesperrt
+  let baselineState  = null;  // Formularzustand = gespeicherter Stand
+  let baselineSig    = '';
+  let draftTimer     = null;
+  let draftWritten   = false;
+  let draftAt        = null;  // Zeitpunkt des letzten erfolgreichen Entwurfs (Anzeige)
+  let lastSavedAt    = null;  // Zeitpunkt des letzten Speicherns (Anzeige)
+  const pendingAssetData = new Map(); // filename -> Base64-Data-URL (Kopie fuer den Entwurf)
+  let pendingRenames = [];            // vorgemerkte Umbenennungen gespeicherter Bilder [{ from, to }] – erst beim Speichern angewendet
+  const PERSIST = { persistent: true }; // Fehlermeldungen, die Datenverlust betreffen: bleiben bis zum Schliessen
 
   let categories       = [];
   let tags             = [];
@@ -19,6 +30,8 @@
   const pendingAttachmentFiles = new Map(); // assetFile -> File (noch nicht gespeichert)
   let currentGuideId   = null;
   let existingMeta      = null;
+  let loadedVersion     = null; // meta.version beim Laden (Bearbeiten-Modus) – Grundlage der Konfliktpruefung beim Speichern
+  let loadedStamp       = null; // Dateizeiten beim Laden (Ordnermodus)
   const pendingAssets     = new Map(); // filename -> File|Blob (noch nicht gespeichert)
   const assetPreviewUrls  = new Map(); // filename -> Blob-URL (nur für Live-Vorschau)
   let existingAssetNames  = new Set(); // bereits auf der Platte gespeicherte Asset-Dateinamen (Edit-Modus)
@@ -45,8 +58,8 @@
   // Vorschläge für häufige Status-Tags – per Klick an/abwählbar.
   const SUGGESTED_TAGS = ['unfertig', 'überarbeiten', 'wichtig', 'geprüft', 'veraltet'];
 
-  function notify(message, type_) {
-    if (typeof showToast === 'function') showToast(message, type_);
+  function notify(message, type_, options) {
+    if (typeof showToast === 'function') showToast(message, type_, options);
   }
 
   // Markdown kollabiert normalerweise JEDE Anzahl Leerzeilen zu genau einem
@@ -630,7 +643,7 @@
       notify('Große Datei: ' + (file.size / 1024 / 1024).toFixed(1) + ' MB – das kann die Performance beeinflussen.', 'warning');
     }
     const filename = uniqueAssetName(file.name);
-    pendingAssets.set(filename, file);
+    registerPendingAsset(filename, file);
     assetPreviewUrls.set(filename, URL.createObjectURL(file));
     insertRaw(textarea, '![' + filename + '](assets/' + filename + ')');
   }
@@ -682,7 +695,7 @@
     const thumb = document.createElement('img');
     thumb.className = 'ge-image-thumb';
     if (currentGuideId) {
-      const urlRes = await window.GuidesDB.getAssetUrl(currentGuideId, filename);
+      const urlRes = await window.GuidesDB.getAssetUrl(currentGuideId, sourceNameOf(filename)); // vorgemerkte Umbenennung: Daten des alten Namens
       if (urlRes.success) thumb.src = urlRes.url;
     }
     row.appendChild(thumb);
@@ -736,7 +749,7 @@
     btn.disabled = true;
     btn.textContent = '⏳ Lade…';
     try {
-      const urlRes = await window.GuidesDB.getAssetUrl(currentGuideId, filename);
+      const urlRes = await window.GuidesDB.getAssetUrl(currentGuideId, sourceNameOf(filename));
       if (!urlRes.success) throw new Error(urlRes.error || 'Bild nicht gefunden.');
       const blob = await (await fetch(urlRes.url)).blob();
       downloadBlob(blob, filename);
@@ -751,7 +764,7 @@
   async function renderImageBrowser() {
     const listEl = document.getElementById('ge-images-list');
     if (!listEl) return;
-    const images = [...existingAssetNames].filter((name) => IMAGE_EXT_RE.test(name));
+    const images = [...existingAssetNames].map(displayNameOf).filter((name) => IMAGE_EXT_RE.test(name));
     listEl.replaceChildren();
     if (!images.length) {
       const empty = document.createElement('div');
@@ -765,33 +778,37 @@
     }
   }
 
-  async function renameExistingImage(oldName) {
-    const input = (prompt('Neuer Dateiname:', oldName) || '').trim();
-    if (!input || input === oldName) return;
-    const newName = sanitizeAttachmentName(input);
+  // Umbenennen wird nur VORGEMERKT: im Formular wird der Text umgeschrieben (alle Schreibweisen der Verweise,
+  // GuidesDB.rewriteAssetReferences), auf Platte und in der Datenbank aendert sich nichts. Erst "Speichern" legt das
+  // neue Asset an, speichert den Guide und verschiebt danach das alte in den Asset-Papierkorb (siehe saveGuide).
+  // Schliesst man ohne Speichern, ist alles unveraendert; die Vormerkung steht im Entwurf.
+  function sourceNameOf(shownName) { const r = pendingRenames.find((x) => x.to === shownName); return r ? r.from : shownName; }
+  function displayNameOf(storedName) { const r = pendingRenames.find((x) => x.from === storedName); return r ? r.to : storedName; }
+  function assetNameTaken(name) {
+    return existingAssetNames.has(name) || pendingAssets.has(name) || pendingRenames.some((r) => r.to === name);
+  }
 
-    if (existingAssetNames.has(newName) || pendingAssets.has(newName)) {
-      notify('Datei „' + newName + '“ existiert bereits.', 'error');
+  async function renameExistingImage(shownName) {
+    const source = sourceNameOf(shownName);
+    const input = (prompt('Neuer Dateiname:', shownName) || '').trim();
+    if (!input || input === shownName) return;
+    // bereinigen: nur [A-Za-z0-9._-] (keine Pfadzeichen), keine fuehrenden Punkte, Dateiendung des Bilds bleibt
+    const ext = (/\.[A-Za-z0-9]+$/.exec(source) || [''])[0];
+    let newName = sanitizeAttachmentName(input).replace(/^\.+/, '');
+    if (ext && !newName.toLowerCase().endsWith(ext.toLowerCase())) newName = newName.replace(/\.[A-Za-z0-9]+$/, '') + ext;
+    if (!newName || newName === ext) { notify('Ungültiger Dateiname.', 'error'); return; }
+    if (newName === shownName) return;
+    const backToOrigin = newName === source;   // zurueck auf den gespeicherten Namen: keine Umbenennung mehr
+    if (!backToOrigin && assetNameTaken(newName)) {
+      notify('Datei „' + newName + '“ existiert bereits (oder ist für eine andere Umbenennung vorgemerkt).', 'error');
       return;
     }
-
-    const urlRes = await window.GuidesDB.getAssetUrl(currentGuideId, oldName);
-    if (!urlRes.success) { notify(urlRes.error || 'Bild nicht gefunden.', 'error'); return; }
-    const blob = await (await fetch(urlRes.url)).blob();
-
-    const saveRes = await window.GuidesDB.saveAsset(currentGuideId, newName, blob);
-    if (!saveRes.success) { notify(saveRes.error || 'Umbenennen fehlgeschlagen.', 'error'); return; }
-    await window.GuidesDB.deleteAsset(currentGuideId, oldName);
-
-    existingAssetNames.delete(oldName);
-    existingAssetNames.add(newName);
-
-    // Referenzen im gerade offenen (evtl. noch ungespeicherten) Text
-    // aktualisieren, damit nichts verloren geht.
-    textarea.value = textarea.value.split('assets/' + oldName).join('assets/' + newName);
+    textarea.value = window.GuidesDB.rewriteAssetReferences(textarea.value, shownName, newName);
+    pendingRenames = pendingRenames.filter((r) => r.from !== source);   // Kette: am Ende gilt nur der letzte Name
+    if (!backToOrigin) pendingRenames.push({ from: source, to: newName });
     await updatePreview();
-
-    notify('Bild umbenannt.', 'success');
+    scheduleAutosave();
+    notify(backToOrigin ? 'Umbenennung zurückgenommen.' : 'Umbenennung vorgemerkt – sie wird beim Speichern angewendet.', 'success');
     await renderImageBrowser();
   }
 
@@ -819,7 +836,7 @@
     await Promise.all([...names].map(async (name) => {
       if (assetPreviewUrls.has(name)) { map.set(name, assetPreviewUrls.get(name)); return; }
       if (currentGuideId) {
-        const res = await window.GuidesDB.getAssetUrl(currentGuideId, name);
+        const res = await window.GuidesDB.getAssetUrl(currentGuideId, sourceNameOf(name)); // vorgemerkte Umbenennung: Vorschau aus den Daten des alten Assets
         if (res.success) map.set(name, res.url);
       }
     }));
@@ -862,9 +879,13 @@
   }
 
   // ── Entwurf (localStorage) ───────────────────────────────
-  // Bilder aus pendingAssets müssen als Base64 mitgesichert werden – sonst
-  // verweist der wiederhergestellte Text auf assets/*, die nie gespeichert
-  // wurden (kaputtes Bild beim späteren Anzeigen des Guides).
+  // Modell (js/guides-drafts.js): ein Entwurf je Guide, "gs-draft:<guideId>"; neue Guides "gs-draft:new:<uuid>".
+  // Geschrieben wird SYNCHRON (Schreibpuffer): bei Eingabe (hoechstens alle 300 ms), sofort bei Fokusverlust,
+  // wenn der Tab versteckt wird und bei pagehide. Misslingt das Schreiben (auch Speicher voll), steht ein
+  // dauerhaftes Banner mit "Als Datei sichern". Geloescht wird ein Entwurf erst, wenn die Datenbank das
+  // Speichern bestaetigt hat. Bilder aus pendingAssets liegen als Base64 im Entwurf – sonst verweist der
+  // wiederhergestellte Text auf assets/*, die nie gespeichert wurden; die Umwandlung laeuft beim Hinzufuegen
+  // (asynchron), damit das Schreiben des Entwurfs selbst synchron bleiben kann.
   function fileToDataUrl(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -883,75 +904,110 @@
     return new Blob([bytes], { type: mime });
   }
 
-  function loadDrafts() {
-    const raw = localStorage.getItem(DRAFTS_KEY);
-    if (!raw) return [];
-    try {
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch { return []; }
+  function registerPendingAsset(filename, blob) {
+    pendingAssets.set(filename, blob);
+    fileToDataUrl(blob)
+      .then((url) => { if (pendingAssets.has(filename)) { pendingAssetData.set(filename, url); scheduleAutosave(); } })
+      .catch(() => { /* einzelnes Bild bleibt ohne Entwurfskopie, Rest des Entwurfs wird trotzdem gesichert */ });
   }
 
-  function persistDrafts(drafts) {
-    localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+  function currentDraftKey() {
+    if (currentGuideId) return window.GuidesDrafts.keyFor(currentGuideId);
+    if (!newDraftKey) newDraftKey = window.GuidesDrafts.newKey();
+    return newDraftKey;
   }
 
-  function removeDraftById(id) {
-    persistDrafts(loadDrafts().filter((d) => d.id !== id));
-  }
-
-  async function saveDraft(silent) {
-    const assets = {};
-    for (const [filename, file] of pendingAssets.entries()) {
-      try { assets[filename] = await fileToDataUrl(file); }
-      catch { /* einzelnes Bild überspringen, Rest des Entwurfs trotzdem sichern */ }
-    }
-
-    // Erster Autosave dieser Session vergibt eine eigene Draft-ID – dadurch
-    // überschreibt das Bearbeiten eines Guides oder ein zweiter, parallel
-    // begonnener neuer Guide nie mehr den Entwurf einer anderen Session.
-    if (!currentDraftId) currentDraftId = 'draft-' + Date.now();
-
-    const draft = {
-      id: currentDraftId,
-      title: titleInput.value,
-      category: categorySelect.value,
-      subcategory: subcategoryInput.value,
-      tags: [...tags],
-      content: textarea.value,
-      privateNote: privateNoteInput.value,
-      links: links.map((l) => ({ ...l })),
-      assets,
-      savedAt: new Date().toISOString(),
+  // Formularzustand (Grundlage von "ungespeicherte Aenderungen" und vom Entwurf)
+  function formState() {
+    return {
+      title: titleInput.value, category: categorySelect.value, subcategory: subcategoryInput.value,
+      tags: [...tags], content: textarea.value, privateNote: privateNoteInput.value,
+      links: links.map((l) => ({ id: l.id, text: l.text || '', url: l.url || '', offlineAsset: l.offlineAsset || null, offlineSavedAt: l.offlineSavedAt || null })),
+      attachments: attachments.map((a) => ({ id: a.id, name: a.name, size: a.size, type: a.type, assetFile: a.assetFile })),
+      pendingImages: [...pendingAssets.keys()], pendingFiles: [...pendingAttachmentFiles.keys()],
+      renames: pendingRenames.map((r) => r.from + '>' + r.to),
     };
+  }
+
+  function isDirty() { return window.GuidesDrafts.signature(formState()) !== baselineSig; }
+
+  // Gespeicherter Stand = dieser Zustand (beim Laden, nach erfolgreichem Speichern)
+  function setBaseline(state) {
+    baselineState = state || formState();
+    baselineSig = window.GuidesDrafts.signature(baselineState);
+    editorReady = true;
+  }
+
+  const hhmm = (d) => d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+  // Zustandsanzeige: "Gespeichert um hh:mm" / "Ungespeicherte Änderungen" / "… – Entwurf gesichert um hh:mm"
+  function updateStatus() {
+    const el = document.getElementById('ge-autosave-status');
+    if (!el || !editorReady) return;
+    if (isDirty()) el.textContent = 'Ungespeicherte Änderungen' + (draftAt ? ' – Entwurf gesichert um ' + hhmm(draftAt) : '');
+    else el.textContent = lastSavedAt ? 'Gespeichert um ' + hhmm(lastSavedAt) : '';
+  }
+
+  function buildDraft() {
+    const st = formState();
+    const assets = {};
+    st.pendingImages.forEach((n) => { if (pendingAssetData.has(n)) assets[n] = pendingAssetData.get(n); });
+    return {
+      v: 2, key: currentDraftKey(), guideId: currentGuideId || null,
+      baseVersion: currentGuideId ? loadedVersion : null, savedAt: new Date().toISOString(),
+      title: st.title, category: st.category, subcategory: st.subcategory, tags: st.tags, content: st.content,
+      privateNote: st.privateNote, links: st.links,
+      // Dateien, die noch nicht gespeichert sind, passen nicht in den Entwurf (beliebig gross): nur ihre Namen
+      attachments: st.attachments.filter((a) => !pendingAttachmentFiles.has(a.assetFile)),
+      pendingAttachmentNames: st.pendingFiles.map((f) => (attachments.find((a) => a.assetFile === f) || {}).name || f),
+      pendingRenames: pendingRenames.map((r) => ({ from: r.from, to: r.to })),
+      assets,
+    };
+  }
+
+  // Schreibt den Entwurf sofort und synchron. Rueckgabe true bei Erfolg. force: auch ohne Aenderung schreiben.
+  function flushDraft(opts) {
+    if (draftTimer) { clearTimeout(draftTimer); draftTimer = null; }
+    if (!editorReady || recoveryPending) return false; // solange ein gefundener Entwurf unentschieden ist, nie ueberschreiben
+    const force = !!(opts && opts.force);
+    if (!force && !isDirty()) {
+      // Formular entspricht dem gespeicherten Stand: ein eigener Entwurf ist ueberfluessig
+      if (draftWritten) { window.GuidesDrafts.remove(currentDraftKey()); draftWritten = false; draftAt = null; }
+      hideDraftAlert();
+      updateStatus();
+      return true;
+    }
     try {
-      const drafts = loadDrafts().filter((d) => d.id !== currentDraftId);
-      drafts.push(draft);
-      persistDrafts(drafts);
-      if (silent) updateAutosaveStatus();
-      else notify('Entwurf gespeichert.', 'success');
+      const written = window.GuidesDrafts.write(buildDraft());
+      draftWritten = true;
+      draftAt = new Date();
+      hideDraftAlert();
+      // Text ist gesichert; passten Bilder nicht in den Speicher, steht ein Hinweis (kein rotes Banner)
+      if (written && written.missing && written.missing.length) showDraftNotice(written.missing); else hideDraftNotice();
+      updateStatus();
+      return true;
     } catch (err) {
-      if (!silent) notify('Entwurf konnte nicht gespeichert werden (evtl. zu groß mit Bildern): ' + (err?.message || err), 'error');
+      showDraftAlert(err);
+      updateStatus();
+      return false;
     }
   }
 
-  function updateAutosaveStatus() {
-    const el = document.getElementById('ge-autosave-status');
-    if (!el) return;
-    const time = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    el.textContent = 'Automatisch gespeichert um ' + time;
+  // Aufruf bei jeder Aenderung: gedrosselt (hoechstens alle 300 ms), Anzeige sofort
+  function scheduleAutosave() {
+    if (!editorReady) return; // Aufrufe beim Aufbau der Seite ignorieren
+    updateStatus();
+    if (draftTimer) return;
+    draftTimer = setTimeout(() => { draftTimer = null; flushDraft(); }, 300);
   }
 
-  // Automatisches Zwischenspeichern: 3 Sekunden nach der letzten Eingabe
-  // (Titel, Kategorie, Tags, Inhalt, private Notiz) wird der Entwurf still
-  // im Hintergrund gesichert – ohne Toast, nur der Status-Text unten
-  // aktualisiert sich. Ergänzt (ersetzt nicht) den manuellen "Entwurf
-  // speichern"-Button.
-  let autosaveTimer = null;
-  function scheduleAutosave() {
-    clearTimeout(autosaveTimer);
-    autosaveTimer = setTimeout(() => { saveDraft(true); }, 3000);
+  // Manuelles "Zwischenspeichern" und Aufrufe aus Konflikt-/Fehlerwegen
+  async function saveDraft(silent) {
+    const ok = flushDraft({ force: true });
+    if (!silent) notify(ok ? 'Entwurf gespeichert.' : 'Entwurf konnte nicht gesichert werden (Speicher voll?) – bitte „Als Datei sichern (.md)“ nutzen.', ok ? 'success' : 'error', ok ? undefined : PERSIST);
+    return ok;
   }
+
   function initAutosave() {
     [titleInput, categorySelect, subcategoryInput, textarea, privateNoteInput].forEach(el => {
       el.addEventListener('input', scheduleAutosave);
@@ -959,30 +1015,131 @@
     });
   }
 
+  // Sofort sichern: Fokusverlust, Tab versteckt, pagehide. beforeunload warnt bei ungespeicherten Aenderungen.
+  function initDraftFlush() {
+    document.addEventListener('blur', () => { flushDraft(); }, true);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushDraft(); });
+    window.addEventListener('pagehide', () => { flushDraft(); revokeAssetPreviewUrls(); });
+    window.addEventListener('beforeunload', (e) => {
+      if (editorReady && isDirty()) {
+        flushDraft();            // der Entwurf bleibt als Rueckfall
+        e.preventDefault();      // Warnung des Browsers
+        e.returnValue = '';
+      }
+    });
+  }
+
+  // ── Banner (dauerhaft, role="alert") ──
+  function hostFor(id) {
+    let host = document.getElementById(id);
+    if (!host) {
+      host = document.createElement('div');
+      host.id = id;
+      const anchor = document.getElementById('ge-draft-panel');
+      anchor.parentNode.insertBefore(host, anchor);
+    }
+    return host;
+  }
+
+  function hideDraftAlert() {
+    const box = document.getElementById('ge-draft-alert');
+    if (box) box.remove();
+  }
+
+  function hideDraftNotice() {
+    const box = document.getElementById('ge-draft-notice');
+    if (box) box.remove();
+  }
+
+  // Hinweis (keine rote Fehlermeldung): der Text ist gesichert, aber nicht alle Bilder passen in den Entwurf
+  function showDraftNotice(missing) {
+    const host = hostFor('ge-draft-alert-host');
+    let box = document.getElementById('ge-draft-notice');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'ge-draft-notice';
+      box.className = 'ge-recover-banner';
+      box.setAttribute('role', 'status');
+      host.appendChild(box);
+    }
+    box.textContent = 'Der Text ist gesichert. Bilder passen nicht in den Entwurf: ' + missing.join(', ') + '. Speichere zwischendurch.';
+  }
+
+  function downloadCurrentAsFile() {
+    const title = titleInput.value.trim();
+    const body = (title ? '# ' + title + '\n\n' : '') + textarea.value;
+    const name = (title || 'entwurf').replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '-').slice(0, 80) || 'entwurf';
+    downloadBlob(new Blob([body], { type: 'text/markdown;charset=utf-8' }), name + '.md');
+  }
+
+  function showDraftAlert(err) {
+    const host = hostFor('ge-draft-alert-host');
+    let box = document.getElementById('ge-draft-alert');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'ge-draft-alert';
+      box.className = 'ge-conflict-banner';
+      box.setAttribute('role', 'alert');
+      const head = document.createElement('strong');
+      head.textContent = 'Entwurf kann nicht gesichert werden. ';
+      const why = document.createElement('span');
+      why.className = 'ge-draft-alert-why';
+      const actions = document.createElement('div');
+      actions.className = 'ge-conflict-actions';
+      const btn = document.createElement('button');
+      btn.type = 'button'; btn.id = 'ge-draft-download'; btn.className = 'gs-folder-btn';
+      btn.textContent = 'Als Datei sichern (.md)';
+      btn.addEventListener('click', downloadCurrentAsFile);
+      actions.appendChild(btn);
+      box.append(head, why, actions);
+      host.appendChild(box);
+    }
+    const reason = err && err.name === 'QuotaExceededError' ? 'Der Browser-Speicher ist voll.' : ((err && err.message) || 'Unbekannter Fehler.');
+    box.querySelector('.ge-draft-alert-why').textContent = reason + ' Bis das Sichern wieder gelingt, bleibt diese Meldung stehen – dein Text geht verloren, wenn du die Seite jetzt verlässt.';
+  }
+
+  // ── Entwurf anwenden ──
   function applyDraft(draft) {
-    currentDraftId = draft.id;
+    if (!draft.guideId) newDraftKey = draft.key; // weiter in denselben Entwurf schreiben
     titleInput.value = draft.title || '';
     if (draft.category) categorySelect.value = draft.category;
     subcategoryInput.value = draft.subcategory || '';
-    tags = Array.isArray(draft.tags) ? draft.tags : [];
+    tags = Array.isArray(draft.tags) ? [...draft.tags] : [];
     renderTagPills();
     textarea.value = draft.content || '';
     privateNoteInput.value = draft.privateNote || '';
-    if (draft.privateNote) privateNoteDetails.open = true;
+    privateNoteDetails.open = !!draft.privateNote;
     links = Array.isArray(draft.links) ? draft.links.map((l) => ({ ...l })) : [];
     renderLinks();
+    attachments = Array.isArray(draft.attachments) ? draft.attachments.map((a) => ({ ...a })) : [];
+    renderAttachments();
 
-    if (draft.assets) {
-      Object.entries(draft.assets).forEach(([filename, dataUrl]) => {
+    pendingAssets.clear(); pendingAssetData.clear(); revokeAssetPreviewUrls();
+    {
+      Object.entries(window.GuidesDrafts.imagesOf(draft).assets).forEach(([filename, dataUrl]) => {
         try {
           const blob = dataUrlToBlob(dataUrl);
           pendingAssets.set(filename, blob);
+          pendingAssetData.set(filename, dataUrl);
           assetPreviewUrls.set(filename, URL.createObjectURL(blob));
         } catch { /* einzelnes Bild überspringen */ }
       });
     }
-
+    // vorgemerkte Umbenennungen zurueckholen (nur, wenn das Bild noch existiert und der neue Name frei ist)
+    pendingRenames = [];
+    const lostRenames = [];
+    (draft.pendingRenames || []).forEach((r) => {
+      if (r && existingAssetNames.has(r.from) && !pendingRenames.some((x) => x.to === r.to) && !existingAssetNames.has(r.to)) pendingRenames.push({ from: r.from, to: r.to });
+      else if (r) lostRenames.push(r.from + ' → ' + r.to);
+    });
+    if (lostRenames.length) notify('Diese vorgemerkten Umbenennungen sind nicht mehr möglich (Bild fehlt oder Name vergeben): ' + lostRenames.join(', '), 'warning');
+    const imgBrowser = document.getElementById('ge-images-list');
+    if (imgBrowser && !imgBrowser.hidden) renderImageBrowser();
+    if ((draft.pendingAttachmentNames || []).length) {
+      notify('Diese Dateien waren nicht im Entwurf und müssen neu angehängt werden: ' + draft.pendingAttachmentNames.join(', '), 'warning');
+    }
     updatePreview();
+    scheduleAutosave();
   }
 
   function fmtDraftDate(iso) {
@@ -992,6 +1149,7 @@
       + ', ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr';
   }
 
+  // ── Entwurfsliste beim Anlegen eines NEUEN Guides ──
   function buildDraftRow(draft, panel, listEl) {
     const row = document.createElement('div');
     row.className = 'ge-draft-row';
@@ -1023,7 +1181,7 @@
     dismissBtn.className = 'gv-confirm-btn gv-confirm-btn--cancel';
     dismissBtn.textContent = 'Verwerfen';
     dismissBtn.addEventListener('click', () => {
-      removeDraftById(draft.id);
+      window.GuidesDrafts.remove(draft.key);
       row.remove();
       if (!listEl.children.length) panel.hidden = true;
     });
@@ -1034,17 +1192,99 @@
   }
 
   function checkForDrafts() {
-    const drafts = loadDrafts();
+    const drafts = window.GuidesDrafts.listNew();
     if (!drafts.length) return;
 
     const panel  = document.getElementById('ge-draft-panel');
     const listEl = document.getElementById('ge-draft-list');
     listEl.replaceChildren();
-    drafts
-      .slice()
-      .sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt))
-      .forEach((draft) => listEl.appendChild(buildDraftRow(draft, panel, listEl)));
+    drafts.forEach((draft) => listEl.appendChild(buildDraftRow(draft, panel, listEl)));
     panel.hidden = false;
+  }
+
+  // ── Wiederherstellung beim Oeffnen eines BESTEHENDEN Guides ──
+  // Nichts wird still angewendet und nichts still verworfen: bis zur Entscheidung zeigt das Formular den
+  // gespeicherten Stand und ist gesperrt (sonst wuerde die erste Eingabe den gefundenen Entwurf ueberschreiben).
+  function setFormInert(on) {
+    ['.ge-form-header', '#ge-view-toggle', '#ge-toolbar', '#ge-editor-wrap', '#ge-images-list'].forEach((sel) => {
+      const el = document.querySelector(sel);
+      if (el) el.toggleAttribute('inert', on);
+    });
+    const imgToggle = document.getElementById('ge-images-toggle');
+    if (imgToggle && imgToggle.parentElement) imgToggle.parentElement.toggleAttribute('inert', on);
+  }
+
+  function clearRecoverBanner() {
+    hostFor('ge-recover-host').replaceChildren();
+    recoveryPending = false;
+    setFormInert(false);
+  }
+
+  function checkRecovery() {
+    const d = window.GuidesDrafts.forGuide(currentGuideId);
+    if (!d) return;
+    if (window.GuidesDrafts.sameAsSaved(d, baselineState)) { window.GuidesDrafts.remove(d.key); return; } // ohne Unterschied: still entfernen
+
+    recoveryPending = true;
+    setFormInert(true);
+    const newer = Number.isInteger(d.baseVersion) && Number.isInteger(loadedVersion) && d.baseVersion < loadedVersion;
+    const host = hostFor('ge-recover-host');
+    host.replaceChildren();
+    const box = document.createElement('div');
+    box.id = 'ge-recover-banner';
+    box.className = 'ge-recover-banner';
+    box.setAttribute('role', 'alert');
+    const head = document.createElement('strong');
+    head.textContent = 'Nicht gespeicherte Änderungen vom ' + fmtDraftDate(d.savedAt) + ' gefunden. ';
+    const missingImages = window.GuidesDrafts.imagesOf(d).missing;
+    const msg = document.createElement('span');
+    msg.textContent = (missingImages.length ? 'Achtung: Diese Bilder fehlen im Entwurf (sie passten nicht in den Speicher): ' + missingImages.join(', ') + '. ' : '') + (newer
+      ? 'Der Guide wurde seitdem geändert (Version ' + d.baseVersion + ' → ' + loadedVersion + '): „Wiederherstellen“ würde diese neueren Änderungen überschreiben – „Als neuen Guide sichern“ überschreibt nichts. '
+      : '') + 'Das Formular zeigt bis zu deiner Entscheidung den gespeicherten Stand.';
+    const actions = document.createElement('div');
+    actions.className = 'ge-conflict-actions';
+    const mk = (id, label, emphasis, handler) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.id = id; b.className = 'gs-folder-btn' + (emphasis ? ' ge-btn-emphasis' : ''); b.textContent = label;
+      b.addEventListener('click', handler);
+      actions.appendChild(b);
+    };
+    mk('ge-recover-apply', 'Wiederherstellen', !newer, () => {
+      applyDraft(d);
+      clearRecoverBanner();
+      flushDraft({ force: true });
+    });
+    mk('ge-recover-discard', 'Verwerfen', false, () => {
+      if (!confirm('Die nicht gespeicherten Änderungen vom ' + fmtDraftDate(d.savedAt) + ' endgültig verwerfen? Der gespeicherte Stand bleibt unverändert.')) return;
+      window.GuidesDrafts.remove(d.key);
+      clearRecoverBanner();
+    });
+    mk('ge-recover-copy', 'Als neuen Guide sichern', newer, () => recoverAsCopy(d));
+    box.append(head, msg, actions);
+    host.appendChild(box);
+  }
+
+  async function recoverAsCopy(d) {
+    const time = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    const meta = {
+      title: (d.title || 'Entwurf').trim() + ' (Entwurf ' + time + ')',
+      category: d.category || 'Allgemein', subcategory: (d.subcategory || '').trim(), tags: [...(d.tags || [])],
+      privateNote: (d.privateNote || '').trim(),
+      links: (d.links || []).filter((l) => l.url && String(l.url).trim()).map((l) => ({ ...l, text: (l.text || '').trim(), url: String(l.url).trim() })),
+      attachments: (d.attachments || []).map((a) => ({ ...a })),
+      favorite: false, source: 'manual', importTag: null,
+    };
+    const images = new Map();
+    Object.entries(window.GuidesDrafts.imagesOf(d).assets).forEach(([n, u]) => { try { images.set(n, dataUrlToBlob(u)); } catch { /* überspringen */ } });
+    const r = await createCopyGuide({ meta, content: d.content || '', sourceId: currentGuideId, images, files: new Map(), renames: d.pendingRenames || [] });
+    if (!r.ok) {
+      showSaveAlert('Der Entwurf wurde nicht als neuer Guide gesichert: ' + r.error + ' Er bleibt erhalten.');
+      notify('Der Entwurf wurde nicht als neuer Guide gesichert: ' + r.error, 'error', PERSIST);
+      return;
+    }
+    window.GuidesDrafts.remove(d.key);
+    clearRecoverBanner();
+    notify('Die nicht gespeicherten Änderungen wurden als neuer Guide „' + meta.title + '“ gesichert.', 'success');
   }
 
   // ── Bestehenden Guide laden (Bearbeiten-Modus) ──────────
@@ -1056,6 +1296,8 @@
     }
     currentGuideId = id;
     existingMeta = res.meta;
+    loadedVersion = Number.isInteger(res.meta.version) && res.meta.version >= 1 ? res.meta.version : 1; // alte Guides ohne Feld = 1
+    loadedStamp = res.stamp || null;
     const assetsRes = await window.GuidesDB.listAssets(id);
     existingAssetNames = new Set(assetsRes.assets || []);
 
@@ -1076,18 +1318,28 @@
     document.title = 'support.sheet – Guide bearbeiten';
 
     await updatePreview();
+    // gespeicherter Stand = Formular jetzt; ein Entwurf zu genau diesem Guide wird angeboten (nie still angewendet)
+    clearRecoverBanner();
+    pendingRenames = [];
+    const modified = new Date(res.meta.modified);
+    lastSavedAt = isNaN(modified.getTime()) ? new Date() : modified;
+    draftWritten = false; draftAt = null;
+    setBaseline();
+    updateStatus();
+    checkRecovery();
   }
 
   // ── Speichern ────────────────────────────────────────────
   // Reine Speicherlogik ohne Navigation – gibt true/false zurueck, damit
   // die beiden Bottom-Bar-Buttons ("Speichern" vs. "Speichern & Schließen")
   // je nach Erfolg selbst entscheiden koennen, wohin es geht.
-  async function saveGuide() {
+  //
+  // Im Bearbeiten-Modus wird mit der beim Laden gelesenen Version (und im Ordnermodus den
+  // Dateizeiten) gespeichert. Hat sich der Guide inzwischen geaendert (anderes Fenster, Ansicht,
+  // andere Anwendung), wird NICHTS geschrieben: Banner mit drei Wegen, der eigene Text bleibt im
+  // Formular und im Entwurf.
+  function collectFormMeta() {
     const title = titleInput.value.trim();
-    if (!title) { notify('Bitte einen Titel eingeben.', 'error'); titleInput.focus(); return false; }
-
-    const isEditMode = !!currentGuideId;
-    const id = currentGuideId || window.GuidesDB.generateId();
     const meta = {
       title,
       category: categorySelect.value || 'Allgemein',
@@ -1101,39 +1353,274 @@
       importTag: existingMeta ? existingMeta.importTag : null,
     };
     if (existingMeta && existingMeta.created) meta.created = existingMeta.created;
+    return meta;
+  }
+
+  // ── Vorgemerkte Umbenennungen von Bildern (pendingRenames) beim Speichern ──
+  // Reihenfolge: (1) neue Assets aus den Daten der alten schreiben und bestaetigen, (2) Guide speichern,
+  // (3) erst nach bestaetigtem Speichern die alten Assets in den Asset-Papierkorb legen (nie endgueltig loeschen,
+  // und nur wenn sie im neuen Text nicht mehr vorkommen). Scheitert (1) oder (2), bleibt das alte Asset an seinem
+  // Platz, in diesem Versuch erzeugte neue Assets wandern in den Papierkorb und die Vormerkung bleibt erhalten.
+  async function createRenamedAssets(id, created) {
+    const db = window.GuidesDB;
+    const list = await db.listAssets(id);
+    const existing = new Set(list.assets || []);
+    for (const r of pendingRenames) {
+      if (existing.has(r.to)) return { ok: false, error: 'Das Bild „' + r.to + '“ existiert inzwischen im Guide (Umbenennung von „' + r.from + '“) und wird nicht überschrieben.' };
+      created.push(r.to); // ab hier kann die Datei existieren (auch unvollstaendig): bei Misserfolg in den Papierkorb
+      try {
+        const url = await db.getAssetUrl(id, r.from);
+        if (!url.success) throw new Error(url.error || 'altes Bild nicht gefunden');
+        const blob = await (await fetch(url.url)).blob();
+        URL.revokeObjectURL(url.url);
+        const saved = await db.saveAsset(id, r.to, blob);
+        if (!saved.success) throw new Error(saved.error);
+      } catch (e) {
+        return { ok: false, error: 'Umbenennung „' + r.from + '“ → „' + r.to + '“ fehlgeschlagen: ' + (e?.message || e) };
+      }
+    }
+    return { ok: true };
+  }
+
+  async function undoCreatedAssets(id, created) {
+    const failed = [];
+    for (const name of created) {
+      const t = await window.GuidesDB.trashAsset(id, name);
+      if (!t.success && !/nicht gefunden|could not be found|NotFound/i.test(t.error || '')) failed.push(name);
+    }
+    if (failed.length) notify('Neu angelegte Bilder konnten nicht in den Papierkorb verschoben werden und liegen noch im Guide: ' + failed.join(', '), 'warning', PERSIST);
+  }
+
+  async function finishRenames(id, savedText, savedMeta) {
+    const db = window.GuidesDB, notes = [];
+    const o = await db.findOrphanedAssets(id, savedText, savedMeta);
+    if (!o.success) notes.push('Die alten Bilder bleiben liegen (Prüfung fehlgeschlagen: ' + o.error + ')');
+    const orphan = new Set(((o && o.orphans) || []).map((x) => x.filename));
+    for (const r of pendingRenames) {
+      if (!o.success) break;
+      if (!orphan.has(r.from)) { notes.push('„' + r.from + '“ wird noch verwendet und bleibt liegen'); continue; }
+      const t = await db.trashAsset(id, r.from);
+      if (!t.success) notes.push('„' + r.from + '“ konnte nicht in den Papierkorb verschoben werden: ' + t.error);
+    }
+    pendingRenames = [];
+    const list = await db.listAssets(id);
+    existingAssetNames = new Set(list.assets || []);
+    return notes;
+  }
+
+  async function saveGuide() {
+    if (recoveryPending) {
+      notify('Bitte zuerst über die gefundenen nicht gespeicherten Änderungen entscheiden (Banner oben).', 'error');
+      return false;
+    }
+    const title = titleInput.value.trim();
+    if (!title) { notify('Bitte einen Titel eingeben.', 'error'); titleInput.focus(); return false; }
+
+    const isEditMode = !!currentGuideId;
+    const id = currentGuideId || window.GuidesDB.generateId();
+    const meta = collectFormMeta();
+    const savedState = formState();           // Stand, der gespeichert wird (Eingaben waehrend des Speicherns bleiben "ungespeichert")
+    const contentToSave = textarea.value;
+    const draftKeyBefore = currentDraftKey();
+
+    // Der Entwurf ist aktuell, bevor die Datenbank angefasst wird – und bleibt, bis sie das Speichern bestaetigt hat.
+    flushDraft({ force: true });
 
     for (const [filename, file] of pendingAssets.entries()) {
       const res = await window.GuidesDB.saveAsset(id, filename, file);
-      if (!res.success) notify('Bild „' + filename + '“ konnte nicht gespeichert werden: ' + res.error, 'error');
+      if (!res.success) notify('Bild „' + filename + '“ konnte nicht gespeichert werden: ' + res.error, 'error', PERSIST);
     }
     for (const [assetFile, file] of pendingAttachmentFiles.entries()) {
       const res = await window.GuidesDB.saveAsset(id, assetFile, file);
-      if (!res.success) notify('Datei „' + assetFile + '“ konnte nicht gespeichert werden: ' + res.error, 'error');
+      if (!res.success) notify('Datei „' + assetFile + '“ konnte nicht gespeichert werden: ' + res.error, 'error', PERSIST);
     }
 
-    const res = await window.GuidesDB.saveGuide(id, meta, textarea.value);
-    if (!res.success) {
-      notify(res.error || 'Guide konnte nicht gespeichert werden.', 'error');
-      return false;
-    }
-
-    // Nur beim Bearbeiten kann es überhaupt schon alte, jetzt nicht mehr
-    // referenzierte Assets geben – bei einem neuen Guide gibt es nichts
-    // aufzuräumen.
-    if (isEditMode) {
-      const cleanupRes = await window.GuidesDB.cleanupOrphanedAssets(id, textarea.value, meta);
-      if (!cleanupRes.success) {
-        notify(cleanupRes.error || 'Verwaiste Assets konnten nicht bereinigt werden.', 'error');
+    // Umbenennungen, Schritt 1: neue Assets aus den Daten der alten schreiben und bestaetigen
+    const createdNames = [];
+    if (pendingRenames.length) {
+      const r1 = await createRenamedAssets(id, createdNames);
+      if (!r1.ok) {
+        await undoCreatedAssets(id, createdNames);
+        showSaveAlert('Nicht gespeichert: ' + r1.error + ' Das alte Bild bleibt unverändert, die Umbenennung bleibt vorgemerkt, dein Text ist als Entwurf gesichert.');
+        notify('Nicht gespeichert: ' + r1.error, 'error', PERSIST);
+        return false;
       }
     }
 
-    if (currentDraftId) { removeDraftById(currentDraftId); currentDraftId = null; }
-    pendingAssets.clear();
+    // Schritt 2: Guide mit neuem Text speichern
+    let res;
+    try {
+      res = await window.GuidesDB.saveGuide(id, meta, contentToSave,
+        isEditMode ? { expectedVersion: loadedVersion, expectedStamp: loadedStamp } : undefined);
+    } catch (err) {
+      await undoCreatedAssets(id, createdNames);
+      if (err && err.name === 'ConflictError') {
+        showConflictBanner(err);
+        notify('Nicht gespeichert: Der Guide wurde zwischenzeitlich geändert.', 'error', PERSIST);
+        return false;
+      }
+      showSaveAlert('Speichern fehlgeschlagen: ' + (err?.message || err) + ' Dein Text ist als Entwurf gesichert.');
+      notify('Speichern fehlgeschlagen: ' + (err?.message || err), 'error', PERSIST);
+      return false;
+    }
+    if (!res.success) {
+      await undoCreatedAssets(id, createdNames);
+      showSaveAlert((res.error || 'Guide konnte nicht gespeichert werden.') + ' Dein Text ist als Entwurf gesichert.');
+      notify(res.error || 'Guide konnte nicht gespeichert werden.', 'error', PERSIST);
+      return false;
+    }
+
+    // Kein automatisches Aufräumen verwaister Assets beim Speichern: Die
+    // Erkennung konnte Dateien mit Leerzeichen/Klammern/Sonderzeichen im Namen
+    // nicht sicher zuordnen und hat sie endgültig gelöscht. Verwaiste Assets
+    // werden nur noch bewusst über Lokale DB | Einstellungen geprüft
+    // (Anzeige, Bestätigung, Papierkorb).
+
+    // Schritt 3: erst jetzt – die Datenbank hat bestaetigt – kommen die alten Bilder in den Asset-Papierkorb
+    const renameNotes = pendingRenames.length ? await finishRenames(id, contentToSave, res.meta) : [];
+
+    // Erst jetzt wird der Entwurf geloescht
+    clearAlerts();
+    window.GuidesDrafts.remove(draftKeyBefore);
+    newDraftKey = null; draftWritten = false; draftAt = null;
+    pendingAssets.clear(); pendingAssetData.clear();
     revokeAssetPreviewUrls();
     pendingAttachmentFiles.clear();
     currentGuideId = id; // fuer einen etwaigen zweiten Save in derselben Session
-    notify('Guide gespeichert.', 'success');
+    existingMeta = res.meta;
+    loadedVersion = res.version;   // naechstes Speichern in dieser Session baut auf dem eben geschriebenen Stand auf
+    loadedStamp = res.stamp || null;
+    lastSavedAt = new Date();
+    setBaseline(Object.assign({}, savedState, { pendingImages: [], pendingFiles: [], renames: [] }));
+    hideDraftAlert();
+    hideDraftNotice();
+    updateStatus();
+    if (renameNotes.length) notify('Guide gespeichert. Hinweis zu umbenannten Bildern: ' + renameNotes.join('; ') + '.', 'warning', PERSIST);
+    else notify('Guide gespeichert.', 'success');
+    if (document.getElementById('ge-images-list') && !document.getElementById('ge-images-list').hidden) renderImageBrowser();
     return true;
+  }
+
+  // ── Konflikt-Banner und Fehlermeldungen (dauerhaft, role="alert") ──
+  function alertHost() { return hostFor('ge-alert-host'); }
+
+  function clearAlerts() { alertHost().replaceChildren(); }
+
+  function showSaveAlert(message) {
+    const host = alertHost();
+    host.replaceChildren();
+    const box = document.createElement('div');
+    box.id = 'ge-save-alert';
+    box.className = 'ge-conflict-banner';
+    box.setAttribute('role', 'alert');
+    box.textContent = message;
+    host.appendChild(box);
+  }
+
+  function showConflictBanner(err) {
+    const host = alertHost();
+    host.replaceChildren();
+    const box = document.createElement('div');
+    box.id = 'ge-conflict-banner';
+    box.className = 'ge-conflict-banner';
+    box.setAttribute('role', 'alert');
+
+    const head = document.createElement('strong');
+    head.textContent = 'Nicht gespeichert – Konflikt. ';
+    const msg = document.createElement('span');
+    msg.textContent = (err.message || '') + ' Dein Text steht unverändert im Formular und ist als Entwurf gesichert. Was möchtest du tun?';
+    const actions = document.createElement('div');
+    actions.className = 'ge-conflict-actions';
+
+    const mk = (id, label, handler) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.id = id; b.className = 'gs-folder-btn'; b.textContent = label;
+      b.addEventListener('click', handler);
+      actions.appendChild(b);
+    };
+    mk('ge-conflict-copy', 'Meine Version als neuen Guide sichern', saveConflictCopy);
+    mk('ge-conflict-reload', 'Stand aus dem anderen Fenster laden', reloadAfterConflict);
+    mk('ge-conflict-continue', 'Weiter bearbeiten (nichts speichern)', clearAlerts);
+
+    box.append(head, msg, actions);
+    host.appendChild(box);
+  }
+
+  // Legt einen NEUEN Guide an (Konflikt-Kopie, Entwurf als neuer Guide): alle Assets des Quell-Guides werden
+  // mitkopiert, dazu die uebergebenen noch nicht gespeicherten Bilder/Dateien. Der Quell-Guide bleibt unveraendert.
+  // o: { meta, content, sourceId, images: Map, files: Map } → { ok, id, res } | { ok:false, error }
+  async function createCopyGuide(o) {
+    const db = window.GuidesDB;
+    const newId = db.generateId();
+    const copyFailed = [];
+    const renameMap = new Map((o.renames || []).map((r) => [r.from, r.to])); // vorgemerkte Umbenennungen: Asset unter dem NEUEN Namen anlegen
+    if (o.sourceId) {
+      const list = await db.listAssets(o.sourceId);
+      for (const name of (list.assets || [])) {
+        try {
+          const url = await db.getAssetUrl(o.sourceId, name);
+          if (!url.success) throw new Error(url.error);
+          const blob = await (await fetch(url.url)).blob();
+          URL.revokeObjectURL(url.url);
+          const saved = await db.saveAsset(newId, renameMap.get(name) || name, blob);
+          if (!saved.success) throw new Error(saved.error);
+        } catch (e) { copyFailed.push(name + ' (' + (e?.message || e) + ')'); }
+      }
+    }
+    for (const [filename, file] of o.images.entries()) {
+      const r = await db.saveAsset(newId, filename, file); if (!r.success) copyFailed.push(filename);
+    }
+    for (const [assetFile, file] of o.files.entries()) {
+      const r = await db.saveAsset(newId, assetFile, file); if (!r.success) copyFailed.push(assetFile);
+    }
+    if (copyFailed.length) return { ok: false, error: 'Dateien konnten nicht kopiert werden: ' + copyFailed.join('; ') + '.' };
+    const res = await db.saveGuide(newId, o.meta, o.content);
+    if (!res.success) return { ok: false, error: res.error || 'Kopie konnte nicht gespeichert werden.' };
+    return { ok: true, id: newId, res };
+  }
+
+  // 1. Eigene Version als neuen Guide: Titel mit "Konflikt" und Uhrzeit, alle Felder samt Anhaengen
+  //    (die Dateien werden mitkopiert); der urspruengliche Guide bleibt unveraendert.
+  async function saveConflictCopy() {
+    const time = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    const meta = collectFormMeta();
+    meta.title = meta.title + ' (Konflikt ' + time + ')';
+    delete meta.created;
+    const draftKeyBefore = currentDraftKey();
+    const savedState = formState();
+
+    const r = await createCopyGuide({ meta, content: textarea.value, sourceId: currentGuideId, images: pendingAssets, files: pendingAttachmentFiles, renames: pendingRenames });
+    if (!r.ok) {
+      showSaveAlert('Kopie nicht angelegt – ' + r.error + ' Dein Text ist weiter im Formular und als Entwurf gesichert.');
+      notify('Kopie nicht angelegt: ' + r.error, 'error', PERSIST);
+      return;
+    }
+    clearAlerts();
+    window.GuidesDrafts.remove(draftKeyBefore);
+    newDraftKey = null; draftWritten = false; draftAt = null;
+    pendingAssets.clear(); pendingAssetData.clear(); revokeAssetPreviewUrls(); pendingAttachmentFiles.clear();
+    pendingRenames = []; // die Assets liegen im neuen Guide unter den neuen Namen
+    currentGuideId = r.id;
+    existingMeta = r.res.meta;
+    loadedVersion = r.res.version;
+    loadedStamp = r.res.stamp || null;
+    titleInput.value = meta.title;
+    const assetsRes = await window.GuidesDB.listAssets(r.id);
+    existingAssetNames = new Set(assetsRes.assets || []);
+    lastSavedAt = new Date();
+    setBaseline(Object.assign({}, savedState, { title: meta.title, pendingImages: [], pendingFiles: [], renames: [] }));
+    hideDraftAlert();
+    updateStatus();
+    notify('Deine Version wurde als neuer Guide „' + meta.title + '“ gespeichert.', 'success');
+  }
+
+  // 2. Stand aus dem anderen Fenster laden – die eigenen Aenderungen sind vorher als Entwurf gesichert.
+  async function reloadAfterConflict() {
+    if (!confirm('Die eigenen Änderungen werden verworfen und der aktuelle Stand geladen. Sie sind vorher als Entwurf gesichert und lassen sich unter „Nicht gespeicherte Entwürfe“ wiederherstellen.\n\nStand aus dem anderen Fenster laden?')) return;
+    await saveDraft(true);
+    pendingAssets.clear(); pendingAssetData.clear(); revokeAssetPreviewUrls(); pendingAttachmentFiles.clear();
+    await loadForEdit(currentGuideId);
+    clearAlerts();
   }
 
   // "Speichern" – wie bisher direkt zur Guide-Ansicht.
@@ -1208,7 +1695,7 @@
           const ext = ((image.contentType || 'image/png').split('/').pop() || 'png').replace('jpeg', 'jpg');
           const filename = uniqueAssetName('docx-image-' + (++importImageCounter) + '.' + ext);
           const blob = base64ToBlob(base64, image.contentType);
-          pendingAssets.set(filename, blob);
+          registerPendingAsset(filename, blob);
           assetPreviewUrls.set(filename, URL.createObjectURL(blob));
           return { src: 'assets/' + filename };
         })),
@@ -1255,10 +1742,10 @@
     initAutosave();
 
     // Editor ohne Speichern verlassen (anderer Link, Tab schließen, Zurück-
-    // Navigation) – es gibt keinen eigenen "Abbrechen"-Button, das deckt
-    // also alle Wege ab. Nach einem erfolgreichen saveGuide() ist die Map
-    // bereits leer (revokeAssetPreviewUrls() dort), dann ist das hier ein No-op.
-    window.addEventListener('beforeunload', revokeAssetPreviewUrls);
+    // Navigation): Entwurf sofort sichern (pagehide, Fokusverlust, Tab versteckt) und bei ungespeicherten
+    // Änderungen warnen (beforeunload). Der Editor hat keinen eigenen "Abbrechen"-Knopf; "Speichern &
+    // Schließen" speichert zuerst. Die Blob-URLs der Bildvorschau werden bei pagehide freigegeben.
+    initDraftFlush();
 
     document.getElementById('ge-save-draft')?.addEventListener('click', () => saveDraft(false));
     document.getElementById('ge-save')?.addEventListener('click', handleSaveAndView);
@@ -1274,6 +1761,7 @@
     if (editId) {
       await loadForEdit(editId);
     } else {
+      setBaseline(); // leerer Stand; Vorbefuellung und wiederhergestellte Entwuerfe gelten als ungespeichert
       applyPrefillFromUrl();
       checkForDrafts();
     }

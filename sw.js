@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20261017-patchday-5';
+const CACHE_VERSION = '20261018-viewfiles-10';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -87,6 +87,8 @@ const ASSETS = [
   './css/guides.css',
   './js/guides.js',
   './js/guides-db.js',
+  './js/guides-backup.js',
+  './js/guides-drafts.js',
   './js/guides-view.js',
   './js/guides-overview.js',
   './js/guides-editor.js',

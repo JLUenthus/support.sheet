@@ -107,7 +107,7 @@
           </div>
 
           <h3>Private Notiz</h3>
-          <p>Über „🔒 Private Notiz" kannst du dir interne Vermerke machen (z.B. Kundendetails), die <strong>nie</strong> exportiert oder geteilt werden – auch nicht in ZIP-Exports oder Merge-Paketen. Sie erscheint nur dir in der Guide-Ansicht.</p>
+          <p>Über „🔒 Private Notiz" kannst du dir interne Vermerke machen (z.B. Kundendetails), die in Weitergabe-Paketen und lesbaren Archiven <strong>nie</strong> mitgeschickt werden. Nur die vollständige <strong>Sicherung</strong> enthält sie – diese Datei darfst du deshalb nicht weitergeben. Die Notiz erscheint nur dir in der Guide-Ansicht.</p>
 
           <h3>Links hinterlegen</h3>
           <p>Unter „🔗 Links" kannst du beliebig viele URLs hinterlegen (z.B. Hersteller-Doku, Microsoft-Learn-Artikel). Über „+ Weiteren Link hinzufügen" fügst du weitere Zeilen hinzu. Die Links tauchen später im fertigen Guide auf – dort lässt sich jeder Link kopieren, und du kannst versuchen, eine Offline-Kopie der Seite herunterzuladen (klappt nur, wenn die Zielseite das technisch erlaubt).</p>
@@ -149,7 +149,7 @@
           </div>
 
           <h3>Automatisches Speichern & Entwürfe</h3>
-          <p>Während du schreibst, wird dein Stand alle paar Sekunden automatisch als Entwurf zwischengespeichert (Status unten links). Verlässt du die Seite ohne zu speichern und kommst später zurück, bietet dir „Guide anlegen" eine Liste aller offenen Entwürfe zum Wiederherstellen an – mehrere Entwürfe können dabei parallel bestehen, ohne sich gegenseitig zu überschreiben.</p>
+          <p>Während du schreibst, wird jede Änderung nach kürzester Zeit (und sofort beim Verlassen des Feldes, beim Wechsel des Tabs und beim Schließen der Seite) als Entwurf in deinem Browser gesichert; die Anzeige unten links zeigt „Gespeichert um …“, „Ungespeicherte Änderungen“ und „Entwurf gesichert um …“. Jeder Guide hat seinen eigenen Entwurf: Öffnest du einen Guide erneut, bietet ein Banner „Nicht gespeicherte Änderungen vom … gefunden“ an, sie wiederherzustellen, zu verwerfen oder als neuen Guide zu sichern – nichts wird still angewendet oder gelöscht. Entwürfe zu neuen Guides erscheinen als Liste unter „Guide anlegen“. Der Entwurf wird erst gelöscht, nachdem die Datenbank das Speichern bestätigt hat. Ist der Browser-Speicher voll, steht ein rotes Banner mit „Als Datei sichern (.md)“ im Editor; beim Verlassen der Seite mit ungespeicherten Änderungen warnt der Browser.</p>
 
           <div class="howto-shot">
             <div class="howto-shot-icon">📸</div>
@@ -188,7 +188,8 @@
           <p>Hier verwaltest du die Datenbank als Ganzes:</p>
           <ul>
             <li><strong>📊 Datenbankstatus</strong> – zeigt, ob ein echter Ordner verbunden ist oder der Browser-Speicher genutzt wird, plus Anzahl Guides/Kategorien/Assets. Über einen Ordner statt Browser-Speicher hast du echte Dateien auf der Festplatte, die z.B. mit OneDrive gesichert werden können.</li>
-            <li><strong>📤 Export</strong> – als lesbares ZIP-Archiv (Markdown + Bilder, gut zum Durchstöbern) oder als Merge-Paket (zum späteren Re-Import in guide.sheet, z.B. auf einem anderen Rechner).</li>
+            <li><strong>📤 Export</strong> – als <strong>Sicherung</strong> (vollständig, mit privaten Notizen, Kategorienbaum und Papierkorb; wird nach dem Erstellen gegen Prüfsummen geprüft), als <strong>Weitergabe</strong> (wie die Sicherung, aber ohne private Notizen) oder als <strong>lesbares Archiv</strong> (nur Texte und Bilder zum Durchstöbern – <em>kein Backup</em>, Tags, Zeitstempel, Anhänge und mehr gehen verloren). „Jetzt Backup erstellen“ erzeugt immer die vollständige Sicherung.</li>
+            <li><strong>🔄 Mehrere Fenster oder Rechner</strong> – Jeder Guide trägt eine Versionsnummer. Speichert ein Fenster einen Guide, den ein anderes Fenster (oder die Ansicht) inzwischen geändert hat, wird <em>nichts</em> überschrieben: ein Hinweis bietet an, deine Version als neuen Guide zu sichern, den aktuellen Stand zu laden oder weiterzubearbeiten; dein Text bleibt dabei im Formular und als Entwurf erhalten. Im Ordnermodus vergleicht guide.sheet zusätzlich die Dateizeiten von <code>content.md</code> und <code>meta.json</code>, um Änderungen von außen zu erkennen (OneDrive, anderer Rechner im geteilten Ordner). Das ist <strong>kein vollständiger Schutz zwischen Rechnern</strong>: Synchronisierungsdienste können Dateien ändern, ohne dass guide.sheet es bemerkt. Bearbeite denselben Guide deshalb nicht gleichzeitig auf zwei Rechnern.</li>
             <li><strong>📥 Import/Merge</strong> – ZIP-Datei hineinziehen, Vorschau prüfen und übernehmen. Konflikte mit bereits vorhandenen Guides werden erkannt und lassen sich einzeln auflösen.</li>
             <li><strong>📎 Dateiverwaltung</strong> – zeigt alle in Guides hinterlegten Dateien (siehe „Dateien anhängen") über alle Guides hinweg, gruppiert nach Guide, mit erneutem Download.</li>
             <li><strong>📁 Kategorien verwalten</strong> – Farbe/Name ändern, Reihenfolge per Pfeil anpassen, leere Kategorien löschen.</li>
@@ -224,6 +225,7 @@
 
   <script src="js/toast.js"></script>
   <script src="js/guides-db.js"></script>
+  <script src="js/guides-backup.js"></script>
   <script src="js/guides.js"></script>
   <script src="nav.js"></script>
 

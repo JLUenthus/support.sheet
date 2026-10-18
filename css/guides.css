@@ -2087,3 +2087,39 @@
   transition: all .15s;
 }
 .link-dialog-btn-ok:hover { background: rgba(124,140,248,.2); }
+
+/* ── Sicherung/Import: Hinweise, Ergebnis, verwaiste Assets ── */
+.gm-notice { font-size: .78rem; color: var(--muted); background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; margin: 0 0 14px; line-height: 1.5; }
+.gm-notice[hidden] { display: none; }
+.gm-notice--ok    { border-color: rgba(74, 222, 128, .3); color: var(--text); }
+.gm-notice--warn  { border-color: rgba(245, 158, 11, .35); color: #f59e0b; }
+.gm-notice--error { border-color: rgba(248, 113, 113, .4); color: #f87171; }
+.gm-result { font-size: .82rem; line-height: 1.5; border-radius: 8px; padding: 10px 14px; margin: 0 0 16px; border: 1px solid var(--border); background: var(--panel); color: var(--text); overflow-wrap: anywhere; }
+.gm-result[hidden] { display: none; }
+.gm-result--success { border-color: rgba(74, 222, 128, .35); }
+.gm-result--warning { border-color: rgba(245, 158, 11, .4); color: #f59e0b; }
+.gm-result--error   { border-color: rgba(248, 113, 113, .45); color: #f87171; }
+.gm-orphans { margin-top: 14px; }
+.gm-orphans[hidden] { display: none; }
+.gm-orphans-summary { font-size: .8rem; color: var(--text); margin: 0 0 10px; }
+.gm-orphans-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; max-height: 280px; overflow-y: auto; }
+.gm-orphan-row { display: grid; grid-template-columns: 22px minmax(0, 1.2fr) minmax(0, 1.4fr) auto; gap: 10px; align-items: center; font-size: .78rem; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+.gm-orphan-guide, .gm-orphan-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gm-orphan-name { font-family: var(--font-mono); color: var(--muted); }
+.gm-orphan-size { color: var(--dim); white-space: nowrap; }
+.gm-trash-subtitle { font-size: .8rem; font-weight: 700; color: var(--muted); margin: 16px 0 8px; }
+.gm-trash-subtitle[hidden] { display: none; }
+.gs-backup-info { font-size: .68rem; color: var(--dim); flex-basis: 100%; padding-left: 16px; }
+.gs-backup-row { flex-wrap: wrap; }
+
+/* ── Konflikt-Banner (Editor), Hinweis in der Ansicht, nicht lesbare Kachel ── */
+.ge-conflict-banner { font-size: .84rem; line-height: 1.5; color: #f87171; background: var(--panel); border: 1px solid rgba(248, 113, 113, .45); border-radius: 8px; padding: 12px 14px; margin: 0 0 14px; overflow-wrap: anywhere; }
+.ge-conflict-banner[hidden] { display: none; }
+.ge-conflict-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.gg-tile-preview--error { color: #f87171; }
+.gg-retry-read { margin-top: 6px; }
+
+/* ── Entwurf: Wiederherstellungsbanner, hervorgehobener Knopf, Zustandsanzeige ── */
+.ge-recover-banner { font-size: .84rem; line-height: 1.5; color: #f59e0b; background: var(--panel); border: 1px solid rgba(245, 158, 11, .5); border-radius: 8px; padding: 12px 14px; margin: 0 0 14px; overflow-wrap: anywhere; }
+.ge-btn-emphasis { border-color: var(--accent); color: var(--text); font-weight: 700; }
+[inert] { opacity: .55; }

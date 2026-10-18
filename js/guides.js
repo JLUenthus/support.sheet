@@ -228,17 +228,25 @@
   }
 
   // ── Backup-Ampel ─────────────────────────────────────────
-  // Grün: letzter Export (gs-last-export) ist neuer/gleich der letzten
-  // Guide-Änderung über alle Guides hinweg – Rot: es gibt ungesicherte
-  // Änderungen oder es wurde noch nie exportiert. Nutzt bewusst keinen
-  // eigenen Speicher – der Export-Zeitstempel existiert bereits
-  // (guides-manage.js), die letzte Guide-Änderung wird aus den
-  // vorhandenen Metadaten abgeleitet.
+  // Grün: es gibt eine vollständige Sicherung und seit ihr wurde kein Guide
+  // geändert, angelegt, gelöscht oder wiederhergestellt. Rot: nie gesichert oder
+  // es gibt Änderungen seit der Sicherung (Anzahl wird angezeigt). Nur eine
+  // vollständige Sicherung (GuidesBackup.recordBackup) setzt den Zeitpunkt –
+  // weder das lesbare Archiv noch der Export einer einzelnen Kategorie.
   function initBackupStatus() {
     const db  = window.GuidesDB;
+    const GB  = window.GuidesBackup;
     const row = document.getElementById('gs-backup-row');
     const dot = document.getElementById('gs-backup-dot');
-    if (!row || !dot || !db) return;
+    if (!row || !dot || !db || !GB) return;
+
+    let info = document.getElementById('gs-backup-info');
+    if (!info) {
+      info = document.createElement('span');
+      info.id = 'gs-backup-info';
+      info.className = 'gs-backup-info';
+      row.appendChild(info);
+    }
 
     function fmt(iso) {
       if (!iso) return 'nie';
@@ -248,30 +256,18 @@
         + ', ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr';
     }
 
+    let runId = 0;
     async function refresh() {
-      const lastBackup = localStorage.getItem('gs-last-export');
-
-      let lastGuideChange = null;
-      if (!(db.isFilesystemMode() && !db.isConnected())) {
-        const res = await db.listGuides();
-        const guides = (res.success && res.guides) || [];
-        guides.forEach((g) => {
-          const modified = g.meta && g.meta.modified;
-          if (modified && (!lastGuideChange || new Date(modified) > new Date(lastGuideChange))) {
-            lastGuideChange = modified;
-          }
-        });
-      }
-
-      // Auf Minuten abrunden – die Anzeige zeigt ebenfalls nur Stunde:Minute,
-      // ein Vergleich auf volle Millisekunden würde sonst bei zwei optisch
-      // gleichen Zeiten (z.B. durch ein triviales Zwischenspeichern wie
-      // Favorit setzen) fälschlich Rot anzeigen.
-      const toMinute = (iso) => Math.floor(new Date(iso).getTime() / 60000);
-      const isOk = !!lastBackup && (!lastGuideChange || toMinute(lastBackup) >= toMinute(lastGuideChange));
+      const mine = ++runId;
+      const st = await GB.getStatus(db);
+      if (mine !== runId) return; // ein neuerer Aufruf hat übernommen
+      const isOk = !!st.at && st.changed === 0;
       row.classList.toggle('ok', isOk);
       row.classList.toggle('stale', !isOk);
-      row.title = 'Letzte Guide-Änderung: ' + fmt(lastGuideChange) + '\nLetztes Backup: ' + fmt(lastBackup);
+      info.textContent = !st.at ? 'noch keine vollständige Sicherung'
+        : st.changed == null ? 'Stand nicht lesbar'
+        : st.changed + (st.changed === 1 ? ' Änderung' : ' Änderungen') + ' seit der Sicherung';
+      row.title = 'Letzte vollständige Sicherung: ' + fmt(st.at) + (st.changed == null ? '' : '\nGeänderte Guides seitdem: ' + st.changed);
     }
 
     refresh();

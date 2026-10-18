@@ -8,6 +8,7 @@
   let currentId = null;
   let currentMeta = null;
   let currentContent = '';
+  let currentVersion = 1; // meta.version des angezeigten Stands (Grundlage der Konfliktpruefung)
   let allCategories = [];
   let isSupportGuide = false; // true = readonly Support-Guide aus data/support-guides.json (Bug 2)
 
@@ -293,17 +294,101 @@
     return content;
   }
 
-  async function toggleChecklistItem(index, box) {
-    const updated = toggleCheckboxLine(currentContent, index);
-    if (updated === currentContent) return;
-    const previousContent = currentContent;
-    currentContent = updated;
-    const res = await window.GuidesDB.saveGuide(currentId, currentMeta, currentContent);
-    if (!res.success) {
-      currentContent = previousContent;
-      box.checked = !box.checked;
-      notify(res.error || 'Checkliste konnte nicht gespeichert werden.', 'error');
+  // Alle Kontrollkaestchen-Zeilen (gleiche Zaehlung wie toggleCheckboxLine): [{ text, checked }]
+  function checklistLines(content) {
+    const out = [];
+    let inFence = false;
+    content.split('\n').forEach((line) => {
+      if (/^\s*```/.test(line)) { inFence = !inFence; return; }
+      if (inFence) return;
+      const m = line.match(/^(\s*[-*+]\s+\[)([ xX])(\].*)$/);
+      if (m) out.push({ text: m[3], checked: !!m[2].trim() });
+    });
+    return out;
+  }
+
+  function showSyncNotice(message) {
+    let el = document.getElementById('gv-sync-notice');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'gv-sync-notice';
+      el.className = 'gv-sync-notice ge-conflict-banner';
+      el.setAttribute('role', 'alert');
+      const article = document.getElementById('gv-article');
+      article.insertBefore(el, article.firstChild);
     }
+    el.textContent = message;
+    el.hidden = false;
+  }
+
+  // Aktuellen Stand frisch laden und neu zeichnen (nach einem Konflikt); die Meldung bleibt stehen.
+  async function reloadFresh(message, type) {
+    const res = await window.GuidesDB.getGuide(currentId);
+    if (res.success) {
+      currentMeta = res.meta;
+      currentContent = res.content || '';
+      currentVersion = Number.isInteger(res.meta.version) && res.meta.version >= 1 ? res.meta.version : 1;
+      await renderGuide();
+    }
+    showSyncNotice(message + (res.success ? '' : ' (Der aktuelle Stand konnte nicht neu geladen werden: ' + (res.error || '') + ')'));
+    notify(message, type || 'error');
+  }
+
+  // Schreibt NUR die uebergebenen Felder: GuidesDB.updateGuideFields liest den Guide frisch, wendet fn
+  // auf den frischen Stand an und speichert mit der angezeigten Version. Hat sich der Guide inzwischen
+  // geaendert (ConflictError), wird einmal mit dem frischen Stand wiederholt – fn setzt ja nur ein Feld
+  // bzw. bricht ab, wenn es nicht mehr passt; scheitert auch das, nichts schreiben und melden.
+  // Rueckgabe wie updateGuideFields; adopted: true, wenn der Stand aus einem anderen Fenster uebernommen wurde.
+  async function writeFields(fn) {
+    let adopted = false;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      let res;
+      try {
+        res = await window.GuidesDB.updateGuideFields(currentId, fn, { expectedVersion: currentVersion });
+      } catch (err) {
+        if (err && err.name === 'ConflictError') {
+          if (err.current && err.current.meta && typeof err.current.content === 'string') {
+            currentMeta = err.current.meta;
+            currentContent = err.current.content;
+            currentVersion = err.currentVersion;
+            adopted = true;
+            continue;
+          }
+          return { success: false, conflict: true, error: err.message || 'Der Guide wurde geändert oder existiert nicht mehr.' };
+        }
+        return { success: false, error: (err && err.message) || String(err) };
+      }
+      if (res.success && !res.unchanged) {
+        currentMeta = res.meta;
+        currentContent = res.content;
+        currentVersion = res.version;
+      }
+      return Object.assign({}, res, { adopted });
+    }
+    return { success: false, conflict: true, error: 'Der Guide wird gerade in einem anderen Fenster geändert.' };
+  }
+
+  async function afterAdopt(res) {
+    if (res && res.adopted) await reloadFresh('Der Guide wurde in einem anderen Fenster geändert – Ansicht aktualisiert.', 'warning');
+  }
+
+  async function toggleChecklistItem(index, box) {
+    const expected = checklistLines(currentContent)[index];
+    if (!expected) return;
+    const res = await writeFields(({ content }) => {
+      const cur = checklistLines(content)[index];
+      if (!cur || cur.text !== expected.text || cur.checked !== expected.checked) {
+        const e = new Error('Nicht gespeichert: Das Kontrollkästchen „' + expected.text.replace(/^\]\s*/, '').slice(0, 60) + '“ passt nach einer Änderung in einem anderen Fenster nicht mehr (Position oder Text abweichend). Die Ansicht zeigt den aktuellen Stand.');
+        e.code = 'MISMATCH';
+        throw e;
+      }
+      return { content: toggleCheckboxLine(content, index) };
+    });
+    if (res.success) { await afterAdopt(res); return; }
+    box.checked = !box.checked;
+    if (res.aborted) await reloadFresh(res.error);
+    else if (res.conflict) await reloadFresh('Nicht gespeichert: ' + res.error + ' Die Ansicht zeigt den aktuellen Stand – bitte die Aufgabe erneut abhaken.');
+    else notify(res.error || 'Checkliste konnte nicht gespeichert werden.', 'error');
   }
 
   function enhanceChecklists(container) {
@@ -479,6 +564,48 @@
     return wrapper;
   }
 
+  // ── Dateioperationen: nie eine Datei anfassen, bevor der Guide bestaetigt ist ──
+  // Hinzufuegen: erst Datei schreiben, dann Guide aendern; scheitert das, wandert die neue Datei in den
+  // Asset-Papierkorb. Entfernen/Umbenennen: erst Guide aendern und bestaetigen, dann die alte Datei in den
+  // Asset-Papierkorb. Physisch geloescht wird in der Ansicht nie (nur "Papierkorb leeren" in der Verwaltung).
+  function keepError(message) {
+    if (typeof showToast === 'function') showToast(message, 'error', { persistent: true }); // Datenverlust-Meldung: bleibt stehen
+  }
+
+  async function trashFile(name) {
+    try { return await window.GuidesDB.trashAsset(currentId, name); }
+    catch (err) { return { success: false, error: (err && err.message) || String(err) }; }
+  }
+
+  // Eine in diesem Vorgang neu geschriebene Datei zurueckziehen (in den Papierkorb, nie loeschen)
+  async function discardNewFile(name) {
+    const t = await trashFile(name);
+    if (!t.success && !/nicht gefunden|could not be found|NotFound/i.test(t.error || '')) {
+      keepError('Die neu angelegte Datei „' + name + '“ konnte nicht in den Papierkorb verschoben werden und liegt noch im Guide: ' + t.error);
+    }
+  }
+
+  // Alte Dateien nach bestaetigter Aenderung des Guides in den Papierkorb legen – nur, wenn sie im aktuellen Stand
+  // nicht mehr referenziert sind (Text, Anhaenge, Offline-Kopien). Rueckgabe: Hinweise zu Dateien, die liegen bleiben.
+  async function trashIfUnreferenced(names) {
+    const notes = [];
+    const o = await window.GuidesDB.findOrphanedAssets(currentId, currentContent, currentMeta);
+    if (!o.success) return ['Die alten Dateien bleiben liegen (Prüfung fehlgeschlagen: ' + o.error + ')'];
+    const orphan = new Set((o.orphans || []).map((x) => x.filename));
+    for (const name of names) {
+      if (!orphan.has(name)) { notes.push('„' + name + '“ wird noch verwendet und bleibt liegen'); continue; }
+      const t = await trashFile(name);
+      if (!t.success) notes.push('„' + name + '“ konnte nicht in den Papierkorb verschoben werden: ' + t.error);
+    }
+    return notes;
+  }
+
+  async function freeAssetName(wanted) {
+    const list = await window.GuidesDB.listAssets(currentId);
+    if (!(list.assets || []).includes(wanted)) return wanted;
+    return wanted.replace(/(\.[^.]*)?$/, '-' + Date.now() + '$1');
+  }
+
   // Best-Effort: klappt nur bei Seiten, die Cross-Origin-Lesezugriff
   // erlauben (CORS) – bei den meisten echten Websites blockiert das der
   // Browser aus Sicherheitsgründen. In dem Fall: klare Fehlermeldung mit
@@ -487,31 +614,53 @@
     const originalText = btn.textContent;
     btn.disabled = true;
     btn.textContent = '⏳ Lade…';
+    const resetButton = () => { btn.disabled = false; btn.textContent = originalText; };
+
+    let html;
     try {
       const res = await fetch(link.url, { mode: 'cors' });
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      const html = await res.text();
-      const blob = new Blob([html], { type: 'text/html' });
-      const filename = 'link-' + link.id + '.html';
-      const saveRes = await window.GuidesDB.saveAsset(currentId, filename, blob);
-      if (!saveRes.success) throw new Error(saveRes.error || 'Speichern fehlgeschlagen.');
-
-      link.offlineAsset = filename;
-      link.offlineSavedAt = new Date().toISOString();
-      const saveGuideRes = await window.GuidesDB.saveGuide(currentId, currentMeta, currentContent);
-      if (!saveGuideRes.success) throw new Error(saveGuideRes.error || 'Guide konnte nicht aktualisiert werden.');
-
-      renderLinks();
-      notify('Offline-Kopie gespeichert.', 'success');
+      html = await res.text();
     } catch (err) {
       const errorBox = btn.closest('.gv-link-item').querySelector('.gv-link-error');
       errorBox.querySelector('.gv-link-error-text').textContent =
         'Offline-Kopie fehlgeschlagen – die Seite blockiert vermutlich Cross-Origin-Zugriff (CORS), das kann bei den meisten Websites nicht umgangen werden. ' +
         'Alternative: Seite öffnen, Strg+P → „Als PDF speichern“, und die PDF-Datei manuell in den Guide-Inhalt einfügen.';
       errorBox.hidden = false;
-      btn.disabled = false;
-      btn.textContent = originalText;
+      resetButton();
+      return;
     }
+
+    // Aktualisieren: die vorhandene Kopie wird NICHT ueberschrieben, die neue bekommt einen neuen Namen; die alte
+    // geht erst nach bestaetigter Aenderung des Guides in den Papierkorb.
+    const oldAsset = link.offlineAsset || null;
+    const filename = await freeAssetName(oldAsset ? 'link-' + link.id + '-' + Date.now() + '.html' : 'link-' + link.id + '.html');
+    const saveRes = await window.GuidesDB.saveAsset(currentId, filename, new Blob([html], { type: 'text/html' }));
+    if (!saveRes.success) {
+      await discardNewFile(filename);
+      keepError('Offline-Kopie nicht gespeichert: ' + (saveRes.error || 'Speichern fehlgeschlagen.'));
+      resetButton();
+      return;
+    }
+
+    const savedAt = new Date().toISOString();
+    const saveGuideRes = await writeFields(({ meta }) => ({
+      links: (meta.links || []).map((l) => (l.id === link.id ? { ...l, offlineAsset: filename, offlineSavedAt: savedAt } : l)),
+    }));
+    if (!saveGuideRes.success) {
+      await discardNewFile(filename);
+      keepError('Offline-Kopie nicht eingetragen: ' + (saveGuideRes.error || 'Guide konnte nicht aktualisiert werden.') + ' Die Links sind unverändert, die neue Datei liegt im Asset-Papierkorb.');
+      resetButton();
+      return;
+    }
+
+    renderLinks();
+    await afterAdopt(saveGuideRes);
+    if (oldAsset && oldAsset !== filename) {
+      const notes = await trashIfUnreferenced([oldAsset]);
+      if (notes.length) keepError('Offline-Kopie gespeichert. Hinweis zur alten Kopie: ' + notes.join('; ') + '.');
+    }
+    notify('Offline-Kopie gespeichert.', 'success');
   }
 
   async function viewOfflineSnapshot(link) {
@@ -611,17 +760,17 @@
 
   async function removeAttachment(att) {
     if (!confirm('Datei „' + att.name + '“ wirklich entfernen?')) return;
-    const previous = currentMeta.attachments;
-    currentMeta.attachments = (currentMeta.attachments || []).filter((a) => a.id !== att.id);
-    const res = await window.GuidesDB.saveGuide(currentId, currentMeta, currentContent);
+    // erst die Liste des frischen Guides aendern und bestaetigen, dann die Datei in den Asset-Papierkorb
+    const res = await writeFields(({ meta }) => ({ attachments: (meta.attachments || []).filter((a) => a.id !== att.id) }));
     if (!res.success) {
-      currentMeta.attachments = previous;
-      notify(res.error || 'Datei konnte nicht entfernt werden.', 'error');
+      keepError('Datei nicht entfernt: ' + (res.error || 'Guide konnte nicht aktualisiert werden.') + ' Liste und Datei bleiben unverändert.');
       return;
     }
-    await window.GuidesDB.deleteAsset(currentId, att.assetFile);
+    const t = await trashFile(att.assetFile);
     renderAttachments();
-    notify('Datei entfernt.', 'success');
+    if (!t.success) keepError('Der Anhang steht nicht mehr in der Liste, aber die Datei „' + att.name + '“ konnte nicht in den Papierkorb verschoben werden: ' + t.error);
+    else notify('Datei entfernt (im Asset-Papierkorb, wiederherstellbar).', 'success');
+    await afterAdopt(res);
   }
 
   async function addAttachmentFile(file) {
@@ -629,18 +778,26 @@
       notify('Kein Ordner verbunden – große Dateien können im Browser-Cache (IndexedDB) zu Problemen führen.', 'error');
     }
     const attId = 'att-' + Date.now();
-    const assetFile = 'attachment-' + attId + '-' + sanitizeAttachmentName(file.name);
+    const assetFile = await freeAssetName('attachment-' + attId + '-' + sanitizeAttachmentName(file.name));
+    // erst die Datei schreiben und bestaetigen, dann den Guide aendern
     const saveRes = await window.GuidesDB.saveAsset(currentId, assetFile, file);
-    if (!saveRes.success) { notify(saveRes.error || 'Datei konnte nicht gespeichert werden.', 'error'); return; }
+    if (!saveRes.success) {
+      await discardNewFile(assetFile);
+      keepError('Datei nicht gespeichert: ' + (saveRes.error || 'Datei konnte nicht gespeichert werden.'));
+      return;
+    }
 
-    const attachments = Array.isArray(currentMeta.attachments) ? currentMeta.attachments : [];
-    attachments.push({ id: attId, name: file.name, size: file.size, type: file.type || '', assetFile });
-    currentMeta.attachments = attachments;
-    const res = await window.GuidesDB.saveGuide(currentId, currentMeta, currentContent);
-    if (!res.success) { notify(res.error || 'Guide konnte nicht aktualisiert werden.', 'error'); return; }
+    const newAttachment = { id: attId, name: file.name, size: file.size, type: file.type || '', assetFile };
+    const res = await writeFields(({ meta }) => ({ attachments: [...(Array.isArray(meta.attachments) ? meta.attachments : []), newAttachment] }));
+    if (!res.success) {
+      await discardNewFile(assetFile);
+      keepError('Datei „' + file.name + '“ nicht hinzugefügt: ' + (res.error || 'Guide konnte nicht aktualisiert werden.') + ' Die Liste ist unverändert, die neu angelegte Datei liegt im Asset-Papierkorb.');
+      return;
+    }
 
     renderAttachments();
     notify('Datei hinzugefügt.', 'success');
+    await afterAdopt(res);
   }
 
   function initAttachments() {
@@ -750,7 +907,12 @@
   async function renameImage(oldName) {
     const input = (prompt('Neuer Dateiname:', oldName) || '').trim();
     if (!input || input === oldName) return;
-    const newName = sanitizeAttachmentName(input);
+    // bereinigen wie im Editor: nur [A-Za-z0-9._-] (keine Pfadzeichen), keine fuehrenden Punkte, Dateiendung bleibt
+    const ext = (/\.[A-Za-z0-9]+$/.exec(oldName) || [''])[0];
+    let newName = sanitizeAttachmentName(input).replace(/^\.+/, '');
+    if (ext && !newName.toLowerCase().endsWith(ext.toLowerCase())) newName = newName.replace(/\.[A-Za-z0-9]+$/, '') + ext;
+    if (!newName || newName === ext) { notify('Ungültiger Dateiname.', 'error'); return; }
+    if (newName === oldName) return;
 
     const listRes = await window.GuidesDB.listAssets(currentId);
     if ((listRes.assets || []).includes(newName)) {
@@ -758,27 +920,36 @@
       return;
     }
 
+    // (1) neues Asset aus den Daten des alten schreiben und bestaetigen (das alte bleibt unberuehrt)
     const urlRes = await window.GuidesDB.getAssetUrl(currentId, oldName);
     if (!urlRes.success) { notify(urlRes.error || 'Bild nicht gefunden.', 'error'); return; }
     const blob = await (await fetch(urlRes.url)).blob();
-
+    URL.revokeObjectURL(urlRes.url);
     const saveRes = await window.GuidesDB.saveAsset(currentId, newName, blob);
-    if (!saveRes.success) { notify(saveRes.error || 'Umbenennen fehlgeschlagen.', 'error'); return; }
-    await window.GuidesDB.deleteAsset(currentId, oldName);
-
-    const oldPattern = new RegExp('assets/' + escapeRegExp(oldName), 'g');
-    const updatedContent = currentContent.replace(oldPattern, 'assets/' + newName);
-    let metaChanged = updatedContent !== currentContent;
-    (currentMeta.attachments || []).forEach((a) => { if (a.assetFile === oldName) { a.assetFile = newName; metaChanged = true; } });
-    (currentMeta.links || []).forEach((l) => { if (l.offlineAsset === oldName) { l.offlineAsset = newName; metaChanged = true; } });
-
-    if (metaChanged) {
-      currentContent = updatedContent;
-      const saveGuideRes = await window.GuidesDB.saveGuide(currentId, currentMeta, currentContent);
-      if (!saveGuideRes.success) { notify(saveGuideRes.error || 'Guide konnte nicht aktualisiert werden.', 'error'); return; }
+    if (!saveRes.success) {
+      await discardNewFile(newName);
+      keepError('Nicht umbenannt: ' + (saveRes.error || 'Umbenennen fehlgeschlagen.') + ' Das alte Bild bleibt unverändert.');
+      return;
     }
 
-    notify('Bild umbenannt.', 'success');
+    // (2) Guide auf dem frischen Stand aendern: alle Verweise (alle Schreibweisen) umschreiben
+    const saveGuideRes = await writeFields(({ meta, content }) => {
+      const updatedContent = window.GuidesDB.rewriteAssetReferences(content, oldName, newName);
+      let changed = updatedContent !== content;
+      const attachments = (meta.attachments || []).map((a) => { if (a.assetFile === oldName) { changed = true; return { ...a, assetFile: newName }; } return a; });
+      const links = (meta.links || []).map((l) => { if (l.offlineAsset === oldName) { changed = true; return { ...l, offlineAsset: newName }; } return l; });
+      return changed ? { content: updatedContent, attachments, links } : null;
+    });
+    if (!saveGuideRes.success) {
+      await discardNewFile(newName);
+      keepError('Nicht umbenannt: ' + (saveGuideRes.error || 'Guide konnte nicht aktualisiert werden.') + ' Das alte Bild bleibt unverändert, das neue liegt im Asset-Papierkorb.');
+      return;
+    }
+
+    // (3) erst nach bestaetigtem Speichern: das alte Asset in den Asset-Papierkorb (nur wenn nicht mehr referenziert)
+    const notes = await trashIfUnreferenced([oldName]);
+    if (notes.length) keepError('Bild umbenannt. Hinweis: ' + notes.join('; ') + '.');
+    else notify('Bild umbenannt (altes Bild im Asset-Papierkorb, wiederherstellbar).', 'success');
     await renderGuide();
     await renderImageBrowser();
   }
@@ -983,6 +1154,7 @@
       isSupportGuide = false;
       currentMeta    = res.meta;
       currentContent = res.content || '';
+      currentVersion = Number.isInteger(res.meta.version) && res.meta.version >= 1 ? res.meta.version : 1; // alte Guides ohne Feld = 1
     } else {
       // Schritt 4: erst wenn die persoenliche Suche (FS ODER IDB, je nach
       // Modus) nichts geliefert hat, den readonly Support-Guide-Fallback
@@ -1013,14 +1185,18 @@
   }
 
   async function toggleFavorite() {
-    currentMeta.favorite = !currentMeta.favorite;
+    const want = !currentMeta.favorite;
+    currentMeta.favorite = want;
     updateFavButton();
-    const res = await window.GuidesDB.saveGuide(currentId, currentMeta, currentContent);
+    const res = await writeFields(() => ({ favorite: want }));
     if (!res.success) {
-      currentMeta.favorite = !currentMeta.favorite;
+      currentMeta.favorite = !want;
       updateFavButton();
       notify(res.error || 'Favorit konnte nicht gespeichert werden.', 'error');
+      return;
     }
+    updateFavButton();
+    await afterAdopt(res);
   }
 
   function openConfirm()  { document.getElementById('gv-confirm-overlay').hidden = false; }

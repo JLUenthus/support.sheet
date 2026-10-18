@@ -28,8 +28,10 @@
     grid:      'gg-grid',
   };
 
+  // Fehler (Speichern, Löschen, Sammelaktionen) bleiben bis zum Schliessen stehen und werden nicht von einer
+  // folgenden Erfolgsmeldung verdraengt (siehe showToast, options.persistent)
   function notify(message, type) {
-    if (typeof showToast === 'function') showToast(message, type);
+    if (typeof showToast === 'function') showToast(message, type, { persistent: type === 'error' });
   }
 
   function showState(active) {
@@ -132,18 +134,57 @@
     }
   }
 
+  // Liest Inhalt und Version eines Guides fuer Vorschau/Suche. Ein Lesefehler macht den Inhalt
+  // "unbekannt" (content === null, contentState 'unreadable', readError) – NIE einen leeren Text:
+  // sonst wuerde eine spaetere Aktion "" zurueckschreiben und den Guide leeren.
+  async function readPreview(g) {
+    try {
+      const res = await window.GuidesDB.getGuide(g.id);
+      if (!res.success) throw new Error(res.error || 'unbekannter Fehler');
+      g.content        = res.content || '';
+      g.contentPreview = stripMarkdown(g.content).slice(0, 200);
+      g.contentState   = 'ok';
+      g.readError      = null;
+      g.version        = Number.isInteger(res.meta && res.meta.version) && res.meta.version >= 1 ? res.meta.version : 1;
+    } catch (err) {
+      g.content        = null;
+      g.contentPreview = '';
+      g.contentState   = 'unreadable';
+      g.readError      = (err && err.message) || String(err);
+      g.version        = null;
+    }
+  }
+
   async function loadContentPreviews(guides) {
-    const db = window.GuidesDB;
-    await Promise.all(guides.map(async (g) => {
+    await Promise.all(guides.map(readPreview));
+  }
+
+  // Schreibt NUR die uebergebenen Felder eines Guides (nie content): updateGuideFields liest den Guide
+  // frisch und speichert mit der beim Laden gelesenen Version. Bei ConflictError (der Guide hat sich in
+  // einem anderen Fenster geaendert) wird einmal mit dem frischen Stand wiederholt – fn setzt nur ein
+  // Feld. Fuer Guides mit Lesefehler sind schreibende Aktionen gesperrt.
+  async function writeGuideFields(g, fn) {
+    if (g.contentState === 'unreadable') {
+      return { success: false, error: 'Inhalt nicht lesbar – Aktion gesperrt (erst „Erneut lesen“).' };
+    }
+    for (let attempt = 0; attempt < 2; attempt++) {
+      let res;
       try {
-        const res = await db.getGuide(g.id);
-        g.content        = res.success ? (res.content || '') : '';
-        g.contentPreview  = stripMarkdown(g.content).slice(0, 200);
-      } catch {
-        g.content = '';
-        g.contentPreview = '';
+        res = await window.GuidesDB.updateGuideFields(g.id, fn, { expectedVersion: g.version });
+      } catch (err) {
+        if (err && err.name === 'ConflictError') {
+          if (err.current && err.current.meta) { g.version = err.currentVersion; continue; }
+          return { success: false, error: err.message || 'Der Guide wurde geändert oder existiert nicht mehr.' };
+        }
+        return { success: false, error: (err && err.message) || String(err) };
       }
-    }));
+      if (res.success && !res.unchanged) {
+        g.version = res.version;
+        ['favorite', 'tags', 'category', 'subcategory', 'title', 'modified'].forEach((k) => { g.meta[k] = res.meta[k]; });
+      }
+      return res;
+    }
+    return { success: false, error: 'Der Guide wird gerade in einem anderen Fenster geändert.' };
   }
 
   function buildFuse() {
@@ -477,9 +518,27 @@
       badges.appendChild(tag);
     });
 
+    const unreadable = g.contentState === 'unreadable';
     const preview = document.createElement('p');
-    preview.className = 'gg-tile-preview';
-    preview.textContent = (g.contentPreview || '').slice(0, 150) || 'Kein Vorschautext verfügbar.';
+    preview.className = 'gg-tile-preview' + (unreadable ? ' gg-tile-preview--error' : '');
+    preview.textContent = unreadable
+      ? 'Inhalt nicht lesbar: ' + g.readError
+      : ((g.contentPreview || '').slice(0, 150) || 'Kein Vorschautext verfügbar.');
+    if (unreadable) {
+      favBtn.disabled = true;
+      favBtn.title = 'Gesperrt: Inhalt nicht lesbar';
+      const retry = document.createElement('button');
+      retry.type = 'button';
+      retry.className = 'gs-folder-btn gg-retry-read';
+      retry.textContent = '🔄 Erneut lesen';
+      retry.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await readPreview(g);
+        renderGrid();
+      });
+      preview.appendChild(document.createElement('br'));
+      preview.appendChild(retry);
+    }
 
     const footer = document.createElement('div');
     footer.className = 'gg-tile-footer';
@@ -516,10 +575,12 @@
 
     favBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      meta.favorite = !meta.favorite;
+      if (g.contentState === 'unreadable') return;
+      const want = !meta.favorite;
+      meta.favorite = want;
       favBtn.classList.toggle('active', meta.favorite);
       favBtn.setAttribute('aria-pressed', String(meta.favorite));
-      const res = await window.GuidesDB.saveGuide(g.id, meta, g.content || '');
+      const res = await writeGuideFields(g, () => ({ favorite: want }));
       if (!res.success) {
         meta.favorite = !meta.favorite;
         favBtn.classList.toggle('active', meta.favorite);
@@ -609,19 +670,22 @@
     const tag = (prompt('Tag-Name für alle ausgewählten Guides:') || '').trim();
     if (!tag) return;
     const ids = [...selectedIds];
-    let errors = 0;
+    let errors = 0, locked = 0;
     for (const id of ids) {
       const guide = allGuides.find((g) => g.id === id);
       if (!guide) continue;
-      const tags = Array.isArray(guide.meta.tags) ? [...guide.meta.tags] : [];
-      if (tags.includes(tag)) continue;
-      tags.push(tag);
-      const res = await window.GuidesDB.saveGuide(id, Object.assign({}, guide.meta, { tags }), guide.content || '');
+      if (guide.contentState === 'unreadable') { locked++; continue; }
+      const res = await writeGuideFields(guide, ({ meta }) => {
+        const tags = Array.isArray(meta.tags) ? [...meta.tags] : [];
+        if (tags.includes(tag)) return null;
+        tags.push(tag);
+        return { tags };
+      });
       if (!res.success) errors++;
     }
     notify(
-      'Tag „' + tag + '“ zu ' + ids.length + ' Guide(s) hinzugefügt' + (errors ? ' (' + errors + ' Fehler)' : '') + '.',
-      errors ? 'error' : 'success'
+      'Tag „' + tag + '“ zu ' + (ids.length - locked - errors) + ' Guide(s) hinzugefügt' + (errors ? ' (' + errors + ' Fehler)' : '') + (locked ? ' (' + locked + ' gesperrt: Inhalt nicht lesbar)' : '') + '.',
+      (errors || locked) ? 'error' : 'success'
     );
     selectedIds.clear();
     await loadAndRender();
@@ -645,16 +709,17 @@
     if (!newCategory) return;
 
     const ids = [...selectedIds];
-    let errors = 0;
+    let errors = 0, locked = 0;
     for (const id of ids) {
       const guide = allGuides.find((g) => g.id === id);
       if (!guide) continue;
-      const res = await window.GuidesDB.saveGuide(id, Object.assign({}, guide.meta, { category: newCategory }), guide.content || '');
+      if (guide.contentState === 'unreadable') { locked++; continue; }
+      const res = await writeGuideFields(guide, () => ({ category: newCategory }));
       if (!res.success) errors++;
     }
     notify(
-      'Kategorie für ' + ids.length + ' Guide(s) auf „' + newCategory + '“ gesetzt' + (errors ? ' (' + errors + ' Fehler)' : '') + '.',
-      errors ? 'error' : 'success'
+      'Kategorie für ' + (ids.length - locked - errors) + ' Guide(s) auf „' + newCategory + '“ gesetzt' + (errors ? ' (' + errors + ' Fehler)' : '') + (locked ? ' (' + locked + ' gesperrt: Inhalt nicht lesbar)' : '') + '.',
+      (errors || locked) ? 'error' : 'success'
     );
     selectedIds.clear();
     await loadAndRender();

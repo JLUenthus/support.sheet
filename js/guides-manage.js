@@ -1,12 +1,12 @@
 // ============================================================
 // guide.sheet – guides-manage.js (Phase 7+8 – Export/Import/DB-Verwaltung)
-// Export (lesbares Archiv + Merge-Paket via JSZip), Import/Merge mit
-// Konflikterkennung, Kategorien-Verwaltung, Papierkorb, Statistik.
-// Nutzt ausschließlich GuidesDB. Erwartet vor dieser Datei:
-// guides-db.js + jszip.min.js.
+// Export (Sicherung vollständig / Weitergabe / lesbares Archiv via JSZip),
+// Import/Merge mit Konflikterkennung und Prüfsummenkontrolle, Verwaiste Assets
+// (prüfen, in den Papierkorb), Kategorien-Verwaltung, Papierkorb, Statistik.
+// Nutzt GuidesDB und GuidesBackup. Erwartet vor dieser Datei:
+// guides-db.js + guides-backup.js + jszip.min.js.
 // ============================================================
 (function() {
-  const LAST_EXPORT_KEY = 'gs-last-export';
   const EXPORT_NAME_KEY = 'gs-export-name';
 
   let categoriesState  = [];
@@ -16,8 +16,10 @@
   let loading          = false;
   let importIdCounter  = 0;
 
+  // Fehler (Sicherung, Import, Löschen, Papierkorb, Kategorien) bleiben bis zum Schliessen stehen und werden nicht
+  // von einer folgenden Erfolgsmeldung verdraengt (siehe showToast, options.persistent)
   function notify(message, msgType) {
-    if (typeof showToast === 'function') showToast(message, msgType);
+    if (typeof showToast === 'function') showToast(message, msgType, { persistent: msgType === 'error' });
   }
 
   function fmtDate(iso) {
@@ -110,9 +112,22 @@
     }
     document.getElementById('gm-status-assets').textContent = assetTotal;
 
-    const lastExport = localStorage.getItem(LAST_EXPORT_KEY);
-    document.getElementById('gm-status-lastexport').textContent = lastExport ? fmtDate(lastExport) : 'Noch nie';
+    const st = await window.GuidesBackup.getStatus(db);
+    document.getElementById('gm-status-lastbackup').textContent = !st.at ? 'Noch nie'
+      : fmtDate(st.at) + (st.changed == null ? '' : ' · ' + st.changed + ' geändert seitdem');
   }
+
+  // Ergebnis von Export/Import: bleibt stehen (der Toast verschwindet nach 2 s,
+  // wuerde bei Teilergebnissen und Warnungen also leicht uebersehen).
+  function showResult(message, type) {
+    const el = document.getElementById('gm-result');
+    el.textContent = message;
+    el.className = 'gm-result gm-result--' + (type || 'success');
+    el.hidden = false;
+    notify(message, type);
+  }
+
+  function refreshBackupIndicator() { document.dispatchEvent(new CustomEvent('guides-backup-updated')); }
 
   function initStatusActions() {
     document.getElementById('gm-switch-folder').addEventListener('click', async () => {
@@ -125,7 +140,9 @@
       if (res.success) { notify('Ordner getrennt.', 'success'); await loadAll(); }
       else if (res.error) notify(res.error, 'error');
     });
-    document.getElementById('gm-cleanup-assets').addEventListener('click', cleanupAllOrphanedAssets);
+    document.getElementById('gm-cleanup-assets').addEventListener('click', checkOrphans);
+    document.getElementById('gm-orphans-trash').addEventListener('click', trashSelectedOrphans);
+    document.getElementById('gm-orphans-close').addEventListener('click', () => { document.getElementById('gm-orphans-panel').hidden = true; });
   }
 
   // Der "Neu hier?"-Hinweis auf guides.html merkt sich sein Ausblenden in
@@ -141,28 +158,77 @@
     });
   }
 
-  async function cleanupAllOrphanedAssets() {
-    const db = window.GuidesDB;
-    const listRes = await db.listGuides();
-    if (!listRes.success) { notify(listRes.error || 'Guides konnten nicht gelesen werden.', 'error'); return; }
-    const guides = listRes.guides || [];
-    if (!guides.length) { notify('Keine Guides vorhanden.', 'success'); return; }
+  // ── Verwaiste Assets: prüfen, anzeigen, nach Bestätigung in den Papierkorb ──
+  // Läuft nie automatisch (nicht beim Speichern, nicht beim Import), sondern nur
+  // auf ausdrücklichen Klick. Nichts wird endgültig gelöscht: bestätigte Dateien
+  // wandern in den Papierkorb und lassen sich dort wiederherstellen.
+  let orphanState = [];
 
-    let totalDeleted = 0;
-    let failedGuides = 0;
-    for (const g of guides) {
-      const full = await db.getGuide(g.id);
-      if (!full.success) { failedGuides++; continue; }
-      const res = await db.cleanupOrphanedAssets(g.id, full.content || '', full.meta);
-      if (res.success) totalDeleted += res.deletedCount;
-      else failedGuides++;
+  function renderOrphans(scan) {
+    const panel   = document.getElementById('gm-orphans-panel');
+    const list    = document.getElementById('gm-orphans-list');
+    const summary = document.getElementById('gm-orphans-summary');
+    const trashBtn = document.getElementById('gm-orphans-trash');
+    list.replaceChildren();
+    panel.hidden = false;
+
+    orphanState.forEach((o) => {
+      const row = document.createElement('label');
+      row.className = 'gm-orphan-row';
+      row.dataset.guide = o.guideId;
+      row.dataset.file = o.filename;
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.checked = o.selected;
+      cb.addEventListener('change', () => { o.selected = cb.checked; });
+      const guide = document.createElement('span');
+      guide.className = 'gm-orphan-guide'; guide.textContent = o.title;
+      const name = document.createElement('span');
+      name.className = 'gm-orphan-name'; name.textContent = o.filename;
+      const size = document.createElement('span');
+      size.className = 'gm-orphan-size'; size.textContent = formatFileSize(o.size);
+      row.append(cb, guide, name, size);
+      list.appendChild(row);
+    });
+
+    const guideCount = new Set(orphanState.map((o) => o.guideId)).size;
+    const skipped = scan.skipped.length ? ' ' + scan.skipped.length + ' Guide(s) konnten nicht gelesen werden und wurden nicht geprüft.' : '';
+    summary.textContent = orphanState.length
+      ? orphanState.length + ' nicht referenzierte Datei(en) in ' + guideCount + ' Guide(s) gefunden (' + scan.scanned + ' Guides geprüft). Es wurde nichts verändert.' + skipped
+      : 'Keine verwaisten Assets gefunden (' + scan.scanned + ' Guides geprüft).' + skipped;
+    trashBtn.hidden = !orphanState.length;
+  }
+
+  async function checkOrphans() {
+    const summary = document.getElementById('gm-orphans-summary');
+    document.getElementById('gm-orphans-panel').hidden = false;
+    document.getElementById('gm-orphans-list').replaceChildren();
+    document.getElementById('gm-orphans-trash').hidden = true;
+    summary.textContent = 'Prüfe…';
+    try {
+      const scan = await window.GuidesBackup.scanOrphans(window.GuidesDB);
+      orphanState = scan.orphans.map((o) => ({ ...o, selected: true }));
+      renderOrphans(scan);
+    } catch (err) {
+      document.getElementById('gm-orphans-panel').hidden = true;
+      notify('Prüfung fehlgeschlagen: ' + (err?.message || err), 'error');
     }
+  }
 
-    notify(
-      totalDeleted + ' verwaiste Asset(s) entfernt' + (failedGuides ? ' (' + failedGuides + ' Guide(s) übersprungen)' : '') + '.',
-      'success'
-    );
-    await updateStatusPanel(allGuidesCache);
+  async function trashSelectedOrphans() {
+    const selected = orphanState.filter((o) => o.selected);
+    if (!selected.length) { notify('Keine Datei ausgewählt.', 'error'); return; }
+    if (!confirm(selected.length + ' Datei(en) in den Papierkorb verschieben?\n\nSie werden nicht gelöscht und lassen sich im Papierkorb wiederherstellen. ' +
+      'Endgültig gelöscht wird erst mit „Papierkorb leeren“ (nach einer weiteren Rückfrage).')) return;
+    let moved = 0;
+    const failed = [];
+    for (const o of selected) {
+      const res = await window.GuidesDB.trashAsset(o.guideId, o.filename);
+      if (res.success) moved++; else failed.push(o.filename + ': ' + (res.error || 'Fehler'));
+    }
+    showResult(moved + ' Datei(en) in den Papierkorb verschoben' + (failed.length ? ', ' + failed.length + ' NICHT verschoben (' + failed.join('; ') + ')' : '') + '.',
+      failed.length ? 'error' : 'success');
+    await checkOrphans();
+    await loadAll();
   }
 
   // ── Export ───────────────────────────────────────────────
@@ -177,6 +243,8 @@
     });
   }
 
+  // Lesbares Archiv: Funktion unveraendert (Markdown + Bilder); die Daten kommen jetzt
+  // aus dem Guide selbst (GuidesBackup.collect) statt aus dem Index-Eintrag.
   async function buildReadableArchive(zip, guides, exportedBy, dateStr) {
     const usedNames = new Map();
     const tocLines = [];
@@ -219,14 +287,7 @@
       }
 
       zip.file(mdPath, content);
-
-      const assetsRes = await window.GuidesDB.listAssets(g.id);
-      for (const filename of (assetsRes.assets || [])) {
-        const urlRes = await window.GuidesDB.getAssetUrl(g.id, filename);
-        if (!urlRes.success) continue;
-        const blob = await (await fetch(urlRes.url)).blob();
-        zip.file(assetsFolder + filename, blob);
-      }
+      for (const a of g.assets) zip.file(assetsFolder + a.name, a.blob);
 
       tocLines.push('- [' + (meta.title || 'Unbenannt') + '](' + mdPath + ') – ' + ageLabel(meta.modified));
     }
@@ -238,36 +299,7 @@
     zip.file('README.md', readme);
   }
 
-  async function buildMergePackage(zip, guides, exportedBy, dateStr) {
-    for (const g of guides) {
-      const base = 'guides/' + g.id + '/';
-      // Kopie statt g.meta direkt – privateNote darf niemals in eine Export-Datei gelangen.
-      const meta = { ...g.meta };
-      delete meta.privateNote;
-      zip.file(base + 'meta.json', JSON.stringify(meta, null, 2));
-      zip.file(base + 'content.md', g.content || '');
-
-      const assetsRes = await window.GuidesDB.listAssets(g.id);
-      for (const filename of (assetsRes.assets || [])) {
-        const urlRes = await window.GuidesDB.getAssetUrl(g.id, filename);
-        if (!urlRes.success) continue;
-        const blob = await (await fetch(urlRes.url)).blob();
-        zip.file(base + 'assets/' + filename, blob);
-      }
-    }
-
-    zip.file('categories.json', JSON.stringify(categoriesState, null, 2));
-    zip.file('_package.json', JSON.stringify({
-      version: '1.0',
-      exportedAt: new Date().toISOString(),
-      exportedBy,
-      guideCount: guides.length,
-      tool: 'guide.sheet',
-    }, null, 2));
-  }
-
-  async function downloadZip(zip, filename) {
-    const blob = await zip.generateAsync({ type: 'blob' });
+  function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -278,6 +310,35 @@
     URL.revokeObjectURL(url);
   }
 
+  async function downloadZip(zip, filename) {
+    downloadBlob(await zip.generateAsync({ type: 'blob' }), filename);
+  }
+
+  // Die gerade erzeugte Datei wird wieder gelesen und gegen ihre Prüfsummen und
+  // gegen das erwartete Manifest geprüft. Erst danach wird sie angeboten.
+  async function verifyBuiltPackage(pkg) {
+    const zip = await JSZip.loadAsync(pkg.blob);
+    const v = await window.GuidesBackup.verifyZip(zip);
+    const issues = [...v.errors];
+    Object.entries(v.guideErrors).forEach(([id, msgs]) => issues.push(id + ': ' + msgs.join('; ')));
+    if (!v.hasManifest) issues.push('Manifest fehlt');
+    else {
+      const text = await zip.file('_manifest.json').async('string');
+      if (text !== pkg.manifestText) issues.push('Manifest weicht vom erwarteten ab');
+    }
+    if (v.guideCount !== pkg.counts.guides || v.assetCount !== pkg.counts.assets) issues.push('Anzahl der Guides/Assets weicht ab');
+    return { ok: issues.length === 0, issues };
+  }
+
+  function updateFormatNotices() {
+    const format = document.querySelector('input[name="gm-format"]:checked').value;
+    const scope  = document.querySelector('input[name="gm-scope"]:checked').value;
+    document.getElementById('gm-notice-full').hidden     = format !== 'full';
+    document.getElementById('gm-notice-share').hidden    = format !== 'share';
+    document.getElementById('gm-readable-warning').hidden = format !== 'readable';
+    document.getElementById('gm-notice-partial').hidden  = !(format === 'full' && scope !== 'all');
+  }
+
   async function handleExport() {
     if (typeof JSZip === 'undefined') { notify('jszip.js konnte nicht geladen werden.', 'error'); return; }
 
@@ -285,48 +346,92 @@
     const format = document.querySelector('input[name="gm-format"]:checked').value;
     const exportedBy = (document.getElementById('gm-export-name').value || 'anonym').trim();
     localStorage.setItem(EXPORT_NAME_KEY, exportedBy);
+    const GB = window.GuidesBackup;
 
-    const res = await window.GuidesDB.listGuides();
-    if (!res.success) { notify(res.error || 'Guides konnten nicht gelesen werden.', 'error'); return; }
-    let guides = res.guides || [];
+    if (format === 'readable' && !confirm('Lesbares Archiv – KEIN Backup!\n\n' + GB.READABLE_WARNING + '\n\nTrotzdem als lesbares Archiv exportieren?')) return;
 
-    if (scope === 'category') {
-      const cat = document.getElementById('gm-export-category').value;
-      guides = guides.filter(g => (g.meta.category || 'Allgemein') === cat);
-    } else if (scope === 'favorites') {
-      guides = guides.filter(g => g.meta.favorite);
-    }
-
-    if (!guides.length) { notify('Keine Guides für diese Auswahl gefunden.', 'error'); return; }
-
-    for (const g of guides) {
-      const full = await window.GuidesDB.getGuide(g.id);
-      g.content = full.success ? full.content : '';
-    }
-
-    const dateStr = new Date().toISOString().slice(0, 10);
-    const zip = new JSZip();
-
+    const buttons = [document.getElementById('gm-export-btn'), document.getElementById('gm-quick-backup-btn')];
+    buttons.forEach((b) => { b.disabled = true; });
     try {
+      const data = await GB.collect(window.GuidesDB, {
+        scope,
+        category: document.getElementById('gm-export-category').value,
+        includeTrash: format === 'full' && scope === 'all', // die Weitergabe enthält keinen Papierkorb (nicht für Dritte bestimmt)
+      });
+      if (!data.guides.length) { notify('Keine Guides für diese Auswahl gefunden.', 'error'); return; }
+
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const assetTotal = data.guides.reduce((n, g) => n + g.assets.length, 0);
+
       if (format === 'readable') {
-        await buildReadableArchive(zip, guides, exportedBy, dateStr);
+        const zip = new JSZip();
+        await buildReadableArchive(zip, data.guides, exportedBy, dateStr);
         await downloadZip(zip, 'guide-sheet-export-' + dateStr + '.zip');
-      } else {
-        await buildMergePackage(zip, guides, exportedBy, dateStr);
-        await downloadZip(zip, 'guide-sheet-package-' + sanitizeForFilename(exportedBy) + '-' + dateStr + '.zip');
+        showResult('Lesbares Archiv erstellt (' + GB.plural(data.guides.length, 'Guide', 'Guides') + ', ' + GB.plural(assetTotal, 'Asset', 'Assets') + '). ' +
+          'Kein Backup: Tags, Favoriten, Zeitstempel, Unterkategorien, private Notizen, Anhänge/Links als Felder und der Kategorienbaum sind nicht enthalten.', 'warning');
+        return;
       }
-      localStorage.setItem(LAST_EXPORT_KEY, new Date().toISOString());
-      document.dispatchEvent(new CustomEvent('guides-backup-updated'));
-      notify('Export erstellt (' + guides.length + ' Guide(s)).', 'success');
+
+      const kind = format === 'share' ? 'share' : 'backup';
+      const isFullBackup = kind === 'backup' && scope === 'all';
+      const pkg = await GB.buildPackage(kind, data, exportedBy);
+      const check = await verifyBuiltPackage(pkg);
+      if (!check.ok) {
+        showResult('WARNUNG: Die erzeugte Datei hat die Prüfung NICHT bestanden (Prüfsummen stimmen nicht: ' + check.issues.slice(0, 3).join(' | ') +
+          (check.issues.length > 3 ? ' … +' + (check.issues.length - 3) : '') + '). Die Datei wurde nicht gespeichert und „Letztes Backup“ nicht gesetzt. Bitte erneut versuchen.', 'error');
+        return;
+      }
+
+      const name = kind === 'share'
+        ? 'guide-sheet-weitergabe-' + sanitizeForFilename(exportedBy) + '-' + dateStr + '.zip'
+        : (isFullBackup ? 'guide-sheet-sicherung-' : 'guide-sheet-teilsicherung-') + dateStr + '.zip';
+      downloadBlob(pkg.blob, name);
+
+      const numbers = GB.plural(pkg.counts.guides, 'Guide', 'Guides') + ', ' + GB.plural(pkg.counts.assets, 'Asset', 'Assets') + ', Prüfsummen stimmen';
+      let message, type = 'success';
+      // Papierkorb-Altbestand: Rohkopien und Nichtlesbares werden genannt, nie stumm weggelassen
+      const notes = [];
+      if (data.legacy.length) notes.push('Papierkorb-Altbestand, als Guide nicht lesbar: ' + GB.plural(data.legacy.length, 'Rohkopie', 'Rohkopien') + ' unverändert im Paket (_legacy-trash): ' + data.legacy.map((l) => l.folder + (l.failed.length ? ' [' + l.failed.length + ' Datei(en) nicht lesbar]' : '')).join(', '));
+      if (data.unlisted.length) notes.push('NICHT im Paket (nicht lesbar, kein Ordner zum Kopieren): ' + data.unlisted.map((u) => u.label + ' – ' + u.error).join('; '));
+      if (notes.length) type = 'warning';
+      if (kind === 'share') {
+        message = 'Weitergabe geprüft: ' + numbers + '. Ohne private Notizen und ohne Papierkorb.';
+      } else if (isFullBackup) {
+        const recorded = GB.recordBackup(data.guides);
+        refreshBackupIndicator();
+        message = 'Sicherung geprüft: ' + numbers + '. ' + GB.PRIVATE_NOTICE + (notes.length ? ' ' + notes.join(' ') : '');
+        if (!recorded) { message += ' Der Zeitpunkt der Sicherung konnte nicht gespeichert werden.'; type = 'warning'; }
+      } else {
+        message = 'Teil-Sicherung geprüft: ' + numbers + '. Sie enthält nicht alle Guides und setzt „Letztes Backup“ nicht. ' + GB.PRIVATE_NOTICE;
+        type = 'warning';
+      }
+      showResult(message, type);
       await updateStatusPanel(allGuidesCache);
     } catch (err) {
-      notify('Export fehlgeschlagen: ' + (err?.message || err), 'error');
+      showResult('Export fehlgeschlagen: ' + (err?.message || err), 'error');
+    } finally {
+      buttons.forEach((b) => { b.disabled = false; });
     }
   }
 
   // ── Import / Merge ───────────────────────────────────────
+  // Erkennt: Sicherung / Weitergabe (Format 2, mit Manifest), älteres Merge-Paket
+  // (_package.json ohne formatVersion) und lesbares Archiv.
   async function parseMergePackage(zip) {
+    const GB = window.GuidesBackup;
     const pkg = JSON.parse(await zip.file('_package.json').async('string'));
+    const formatVersion = pkg.formatVersion || 1;
+    if (formatVersion > GB.FORMAT_VERSION) {
+      throw new Error('Das Paket hat das Format ' + formatVersion + ' und stammt aus einer neueren Version von guide.sheet.');
+    }
+    const packageKind = formatVersion >= 2 ? (pkg.kind === 'share' ? 'share' : 'backup') : 'package';
+
+    let verification = null;
+    if (formatVersion >= 2) {
+      verification = await GB.verifyZip(zip);
+      if (!verification.hasManifest) throw new Error('Das Paket (Format ' + formatVersion + ') enthält kein Manifest mit Prüfsummen und wird nicht importiert.');
+    }
+
     const guideIds = new Set();
     Object.keys(zip.files).forEach((path) => {
       const m = path.match(/^guides\/([^/]+)\/meta\.json$/);
@@ -339,7 +444,32 @@
       const content = await zip.file('guides/' + id + '/content.md').async('string');
       const assetPaths = Object.keys(zip.files).filter(p =>
         p.startsWith('guides/' + id + '/assets/') && !zip.files[p].dir);
-      items.push({ id, meta, content, assetPaths, conflict: false, chosenAction: 'new', selected: true, extraTag: '' });
+      const problems = verification && verification.guideErrors[id];
+      items.push({
+        id, meta, content, assetPaths, conflict: false, chosenAction: 'new', selected: !problems, extraTag: '',
+        trashed: !!meta.trashedAt, corrupt: !!problems, problems: problems || [],
+      });
+    }
+
+    // Rohkopien aus dem Papierkorb-Altbestand: lesbar -> Papierkorb-Guide, sonst bleibt der Inhalt im Paket
+    const legacyFolders = new Set();
+    Object.keys(zip.files).forEach((path) => { const lm = path.match(/^_legacy-trash\/([^/]+)\//); if (lm) legacyFolders.add(lm[1]); });
+    const legacyUnreadable = [];
+    for (const folder of legacyFolders) {
+      const prefix = '_legacy-trash/' + folder + '/';
+      const problems = verification && verification.guideErrors[prefix.slice(0, -1)];
+      let meta = null, content = null;
+      try {
+        meta = JSON.parse(await zip.file(prefix + 'meta.json').async('string'));
+        content = await zip.file(prefix + 'content.md').async('string');
+      } catch { meta = null; }
+      if (!meta || typeof meta !== 'object' || !meta.id || items.some((i) => i.id === meta.id)) { legacyUnreadable.push(folder); continue; }
+      if (!meta.trashedAt) meta.trashedAt = meta.modified || new Date().toISOString();
+      const assetPaths = Object.keys(zip.files).filter((p) => p.startsWith(prefix + 'assets/') && !zip.files[p].dir);
+      items.push({
+        id: meta.id, meta, content, assetPaths, conflict: false, chosenAction: 'new', selected: !problems, extraTag: '',
+        trashed: true, corrupt: !!problems, problems: problems || [], legacy: folder,
+      });
     }
 
     let categoriesFromPkg = [];
@@ -347,8 +477,9 @@
     if (catFile) {
       try { categoriesFromPkg = JSON.parse(await catFile.async('string')); } catch { /* ignorieren */ }
     }
+    const categoriesCorrupt = !!(verification && verification.errors.some((e) => /categories\.json/.test(e)));
 
-    return { kind: 'package', pkg, items, categoriesFromPkg };
+    return { kind: 'package', packageKind, pkg, items, categoriesFromPkg, categoriesCorrupt, verification, legacyUnreadable };
   }
 
   // buildReadableArchive() hängt "## Links"/"## Dateien" ans Ende des
@@ -427,7 +558,7 @@
         conflict: false, chosenAction: 'new', selected: true, extraTag: '',
       });
     }
-    return { kind: 'readable', items, categoriesFromPkg: [] };
+    return { kind: 'readable', packageKind: 'readable', items, categoriesFromPkg: [] };
   }
 
   async function markConflicts(items) {
@@ -446,11 +577,12 @@
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = item.selected;
+    checkbox.disabled = !!item.corrupt;
     checkbox.addEventListener('change', () => { item.selected = checkbox.checked; });
     tdSelect.appendChild(checkbox);
 
     const tdTitle = document.createElement('td');
-    tdTitle.textContent = item.meta.title || '(Ohne Titel)';
+    tdTitle.textContent = (item.meta.title || '(Ohne Titel)') + (item.trashed ? ' (aus dem Papierkorb)' : '');
     const tdCat = document.createElement('td');
     tdCat.textContent = item.meta.category || 'Allgemein';
 
@@ -465,7 +597,12 @@
 
     const tdAction = document.createElement('td');
 
-    if (item.conflict) {
+    if (item.corrupt) {
+      const badge = document.createElement('span');
+      badge.className = 'gm-conflict-badge';
+      badge.textContent = '❌ Beschädigt – wird nicht importiert: ' + item.problems.join('; ');
+      tdAction.appendChild(badge);
+    } else if (item.conflict) {
       const badge = document.createElement('span');
       badge.className = 'gm-conflict-badge';
       badge.textContent = '⚠️ Konflikt';
@@ -491,16 +628,48 @@
     return tr;
   }
 
+  const PACKAGE_LABELS = {
+    backup: 'Sicherung erkannt',
+    share: 'Weitergabe-Paket erkannt',
+    package: 'Älteres Merge-Paket erkannt',
+    readable: 'Lesbares Archiv erkannt',
+  };
+
   function renderImportPreview(parsed) {
+    const GB = window.GuidesBackup;
     const wrap    = document.getElementById('gm-import-preview');
     const title   = document.getElementById('gm-import-preview-title');
     const tbody   = document.getElementById('gm-import-rows');
     const tagAll  = document.getElementById('gm-import-tag-all');
     const selectAll = document.getElementById('gm-import-select-all');
+    const warning   = document.getElementById('gm-import-warning');
+    const integrity = document.getElementById('gm-import-integrity');
 
     wrap.hidden = false;
-    title.textContent = (parsed.kind === 'package' ? 'Merge-Paket erkannt – ' : 'Lesbares Archiv erkannt – ')
-      + parsed.items.length + ' Guide(s)';
+    const trashed = parsed.items.filter((i) => i.trashed).length;
+    title.textContent = PACKAGE_LABELS[parsed.packageKind] + ' – ' + parsed.items.length + ' Guide(s)' + (trashed ? ' (davon ' + trashed + ' aus dem Papierkorb)' : '');
+
+    const lu = parsed.legacyUnreadable || [];
+    const missing = [GB.describeMissing(parsed.packageKind),
+      lu.length ? 'Das Paket enthält ' + GB.plural(lu.length, 'Rohkopie', 'Rohkopien') + ' aus dem Papierkorb-Altbestand, die sich nicht als Guide lesen lassen (' + lu.join(', ') + '): sie werden nicht importiert, der Inhalt bleibt in der Paketdatei erhalten.' : ''].filter(Boolean).join(' ');
+    warning.textContent = missing;
+    warning.hidden = !missing;
+
+    const v = parsed.verification;
+    if (!v) {
+      integrity.textContent = 'Dieses Format enthält keine Prüfsummen – die Vollständigkeit der Datei kann nicht geprüft werden.';
+      integrity.className = 'gm-notice';
+    } else if (v.ok) {
+      integrity.textContent = 'Prüfsummen geprüft: ' + GB.plural(v.guideCount, 'Guide', 'Guides') + ', ' + GB.plural(v.assetCount, 'Asset', 'Assets') + ' – alle stimmen.';
+      integrity.className = 'gm-notice gm-notice--ok';
+    } else {
+      const lines = [...v.errors];
+      Object.entries(v.guideErrors).forEach(([id, msgs]) => lines.push('Guide ' + id + ': ' + msgs.join('; ')));
+      integrity.textContent = 'ACHTUNG – Prüfsummenfehler, die Datei ist beschädigt oder verändert: ' + lines.join(' | ') + '. Betroffene Guides werden nicht importiert.';
+      integrity.className = 'gm-notice gm-notice--error';
+    }
+    integrity.hidden = false;
+
     tbody.replaceChildren();
     parsed.items.forEach(item => tbody.appendChild(buildImportRow(item)));
 
@@ -525,50 +694,89 @@
 
   async function confirmImport() {
     if (!parsedImport) return;
-    const exportedBy = (parsedImport.pkg && parsedImport.pkg.exportedBy) || 'import';
-    const dateStr = new Date().toISOString().slice(0, 10);
-    const importTag = 'import:' + dateStr + ':' + exportedBy;
-    const tagForAll = (document.getElementById('gm-import-tag-all').value || '').trim();
+    const parsed = parsedImport;
+    const GB = window.GuidesBackup;
+    const btn = document.getElementById('gm-import-confirm');
+    btn.disabled = true;
+    try {
+      const exportedBy = (parsed.pkg && parsed.pkg.exportedBy) || 'import';
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const importTag = 'import:' + dateStr + ':' + exportedBy;
+      const tagForAll = (document.getElementById('gm-import-tag-all').value || '').trim();
+      // Sicherung: Herkunft (importTag) bleibt wie sie war. Pakete (Sicherung, Weitergabe, älteres
+      // Merge-Paket) behalten created/modified/version; das lesbare Archiv hat keine Zeitstempel.
+      const keepOrigin = parsed.packageKind === 'backup';
+      const keepTimes  = parsed.kind === 'package';
 
-    let imported = 0, skipped = 0;
+      let imported = 0, importedTrashed = 0, skipped = 0, corrupt = 0, assetsSaved = 0;
+      const failedGuides = [], failedAssets = [];
 
-    for (const item of parsedImport.items) {
-      if (!item.selected) { skipped++; continue; }
-      if (item.conflict && item.chosenAction === 'keep') { skipped++; continue; }
+      for (const item of parsed.items) {
+        if (item.corrupt) { corrupt++; continue; }
+        if (!item.selected) { skipped++; continue; }
+        if (item.conflict && item.chosenAction === 'keep') { skipped++; continue; }
 
-      const targetId = (item.conflict && item.chosenAction === 'both') ? generateUniqueId() : item.id;
-      const tags = new Set(item.meta.tags || []);
-      if (tagForAll) tags.add(tagForAll);
-      if (item.extraTag) tags.add(item.extraTag);
-      const meta = Object.assign({}, item.meta, { id: targetId, importTag, tags: [...tags] });
+        const targetId = (item.conflict && item.chosenAction === 'both') ? generateUniqueId() : item.id;
+        const tags = new Set(item.meta.tags || []);
+        if (tagForAll) tags.add(tagForAll);
+        if (item.extraTag) tags.add(item.extraTag);
+        const meta = Object.assign({}, item.meta, { id: targetId, tags: [...tags] });
+        if (!keepOrigin) meta.importTag = importTag;
+        const label = meta.title || targetId;
 
-      for (const assetPath of item.assetPaths) {
-        const entry = parsedImport.zip.file(assetPath);
-        if (!entry) continue;
-        const blob = await entry.async('blob');
-        const filename = assetPath.split('/').pop();
-        await window.GuidesDB.saveAsset(targetId, filename, blob);
+        for (const assetPath of item.assetPaths) {
+          const filename = assetPath.split('/').pop();
+          const entry = parsed.zip.file(assetPath);
+          if (!entry) { failedAssets.push(filename + ' (' + label + '): fehlt im Paket'); continue; }
+          const blob = await entry.async('blob');
+          const res = await window.GuidesDB.saveAsset(targetId, filename, blob);
+          if (res.success) assetsSaved++;
+          else failedAssets.push(filename + ' (' + label + '): ' + (res.error || 'Fehler'));
+        }
+
+        const res = await window.GuidesDB.saveGuide(targetId, meta, item.content, { keepModified: keepTimes });
+        if (res.success) { imported++; if (meta.trashedAt) importedTrashed++; }
+        else failedGuides.push(label + ': ' + (res.error || 'Fehler'));
       }
 
-      const res = await window.GuidesDB.saveGuide(targetId, meta, item.content);
-      if (res.success) imported++;
-      else notify(res.error || 'Guide „' + (meta.title || targetId) + '“ konnte nicht importiert werden.', 'error');
-    }
-
-    if (parsedImport.categoriesFromPkg && parsedImport.categoriesFromPkg.length) {
-      const names = new Set(categoriesState.map(c => c.name));
-      const merged = [...categoriesState];
-      parsedImport.categoriesFromPkg.forEach((c) => { if (!names.has(c.name)) merged.push(c); });
-      if (merged.length !== categoriesState.length) {
-        categoriesState = merged;
-        await window.GuidesDB.saveCategories(categoriesState);
+      let categoryNote = '';
+      if (parsed.categoriesFromPkg && parsed.categoriesFromPkg.length) {
+        if (parsed.categoriesCorrupt) {
+          categoryNote = 'Kategorienbaum NICHT übernommen (Prüfsummenfehler)';
+        } else {
+          const merged = GB.mergeCategories(categoriesState, parsed.categoriesFromPkg);
+          if (merged.changed) {
+            const saved = await window.GuidesDB.saveCategories(merged.tree);
+            if (saved.success) {
+              categoriesState = merged.tree;
+              categoryNote = 'Kategorienbaum zusammengeführt (' + merged.added + ' Kategorie(n), ' + merged.addedSubs + ' Unterkategorie(n) ergänzt)';
+            } else categoryNote = 'Kategorienbaum NICHT gespeichert: ' + (saved.error || 'Fehler');
+          }
+        }
       }
-    }
 
-    notify(imported + ' Guide(s) importiert' + (skipped ? ', ' + skipped + ' übersprungen' : '') + '.', 'success');
-    document.getElementById('gm-import-preview').hidden = true;
-    parsedImport = null;
-    await loadAll();
+      const parts = [GB.plural(imported, 'Guide', 'Guides') + ' importiert' + (importedTrashed ? ' (davon ' + importedTrashed + ' im Papierkorb)' : '') +
+        ', ' + GB.plural(assetsSaved, 'Asset', 'Assets') + ' gespeichert'];
+      if (skipped) parts.push(skipped + ' übersprungen (abgewählt oder Konflikt „Behalten“)');
+      if (corrupt) parts.push(GB.plural(corrupt, 'Guide', 'Guides') + ' NICHT importiert (Prüfsummenfehler)');
+      if (failedGuides.length) parts.push(GB.plural(failedGuides.length, 'Guide', 'Guides') + ' NICHT importiert: ' + failedGuides.join('; '));
+      if (failedAssets.length) parts.push(GB.plural(failedAssets.length, 'Asset', 'Assets') + ' NICHT gespeichert: ' + failedAssets.join('; '));
+      if (categoryNote) parts.push(categoryNote);
+      if ((parsed.legacyUnreadable || []).length) parts.push(GB.plural(parsed.legacyUnreadable.length, 'Papierkorb-Rohkopie', 'Papierkorb-Rohkopien') + ' aus dem Paket nicht als Guide lesbar und NICHT importiert (' + parsed.legacyUnreadable.join(', ') + ') – der Inhalt bleibt in der Paketdatei erhalten, bitte die Datei aufbewahren');
+      const lossy = parsed.packageKind === 'readable' || parsed.packageKind === 'package' || (parsed.legacyUnreadable || []).length > 0;
+      if (lossy) parts.push('Nicht im Paket enthalten: ' + (parsed.packageKind === 'readable'
+        ? 'Tags, Favoriten, Zeitstempel, Unterkategorien, private Notizen, Kategorienbaum'
+        : 'Links, Anhänge, private Notizen, Versionsangaben'));
+      const failed = corrupt || failedGuides.length || failedAssets.length || /NICHT/.test(categoryNote);
+
+      document.getElementById('gm-import-preview').hidden = true;
+      parsedImport = null;
+      showResult(parts.join('. ') + '.', failed ? 'error' : (lossy ? 'warning' : 'success'));
+      refreshBackupIndicator();
+      await loadAll();
+    } finally {
+      btn.disabled = false;
+    }
   }
 
   function initImportZone() {
@@ -594,8 +802,8 @@
 
     document.getElementById('gm-import-select-all').addEventListener('change', (e) => {
       const checked = e.target.checked;
-      if (parsedImport) parsedImport.items.forEach((item) => { item.selected = checked; });
-      document.querySelectorAll('#gm-import-rows input[type="checkbox"]').forEach((cb) => { cb.checked = checked; });
+      if (parsedImport) parsedImport.items.forEach((item) => { item.selected = checked && !item.corrupt; });
+      document.querySelectorAll('#gm-import-rows input[type="checkbox"]').forEach((cb) => { cb.checked = checked && !cb.disabled; });
     });
   }
 
@@ -698,8 +906,51 @@
     const emptyMsg = document.getElementById('gm-trash-empty');
     list.replaceChildren();
     const items = (res.success && res.guides) || [];
-    emptyMsg.hidden = items.length > 0;
     items.forEach(item => list.appendChild(buildTrashRow(item)));
+
+    // Assets im Papierkorb (aus "Verwaiste Assets prüfen")
+    const assetRes = await window.GuidesDB.listTrashedAssets();
+    const assetItems = (assetRes.success && assetRes.items) || [];
+    const assetList = document.getElementById('gm-trash-assets-list');
+    assetList.replaceChildren();
+    document.getElementById('gm-trash-assets-title').hidden = !assetItems.length;
+    const titles = new Map();
+    allGuidesCache.forEach(g => titles.set(g.id, g.meta.title));
+    items.forEach(g => titles.set(g.id, g.meta.title));
+    assetItems.forEach(it => assetList.appendChild(buildTrashAssetRow(it, titles.get(it.guideId) || it.guideId)));
+    emptyMsg.hidden = items.length > 0 || assetItems.length > 0;
+  }
+
+  function buildTrashAssetRow(it, guideTitle) {
+    const row = document.createElement('div');
+    row.className = 'gm-trash-item gm-trash-asset-row';
+    row.dataset.guide = it.guideId;
+    row.dataset.file = it.filename;
+
+    const info = document.createElement('div');
+    info.className = 'gm-trash-info';
+    const title = document.createElement('strong');
+    title.textContent = it.filename;
+    const meta = document.createElement('span');
+    meta.className = 'gm-trash-meta';
+    meta.textContent = guideTitle + ' · ' + formatFileSize(it.size) + (it.trashedAt ? ' · Verschoben: ' + fmtDate(it.trashedAt) : '');
+    info.append(title, meta);
+
+    const restoreBtn = document.createElement('button');
+    restoreBtn.type = 'button';
+    restoreBtn.className = 'gs-folder-btn gm-trash-asset-restore';
+    restoreBtn.textContent = '↩️ Wiederherstellen';
+    restoreBtn.addEventListener('click', async () => {
+      const res = await window.GuidesDB.restoreAsset(it.guideId, it.trashName);
+      if (res.success) { notify('Datei wiederhergestellt.', 'success'); await loadAll(); }
+      else notify(res.error || 'Fehler beim Wiederherstellen.', 'error');
+    });
+
+    const actions = document.createElement('div');
+    actions.className = 'gm-trash-actions';
+    actions.appendChild(restoreBtn);
+    row.append(info, actions);
+    return row;
   }
 
   function buildTrashRow(item) {
@@ -746,12 +997,20 @@
 
   function initEmptyTrash() {
     document.getElementById('gm-empty-trash').addEventListener('click', async () => {
-      const res = await window.GuidesDB.listTrash();
+      const db = window.GuidesDB;
+      const res = await db.listTrash();
       const items = (res.success && res.guides) || [];
-      if (!items.length) { notify('Papierkorb ist bereits leer.', 'success'); return; }
-      if (!confirm('Papierkorb wirklich leeren? ' + items.length + ' Guide(s) werden endgültig gelöscht.')) return;
-      for (const item of items) await window.GuidesDB.permanentDelete(item.id);
-      notify('Papierkorb geleert.', 'success');
+      const assetRes = await db.listTrashedAssets();
+      const assetItems = (assetRes.success && assetRes.items) || [];
+      if (!items.length && !assetItems.length) { notify('Papierkorb ist bereits leer.', 'success'); return; }
+      const what = [items.length ? items.length + ' Guide(s)' : '', assetItems.length ? assetItems.length + ' Datei(en) (Assets)' : ''].filter(Boolean).join(' und ');
+      if (!confirm('Papierkorb wirklich leeren? ' + what + ' werden endgültig gelöscht. Das kann nicht rückgängig gemacht werden.')) return;
+      // Assets zuerst: permanentDelete() eines Guides entfernt dessen Papierkorb-Assets mit
+      const purged = await db.purgeTrashedAssets(assetItems.map(a => ({ guideId: a.guideId, trashName: a.trashName })));
+      let guideFailed = 0;
+      for (const item of items) { const r = await db.permanentDelete(item.id); if (!r.success) guideFailed++; }
+      const failed = (purged.failed || 0) + guideFailed;
+      notify(failed ? 'Papierkorb teilweise geleert: ' + failed + ' Eintrag/Einträge konnten nicht gelöscht werden.' : 'Papierkorb geleert.', failed ? 'error' : 'success');
       await loadAll();
     });
   }
@@ -934,11 +1193,15 @@
     initEmptyTrash();
     initFileManager();
     document.getElementById('gm-export-btn').addEventListener('click', handleExport);
+    // "Jetzt Backup erstellen" = vollständige Sicherung aller Guides (nie das lesbare Archiv)
     document.getElementById('gm-quick-backup-btn').addEventListener('click', () => {
       document.querySelector('input[name="gm-scope"][value="all"]').checked = true;
-      document.querySelector('input[name="gm-format"][value="readable"]').checked = true;
+      document.querySelector('input[name="gm-format"][value="full"]').checked = true;
+      updateFormatNotices();
       handleExport();
     });
+    document.querySelectorAll('input[name="gm-format"], input[name="gm-scope"]').forEach((r) => r.addEventListener('change', updateFormatNotices));
+    updateFormatNotices();
 
     await window.GuidesDB.restoreFolder();
     await loadAll();
