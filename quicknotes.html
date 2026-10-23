@@ -33,6 +33,7 @@
 
       <!-- Tab-Leiste -->
       <div class="qn-tabbar">
+        <button type="button" class="qn-allbtn" id="qn-all-btn" aria-expanded="false" aria-controls="qn-notes" title="Notizenliste ein- und ausblenden">☰ Alle Notizen (<span id="qn-all-count">0</span>)</button>
         <button type="button" class="qn-iconbtn" id="qn-tabs-left" aria-label="Tabs nach links scrollen" title="Tabs nach links scrollen">‹</button>
         <div class="qn-tabstrip" id="qn-tabstrip" role="tablist" aria-label="Geöffnete Notizen"></div>
         <button type="button" class="qn-iconbtn" id="qn-tabs-right" aria-label="Tabs nach rechts scrollen" title="Tabs nach rechts scrollen">›</button>
@@ -57,6 +58,33 @@
         <input type="file" id="qn-import-file" accept=".txt,.zip,text/plain,application/zip" multiple hidden>
       </div>
 
+      <div class="qn-bodyrow">
+
+      <!-- Notizenliste: alle Notizen (offene und geschlossene), Filter, Mehrfachauswahl (Logik: js/quicknotes-list.js) -->
+      <aside class="qn-notes" id="qn-notes" aria-label="Notizenliste" hidden>
+        <div class="qn-notes-head">
+          <label class="qn-notes-filterlabel" for="qn-filter">Notizen filtern (Titel und Text)</label>
+          <input type="search" id="qn-filter" class="qn-notes-filter" placeholder="Filtern …" autocomplete="off" spellcheck="false">
+          <div class="qn-notes-tools">
+            <button type="button" class="qn-btn qn-btn--primary" id="qn-new-in-list">+ Neue Notiz</button>
+            <button type="button" class="qn-btn" id="qn-sel-toggle" aria-pressed="false">Auswählen</button>
+          </div>
+          <p class="qn-notes-sub" id="qn-notes-sub" aria-live="polite"></p>
+          <div class="qn-selbar" id="qn-selbar" hidden>
+            <span class="qn-selcount" id="qn-sel-count" role="status" aria-live="polite">0 ausgewählt</span>
+            <div class="qn-selbtns">
+              <button type="button" class="qn-btn" id="qn-sel-all">Alle auswählen</button>
+              <button type="button" class="qn-btn" id="qn-sel-none">Auswahl aufheben</button>
+              <button type="button" class="qn-btn qn-btn--danger" id="qn-sel-trash" disabled>In den Papierkorb (0)</button>
+              <button type="button" class="qn-btn" id="qn-sel-cancel">Abbrechen</button>
+            </div>
+          </div>
+        </div>
+        <ul class="qn-note-list" id="qn-note-list"></ul>
+      </aside>
+
+      <div class="qn-workarea">
+
       <!-- Meldungen (Fehler, Konflikt, Wiederherstellung) -->
       <div class="qn-banners" id="qn-banners"></div>
 
@@ -72,12 +100,16 @@
 
       <!-- Leerer Zustand: alle Tabs geschlossen -->
       <div class="qn-empty" id="qn-empty" hidden>
-        <p>Keine Notiz geöffnet.</p>
+        <p id="qn-empty-text">Keine Notiz offen.</p>
         <button type="button" class="qn-btn qn-btn--primary" id="qn-empty-new">+ Neue Notiz</button>
         <button type="button" class="qn-btn" id="qn-empty-list">Alle Notizen anzeigen</button>
       </div>
 
-      <p class="qn-hint">Quicknotes liegen im Browser-Speicher dieses Geräts. Sie sind nicht im Guide-Ordner und nicht in der Guide-Sicherung. Sichern: <strong>Alle Notizen sichern</strong>.</p>
+      </div><!-- /qn-workarea -->
+      </div><!-- /qn-bodyrow -->
+
+      <p class="qn-hint">Quicknotes liegen im Browser-Speicher dieses Geräts. Sie sind nicht im Guide-Ordner und nicht in der Guide-Sicherung. Sichern: <strong>Alle Notizen sichern</strong>.
+        <span class="qn-hint-links"><a href="guides.html" id="qn-link-guides">Alle Guides anzeigen</a> · <a href="guides.html#quicknotes" id="qn-link-guides-qn">Quicknotes in Guides anzeigen</a></span></p>
       <p class="qn-hint qn-hint--storage" id="qn-persist-hint" hidden></p>
 
       <!-- Statusleiste -->
@@ -142,7 +174,9 @@
   <script src="js/jszip.min.js"></script>
   <script src="js/quicknotes-db.js"></script>
   <script src="js/quicknotes-io.js"></script>
+  <script src="js/quicknotes-select.js"></script>
   <script src="js/quicknotes.js"></script>
+  <script src="js/quicknotes-list.js"></script>
   <script src="js/quicknotes-convert.js"></script>
   <script src="nav.js"></script>
 

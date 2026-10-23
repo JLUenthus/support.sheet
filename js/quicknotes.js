@@ -142,6 +142,7 @@
     clearTimeout(doc.retryTimer); doc.retryTimer = null;
     if (isClean(doc)) { removePending(doc); setState(doc, 'saved'); }
     else { setState(doc, 'dirty'); scheduleSave(doc); }         // waehrenddessen weitergetippt
+    if (window.QuickNotesList) window.QuickNotesList.refreshSoon();      // neue Aenderungszeit in der Liste
     if (doc.id === activeId) updateStatus();
   }
 
@@ -335,6 +336,7 @@
       if (!p || typeof p.text !== 'string' || typeof p.id !== 'string') return;      // unlesbar: liegen lassen, nichts loeschen
       if (p.win && held.has('qn.win.' + p.win)) return;                               // gehoert zu einem noch offenen Fenster
       const note = notesById.get(p.id) || null;
+      if (note && note.trashedAt) return;                                            // im Papierkorb: Puffer bleibt unberuehrt, Angebot nach dem Wiederherstellen
       if (note && note.text === p.text && (!p.title || p.title === note.title)) { try { localStorage.removeItem(k); } catch (e) { /* nichts zu tun */ } return; } // bereits gespeichert
       recoveryOffers.push({ key: k, pendingKey: k, pending: p, note });
     });
@@ -553,6 +555,7 @@
       updateTabState(doc);
     });
     if (hadFocus) { const t = tabEl(hadFocus.dataset.id); if (t) t.querySelector('.qn-tab-btn').focus(); }
+    if (window.QuickNotesList) window.QuickNotesList.markersChanged();   // offene Tabs in der Liste markieren, Text des Leerzustands
     $('qn-empty').hidden = fallbackMode || order.length > 0;
     $('qn-editors').hidden = fallbackMode || order.length === 0;
     ['qn-rename', 'qn-export-one', 'qn-delete'].forEach((id) => { $(id).disabled = order.length === 0; });
@@ -749,9 +752,11 @@
   // ── Notizliste (▾), Papierkorb ────────────────────────
   async function refreshTrashCount() {
     try { $('qn-trash-count').textContent = String((await DB.list()).filter((n) => n.trashedAt).length); } catch (e) { /* Anzeige nur */ }
+    if (window.QuickNotesList) window.QuickNotesList.refreshSoon();   // Notizenliste (Seitenbereich) nachziehen
   }
 
   async function refreshListMenu() {
+    if (window.QuickNotesList) window.QuickNotesList.refreshSoon();
     const menu = $('qn-list-menu');
     if (menu.hidden) return;
     let notes;
@@ -780,64 +785,6 @@
   function closeListMenu() {
     $('qn-list-menu').hidden = true;
     $('qn-list-btn').setAttribute('aria-expanded', 'false');
-  }
-
-  async function openTrash() {
-    if (document.getElementById('qn-trash-dialog')) return;
-    const overlay = el('div', 'qn-modal');
-    overlay.id = 'qn-trash-dialog';
-    overlay.setAttribute('role', 'dialog');
-    overlay.setAttribute('aria-modal', 'true');
-    overlay.setAttribute('aria-label', 'Papierkorb');
-    const box = el('div', 'qn-modal-box');
-    const head = el('div', 'qn-modal-head');
-    head.appendChild(el('h2', 'qn-modal-title', 'Papierkorb'));
-    const close = el('button', 'qn-btn', 'Schließen');
-    close.type = 'button';
-    head.appendChild(close);
-    const listEl = el('div', 'qn-trash-list');
-    box.append(head, el('p', 'qn-modal-sub', 'Gelöschte Notizen werden nie automatisch endgültig entfernt.'), listEl);
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-    const prevFocus = document.activeElement;
-    const closeDialog = () => { overlay.remove(); document.removeEventListener('keydown', onKey, true); if (prevFocus && prevFocus.focus) prevFocus.focus(); };
-    const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeDialog(); } };
-    document.addEventListener('keydown', onKey, true);
-    close.addEventListener('click', closeDialog);
-
-    async function fill() {
-      let trashed;
-      try { trashed = (await DB.list()).filter((n) => n.trashedAt).sort((a, b) => b.trashedAt - a.trashedAt); }
-      catch (err) { listEl.replaceChildren(el('p', 'qn-menu-empty', 'Der Papierkorb konnte nicht geladen werden: ' + errText(err))); return; }
-      listEl.replaceChildren();
-      if (!trashed.length) listEl.appendChild(el('p', 'qn-menu-empty', 'Der Papierkorb ist leer.'));
-      trashed.forEach((n) => {
-        const row = el('div', 'qn-trash-row');
-        row.dataset.id = n.id;
-        const info = el('div', 'qn-trash-info');
-        info.append(el('span', 'qn-trash-title', n.title), el('span', 'qn-trash-meta', 'gelöscht am ' + dateTime(n.trashedAt) + ' · ' + n.text.length + ' Zeichen'));
-        const restore = el('button', 'qn-btn', 'Wiederherstellen');
-        restore.type = 'button';
-        restore.setAttribute('aria-label', 'Wiederherstellen: ' + n.title);
-        restore.addEventListener('click', async () => {
-          try { await DB.setTrashed(n.id, false); notify('„' + n.title + '“ wiederhergestellt (über ▾ öffnen).'); }
-          catch (err) { notify('Wiederherstellen fehlgeschlagen: ' + errText(err), 'error'); }
-          fill(); refreshTrashCount(); refreshListMenu();
-        });
-        const purge = el('button', 'qn-btn qn-btn--danger', 'Endgültig löschen');
-        purge.type = 'button';
-        purge.setAttribute('aria-label', 'Endgültig löschen: ' + n.title);
-        purge.addEventListener('click', async () => {
-          if (!window.confirm('„' + n.title + '“ endgültig löschen? Das kann nicht rückgängig gemacht werden.')) return;
-          try { await DB.purge(n.id); } catch (err) { notify('Löschen fehlgeschlagen: ' + errText(err), 'error'); }
-          fill(); refreshTrashCount();
-        });
-        row.append(info, restore, purge);
-        listEl.appendChild(row);
-      });
-    }
-    await fill();
-    close.focus();
   }
 
   async function deleteActive() {
@@ -952,6 +899,7 @@
   function enterFallback(err) {
     fallbackMode = true;
     $('qn-tabstrip').parentElement.hidden = true;
+    $('qn-notes').hidden = true;
     $('qn-toolbar').hidden = true;
     $('qn-editors').hidden = true;
     $('qn-empty').hidden = true;
@@ -988,6 +936,7 @@
 
     const params = new URLSearchParams(location.search);
     let target = decodeURIComponent((location.hash || '').slice(1));
+    if (target === 'trash') target = '';                                 // quicknotes.html#trash oeffnet den Papierkorb-Dialog (js/quicknotes-list.js)
     if (params.get('new') === '1') {
       try {
         const note = await DB.create({});
@@ -1018,6 +967,7 @@
     refreshTrashCount();
     scanPending(byId);
     DB.onChange(onRemoteChange);
+    if (window.QuickNotesList) { let fresh = all; try { fresh = await DB.list(); } catch (e) { /* alter Stand */ } window.QuickNotesList.start(fresh); }
   }
 
   async function initPersist() {
@@ -1034,7 +984,7 @@
   function bind() {
     $('qn-new').addEventListener('click', newNote);
     $('qn-empty-new').addEventListener('click', newNote);
-    $('qn-empty-list').addEventListener('click', openListMenu);
+    $('qn-empty-list').addEventListener('click', () => { if (window.QuickNotesList) window.QuickNotesList.openPanel(); });
     $('qn-rename').addEventListener('click', () => startRename(docs.get(activeId)));
     $('qn-wrap').addEventListener('click', () => setWrap(!wrap));
     $('qn-export-one').addEventListener('click', () => { const d = docs.get(activeId); if (d) saveDocAsFile(d); });
@@ -1042,7 +992,7 @@
     $('qn-backup').addEventListener('click', backupAll);
     $('qn-import').addEventListener('click', () => $('qn-import-file').click());
     $('qn-import-file').addEventListener('change', (e) => { const f = [...e.target.files]; e.target.value = ''; if (f.length) importFiles(f); });
-    $('qn-trash-btn').addEventListener('click', openTrash);
+    $('qn-trash-btn').addEventListener('click', () => { if (window.QuickNotesList) window.QuickNotesList.openTrash(); });
     $('qn-list-btn').addEventListener('click', () => ($('qn-list-menu').hidden ? openListMenu() : closeListMenu()));
     $('qn-st-persist').addEventListener('click', () => { const h = $('qn-persist-hint'); h.hidden = !h.hidden; $('qn-st-persist').setAttribute('aria-expanded', String(!h.hidden)); });
     $('qn-tabs-left').addEventListener('click', () => $('qn-tabstrip').scrollBy({ left: -240 }));
@@ -1069,7 +1019,7 @@
 
     window.addEventListener('hashchange', async () => {
       const id = decodeURIComponent(location.hash.slice(1));
-      if (!id || fallbackMode) return;
+      if (!id || id === 'trash' || fallbackMode) return;
       if (docs.has(id)) { activate(id); return; }
       try { const n = await DB.get(id); if (n && !n.trashedAt) openNote(n, { activate: true }); } catch (e) { /* Hinweis nicht noetig */ }
     });
@@ -1097,8 +1047,32 @@
     updateStatus(); refreshListMenu();
   }
 
-  // Schnittstelle fuer js/quicknotes-convert.js
+  // Eine Notiz wurde in den Papierkorb gelegt (Sammelaktion): offenen Tab schliessen, die Nachbar-Notiz wird aktiv
+  // Wurde nach dem Speichern (Flush) noch weitergetippt, bleibt die Notiz offen: Der Text bleibt im Editor und im Schreibpuffer,
+  // das naechste Speichern endet im Konflikt-Banner (Kopie sichern) – der Tab wird nie mit ungespeichertem Text geschlossen.
+  // Rueckgabe: true = Tab geschlossen, false = bleibt offen (ungespeicherte Eingaben)
+  function adoptTrashed(id) {
+    const doc = docs.get(id);
+    if (!doc) return true;
+    if (!isClean(doc) || doc.state === 'saving') {
+      writePendingNow(doc);
+      doc.remoteTrashed = true;
+      renderTabs(); renderBanners(); updateStatus();
+      return false;
+    }
+    removeDocFromUi(doc);
+    return true;
+  }
+
+  // Schnittstelle fuer js/quicknotes-convert.js und js/quicknotes-list.js
   window.QuickNotesPageInternal = {
+    openIds: () => order.slice(),
+    activeId: () => activeId,
+    openNote: (note, opts) => openNote(note, opts),
+    activate: (id) => activate(id),
+    newNote: () => newNote(),
+    adoptTrashed,
+    refreshMenus: () => { refreshTrashCount(); refreshListMenu(); },
     activeDoc: () => docs.get(activeId) || null,
     docById: (id) => docs.get(id) || null,
     flush: (doc) => flush(doc),

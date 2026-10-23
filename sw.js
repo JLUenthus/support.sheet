@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20261018-qnconvert-12';
+const CACHE_VERSION = '20261022-qnlist-15';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -83,12 +83,15 @@ const ASSETS = [
   './guides-howto.html',
   './guides-create.html',
   './guides-manage.html',
+  './wizard.html',
   './quicknotes.html',
   './css/quicknotes.css',
   './js/quicknotes-db.js',
   './js/quicknotes-io.js',
   './js/quicknotes.js',
   './js/quicknotes-convert.js',
+  './js/quicknotes-select.js',
+  './js/quicknotes-list.js',
   './js/quicknotes-overview.js',
   './guides-view.html',
   './css/guides.css',
@@ -146,6 +149,14 @@ const ASSETS = [
   './css/linux.css',
   './js/settings-store.js',
   './js/tools.js',
+  './css/wizard.css',
+  './js/wizard-engine.js',
+  './js/wizard-renderer.js',
+  './js/script-overlay.js',
+  './js/highlight-init.js',
+  './js/highlight.min.js',
+  './js/highlight-powershell.min.js',
+  './css/highlight-atom-one-dark.min.css',
   './powershell/Get-SystemInventory.ps1',
   './powershell/Get-LocalAdmins.ps1',
   './powershell/Test-NetworkConnectivity.ps1',

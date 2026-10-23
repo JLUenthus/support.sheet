@@ -201,6 +201,42 @@
     return true;
   }
 
+  // Wie setTrashed(), aber nur, wenn die Notiz noch genau den erwarteten Stand (rev) hat – fuer Sammelaktionen: eine
+  // inzwischen geaenderte Notiz (anderes Fenster, Autosave) wird nicht verschoben und nicht ueberschrieben.
+  // Rueckgabe: { ok, note } | { ok:false, conflict, current } | { ok:false, missing }
+  async function setTrashedIfRev(id, trashed, expectedRev) {
+    const res = await runTx('readwrite', (store, setResult, guard) => {
+      const g = store.get(id);
+      g.onsuccess = guard(() => {
+        const rec = g.result;
+        if (!rec) { setResult({ ok: false, missing: true }); return; }
+        if (rec.rev !== expectedRev) { setResult({ ok: false, conflict: true, current: rec }); return; }
+        const next = Object.assign({}, rec, { trashedAt: trashed ? Date.now() : null, rev: rec.rev + 1 });
+        const p = store.put(next);
+        p.onsuccess = guard(() => setResult({ ok: true, note: next }));
+      });
+    });
+    if (res.ok) notify({ type: 'changed', id, rev: res.note.rev });
+    return res;
+  }
+
+  // Wie purge(), aber nur bei unveraendertem Stand (rev): eine inzwischen geaenderte Notiz wird nicht endgueltig geloescht.
+  // Rueckgabe: { ok, note (der geloeschte Datensatz) } | { ok:false, conflict, current } | { ok:false, missing }
+  async function purgeIfRev(id, expectedRev) {
+    const res = await runTx('readwrite', (store, setResult, guard) => {
+      const g = store.get(id);
+      g.onsuccess = guard(() => {
+        const rec = g.result;
+        if (!rec) { setResult({ ok: false, missing: true }); return; }
+        if (rec.rev !== expectedRev) { setResult({ ok: false, conflict: true, current: rec }); return; }
+        const d = store.delete(id);
+        d.onsuccess = guard(() => setResult({ ok: true, note: rec }));
+      });
+    });
+    if (res.ok) notify({ type: 'purged', id });
+    return res;
+  }
+
   // Merkt sich das Oeffnen, ohne rev oder updatedAt zu veraendern (sonst gaebe es Scheinkonflikte zwischen Fenstern).
   async function markOpened(id) {
     try {
@@ -232,7 +268,7 @@
   }
 
   window.QuickNotesDB = {
-    open, exists, list, get, create, save, setTrashed, markConverted, purge, markOpened, addMany, onChange,
+    open, exists, list, get, create, save, setTrashed, setTrashedIfRev, markConverted, purge, purgeIfRev, markOpened, addMany, onChange,
     defaultTitle, clampTitle, TITLE_MAX, WINDOW_ID, DB_NAME, STORE,
   };
 })();

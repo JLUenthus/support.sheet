@@ -141,13 +141,18 @@
 
         <!-- ── QUICKNOTES (Gruppe wie "Support", oben, standardmäßig ausgeblendet; liest nur aus quicknotes-db) ── -->
         <section class="gs-support-section gs-qn-section" id="gs-qn-section">
-          <div class="gs-support-header">
+          <div class="gs-support-header gs-qn-header-focus" id="gs-qn-header" tabindex="-1">
             <div class="gs-support-title">
               <span class="gs-support-icon">📝</span>
               <span>Quicknotes</span>
               <span class="gs-support-count" id="gs-qn-count"></span>
             </div>
             <div class="gs-qn-actions">
+              <div class="gs-qn-links" id="gs-qn-links" hidden>
+                <a class="gs-qn-link" id="gs-qn-pagelink" href="quicknotes.html">Zur Quicknotes-Seite</a>
+                <a class="gs-qn-link" id="gs-qn-trashlink" href="quicknotes.html#trash">Papierkorb (<span id="gs-qn-trashcount">0</span>)</a>
+              </div>
+              <button type="button" class="gs-support-toggle" id="gs-qn-select" aria-pressed="false" hidden>Auswählen</button>
               <button type="button" class="gs-support-toggle gs-qn-new" id="gs-qn-new" hidden>+ Neue Quicknote</button>
               <button type="button" class="gs-support-toggle" id="gs-qn-toggle" aria-expanded="false" aria-controls="gs-qn-body">
                 <span class="gs-support-toggle-label" id="gs-qn-toggle-label">einblenden</span>
@@ -158,6 +163,18 @@
           <div class="gs-qn-body" id="gs-qn-body" hidden>
             <p class="gs-qn-note">Quicknotes liegen im Browser-Speicher dieses Geräts. Sie sind nicht im Guide-Ordner und nicht in der Guide-Sicherung. Sichern: <a href="quicknotes.html">Alle Notizen sichern</a>.</p>
             <p class="gs-qn-error" id="gs-qn-error" role="alert" hidden></p>
+            <div class="gs-qn-msg" id="gs-qn-msg" role="status" hidden>
+              <span class="gs-qn-msg-text" id="gs-qn-msg-text"></span>
+              <button type="button" class="gs-support-toggle" id="gs-qn-undo" hidden>Rückgängig</button>
+              <button type="button" class="gs-support-toggle" id="gs-qn-msg-close">Schließen</button>
+            </div>
+            <div class="gs-qn-selbar" id="gs-qn-selbar" hidden>
+              <span class="gs-qn-selcount" id="gs-qn-sel-count" aria-live="polite">0 ausgewählt</span>
+              <button type="button" class="gs-support-toggle" id="gs-qn-sel-all">Alle auswählen</button>
+              <button type="button" class="gs-support-toggle" id="gs-qn-sel-none">Auswahl aufheben</button>
+              <button type="button" class="gs-support-toggle" id="gs-qn-sel-trash" disabled>In den Papierkorb (0)</button>
+              <button type="button" class="gs-support-toggle" id="gs-qn-sel-cancel">Abbrechen</button>
+            </div>
             <div class="gs-qn-grid" id="gs-qn-grid"><!-- Kacheln werden per JS eingefügt --></div>
           </div>
         </section>
@@ -262,6 +279,7 @@
   <script src="js/guide-overlay.js"></script>
   <script src="js/guides-overview.js"></script>
   <script src="js/quicknotes-db.js"></script>
+  <script src="js/quicknotes-select.js"></script>
   <script src="js/quicknotes-overview.js"></script>
   <script src="nav.js"></script>
 

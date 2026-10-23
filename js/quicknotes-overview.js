@@ -5,14 +5,24 @@
 // Guide-Filtern (Suche, Kategorie, Tag, Favoriten, Sortierung) und von den Zählern der Seitenleiste; die bestehende
 // Guide-Logik wird nicht verändert. Fällt die Datenbank aus, zeigt nur diese Gruppe eine Fehlermeldung.
 // Zustand wie beim Support-Schalter in localStorage: gs-hide-quicknotes ('true' = ausgeblendet; Standard: ausgeblendet).
-// Erwartet js/quicknotes-db.js vor dieser Datei.
+// guides.html#quicknotes blendet die Gruppe NUR für diesen Besuch ein (der gespeicherte Zustand bleibt), scrollt sie ins
+// Sichtfeld und setzt den Fokus auf die Kopfzeile.
+// Auswahlmodus: mehrere Notizen markieren und gemeinsam in den Papierkorb legen (Regeln aus js/quicknotes-select.js, rev-Vergleich
+// je Notiz, Rückgängig bleibt als Meldung stehen). Endgültig gelöscht wird hier NIE – nur im Papierkorb-Dialog der Quicknotes-Seite.
+// Erwartet js/quicknotes-db.js und js/quicknotes-select.js vor dieser Datei.
 // ============================================================
 (function () {
   const HIDE_KEY = 'gs-hide-quicknotes';
   const $ = (id) => document.getElementById(id);
+  const S = window.QuickNotesSelect;
   let rendering = false, again = false;
+  let forced = false;            // #quicknotes: für diesen Besuch eingeblendet, ohne den gespeicherten Zustand zu ändern
+  let selMode = false, busy = false;
+  let notes = [];                // nicht gelöschte Notizen, zuletzt geändert zuerst
+  const sel = S ? S.createSelection() : null;
 
   function isHidden() { return localStorage.getItem(HIDE_KEY) !== 'false'; }
+  const isVisible = () => forced || !isHidden();
 
   function pad(n) { return String(n).padStart(2, '0'); }
   function fmt(ts) { const d = new Date(ts); return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
@@ -22,18 +32,26 @@
   }
 
   function applyVisibility() {
-    const hidden = isHidden();
-    const body = $('gs-qn-body'), toggle = $('gs-qn-toggle'), label = $('gs-qn-toggle-label');
+    const shown = isVisible();
+    const toggle = $('gs-qn-toggle'), label = $('gs-qn-toggle-label');
     const chevron = toggle.querySelector('.gs-support-chevron');
-    body.hidden = hidden;
-    $('gs-qn-new').hidden = hidden;
-    $('gs-qn-section').classList.toggle('gs-qn-section--open', !hidden);
-    label.textContent = hidden ? 'einblenden' : 'ausblenden';
-    if (chevron) chevron.style.transform = hidden ? 'rotate(-90deg)' : '';
-    toggle.setAttribute('aria-expanded', String(!hidden));
+    $('gs-qn-body').hidden = !shown;
+    $('gs-qn-new').hidden = !shown;
+    $('gs-qn-select').hidden = !shown;
+    $('gs-qn-links').hidden = !shown;
+    $('gs-qn-section').classList.toggle('gs-qn-section--open', shown);
+    label.textContent = shown ? 'ausblenden' : 'einblenden';
+    if (chevron) chevron.style.transform = shown ? '' : 'rotate(-90deg)';
+    toggle.setAttribute('aria-expanded', String(shown));
+    if (!shown && selMode) setSelMode(false);
   }
 
+  // ── Kacheln ───────────────────────────────────────────
+  const visibleIds = () => notes.map((n) => n.id);
+
   function buildTile(note) {
+    const cell = document.createElement('div');
+    cell.className = 'gs-qn-cell';
     const tile = document.createElement('a');
     tile.className = 'gg-tile gs-qn-tile';
     tile.href = 'quicknotes.html#' + encodeURIComponent(note.id);
@@ -74,7 +92,19 @@
     footer.appendChild(time);
 
     tile.append(top, badges, prev, footer);
-    return tile;
+    cell.appendChild(tile);
+
+    if (selMode) {
+      const chk = document.createElement('input');
+      chk.type = 'checkbox';
+      chk.className = 'gs-qn-check';
+      chk.setAttribute('aria-label', 'Notiz „' + (note.title || 'Ohne Titel') + '“ auswählen');
+      chk.addEventListener('click', (e) => { sel.click(note.id, visibleIds(), e.shiftKey); syncSel(); });
+      cell.appendChild(chk);
+      // Im Auswahlmodus wählt ein Klick auf die Kachel aus und öffnet nicht
+      tile.addEventListener('click', (e) => { e.preventDefault(); sel.click(note.id, visibleIds(), e.shiftKey); syncSel(); });
+    }
+    return cell;
   }
 
   async function render() {
@@ -86,9 +116,11 @@
       if (!db) throw new Error('quicknotes-db.js ist nicht geladen.');
       // Die Übersicht legt die Datenbank nicht an: solange keine Quicknote existiert, gibt es sie auch nicht.
       const all = (await db.exists()) ? await db.list() : [];
-      const notes = all.filter((n) => !n.trashedAt).sort((a, b) => b.updatedAt - a.updatedAt);
+      notes = all.filter((n) => !n.trashedAt).sort((a, b) => b.updatedAt - a.updatedAt);
       count.textContent = String(notes.length);
+      $('gs-qn-trashcount').textContent = String(all.length - notes.length);
       err.hidden = true;
+      if (sel) sel.restrictTo(visibleIds());
       grid.replaceChildren();
       if (!notes.length) {
         const empty = document.createElement('p');
@@ -96,6 +128,7 @@
         empty.textContent = 'Noch keine Quicknotes.';
         grid.appendChild(empty);
       } else notes.forEach((n) => grid.appendChild(buildTile(n)));
+      syncSel();
     } catch (e) {
       count.textContent = '!';
       grid.replaceChildren();
@@ -105,6 +138,63 @@
       rendering = false;
       if (again) { again = false; render(); }
     }
+  }
+
+  // ── Auswahlmodus ──────────────────────────────────────
+  function syncSel() {
+    if (!sel) return;
+    $('gs-qn-selbar').hidden = !selMode;
+    $('gs-qn-sel-count').textContent = sel.size() + ' ausgewählt';
+    const t = $('gs-qn-sel-trash');
+    t.textContent = 'In den Papierkorb (' + sel.size() + ')';
+    t.disabled = sel.size() === 0 || busy;
+    $('gs-qn-select').setAttribute('aria-pressed', String(selMode));
+    document.querySelectorAll('#gs-qn-grid .gs-qn-cell').forEach((cell) => {
+      const id = cell.querySelector('.gs-qn-tile').dataset.noteId;
+      const on = sel.has(id);
+      cell.querySelector('.gs-qn-tile').classList.toggle('gs-qn-tile--sel', on);
+      const c = cell.querySelector('.gs-qn-check');
+      if (c) c.checked = on;
+    });
+  }
+
+  function setSelMode(on) {
+    selMode = !!on;
+    if (!selMode && sel) sel.clear();
+    render();
+  }
+
+  // Meldung bleibt bis zum Schließen oder zur nächsten Aktion stehen; Rückgängig, solange sie da ist
+  function showMsg(text, warn, undoFn) {
+    const m = $('gs-qn-msg');
+    $('gs-qn-msg-text').textContent = text;
+    m.classList.toggle('gs-qn-msg--warn', !!warn);
+    const u = $('gs-qn-undo');
+    u.hidden = !undoFn;
+    u.onclick = undoFn ? () => undoFn() : null;
+    m.hidden = false;
+  }
+
+  async function trashSelected() {
+    if (busy || !sel) return;
+    const items = notes.filter((n) => sel.has(n.id)).map((n) => ({ id: n.id, title: n.title, rev: n.rev }));
+    if (!items.length) return;
+    if (!window.confirm(S.confirmText('trash', items))) return;
+    busy = true; syncSel();
+    let res;
+    try { res = await S.bulkTrash(items, { trash: (id, rev) => window.QuickNotesDB.setTrashedIfRev(id, true, rev) }); }
+    finally { busy = false; }
+    selMode = false; sel.clear();
+    await render();
+    showMsg(S.summarize(res, 'trash'), res.skipped.length > 0, res.done.length ? () => undo(res.done) : null);
+  }
+
+  async function undo(done) {
+    let r;
+    try { r = await S.bulkRestore(done, { restore: (id, rev) => window.QuickNotesDB.setTrashedIfRev(id, false, rev) }); }
+    catch (e) { showMsg('Rückgängig fehlgeschlagen: ' + ((e && e.message) || e), true, null); return; }
+    await render();
+    showMsg(S.summarize(r, 'restore'), r.skipped.length > 0, null);
   }
 
   async function createNew() {
@@ -122,15 +212,37 @@
     }
   }
 
+  // guides.html#quicknotes: für diesen Besuch einblenden (gespeicherten Zustand nicht ändern), ins Sichtfeld scrollen, Kopfzeile fokussieren
+  function handleHash() {
+    if (location.hash !== '#quicknotes') return;
+    forced = true;
+    applyVisibility();
+    const s = $('gs-qn-section'), h = $('gs-qn-header');
+    if (s.scrollIntoView) s.scrollIntoView({ block: 'start' });
+    if (h && h.focus) h.focus();
+  }
+
   function init() {
     if (!$('gs-qn-section')) return;
     applyVisibility();
     $('gs-qn-toggle').addEventListener('click', () => {
-      localStorage.setItem(HIDE_KEY, String(!isHidden()));
+      const nowShown = !isVisible();
+      forced = false;                                   // eine ausdrückliche Entscheidung gilt (und wird gespeichert)
+      localStorage.setItem(HIDE_KEY, String(!nowShown));
       applyVisibility();
     });
     $('gs-qn-new').addEventListener('click', createNew);
-    render();
+    if (sel) {
+      $('gs-qn-select').addEventListener('click', () => setSelMode(!selMode));
+      $('gs-qn-sel-all').addEventListener('click', () => { sel.selectAll(visibleIds()); syncSel(); });
+      $('gs-qn-sel-none').addEventListener('click', () => { sel.clear(); syncSel(); });
+      $('gs-qn-sel-cancel').addEventListener('click', () => setSelMode(false));
+      $('gs-qn-sel-trash').addEventListener('click', trashSelected);
+    }
+    $('gs-qn-msg-close').addEventListener('click', () => { $('gs-qn-msg').hidden = true; });
+    handleHash();
+    render().then(() => { if (forced) handleHash(); });
+    window.addEventListener('hashchange', handleHash);
     try { if (window.QuickNotesDB) window.QuickNotesDB.onChange(render); } catch (e) { /* ohne BroadcastChannel: Aktualisierung beim Sichtbarwerden */ }
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') render(); });
   }

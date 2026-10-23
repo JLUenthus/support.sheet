@@ -366,7 +366,134 @@ body.page-quicknotes .as-scroll-top { display: none; }
 .qn-st--conv a { color: var(--qn-accent); }
 .gs-qn-badge--conv { --gg-cat-color: var(--green); color: var(--green); }
 
+/* ── Notizenliste (Seitenbereich), Auswahl, Papierkorb-Dialog ── */
+.qn-allbtn {
+  flex: none;
+  align-self: center;
+  margin: 0 6px 4px 0;
+  padding: 5px 10px;
+  background: var(--panel2);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.qn-allbtn:hover { border-color: var(--qn-accent); }
+.qn-allbtn[aria-expanded="true"] { background: var(--qn-accent-bg); border-color: var(--qn-accent); color: var(--qn-accent); }
+.qn-allbtn:focus-visible { outline: 2px solid var(--qn-accent); outline-offset: 1px; }
+
+.qn-bodyrow { flex: 1; min-height: 0; display: flex; position: relative; }
+.qn-workarea { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.qn-notes {
+  flex: none;
+  width: min(300px, 34%);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+}
+.qn-notes-head { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-bottom: 1px solid var(--border); }
+.qn-notes-filterlabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.qn-notes-filter {
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  font-size: .8rem;
+}
+.qn-notes-filter:focus-visible, .qn-note-item:focus-visible, .qn-note-check:focus-visible, .qn-notes .qn-btn:focus-visible { outline: 2px solid var(--qn-accent); outline-offset: 1px; }
+.qn-notes-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+.qn-notes-sub { color: var(--muted); font-size: .72rem; }
+.qn-selbar { display: flex; flex-direction: column; gap: 6px; padding: 6px; background: var(--panel2); border: 1px solid var(--border2); border-radius: 6px; }
+.qn-selcount { color: var(--text); font-size: .78rem; font-weight: 700; }
+.qn-selbtns { display: flex; flex-wrap: wrap; gap: 6px; }
+.qn-note-list { list-style: none; margin: 0; padding: 4px; flex: 1; min-height: 0; overflow-y: auto; }
+.qn-note-row { display: flex; align-items: center; gap: 6px; border-radius: 6px; }
+.qn-note-row--sel { background: var(--qn-accent-bg); }
+.qn-note-check { flex: none; width: 16px; height: 16px; margin-left: 6px; accent-color: var(--qn-accent); }
+.qn-note-item {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  padding: 7px 8px;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.qn-note-item:hover { background: rgba(255, 255, 255, .06); }
+.qn-note-item[aria-current="true"] { background: var(--panel2); }
+.qn-note-title { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .82rem; font-weight: 600; }
+.qn-note-row--open .qn-note-title { color: var(--qn-accent); }
+.qn-note-meta { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 2px; color: var(--muted); font-size: .7rem; }
+.qn-note-open { color: var(--qn-accent); font-weight: 700; }
+.qn-note-flag { color: var(--green); font-weight: 700; }
+.qn-note-empty { padding: 10px; color: var(--muted); font-size: .8rem; }
+.qn-hint-links { margin-left: 8px; white-space: nowrap; }
+.qn-hint a { color: var(--qn-accent); }
+
+.qn-modal-box { width: min(720px, 100%); }
+.qn-trash-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.qn-trash-msg { margin-bottom: 10px; padding: 8px 10px; background: var(--panel2); border-left: 4px solid var(--accent); border-radius: 6px; color: var(--text); font-size: .8rem; line-height: 1.45; overflow-wrap: anywhere; }
+.qn-trash-msg--warn { border-left-color: var(--amber); }
+.qn-trash-msg--error { border-left-color: var(--red); }
+.qn-trash-confirm { margin-bottom: 10px; padding: 10px; background: #2a1c26; border: 1px solid var(--red); border-radius: 8px; }
+.qn-trash-confirm-text { margin-bottom: 8px; color: var(--text); font-size: .84rem; line-height: 1.45; overflow-wrap: anywhere; }
+.qn-trash-row { align-items: flex-start; }
+.qn-trash-row--sel { background: var(--qn-accent-bg); }
+.qn-trash-check { flex: none; width: 16px; height: 16px; margin-top: 3px; accent-color: var(--qn-accent); }
+.qn-trash-preview { display: block; margin-top: 2px; color: var(--muted); font-size: .76rem; overflow-wrap: anywhere; }
+.qn-trash-guide { margin-top: 2px; color: var(--qn-accent); font-size: .76rem; }
+.qn-modal button:focus-visible, .qn-modal input:focus-visible, .qn-modal a:focus-visible { outline: 2px solid var(--qn-accent); outline-offset: 1px; }
+
+/* Gruppe "Quicknotes" in der Guide-Übersicht: Verweise, Auswahlmodus, Meldung */
+.gs-qn-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.gs-qn-link {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--muted);
+  font-size: .75rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.gs-qn-link:hover { color: var(--text); border-color: var(--border2); }
+.gs-qn-section a:focus-visible, .gs-qn-section input:focus-visible { outline: 2px solid var(--qn-accent); outline-offset: 1px; }
+.gs-qn-header-focus:focus { outline: 2px solid var(--qn-accent); outline-offset: 4px; border-radius: 4px; }
+.gs-qn-selbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; padding: 8px 10px; background: var(--panel2); border: 1px solid var(--border2); border-radius: var(--r); }
+.gs-qn-selcount { margin-right: auto; color: var(--text); font-size: .8rem; font-weight: 700; }
+.gs-qn-cell { position: relative; display: flex; }
+.gs-qn-cell > .gs-qn-tile { flex: 1; min-width: 0; }
+.gs-qn-check { position: absolute; top: 12px; right: 12px; width: 18px; height: 18px; accent-color: var(--qn-accent); }
+.gs-qn-tile--sel { outline: 2px solid var(--qn-accent); outline-offset: -2px; }
+.gs-qn-msg { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 12px; padding: 9px 12px; background: var(--panel2); border: 1px solid var(--border2); border-left: 4px solid var(--accent); border-radius: var(--r); color: var(--text); font-size: .8rem; line-height: 1.45; }
+.gs-qn-msg--warn { border-left-color: var(--amber); }
+.gs-qn-msg-text { flex: 1 1 280px; overflow-wrap: anywhere; }
+
 /* ── schmale Bildschirme ──────────────────────────────────── */
+@media (max-width: 900px) {
+  /* Notizenliste als Überlagerung über dem Editor (standardmäßig ausgeblendet) */
+  .qn-notes {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    z-index: 40;
+    width: min(320px, 92%);
+    min-height: 260px;
+    border-right: 1px solid var(--border2);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .6);
+  }
+}
 @media (max-width: 640px) {
   /* Layout wächst mit dem Inhalt, der Editor behält eine feste, gut nutzbare Höhe */
   .qn-layout { height: auto; min-height: calc(100vh - 140px); border-radius: var(--r); }
