@@ -509,6 +509,32 @@ body.page-quicknotes .as-scroll-top { display: none; }
   .qn-statusbar { gap: 2px 12px; }
 }
 
+/* ── Kompakte Navigation und breites Layout (nur quicknotes.html: Klasse qn-page am body; nav.js bleibt unberührt) ──
+   Die Navigationsleiste besteht aus dem header (main.css, 58 px) und der .as-tab-bar (<style> aus nav.js, 43 px, sticky unter dem header).
+   Selektoren mit body.qn-page schlagen die gleichrangigen Regeln aus nav.js, obwohl dessen <style> später im Dokument steht.
+   Höhe: header 40 px + Tab-Leiste 30 px = 70 px; das Panel füllt den Rest (100vh − 70 − 8 Abstand − 16 unten; die 16 px reichen auch für
+   eine waagerechte Rollleiste, damit die Seite nie senkrecht rollt). Ab 900 px füllt das Panel die Breite bis auf 14 px Rand.
+   Unter 640 px (Mobil-Layout) und für alle anderen Seiten ändert sich nichts. */
+@media (min-width: 641px) {
+  body.qn-page { min-height: 0; }                                 /* main.css: 100vh – mit waagerechter Rollleiste liefe die Seite sonst 15 px über */
+  body.qn-page header { height: 40px; padding: 0 16px; gap: 12px; flex-wrap: nowrap; }
+  body.qn-page .logo-icon { width: 26px; height: 26px; font-size: 14px; border-radius: 7px; }
+  body.qn-page .logo-text { font-size: .92rem; }
+  body.qn-page .as-logo-wrap { gap: 8px; }
+  body.qn-page .pill { padding: 2px 9px; font-size: .7rem; }
+  body.qn-page .as-refresh-btn { width: 28px; height: 28px; font-size: 15px; }
+  body.qn-page .as-tab-bar { top: 40px; height: 30px; padding: 0 16px; }
+  body.qn-page.has-update .as-tab-bar { top: 82px; }             /* Update-Leiste von nav.js (42 px) + header */
+  body.qn-page .as-tab:not(.as-tab--group) { height: 30px; padding: 0 12px; font-size: .78rem; }
+  body.qn-page .as-tab--group { min-height: 28px; }
+  body.qn-page .as-subtab-menu { top: calc(100% + 3px); }
+  body.qn-page main.qn-main { padding-top: 8px; padding-bottom: 0; }
+  body.qn-page .qn-layout { height: calc(100vh - 94px); }
+}
+@media (min-width: 900px) {
+  body.qn-page main.qn-main { max-width: none; padding-left: 14px; padding-right: 14px; }
+}
+
 /* ── Gruppe "Quicknotes" in der Guide-Übersicht (Aufbau und Klassen wie die Gruppe "Support") ── */
 .gs-qn-section.gs-support-section { margin-top: 4px; margin-bottom: 20px; padding-top: 16px; }
 .gs-qn-section .gs-support-header { margin-bottom: 0; }
