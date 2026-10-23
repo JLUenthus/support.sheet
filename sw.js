@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20261023-qnwide-16';
+const CACHE_VERSION = '20261023-gtpl-17';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -83,6 +83,11 @@ const ASSETS = [
   './guides-howto.html',
   './guides-create.html',
   './guides-manage.html',
+  './css/guide-templates.css',
+  './js/guide-templates-core.js',
+  './js/guide-templates-db.js',
+  './js/guide-templates.js',
+  './data/guide-templates.json',
   './wizard.html',
   './quicknotes.html',
   './css/quicknotes.css',

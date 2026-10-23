@@ -1,0 +1,109 @@
+/* ============================================================
+   guide-templates.css – Vorlagen-Dialog beim Anlegen eines Guides (guides-create.html)
+   Nutzt die Tokens aus main.css. Texte nie in --dim (zu wenig Kontrast), nur --text/--muted.
+   ============================================================ */
+
+.gt-applied {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+  margin: 0 0 12px; padding: 9px 12px;
+  background: var(--panel2); border: 1px solid var(--border2); border-left: 4px solid var(--accent);
+  border-radius: var(--r); color: var(--text); font-size: .82rem; line-height: 1.45;
+}
+.gt-applied--warn { border-left-color: var(--amber); }
+.gt-applied--error { border-left-color: var(--red); }
+.gt-applied-text { flex: 1 1 320px; overflow-wrap: anywhere; }
+
+.gt-dialog {
+  width: min(1100px, 96vw); height: min(86vh, 800px); max-width: none; max-height: none;
+  padding: 0; margin: auto; border: 1px solid var(--border2); border-radius: var(--r-lg);
+  background: var(--panel); color: var(--text); box-shadow: 0 24px 64px rgba(0, 0, 0, .65);
+  font-family: var(--font-ui);
+}
+.gt-dialog[open] { display: flex; flex-direction: column; }
+.gt-dialog::backdrop { background: rgba(8, 10, 16, .72); }
+.gt-dialog button:focus-visible, .gt-dialog input:focus-visible, .gt-dialog select:focus-visible, .gt-dialog textarea:focus-visible,
+.gt-opt:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.gt-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px 6px; }
+.gt-heading { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+.gt-note { padding: 0 16px 8px; color: var(--muted); font-size: .76rem; line-height: 1.45; }
+.gt-msgs { display: flex; flex-direction: column; gap: 6px; padding: 0 16px; }
+.gt-msgs:empty { display: none; }
+.gt-msg {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 7px 10px; margin-bottom: 4px;
+  background: var(--panel2); border-left: 4px solid var(--accent); border-radius: 6px; font-size: .8rem; line-height: 1.4;
+}
+.gt-msg--ok { border-left-color: var(--green); }
+.gt-msg--warn { border-left-color: var(--amber); }
+.gt-msg--error { border-left-color: var(--red); }
+.gt-msg-text { flex: 1 1 260px; overflow-wrap: anywhere; }
+
+.gt-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(240px, 340px) 1fr; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.gt-left { display: flex; flex-direction: column; gap: 8px; min-height: 0; padding: 12px; border-right: 1px solid var(--border); }
+.gt-right { min-width: 0; min-height: 0; overflow-y: auto; padding: 14px 16px; }
+.gt-label { display: block; margin-bottom: 4px; font-size: .74rem; font-weight: 600; color: var(--muted); }
+.gt-input {
+  width: 100%; padding: 7px 10px; background: var(--bg); border: 1px solid var(--border2); border-radius: 8px;
+  color: var(--text); font: inherit; font-size: .84rem;
+}
+.gt-textarea { font-family: var(--font-mono); font-size: .8rem; line-height: 1.5; resize: vertical; min-height: 160px; }
+.gt-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+.gt-dialog .gs-folder-btn { width: auto; }
+.gt-dialog .gs-folder-btn:disabled { opacity: .5; cursor: not-allowed; }
+.gt-primary { border-color: var(--accent); color: var(--accent); }
+.gt-danger { color: var(--red); border-color: rgba(248, 113, 113, .5); }
+
+.gt-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.gt-group-title { padding: 4px 2px; font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.gt-opt { padding: 8px 10px; margin-bottom: 4px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel2); cursor: pointer; }
+.gt-opt:hover { border-color: var(--border2); }
+.gt-opt--sel { border-color: var(--accent); background: var(--accent-bg); }
+.gt-opt-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.gt-opt-name { font-weight: 600; font-size: .86rem; overflow-wrap: anywhere; }
+.gt-opt-desc { margin-top: 3px; color: var(--muted); font-size: .74rem; line-height: 1.4; overflow-wrap: anywhere; }
+.gt-badge { flex: none; padding: 1px 8px; border-radius: 20px; font-size: .66rem; font-weight: 700; color: var(--amber); background: var(--amber-bg); border: 1px solid rgba(251, 191, 36, .35); }
+.gt-empty { padding: 6px 4px; color: var(--muted); font-size: .78rem; }
+.gt-empty--err { color: var(--text); background: var(--red-bg); border-left: 4px solid var(--red); padding: 8px 10px; border-radius: 6px; }
+
+.gt-placeholder { color: var(--muted); }
+.gt-pane-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.gt-pane-title { font-size: 1.05rem; font-weight: 700; overflow-wrap: anywhere; }
+.gt-pane-desc { margin: 6px 0 10px; color: var(--muted); font-size: .82rem; line-height: 1.5; }
+.gt-acts { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+.gt-fields { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: .82rem; }
+.gt-cap { text-align: left; padding-bottom: 4px; font-size: .72rem; font-weight: 600; color: var(--muted); }
+.gt-fields th { width: 130px; padding: 5px 8px; text-align: left; font-weight: 600; color: var(--muted); border-top: 1px solid var(--border); vertical-align: top; }
+.gt-fields td { padding: 5px 8px; border-top: 1px solid var(--border); overflow-wrap: anywhere; }
+.gt-unch { color: var(--muted); font-style: italic; }
+.gt-hint { margin: 4px 0 8px; padding: 6px 10px; border-left: 4px solid var(--amber); background: var(--amber-bg); border-radius: 6px; font-size: .78rem; }
+.gt-md-bar { margin: 8px 0; }
+.gt-content { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); overflow-x: auto; }
+.gt-md { margin: 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-family: var(--font-mono); font-size: .76rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.gt-ed-preview { max-height: 260px; overflow: auto; margin-bottom: 8px; }
+
+.gt-editor { display: flex; flex-direction: column; gap: 10px; }
+.gt-field-hint { margin-top: 4px; color: var(--muted); font-size: .72rem; line-height: 1.4; }
+.gt-errors:empty { display: none; }
+.gt-errors { padding: 8px 10px; border-left: 4px solid var(--red); background: var(--red-bg); border-radius: 6px; font-size: .78rem; }
+.gt-errors-list { margin: 0; padding-left: 18px; }
+.gt-conflict { padding: 10px 12px; border-left: 4px solid var(--amber); background: var(--amber-bg); border-radius: 6px; font-size: .8rem; }
+.gt-conflict-text { margin-bottom: 8px; line-height: 1.45; }
+.gt-ed-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.gt-choice { margin: 0 16px 8px; padding: 10px 12px; border: 1px solid var(--amber); border-radius: 8px; background: var(--amber-bg); }
+.gt-choice[hidden] { display: none; }
+.gt-choice-text { margin-bottom: 8px; font-size: .8rem; line-height: 1.5; }
+.gt-choice-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.gt-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 16px; }
+
+/* schmale Bildschirme: Vorschau unter der Liste, Dialog fuellt die Breite */
+@media (max-width: 640px) {
+  .gt-dialog { width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; border-left: 0; border-right: 0; }
+  .gt-body { grid-template-columns: 1fr; overflow-y: auto; align-content: start; }
+  .gt-left, .gt-right { min-height: auto; }   /* sonst schrumpft die Zeile der Liste und die Vorschau rutscht über die Liste */
+  .gt-left { border-right: 0; border-bottom: 1px solid var(--border); }
+  .gt-list { flex: none; max-height: 38vh; }
+  .gt-right { overflow: visible; }
+  .gt-fields th { width: 96px; }
+  .gt-foot .gs-folder-btn { flex: 1; }
+}
