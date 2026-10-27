@@ -59,6 +59,138 @@ function getPrimaryTag(cmd) {
   return cmd.tags.find(t => CATEGORY_MAP[t]) || cmd.tags[0] || null;
 }
 
+// ── Befehlsseiten (opt-in) ───────────────────────────────────
+// render.js wird auch von gpo.html, mitmachen.html, wizard.html und linux.html geladen (createCommandCard, addRecent, renderRecent).
+// Das Verhalten dieses Abschnitts gilt NUR auf windows.html, exchange.html und forti.html: Sie tragen die Seitenklasse "commands-page" am <body>.
+// Ohne diese Klasse (und ohne Option commandsPage bei createCommandCard) bleibt jede Ausgabe Zeichen für Zeichen wie zuvor
+// (tests/render-golden.test.html vergleicht mit tests/fixtures/render.orig.js).
+function isCommandsPage() { return !!(document.body && document.body.classList.contains('commands-page')); }
+
+// Ergänzte Abschnitte (deutsche Beschriftung, eigenes Symbol) für Tags, die in CATEGORY_MAP fehlen, und eindeutige Symbole je Seite.
+// CATEGORY_MAP selbst bleibt unverändert (andere Seiten); die Befehlsseiten nutzen cpCategoryMap().
+const CP_ICON_OVERRIDES = {
+  remote: '📡', eventlog: '📰', quick: '🚀', dhcp: '📶', hyperv: '🧊', rds: '💻', 'on-premises': '🏠', tracking: '🧭', migration: '🚚',
+  groups: '📣', basics: '🧰', policy: '🧾', fortimanager: '🗄️',
+};
+const CP_EXTRA_CATEGORIES = {
+  registry:         { label: 'Registry',                dot: '#fbbf24', icon: '🗝️' },
+  'scheduled-task': { label: 'Geplante Aufgaben',       dot: '#60a5fa', icon: '⏰' },
+  admin:            { label: 'Administration',          dot: '#7c8cf8', icon: '🛠️' },
+  caution:          { label: 'Vorsicht',                dot: '#f87171', icon: '⚠️' },
+  certificates:     { label: 'Zertifikate',             dot: '#2dd4bf', icon: '🎫' },
+  cli:              { label: 'CLI',                     dot: '#a78bfa', icon: '📟' },
+  database:         { label: 'Datenbanken',             dot: '#e8b339', icon: '🗃️' },
+  faz:              { label: 'FortiAnalyzer (FAZ)',     dot: '#a78bfa', icon: '📈' },
+  fg:               { label: 'FortiGate (FG)',          dot: '#fb7124', icon: '🧱' },
+  files:            { label: 'Dateien',                 dot: '#4ade80', icon: '📁' },
+  fmg:              { label: 'FortiManager (FMG)',      dot: '#f87171', icon: '🗂️' },
+  graphics:         { label: 'Grafik',                  dot: '#f472b6', icon: '🎨' },
+  ha:               { label: 'Hochverfügbarkeit (HA)',  dot: '#2dd4bf', icon: '🔁' },
+  info:             { label: 'Informationen',           dot: '#7c8cf8', icon: 'ℹ️' },
+  maintenance:      { label: 'Wartung',                 dot: '#fbbf24', icon: '🧹' },
+  productivity:     { label: 'Produktivität',           dot: '#4ade80', icon: '📝' },
+  ps:               { label: 'PowerShell (Kürzel ps)',  dot: '#a78bfa', icon: '🐚' },
+  reboot:           { label: 'Neustart',                dot: '#fb7124', icon: '♻️' },
+  repair:           { label: 'Reparatur',               dot: '#fbbf24', icon: '🩹' },
+  security:         { label: 'Sicherheit',              dot: '#f87171', icon: '🔐' },
+  server:           { label: 'Server',                  dot: '#60a5fa', icon: '🏗️' },
+  transport:        { label: 'Transport',               dot: '#2dd4bf', icon: '✉️' },
+  windows:          { label: 'Windows',                 dot: '#60a5fa', icon: '🪟' },
+};
+// Position der ergänzten Abschnitte in der Reihenfolge (Seite und Filterleiste folgen derselben Reihenfolge); der Rest steht am Ende
+const CP_AFTER = { registry: 'gpo', 'scheduled-task': 'process' };
+let _cpMap = null;
+function cpCategoryMap() {
+  if (_cpMap) return _cpMap;
+  const out = {};
+  const placed = new Set();
+  Object.entries(CATEGORY_MAP).forEach(([key, meta]) => {
+    out[key] = CP_ICON_OVERRIDES[key] ? { ...meta, icon: CP_ICON_OVERRIDES[key] } : meta;
+    Object.keys(CP_AFTER).forEach(extra => { if (CP_AFTER[extra] === key && CP_EXTRA_CATEGORIES[extra] && !out[extra]) { out[extra] = CP_EXTRA_CATEGORIES[extra]; placed.add(extra); } });
+  });
+  Object.entries(CP_EXTRA_CATEGORIES).forEach(([key, meta]) => { if (!out[key] && !placed.has(key)) out[key] = meta; });
+  return (_cpMap = out);
+}
+// Reihenfolge der Abschnitte wie in der Filterleiste (cpCategoryMap); unbekannte Tags danach in der Reihenfolge des Auftretens
+function cpOrderedGroups(groups) {
+  const order = Object.keys(cpCategoryMap());
+  const known = order.filter(k => groups[k]).map(k => [k, groups[k]]);
+  const rest = Object.entries(groups).filter(([k]) => !order.includes(k));
+  return [...known, ...rest];
+}
+
+// Sicherheitsmodus: "hoch" ist ein Befehl nur mit risk "high" oder dem Tag caution (keine Teilstring-Heuristik wie in getRisk)
+function cpIsHigh(cmd) { return cmd.risk === 'high' || (Array.isArray(cmd.tags) && cmd.tags.includes('caution')); }
+function cpRisk(cmd) {
+  if (cpIsHigh(cmd)) return 'high';
+  if (cmd.risk) return cmd.risk;
+  const l = (cmd.cmd || '').toLowerCase();
+  return (l.includes('set-') || l.includes('disable') || l.includes('stop-') || l.includes('restart-') || l.includes('reset')) ? 'medium' : 'low';
+}
+function cpShouldShow(cmd) { return !isSafeModeOn() || !cpIsHigh(cmd); }
+function cpUpdateSafeHint(commands) {
+  const hint = document.getElementById('safe-mode-hint');
+  if (hint) hint.textContent = '🛡️ Sicherheitsmodus: Befehle mit hohem Risiko ausgeblendet (' + commands.filter(cpIsHigh).length + ')';
+}
+
+// Tags: das Tag, das auf jeder Karte der Seite steht (windows, exchange, cli), wird nicht gezeigt; caution erscheint als "Vorsicht"
+let _cpCommon = { src: null, set: new Set() };
+function cpCommonTags() {
+  if (_cpCommon.src === _allCommands) return _cpCommon.set;
+  let set = new Set();
+  if (Array.isArray(_allCommands) && _allCommands.length >= 10) {
+    set = new Set(Array.isArray(_allCommands[0].tags) ? _allCommands[0].tags : []);
+    _allCommands.forEach(c => { const t = Array.isArray(c.tags) ? c.tags : []; set.forEach(x => { if (!t.includes(x)) set.delete(x); }); });
+  }
+  _cpCommon = { src: _allCommands, set };
+  return set;
+}
+const cpVisibleTags = cmd => (Array.isArray(cmd.tags) ? cmd.tags : []).filter(t => !cpCommonTags().has(t));
+const cpTagLabel = tag => (tag === 'caution' ? 'Vorsicht' : tag);
+// Favoriten-Karten baut favorites.js (nicht Teil dieser Änderung): Tags dort nachträglich angleichen
+function cpLocalizeTags(root) {
+  const common = cpCommonTags();
+  root.querySelectorAll('.tag').forEach(t => { const x = t.textContent; if (x === 'caution') t.textContent = 'Vorsicht'; else if (common.has(x)) t.remove(); });
+}
+function cpInitFavoritesObserver() {
+  const c = document.getElementById('favorites-container');
+  if (!c || typeof MutationObserver === 'undefined') return;
+  new MutationObserver(() => cpLocalizeTags(c)).observe(c, { childList: true, subtree: true });
+}
+
+// Leerzustand der Suche: Meldung im Befehlsbereich (Suchbegriff nur als Text)
+function cpRenderEmpty(term) {
+  if (!isCommandsPage()) return;
+  const container = document.getElementById('commands-container');
+  if (!container) return;
+  const box = document.createElement('div');
+  box.className = 'cmd-empty';
+  box.setAttribute('role', 'status');
+  const title = document.createElement('p');
+  title.className = 'cmd-empty-title';
+  const q = document.createElement('strong');
+  q.textContent = term;
+  title.append('Keine Treffer für „', q, '“');
+  const hint = document.createElement('p');
+  hint.className = 'cmd-empty-hint';
+  hint.textContent = 'Anderen Suchbegriff versuchen oder die Suche leeren, um alle Befehle zu sehen.';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'cmd-empty-clear';
+  btn.textContent = 'Suche leeren';
+  btn.addEventListener('click', () => { const c = document.getElementById('search-clear'); if (c) c.click(); });
+  box.append(title, hint, btn);
+  container.replaceChildren(box);
+}
+
+// "Zuletzt verwendet": der Knopf erscheint direkt nach dem ersten Kopieren (recent.js aktualisiert nur einen vorhandenen Knopf)
+function cpEnsureRecentButton() {
+  const bar = document.getElementById('filter-bar');
+  if (!bar || document.getElementById('filter-btn-recent') || typeof getRecent !== 'function') return;
+  const list = getRecent();
+  if (list.length > 0) bar.insertBefore(buildRecentButton(list.length), bar.firstChild);
+}
+
 // ── Risk-Level ──────────────────────────────────────────────
 // Keine manuelle Pflege noetig – wird zur Laufzeit aus dem
 // "caution"-Tag und ein paar Cmd-Heuristiken abgeleitet.
@@ -101,6 +233,7 @@ function copyToClipboard(text, btn, command) {
     setTimeout(() => btn.classList.remove('copied'), 1500);
     if (typeof showToast === 'function') showToast('Kopiert!', 'success');
     if (command && typeof addRecent === 'function') addRecent(command, text);
+    if (command && isCommandsPage()) cpEnsureRecentButton();
   };
   const onError = err => {
     console.warn('Kopieren fehlgeschlagen', err);
@@ -135,16 +268,18 @@ function execCommandFallback(text, onSuccess, onError) {
 
 // ── Single Command Card ───────────────────────────────────
 
-function getShellBadge(tags) {
+function getShellBadge(tags, cp) {
   if (!Array.isArray(tags)) return null;
   if (tags.includes('shortcuts'))    return { label: 'Shortcut',   cls: 'shell-shortcut' };
   if (tags.includes('powershell'))   return { label: 'PowerShell', cls: 'shell-ps' };
   if (tags.includes('on-premises'))  return { label: 'EMS',        cls: 'shell-ems' };
   if (tags.includes('exo'))          return { label: 'EXO',        cls: 'shell-exo' };
+  if (cp && tags.includes('cli')) return { label: 'CLI', cls: 'shell-cmd' };
   return { label: 'CMD', cls: 'shell-cmd' };
 }
 
-function createCommandCard(template, cmd) {
+function createCommandCard(template, cmd, opts) {
+  const cp = !!(opts && opts.commandsPage);   // opt-in: nur die Befehlsseiten (renderCommandGroups), sonst Ausgabe wie zuvor
   const clone = template.content.cloneNode(true);
   const nameEl       = clone.querySelector('[data-field="name"]');
   const descEl       = clone.querySelector('[data-field="desc"]');
@@ -162,7 +297,7 @@ function createCommandCard(template, cmd) {
   cmdEl.textContent  = cmd.cmd;
 
   // Shell-Badge vor den Tags
-  const badge = getShellBadge(cmd.tags);
+  const badge = getShellBadge(cmd.tags, cp);
   if (badge) {
     const b = document.createElement('span');
     b.className   = 'shell-badge ' + badge.cls;
@@ -170,10 +305,10 @@ function createCommandCard(template, cmd) {
     tagContainer.appendChild(b);
   }
 
-  (Array.isArray(cmd.tags) ? cmd.tags : []).forEach(tag => {
+  (cp ? cpVisibleTags(cmd) : (Array.isArray(cmd.tags) ? cmd.tags : [])).forEach(tag => {
     const span = document.createElement('span');
     span.className   = 'tag';
-    span.textContent = tag;
+    span.textContent = cp ? cpTagLabel(tag) : tag;
     tagContainer.appendChild(span);
   });
 
@@ -212,13 +347,15 @@ function createCommandCard(template, cmd) {
   }
 
   // Risk-Badge + Warnung ─────────────────────────────────
-  const risk = getRisk(cmd);
+  const risk = cp ? cpRisk(cmd) : getRisk(cmd);
 
   // Nur HIGH und MEDIUM anzeigen, LOW ist Standard → kein Badge
   if (risk === 'high' || risk === 'medium') {
     const badge = document.createElement('div');
     badge.className = `risk-badge risk-badge--${risk}`;
-    badge.title = risk === 'high'
+    badge.title = cp
+      ? (risk === 'high' ? 'Achtung: Dieser Befehl kann Daten ändern oder löschen. Vor Ausführung prüfen.' : 'Hinweis: Dieser Befehl verändert Systemeinstellungen.')
+      : risk === 'high'
       ? 'Achtung: Dieser Befehl kann destructive sein. Vor Ausführung prüfen.'
       : 'Hinweis: Dieser Befehl verändert Systemeinstellungen.';
 
@@ -226,7 +363,7 @@ function createCommandCard(template, cmd) {
     dot.className = 'risk-dot';
 
     const label = document.createElement('span');
-    label.textContent = risk === 'high' ? 'HIGH' : 'MED';
+    label.textContent = cp ? (risk === 'high' ? 'Hoch' : 'Mittel') : (risk === 'high' ? 'HIGH' : 'MED');
 
     badge.appendChild(dot);
     badge.appendChild(label);
@@ -263,6 +400,24 @@ function createCommandCard(template, cmd) {
 
 let _activeFilter = 'all';
 
+// "Zuletzt verwendet"-Knopf der Filterleiste (aus renderFilterBar herausgelöst, Ausgabe unverändert)
+function buildRecentButton(count) {
+  const recentBtn = document.createElement('button');
+  recentBtn.className   = 'filter-btn filter-btn--recent';
+  recentBtn.dataset.tag = '__recent__';
+  recentBtn.id          = 'filter-btn-recent';
+  const recentDot = document.createElement('span');
+  recentDot.className = 'filter-dot';
+  recentDot.style.background = '#fbbf24';
+  recentBtn.appendChild(recentDot);
+  recentBtn.appendChild(document.createTextNode('Zuletzt verwendet'));
+  const recentCount = document.createElement('span');
+  recentCount.className = 'filter-recent-count';
+  recentCount.textContent = count;
+  recentBtn.appendChild(recentCount);
+  return recentBtn;
+}
+
 function renderFilterBar(commands) {
   const bar = document.getElementById('filter-bar');
   if (!bar) return;
@@ -275,20 +430,7 @@ function renderFilterBar(commands) {
   if (typeof getRecent === 'function') {
     const recentList = getRecent();
     if (recentList.length > 0) {
-      const recentBtn = document.createElement('button');
-      recentBtn.className   = 'filter-btn filter-btn--recent';
-      recentBtn.dataset.tag = '__recent__';
-      recentBtn.id          = 'filter-btn-recent';
-      const recentDot = document.createElement('span');
-      recentDot.className = 'filter-dot';
-      recentDot.style.background = '#fbbf24';
-      recentBtn.appendChild(recentDot);
-      recentBtn.appendChild(document.createTextNode('Zuletzt verwendet'));
-      const recentCount = document.createElement('span');
-      recentCount.className = 'filter-recent-count';
-      recentCount.textContent = recentList.length;
-      recentBtn.appendChild(recentCount);
-      bar.appendChild(recentBtn);
+      bar.appendChild(buildRecentButton(recentList.length));
     }
   }
 
@@ -304,7 +446,7 @@ function renderFilterBar(commands) {
   bar.appendChild(allBtn);
 
   // One button per category (in CATEGORY_MAP order to be consistent)
-  Object.entries(CATEGORY_MAP).forEach(([tag, meta]) => {
+  Object.entries(isCommandsPage() ? cpCategoryMap() : CATEGORY_MAP).forEach(([tag, meta]) => {
     if (!usedTags.has(tag)) return;
     const btn = document.createElement('button');
     btn.className   = 'filter-btn';
@@ -422,6 +564,7 @@ function renderCommandGroupsRecent(commands, pageColors) {
   const grid = document.createElement('div');
   grid.className = 'cmd-grid';
   const currentPage = (location.pathname.split('/').pop() || 'index.html').replace('.html','');
+  const cp = isCommandsPage();
 
   commands.forEach(cmd => {
     const clone        = template.content.cloneNode(true);
@@ -454,7 +597,7 @@ function renderCommandGroupsRecent(commands, pageColors) {
     cmdEl.textContent  = cmd.cmd;
 
     // Shell-Badge
-    const badge = getShellBadge(cmd.tags);
+    const badge = getShellBadge(cmd.tags, cp);
     if (badge) {
       const b = document.createElement('span');
       b.className   = 'shell-badge ' + badge.cls;
@@ -462,9 +605,9 @@ function renderCommandGroupsRecent(commands, pageColors) {
       tagContainer.appendChild(b);
     }
 
-    (Array.isArray(cmd.tags) ? cmd.tags : []).forEach(tag => {
+    (cp ? cpVisibleTags(cmd) : (Array.isArray(cmd.tags) ? cmd.tags : [])).forEach(tag => {
       const span = document.createElement('span');
-      span.className = 'tag'; span.textContent = tag;
+      span.className = 'tag'; span.textContent = cp ? cpTagLabel(tag) : tag;
       tagContainer.appendChild(span);
     });
 
@@ -544,7 +687,9 @@ function renderCommandGroups(commands, containerId = 'commands-container') {
   if (!template) return;
 
   _lastRenderedCommands = commands;
-  const visible = commands.filter(shouldShowCommand);
+  // opt-in: nur der Befehlsbereich der drei Befehlsseiten (Seitenklasse commands-page); sonst unverändert
+  const cp = containerId === 'commands-container' && isCommandsPage();
+  const visible = cp ? commands.filter(cpShouldShow) : commands.filter(shouldShowCommand);
 
   const fragment = document.createDocumentFragment();
 
@@ -556,8 +701,8 @@ function renderCommandGroups(commands, containerId = 'commands-container') {
     groups[tag].push(cmd);
   });
 
-  Object.entries(groups).forEach(([tag, cmds]) => {
-    const meta = CATEGORY_MAP[tag] || { label: tag, dot: '#7c8cf8', icon: '📋' };
+  (cp ? cpOrderedGroups(groups) : Object.entries(groups)).forEach(([tag, cmds]) => {
+    const meta = (cp ? cpCategoryMap() : CATEGORY_MAP)[tag] || { label: tag, dot: '#7c8cf8', icon: '📋' };
 
     // Section wrapper
     const section = document.createElement('div');
@@ -591,7 +736,7 @@ function renderCommandGroups(commands, containerId = 'commands-container') {
     const grid = document.createElement('div');
     grid.className = 'cmd-grid';
     const gridFrag = document.createDocumentFragment();
-    cmds.forEach(cmd => gridFrag.appendChild(createCommandCard(template, cmd)));
+    cmds.forEach(cmd => gridFrag.appendChild(createCommandCard(template, cmd, cp ? { commandsPage: true } : undefined)));
     grid.appendChild(gridFrag);
     section.appendChild(grid);
 
@@ -601,6 +746,7 @@ function renderCommandGroups(commands, containerId = 'commands-container') {
   container.replaceChildren(fragment);
   if (typeof updateCommandCount === 'function') updateCommandCount(visible.length);
   if (typeof renderFavorites    === 'function') renderFavorites(_allCommands);
+  if (cp) cpUpdateSafeHint(commands);
 }
 
 
@@ -634,6 +780,7 @@ function renderCommands(commands, containerId = 'commands-container') {
 // zusaetzlichen, ungenutzten commands.json-Fetch ausloesen.
 document.addEventListener('DOMContentLoaded', () => {
   if (!document.getElementById('commands-container')) return;
+  if (isCommandsPage()) cpInitFavoritesObserver();
   loadCommands()
     .then(commands => {
       _allCommands = commands;

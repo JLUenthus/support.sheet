@@ -10,7 +10,9 @@ let _searchTimeout = null;
 const FUSE_OPTIONS = {
   threshold:          0.3,
   minMatchCharLength: 2,
+  includeMatches:     true,   // Treffer im Namen werden zuerst gezeigt (siehe runSearch)
   keys: [
+    { name: 'name', weight: 0.5 },
     { name: 'cmd',  weight: 0.6 },
     { name: 'tags', weight: 0.3 },
     { name: 'desc', weight: 0.1 },
@@ -53,13 +55,18 @@ function runSearch(query) {
 
   if (!_fuseInstance) return;
 
-  const results = _fuseInstance.search(trimmed).map(r => r.item);
+  // Treffer im Namen zuerst; innerhalb der beiden Gruppen bleibt die Reihenfolge von Fuse
+  const raw = _fuseInstance.search(trimmed);
+  const inName = r => (r.matches || []).some(m => m.key === 'name');
+  const results = [...raw.filter(inName), ...raw.filter(r => !inName(r))].map(r => r.item);
   // Apply active filter on top of search
   const filtered = (typeof _activeFilter !== 'undefined' && _activeFilter !== 'all' && typeof getPrimaryTag === 'function')
     ? results.filter(c => getPrimaryTag(c) === _activeFilter)
     : results;
 
   renderCommandGroups(filtered);
+  // Leerzustand: Meldung im Befehlsbereich (nur auf den Befehlsseiten mit Seitenklasse commands-page, siehe render.js)
+  if (filtered.length === 0 && typeof cpRenderEmpty === 'function') cpRenderEmpty(trimmed);
   _updateResultCount(filtered.length, false);
 }
 

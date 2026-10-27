@@ -108,6 +108,28 @@
       "blocks": []
     },
     {
+      "id": "disk-analyzer-gui",
+      "path": "powershell/Disk-Analyzer-GUI.ps1",
+      "prerequisites": {
+        "runAsAdmin": false,
+        "modules": [],
+        "executionPolicy": "Bypass",
+        "notes": [
+          "Voraussetzungen: Windows 10 oder 11, oder Windows Server 2016 oder neuer mit Desktop. Windows PowerShell 5.1 oder neuer. Keine Installation, kein Netzwerk.",
+          "Administratorrechte sind optional: Ohne sie läuft das Skript mit eingeschränktem Umfang, Systemziele (Windows-Temp, Fehlerberichte, Lieferoptimierung, SoftwareDistribution) sind dann ausgegraut. Der Knopf „Als Administrator neu starten“ fragt vorher nach und startet nie automatisch neu.",
+          "Aufruf, Schritt 1 (auf dem Zielrechner, in einer normalen Windows PowerShell, im Ordner mit der heruntergeladenen Datei): Unblock-File .\\Disk-Analyzer-GUI.ps1",
+          "Aufruf, Schritt 2 (auf dem Zielrechner, in derselben Windows PowerShell oder in der Eingabeaufforderung, im selben Ordner): powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\Disk-Analyzer-GUI.ps1",
+          "Ohne Fenster, nur lesend (auf dem Zielrechner, in einer Windows PowerShell, zum Beispiel in einer Remote-Sitzung): powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\Disk-Analyzer-GUI.ps1 -NoGui -Path C:\\ -Top 30. Bericht als Datei: -ExportHtml C:\\Temp\\bericht.html (enthält Pfade und Benutzernamen, nicht in öffentliche Tickets).",
+          "Gelöscht wird nur, was Sie ausdrücklich auswählen und bestätigen. Nie angefasst werden Laufwerks-Stämme, Windows, Programme, Benutzerprofile mit Dokumenten, Desktop, Bildern, Videos, Musik, Downloads, OneDrive, Windows.old, der Komponentenspeicher (WinSxS), Schattenkopien, hiberfil.sys und die Auslagerungsdatei. Diese werden nur mit Größe und Hinweis zur Bereinigung angezeigt.",
+          "Löschen aus der Ordner- und Dateiansicht geht standardmäßig in den Papierkorb (der Platz wird erst nach dem Leeren frei). „Endgültig löschen“ verlangt eine zweite Bestätigung. Das Aufräumen der Ziele (Temp usw.) löscht endgültig, hat aber einen Probelauf. Schreibgeschützte Dateien und Dateien in Benutzung werden übersprungen und gemeldet.",
+          "Jede Löschaktion schreibt ein Protokoll nach %LOCALAPPDATA%\\DiskAnalyzer\\logs (Pfade, Größen, Ergebnis, keine Dateiinhalte). Nichts wird hochgeladen.",
+          "Die Größenangaben sind logische Dateigrößen (wie im Explorer unter „Größe“), nicht der belegte Platz. Hardlinks (Komponentenspeicher) lassen sich nicht exakt erfassen. Verknüpfungen und Cloud-Platzhalter (OneDrive) werden weder verfolgt noch geöffnet noch gezählt.",
+          "Sicherheitsprodukte (zum Beispiel SentinelOne) können die Ausführung blockieren. Das Skript enthält kein C# und keinen Add-Type mit Quelltext, macht keine Netzwerkzugriffe und ändert weder Registry noch Dienste noch Einstellungen."
+        ]
+      },
+      "blocks": []
+    },
+    {
       "id": "get-gpoanalyzersnapshot",
       "path": "powershell/gpo/Get-GPOAnalyzerSnapshot.ps1",
       "prerequisites": {

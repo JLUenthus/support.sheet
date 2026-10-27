@@ -27,7 +27,7 @@
   },
   {
     "id": "op-connect-close",
-    "name": "Session beenden",
+    "name": "Session beenden (On-Premises)",
     "cmd": "Remove-PSSession $Session",
     "desc": "Geöffnete Remote-Session sauber beenden. Wichtig um Ressourcen freizugeben – Exchange limitiert gleichzeitige Sessions.",
     "tags": [
@@ -115,7 +115,7 @@
   },
   {
     "id": "op-mailbox-alias",
-    "name": "E-Mail-Adresse hinzufügen",
+    "name": "E-Mail-Adresse hinzufügen (On-Premises)",
     "cmd": "Set-Mailbox -Identity 'user@domain.de' -EmailAddresses @{add='alias@domain.de'}",
     "desc": "Zusätzliche SMTP-Adresse/Alias hinzufügen. Bestehende Adressen bleiben erhalten.",
     "tags": [
@@ -179,7 +179,7 @@
   },
   {
     "id": "op-perms-fullaccess",
-    "name": "FullAccess vergeben",
+    "name": "FullAccess vergeben (On-Premises)",
     "cmd": "Add-MailboxPermission -Identity 'postfach@domain.de' -User 'user@domain.de' -AccessRights FullAccess -AutoMapping $true",
     "desc": "Vollzugriff auf ein Postfach. AutoMapping $true = erscheint automatisch in Outlook. AutoMapping $false = manuell hinzufügen.",
     "tags": [
@@ -203,7 +203,7 @@
   },
   {
     "id": "op-perms-sendonbehalf",
-    "name": "SendOnBehalf vergeben",
+    "name": "SendOnBehalf vergeben (On-Premises)",
     "cmd": "Set-Mailbox -Identity 'postfach@domain.de' -GrantSendOnBehalfTo @{add='user@domain.de'}",
     "desc": "Im Auftrag von senden. Mail zeigt 'Gesendet von user im Auftrag von postfach'.",
     "tags": [
@@ -304,7 +304,7 @@
   },
   {
     "id": "exo-connect-close",
-    "name": "Session beenden",
+    "name": "Session beenden (Online)",
     "cmd": "Disconnect-ExchangeOnline -Confirm:$false",
     "desc": "EXO-Session sauber beenden. Immer ausführen nach Fertigstellung – EXO limitiert gleichzeitige Sessions.",
     "tags": [
@@ -367,7 +367,7 @@
   },
   {
     "id": "exo-mailbox-alias",
-    "name": "E-Mail-Adresse hinzufügen",
+    "name": "E-Mail-Adresse hinzufügen (Online)",
     "cmd": "Set-Mailbox -Identity 'user@domain.de' -EmailAddresses @{add='alias@domain.de'}",
     "desc": "Alias/SMTP-Adresse hinzufügen. Bestehende Adressen bleiben erhalten.",
     "tags": [
@@ -379,7 +379,7 @@
   },
   {
     "id": "exo-perms-fullaccess",
-    "name": "FullAccess vergeben",
+    "name": "FullAccess vergeben (Online)",
     "cmd": "Add-MailboxPermission -Identity 'shared@domain.de' -User 'user@domain.de' -AccessRights FullAccess -AutoMapping $true",
     "desc": "Vollzugriff auf Postfach. AutoMapping $true = erscheint automatisch in Outlook.",
     "tags": [
@@ -403,7 +403,7 @@
   },
   {
     "id": "exo-perms-sendonbehalf",
-    "name": "SendOnBehalf vergeben",
+    "name": "SendOnBehalf vergeben (Online)",
     "cmd": "Set-Mailbox -Identity 'shared@domain.de' -GrantSendOnBehalfTo @{add='user@domain.de'}",
     "desc": "Im Auftrag von senden. Unterschied: Absender ist sichtbar.",
     "tags": [
@@ -492,7 +492,7 @@
   },
   {
     "id": "exo-compliance-litighold",
-    "name": "Litigation Hold aktivieren",
+    "name": "Litigation Hold aktivieren (Online)",
     "cmd": "Set-Mailbox -Identity 'user@domain.de' -LitigationHoldEnabled $true -LitigationHoldDuration 365",
     "desc": "Alle Postfachdaten für 365 Tage einfrieren. User kann Mails löschen aber sie bleiben in Recoverable Items.",
     "tags": [
@@ -566,7 +566,7 @@
   },
   {
     "id": "comp-mailbox-hold",
-    "name": "Litigation Hold aktivieren",
+    "name": "Litigation Hold aktivieren (On-Premises)",
     "cmd": "Set-Mailbox -Identity '{username}' -LitigationHoldEnabled $true -LitigationHoldDuration 365",
     "desc": "Postfach für rechtliche Aufbewahrung sperren. Alle Elemente werden 365 Tage aufbewahrt auch wenn der Benutzer sie löscht. Wichtig bei HR-Fällen oder behördlichen Anforderungen. Duration in Tagen oder 'Unlimited'.",
     "tags": [
@@ -620,7 +620,7 @@
     "id": "comp-audit-log",
     "name": "Postfach-Audit-Log abfragen",
     "cmd": "Search-MailboxAuditLog -Identity '{username}' -StartDate (Get-Date).AddDays(-30) -EndDate (Get-Date) -ShowDetails | Select Operation, OperationResult, LogonUserDisplayName, ItemSubject, TimeStamp | Format-Table -AutoSize",
-    "desc": "Wer hat wann auf das Postfach zugegriffen und was gemacht. Zeigt Send As, Delegated Access, Löschungen. Muss vorher aktiviert sein: Set-Mailbox -Identity x -AuditEnabled $true",
+    "desc": "Wer hat wann auf das Postfach zugegriffen und was gemacht. Zeigt Send As, Delegated Access, Löschungen. Muss vorher aktiviert sein: Set-Mailbox -Identity x -AuditEnabled $true.",
     "tags": [
       "exchange",
       "on-premises",
@@ -634,7 +634,7 @@
     "id": "comp-inactive-mailboxes",
     "name": "Inaktive Postfächer finden",
     "cmd": "Get-Mailbox -InactiveMailboxOnly | Select DisplayName, PrimarySmtpAddress, LitigationHoldEnabled, WhenSoftDeleted | Format-Table -AutoSize",
-    "desc": "Alle soft-gelöschten Postfächer die noch unter Hold stehen. Inaktive Postfächer belegen Lizenzen und Speicher. Nach Klärung ob Hold nötig: Remove-Mailbox -Identity x -PermanentlyDelete",
+    "desc": "Alle soft-gelöschten Postfächer die noch unter Hold stehen. Inaktive Postfächer belegen Lizenzen und Speicher. Nach Klärung ob Hold nötig: Remove-Mailbox -Identity x -PermanentlyDelete.",
     "tags": [
       "exchange",
       "on-premises",
@@ -739,7 +739,7 @@
   {
     "id": "op-queue-mails-umleiten",
     "name": "Mails zu anderem Server umleiten",
-    "cmd": "Redirect-Message -Server '{server}' -Target '{zielserver.domain.com}'",
+    "cmd": "Redirect-Message -Server '{server}' -Target '{zielserver}'",
     "desc": "Alle Mails in Queues eines Servers zu einem anderen Exchange-Server umleiten. Wichtig vor geplantem Neustart damit keine Mails verloren gehen.",
     "tags": [
       "exchange",
@@ -845,7 +845,7 @@
   {
     "id": "op-wartungsmodus-an",
     "name": "Wartungsmodus aktivieren",
-    "cmd": "# 1. Transport auf Draining\nSet-ServerComponentState '{server}' -Component HubTransport -State Draining -Requester Maintenance\n# 2. Mails umleiten\nRedirect-Message -Server '{server}' -Target '{zielserver.fqdn}'\n# 3. Cluster suspendieren\nSuspend-ClusterNode -Name '{server}'\n# 4. DB-Aktivierung blockieren\nSet-MailboxServer '{server}' -DatabaseCopyActivationDisabledAndMoveNow $true\nSet-MailboxServer '{server}' -DatabaseCopyAutoActivationPolicy Blocked\n# 5. Offline setzen\nSet-ServerComponentState '{server}' -Component ServerWideOffline -State Inactive -Requester Maintenance",
+    "cmd": "# 1. Transport auf Draining\nSet-ServerComponentState '{server}' -Component HubTransport -State Draining -Requester Maintenance\n# 2. Mails umleiten\nRedirect-Message -Server '{server}' -Target '{zielserver}'\n# 3. Cluster suspendieren\nSuspend-ClusterNode -Name '{server}'\n# 4. DB-Aktivierung blockieren\nSet-MailboxServer '{server}' -DatabaseCopyActivationDisabledAndMoveNow $true\nSet-MailboxServer '{server}' -DatabaseCopyAutoActivationPolicy Blocked\n# 5. Offline setzen\nSet-ServerComponentState '{server}' -Component ServerWideOffline -State Inactive -Requester Maintenance",
     "desc": "Vollständige Wartungsmodus-Sequenz vor Exchange-Neustart. Schritte: Transport drainieren → Mails umleiten → Cluster suspendieren → DB-Aktivierung blockieren → Server offline. Danach sicher neustarten.",
     "tags": [
       "exchange",

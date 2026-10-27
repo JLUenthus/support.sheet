@@ -1,0 +1,47 @@
+/* ============================================================
+   css/commands-page.css
+   Nur für windows.html, exchange.html und forti.html (Seitenklasse "commands-page" am <body>).
+   Alle Regeln beginnen mit .commands-page oder #commands-container, damit andere Seiten, die css/main.css einbinden
+   (gpo, mitmachen, wizard, dokuassistent, linux, ...) unverändert bleiben. css/main.css selbst bleibt unverändert.
+   tests/render-golden.test.html prüft das (Selektoren, Einbindung nur auf den drei Seiten).
+   ============================================================ */
+
+/* Mehrzeilige Befehle: Zeilenumbrüche und Einrückungen wie im Befehl (auch in Favoriten); der kopierte Text ändert sich nicht */
+.commands-page #commands-container .command-card code,
+.commands-page #favorites-container .command-card code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Leerzustand der Suche: Meldung im Befehlsbereich */
+.commands-page #commands-container .cmd-empty {
+  margin: 32px auto;
+  max-width: 520px;
+  padding: 24px 20px;
+  text-align: center;
+  background: var(--panel);
+  border: 1px dashed var(--border2);
+  border-radius: 10px;
+}
+.commands-page #commands-container .cmd-empty-title {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.commands-page #commands-container .cmd-empty-hint {
+  margin: 0 0 14px;
+  font-size: .85rem;
+  color: var(--muted);
+}
+.commands-page #commands-container .cmd-empty-clear {
+  padding: 6px 14px;
+  font: inherit;
+  font-size: .85rem;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-glow);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.commands-page #commands-container .cmd-empty-clear:hover { background: var(--accent-glow); }

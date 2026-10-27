@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20261023-gtpl-17';
+const CACHE_VERSION = '20261027-dat-24';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -136,6 +136,7 @@ const ASSETS = [
   './css/recent.css',
   './css/favorites.css',
   './css/search.css',
+  './css/commands-page.css',
   './css/tools.css',
   './js/loader.js',
   './js/toast.js',
@@ -171,6 +172,7 @@ const ASSETS = [
   './powershell/Get-EventLogCollector-Server.ps1',
   './powershell/Exchange-PreflightCheck.ps1',
   './powershell/Set-BraveDebloat.ps1',
+  './powershell/Disk-Analyzer-GUI.ps1',
   './powershell/gpo/Get-GPOAnalyzerSnapshot.ps1',
   './gpo.html',
   './css/gpo/gpo.css',

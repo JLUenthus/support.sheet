@@ -2,8 +2,8 @@
   {
     "id": "fg-basics-in-vdom-wechseln",
     "name": "In VDOM wechseln",
-    "cmd": "config vdom\\\n  edit VDOM-NAME\\\n  next\\\nend",
-    "desc": "In eine bestimmte VDOM wechseln. \\\"root\\\" ist die Standard-VDOM. Alle nachfolgenden Befehle gelten dann im Kontext dieser VDOM.",
+    "cmd": "config vdom\n  edit {vdom_name}\n  next\nend",
+    "desc": "In eine bestimmte VDOM wechseln. \"root\" ist die Standard-VDOM. Alle nachfolgenden Befehle gelten dann im Kontext dieser VDOM.",
     "tags": [
       "fortigate",
       "basics",
@@ -44,7 +44,7 @@
     "id": "fg-basics-laufende-konfiguration-anzei",
     "name": "Laufende Konfiguration anzeigen",
     "cmd": "show full-configuration",
-    "desc": "Komplette Konfiguration ausgeben inkl. Standardwerte. Ohne \\\"full\\\" nur Änderungen vom Default. Für Audits.",
+    "desc": "Komplette Konfiguration ausgeben inkl. Standardwerte. Ohne \"full\" nur Änderungen vom Default. Für Audits.",
     "tags": [
       "fortigate",
       "basics",
@@ -57,8 +57,8 @@
   {
     "id": "fg-basics-konfiguration-speichern",
     "name": "Konfiguration speichern",
-    "cmd": "execute backup config ftp DATEINAME FTP-IP",
-    "desc": "Config per FTP sichern. Alternativ: execute backup config tftp DATEINAME TFTP-IP oder über GUI (System → Backup).",
+    "cmd": "execute backup config ftp {dateiname} {ftp_ip}",
+    "desc": "Config per FTP sichern. Beim Kopieren wird nach dem Dateinamen und der FTP-Server-IP gefragt. Alternativ per TFTP (execute backup config tftp, danach Dateiname und TFTP-Server-IP) oder über die GUI (System → Backup).",
     "tags": [
       "fortigate",
       "basics",
@@ -70,8 +70,8 @@
   {
     "id": "fg-basics-konfiguration-auf-festplatte",
     "name": "Konfiguration auf Festplatte",
-    "cmd": "execute backup config flash DATEINAME",
-    "desc": "Backup auf internem Flash-Speicher des FortiGate ablegen. execute restore config flash DATEINAME zum Einspielen.",
+    "cmd": "execute backup config flash {dateiname}",
+    "desc": "Backup auf internem Flash-Speicher des FortiGate ablegen. Beim Kopieren wird nach dem Dateinamen gefragt. Zum Einspielen execute restore config flash mit demselben Dateinamen ausführen.",
     "tags": [
       "fortigate",
       "basics",
@@ -111,8 +111,8 @@
   {
     "id": "fg-network-interface-details",
     "name": "Interface-Details",
-    "cmd": "diagnose hardware deviceinfo nic PORT1",
-    "desc": "Hardware-Details eines Interfaces: Treiber, Duplex, Autoneg, RX/TX-Counters, Fehler. PORT1 durch Interface-Name ersetzen.",
+    "cmd": "diagnose hardware deviceinfo nic {port1}",
+    "desc": "Hardware-Details eines Interfaces: Treiber, Duplex, Autoneg, RX/TX-Counters, Fehler. Beim Kopieren wird nach dem Interface-Namen gefragt.",
     "tags": [
       "fortigate",
       "network",
@@ -126,7 +126,7 @@
     "id": "fg-network-routing-tabelle",
     "name": "Routing-Tabelle",
     "cmd": "get router info routing-table all",
-    "desc": "Komplette Routing-Tabelle mit Protokoll, Next-Hop, Interface und Metrik. \\\"details\\\" anhängen für mehr Info.",
+    "desc": "Komplette Routing-Tabelle mit Protokoll, Next-Hop, Interface und Metrik. \"details\" anhängen für mehr Info.",
     "tags": [
       "fortigate",
       "network",
@@ -154,7 +154,7 @@
     "id": "fg-network-aktive-sessions-anzeigen",
     "name": "Aktive Sessions anzeigen",
     "cmd": "diagnose sys session list",
-    "desc": "Alle aktiven Firewall-Sessions. Kombinieren mit: | grep \\\"proto=6\\\" für TCP, | grep SRCIP für bestimmte IP.",
+    "desc": "Alle aktiven Firewall-Sessions. Zum Filtern eine Zeile anhängen: | grep \"proto=6\" für TCP oder | grep 10.0.0.1 für eine bestimmte Quell-IP (Adresse anpassen).",
     "tags": [
       "fortigate",
       "network",
@@ -182,7 +182,7 @@
   {
     "id": "fg-network-dns-abfrage-testen",
     "name": "DNS-Abfrage testen",
-    "cmd": "execute ping-options source INTERFACE-IP\\\nexecute ping HOSTNAME",
+    "cmd": "execute ping-options source {interface_ip}\nexecute ping {hostname}",
     "desc": "Ping mit bestimmter Quell-IP. Vorher source setzen um richtiges Interface zu verwenden. Auch FQDN möglich.",
     "tags": [
       "fortigate",
@@ -196,7 +196,7 @@
   {
     "id": "fg-network-traceroute",
     "name": "Traceroute",
-    "cmd": "execute traceroute ZIEL-IP",
+    "cmd": "execute traceroute {ziel_ip}",
     "desc": "Routenverfolgung zum Ziel. Zeigt Hops und Latenzen. execute traceroute-options view-settings für Optionen.",
     "tags": [
       "fortigate",
@@ -210,7 +210,7 @@
   {
     "id": "fg-network-interface-traffic-counter",
     "name": "Interface Traffic-Counter",
-    "cmd": "diagnose netlink interface list PORT1",
+    "cmd": "diagnose netlink interface list {port1}",
     "desc": "RX/TX-Bytes, Pakete, Fehler und Drops pro Interface. Hilfreich zur Fehlersuche bei Paketverlust.",
     "tags": [
       "fortigate",
@@ -239,7 +239,7 @@
   {
     "id": "fg-policy-policy-details-anzeigen",
     "name": "Policy-Details anzeigen",
-    "cmd": "show firewall policy POLICY-ID",
+    "cmd": "show firewall policy {policy_id}",
     "desc": "Detailkonfiguration einer bestimmten Policy-ID. Alle gesetzten Parameter inkl. Profile und Log-Einstellungen.",
     "tags": [
       "fortigate",
@@ -266,7 +266,7 @@
   {
     "id": "fg-policy-policy-lookup-traffic-test",
     "name": "Policy-Lookup (Traffic-Test)",
-    "cmd": "diagnose firewall iprope lookup SRCIP DSTIP PROTO SPORT DPORT",
+    "cmd": "diagnose firewall iprope lookup {srcip} {dstip} {proto} {sport} {dport}",
     "desc": "Welche Policy greift für einen bestimmten Traffic? Gibt Policy-ID und Action zurück. Ideal zum Debuggen.",
     "tags": [
       "fortigate",
@@ -295,7 +295,7 @@
     "id": "fg-policy-address-objekte-anzeigen",
     "name": "Address-Objekte anzeigen",
     "cmd": "show firewall address",
-    "desc": "Alle Adressobjekte: Name, Typ (Subnet, FQDN, Range) und Wert. Für Gruppen: show firewall addrgrp",
+    "desc": "Alle Adressobjekte: Name, Typ (Subnet, FQDN, Range) und Wert. Für Gruppen: show firewall addrgrp.",
     "tags": [
       "fortigate",
       "policy",
@@ -309,7 +309,7 @@
     "id": "fg-vpn-services-anzeigen",
     "name": "Services anzeigen",
     "cmd": "show firewall service custom",
-    "desc": "Benutzerdefinierte Service-Objekte. Vordefinierte: show firewall service predefined | grep \\\"set name\\\"",
+    "desc": "Benutzerdefinierte Service-Objekte. Vordefinierte: show firewall service predefined | grep \"set name\".",
     "tags": [
       "fortigate",
       "vpn",
@@ -322,7 +322,7 @@
   {
     "id": "fg-vpn-ipsec-tunnel-u2013-details",
     "name": "IPSec Tunnel – Details",
-    "cmd": "diagnose vpn tunnel list name TUNNEL-NAME",
+    "cmd": "diagnose vpn tunnel list name {tunnel_name}",
     "desc": "Detaillierter Status eines Tunnels: SA, Algorithmen, SPI, Traffic-Zähler und Lifetime.",
     "tags": [
       "fortigate",
@@ -350,7 +350,7 @@
   {
     "id": "fg-vpn-ipsec-debug-aktivieren",
     "name": "IPSec Debug aktivieren",
-    "cmd": "diagnose debug application ike -1\\\ndiagnose debug enable",
+    "cmd": "diagnose debug application ike -1\ndiagnose debug enable",
     "desc": "IKE-Debug für Tunnel-Troubleshooting. Erzeugt viele Logs – nach Analyse mit: diagnose debug disable deaktivieren!",
     "tags": [
       "fortigate",
@@ -364,7 +364,7 @@
   {
     "id": "fg-vpn-tunnel-neu-aufbauen",
     "name": "Tunnel neu aufbauen",
-    "cmd": "diagnose vpn tunnel reset name TUNNEL-NAME",
+    "cmd": "diagnose vpn tunnel reset name {tunnel_name}",
     "desc": "IPSec-Tunnel zurücksetzen und neu aufbauen. Alle SAs werden gelöscht. Kurze Verbindungsunterbrechung.",
     "tags": [
       "fortigate",
@@ -392,7 +392,7 @@
   {
     "id": "fg-vpn-ssl-vpn-benutzer-trennen",
     "name": "SSL-VPN Benutzer trennen",
-    "cmd": "diagnose vpn ssl del-tunnel vd root name BENUTZERNAME",
+    "cmd": "diagnose vpn ssl del-tunnel vd root name {benutzername}",
     "desc": "Einzelnen SSL-VPN Benutzer trennen. Hilfreich wenn Sitzung hängt oder Benutzer gesperrt werden soll.",
     "tags": [
       "fortigate",
@@ -420,7 +420,7 @@
   {
     "id": "fg-diag-debug-deaktivieren",
     "name": "Debug deaktivieren",
-    "cmd": "diagnose debug disable\\\ndiagnose debug reset",
+    "cmd": "diagnose debug disable\ndiagnose debug reset",
     "desc": "Alle Debug-Ausgaben stoppen und Filter zurücksetzen. Immer ausführen nach Diagnose – Debug kostet Performance!",
     "tags": [
       "fortigate",
@@ -460,7 +460,7 @@
   {
     "id": "fg-diag-hardware-nic-status",
     "name": "Hardware-NIC Status",
-    "cmd": "diagnose hardware deviceinfo nic PORT1",
+    "cmd": "diagnose hardware deviceinfo nic {port1}",
     "desc": "Detaillierter NIC-Status: Link, Speed, Duplex, RX/TX-Fehler. Port-Name anpassen (z.B. wan1, internal).",
     "tags": [
       "fortigate",
@@ -473,7 +473,7 @@
   {
     "id": "fg-diag-sniffer-paketmitschnitt",
     "name": "Sniffer / Paketmitschnitt",
-    "cmd": "diagnose sniffer packet PORT1 \\\"host 1.2.3.4\\\" 4 0 l",
+    "cmd": "diagnose sniffer packet {port1} \"host 1.2.3.4\" 4 0 l",
     "desc": "Eingebauter Paket-Sniffer. Filter in tcpdump-Syntax. Level 4 = mit Ethernet-Header. 0 = unbegrenzt. l = verbose.",
     "tags": [
       "fortigate",
@@ -487,7 +487,7 @@
     "id": "fg-diag-fortiguard-verbindung-testen",
     "name": "FortiGuard Verbindung testen",
     "cmd": "execute ping update.fortiguard.net",
-    "desc": "Erreichbarkeit von FortiGuard prüfen. Für Lizenz-/Update-Probleme. Alternativ: diagnose debug application update -1",
+    "desc": "Erreichbarkeit von FortiGuard prüfen. Für Lizenz-/Update-Probleme. Alternativ: diagnose debug application update -1.",
     "tags": [
       "fortigate",
       "diag",
@@ -557,7 +557,7 @@
   {
     "id": "fg-log-log-filter-setzen",
     "name": "Log-Filter setzen",
-    "cmd": "execute log filter start-line 1\\\nexecute log filter view-lines 50\\\nexecute log filter device 0",
+    "cmd": "execute log filter start-line 1\nexecute log filter view-lines 50\nexecute log filter device 0",
     "desc": "Filteroptionen für Logs: Startzeile, Anzahl Zeilen und Gerät (0=disk, 1=flash). Immer vor execute log display.",
     "tags": [
       "fortigate",
@@ -570,7 +570,7 @@
   {
     "id": "fg-log-event-logs",
     "name": "Event-Logs",
-    "cmd": "execute log filter category 1\\\nexecute log display",
+    "cmd": "execute log filter category 1\nexecute log display",
     "desc": "System-Events: Admin-Logins, Config-Änderungen, HA-Events, VPN-Events. Kategorie 1 = Event-Log.",
     "tags": [
       "fortigate",
@@ -584,7 +584,7 @@
   {
     "id": "fg-log-log-disk-status",
     "name": "Log-Disk-Status",
-    "cmd": "diagnose log test\\\ndiagnose log device",
+    "cmd": "diagnose log test\ndiagnose log device",
     "desc": "Log-Gerät und Status anzeigen. diagnose log test schreibt Test-Log-Einträge zum Prüfen ob Logging funktioniert.",
     "tags": [
       "fortigate",
@@ -599,7 +599,7 @@
     "id": "fg-log-syslog-konfiguration",
     "name": "Syslog-Konfiguration",
     "cmd": "show log syslogd setting",
-    "desc": "Konfigurierte Syslog-Server anzeigen. Für FortiAnalyzer: show log fortianalyzer setting",
+    "desc": "Konfigurierte Syslog-Server anzeigen. Für FortiAnalyzer: show log fortianalyzer setting.",
     "tags": [
       "fortigate",
       "log",
@@ -629,7 +629,7 @@
     "id": "fg-user-angemeldete-admins",
     "name": "Angemeldete Admins",
     "cmd": "get system session | grep admin",
-    "desc": "Aktive Admin-Sessions anzeigen. Für vollständige Info: diagnose sys session filter proto 443",
+    "desc": "Aktive Admin-Sessions anzeigen. Für vollständige Info: diagnose sys session filter proto 443.",
     "tags": [
       "fortigate",
       "user",
@@ -642,7 +642,7 @@
   {
     "id": "fg-user-ldap-verbindung-testen",
     "name": "LDAP-Verbindung testen",
-    "cmd": "diagnose test authserver ldap LDAP-SERVER BENUTZERNAME PASSWORT",
+    "cmd": "diagnose test authserver ldap {ldap_server} {benutzername} PASSWORT",
     "desc": "LDAP-Authentication testen ohne GUI. Gibt Gruppen zurück wenn erfolgreich. Passwort wird im Klartext gesendet – nur in sicherer Umgebung!",
     "tags": [
       "fortigate",
@@ -656,7 +656,7 @@
   {
     "id": "fg-user-radius-verbindung-testen",
     "name": "RADIUS-Verbindung testen",
-    "cmd": "diagnose test authserver radius RADIUS-SERVER pap BENUTZERNAME PASSWORT",
+    "cmd": "diagnose test authserver radius {radius_server} pap {benutzername} PASSWORT",
     "desc": "RADIUS-Auth testen. Protokoll: pap, chap, mschapv2. Zeigt Accept/Reject und Attribute zurück.",
     "tags": [
       "fortigate",
@@ -671,7 +671,7 @@
     "id": "fg-user-lokale-benutzer-anzeigen",
     "name": "Lokale Benutzer anzeigen",
     "cmd": "show user local",
-    "desc": "Lokale Benutzerkonten: Name, Typ, Status und 2FA-Einstellungen. Für Gruppen: show user group",
+    "desc": "Lokale Benutzerkonten: Name, Typ, Status und 2FA-Einstellungen. Für Gruppen: show user group.",
     "tags": [
       "fortigate",
       "user",
@@ -727,7 +727,7 @@
   {
     "id": "fmg-basics-verbindung-zu-fgt-pr-u00fcfe",
     "name": "Verbindung zu FGT prüfen",
-    "cmd": "diagnose dvm device detail GERÄTENAME",
+    "cmd": "diagnose dvm device detail {geraetename}",
     "desc": "Detaillierter Verbindungsstatus eines verwalteten FortiGate: IP, Version, HA-Status, Tunnel-Status.",
     "tags": [
       "fortimanager",
@@ -771,7 +771,7 @@
   {
     "id": "fmg-policy-datenbank-backup",
     "name": "Datenbank-Backup",
-    "cmd": "execute backup all-settings ftp DATEINAME FTP-IP",
+    "cmd": "execute backup all-settings ftp {dateiname} {ftp_ip}",
     "desc": "Vollbackup aller FMG-Einstellungen inkl. ADOM-Daten per FTP. Regelmäßig ausführen vor großen Änderungen.",
     "tags": [
       "fortimanager",
@@ -798,7 +798,7 @@
   {
     "id": "fmg-policy-config-diff-anzeigen",
     "name": "Config-Diff anzeigen",
-    "cmd": "diagnose dvm device diff GERÄTENAME",
+    "cmd": "diagnose dvm device diff {geraetename}",
     "desc": "Unterschiede zwischen FMG-Konfiguration und aktueller Gerätekonfiguration anzeigen. Vor Installation prüfen.",
     "tags": [
       "fortimanager",
@@ -825,7 +825,7 @@
   {
     "id": "fmg-policy-script-auf-fgt-ausf-u00fchre",
     "name": "Script auf FGT ausführen",
-    "cmd": "diagnose dvm script run SKRIPT-NAME GERÄTENAME",
+    "cmd": "diagnose dvm script run {skript_name} {geraetename}",
     "desc": "CLI-Skript aus FMG-Bibliothek auf einem verwalteten FortiGate ausführen. Log-Output in Task-Monitor sichtbar.",
     "tags": [
       "fortimanager",
@@ -839,7 +839,7 @@
   {
     "id": "fmg-diag-objekte-importieren",
     "name": "Objekte importieren",
-    "cmd": "diagnose dvm import-device GERÄTENAME",
+    "cmd": "diagnose dvm import-device {geraetename}",
     "desc": "Aktuelle Konfiguration eines FortiGate in FMG importieren. Überschreibt bestehende FMG-Objekte für dieses Gerät!",
     "tags": [
       "fortimanager",
@@ -853,7 +853,7 @@
   {
     "id": "fmg-diag-logs-anzeigen",
     "name": "Logs anzeigen",
-    "cmd": "diagnose debug application dnsproxy -1\\\nexecute log display",
+    "cmd": "diagnose debug application dnsproxy -1\nexecute log display",
     "desc": "Interne FMG-Logs anzeigen. Kategorie und Filter mit execute log filter setzen wie bei FortiGate.",
     "tags": [
       "fortimanager",
@@ -1022,7 +1022,7 @@
   {
     "id": "faz-diag-debug-log-empfang",
     "name": "Debug Log-Empfang",
-    "cmd": "diagnose debug application logd 255\\\ndiagnose debug enable",
+    "cmd": "diagnose debug application logd 255\ndiagnose debug enable",
     "desc": "Ausführliches Logging des Log-Daemons. Zeigt jede Verbindung und Log-Paket. Sehr verbose – nach Diagnose deaktivieren!",
     "tags": [
       "fortianalyzer",
@@ -1035,7 +1035,7 @@
   {
     "id": "faz-diag-verbindung-von-fgt-pr-u00fcf",
     "name": "Verbindung von FGT prüfen",
-    "cmd": "diagnose dvm device detail GERÄTENAME",
+    "cmd": "diagnose dvm device detail {geraetename}",
     "desc": "Verbindungsstatus eines bestimmten Log-Senders: IP, Version, letzter Log-Eingang, Status.",
     "tags": [
       "fortianalyzer",
@@ -1079,7 +1079,7 @@
   {
     "id": "faz-diag-backup-erstellen",
     "name": "Backup erstellen",
-    "cmd": "execute backup all-settings ftp DATEINAME FTP-IP",
+    "cmd": "execute backup all-settings ftp {dateiname} {ftp_ip}",
     "desc": "Vollbackup des FortiAnalyzer (Konfiguration, keine Log-Daten). Log-Daten separates Backup-Konzept erforderlich.",
     "tags": [
       "fortianalyzer",

@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-07-15",
+  "lastUpdated": "2026-10-27",
   "commands": [
     {
       "id": "msc-computerverwaltung",
@@ -186,7 +186,7 @@
     {
       "id": "system-systeminfo-desktop",
       "name": "Systeminfo → Desktop speichern",
-      "cmd": "systeminfo > \\\"%USERPROFILE%\\Desktop\\systeminfo.txt\\\"",
+      "cmd": "systeminfo > \"%USERPROFILE%\\Desktop\\systeminfo.txt\"",
       "desc": "Ausgabe in Textdatei umleiten. Ideal um Systeminfo an Kollegen oder Support zu schicken ohne Remote-Zugriff.",
       "tags": [
         "system",
@@ -198,7 +198,7 @@
     {
       "id": "system-dxdiag-desktop",
       "name": "DirectX-Diagnose → Desktop",
-      "cmd": "dxdiag /t \\\"%USERPROFILE%\\Desktop\\dxdiag.txt\\\"",
+      "cmd": "dxdiag /t \"%USERPROFILE%\\Desktop\\dxdiag.txt\"",
       "desc": "Detaillierter Report zu Grafik, Sound und DirectX-Version. Hilfreich bei Multimedia- und Treiberproblemen.",
       "tags": [
         "system",
@@ -210,7 +210,7 @@
     {
       "id": "system-systeminfo-dxdiag-kombiniert",
       "name": "Systeminfo + DXDiag kombiniert",
-      "cmd": "systeminfo > \\\"%USERPROFILE%\\Desktop\\systeminfo.txt\\\" && dxdiag /t \\\"%USERPROFILE%\\Desktop\\dxdiag.txt\\\"",
+      "cmd": "systeminfo > \"%USERPROFILE%\\Desktop\\systeminfo.txt\" && dxdiag /t \"%USERPROFILE%\\Desktop\\dxdiag.txt\"",
       "desc": "Beide Reports auf einmal erstellen. Perfekt für vollständige System-Dokumentation in einem Schritt.",
       "tags": [
         "system",
@@ -234,13 +234,14 @@
     {
       "id": "system-computername",
       "name": "Computername",
-      "cmd": "wmic computersystem get name",
-      "desc": "Gibt nur den Computernamen aus – ideal für Skripte. Alternativ: hostname (noch kürzer).",
+      "cmd": "hostname",
+      "desc": "Gibt nur den Computernamen aus – ideal für Skripte. Läuft auch dort, wo wmic nicht mehr vorhanden ist (neuere Windows-11-Versionen).",
       "tags": [
         "system",
         "windows",
         "info",
-        "ps"
+        "ps",
+        "powershell"
       ]
     },
     {
@@ -383,7 +384,7 @@
     {
       "id": "network-wlan-passwort-anzeigen",
       "name": "WLAN-Passwort anzeigen",
-      "cmd": "netsh wlan show profile name=\\\"NETZWERKNAME\\\" key=clear",
+      "cmd": "netsh wlan show profile name=\"{netzwerkname}\" key=clear",
       "desc": "Zeigt das Klartext-Passwort unter \"Schlüsselinhalt\". NETZWERKNAME durch echten SSID ersetzen. Nur Admin.",
       "tags": [
         "network",
@@ -416,7 +417,7 @@
     {
       "id": "network-ping-dauerhaft",
       "name": "Ping dauerhaft",
-      "cmd": "ping -t HOSTNAME",
+      "cmd": "ping -t {hostname}",
       "desc": "Fortlaufender Ping – Strg+C zum Stoppen, Strg+Pause für Statistik zwischendurch. Für Verbindungsüberwachung.",
       "tags": [
         "network",
@@ -427,7 +428,7 @@
     {
       "id": "network-traceroute",
       "name": "Traceroute",
-      "cmd": "tracert HOSTNAME",
+      "cmd": "tracert {hostname}",
       "desc": "Route zum Ziel mit Latenz pro Hop. Hilft Flaschenhälse oder Ausfälle im Netzwerkpfad zu lokalisieren.",
       "tags": [
         "network",
@@ -439,7 +440,7 @@
     {
       "id": "network-dns-abfrage",
       "name": "DNS-Abfrage",
-      "cmd": "nslookup HOSTNAME",
+      "cmd": "nslookup {hostname}",
       "desc": "DNS-Auflösung testen. Im interaktiven Modus (nslookup ohne Argument) auch bestimmte Server abfragen: server 8.8.8.8",
       "tags": [
         "network",
@@ -510,7 +511,7 @@
     {
       "id": "ps-dienst-neu-starten",
       "name": "Dienst neu starten",
-      "cmd": "Restart-Service -Name \\\"Dienstname\\\"",
+      "cmd": "Restart-Service -Name \"Dienstname\"",
       "desc": "Sicherer als sc stop/start da auf Stopp gewartet wird. -Force wenn abhängige Dienste vorhanden. -PassThru zeigt Status.",
       "tags": [
         "powershell",
@@ -522,7 +523,7 @@
     {
       "id": "ps-alle-dienste-anzeigen",
       "name": "Alle Dienste anzeigen",
-      "cmd": "Get-Service | Where-Object {$_.Status -eq \\\"Running\\\"}",
+      "cmd": "Get-Service | Where-Object {$_.Status -eq \"Running\"}",
       "desc": "Nur laufende Dienste. Status \"Stopped\" für gestoppte. Pipe zu | Select Name,Status,StartType für kompakte Ansicht.",
       "tags": [
         "powershell",
@@ -582,7 +583,7 @@
     {
       "id": "ps-ordnergroesse",
       "name": "Ordnergröße berechnen",
-      "cmd": "Get-ChildItem \\\"C:\\Ordner\\\" -Recurse | Measure-Object -Property Length -Sum",
+      "cmd": "Get-ChildItem \"C:\\Ordner\" -Recurse | Measure-Object -Property Length -Sum",
       "desc": "Gesamtgröße eines Ordners inkl. Unterordner. .Sum ist in Bytes – durch 1GB teilen für lesbare Ausgabe.",
       "tags": [
         "powershell",
@@ -594,7 +595,7 @@
     {
       "id": "ps-remote-invoke",
       "name": "Remote-Befehl ausführen",
-      "cmd": "Invoke-Command -ComputerName HOSTNAME -ScriptBlock { Get-Process }",
+      "cmd": "Invoke-Command -ComputerName {hostname} -ScriptBlock { Get-Process }",
       "desc": "Befehl auf Remote-PC ausführen. WinRM muss aktiv sein. -Credential für andere Anmeldedaten. Mehrere PCs möglich.",
       "tags": [
         "powershell",
@@ -608,7 +609,7 @@
     {
       "id": "ps-pssession-open",
       "name": "PSSession öffnen",
-      "cmd": "Enter-PSSession -ComputerName HOSTNAME",
+      "cmd": "Enter-PSSession -ComputerName {hostname}",
       "desc": "Interaktive Remote-PowerShell-Sitzung. Prompt wechselt auf Remote-PC. Exit-PSSession zum Beenden.",
       "tags": [
         "powershell",
@@ -621,8 +622,8 @@
     {
       "id": "users-benutzerdetails",
       "name": "Benutzerdetails",
-      "cmd": "net user BENUTZERNAME",
-      "desc": "Detailinfo: Letzter Login, Passwort-Ablauf, Gruppen, Anmeldestunden. Domain-User: net user BENUTZERNAME /domain",
+      "cmd": "net user {username}",
+      "desc": "Detailinfo: Letzter Login, Passwort-Ablauf, Gruppen, Anmeldestunden. Domain-User: net user BENUTZERNAME /domain.",
       "tags": [
         "users",
         "windows",
@@ -659,7 +660,7 @@
     {
       "id": "users-gruppe-hinzufuegen",
       "name": "Benutzer zu Gruppe hinzufügen",
-      "cmd": "net localgroup Administratoren BENUTZERNAME /add",
+      "cmd": "net localgroup Administratoren {username} /add",
       "desc": "Benutzer zur lokalen Admin-Gruppe hinzufügen. Domain-User: DOMÄNE\\BENUTZERNAME. Wirksam nach Neuanmeldung.",
       "tags": [
         "users",
@@ -672,7 +673,7 @@
     {
       "id": "users-benutzer-aus-gruppe-entfernen",
       "name": "Benutzer aus Gruppe entfernen",
-      "cmd": "net localgroup Administratoren BENUTZERNAME /delete",
+      "cmd": "net localgroup Administratoren {username} /delete",
       "desc": "Benutzer aus lokaler Gruppe entfernen. Vorsicht: sich selbst aus Admins entfernen sperrt aus!",
       "tags": [
         "users",
@@ -710,7 +711,7 @@
     {
       "id": "users-benutzer-abmelden",
       "name": "Benutzer abmelden",
-      "cmd": "logoff SESSION-ID",
+      "cmd": "logoff {sessionid}",
       "desc": "Session per ID abmelden. Session-ID aus \"query user\" entnehmen. Ungespeicherte Daten gehen verloren!",
       "tags": [
         "users",
@@ -729,6 +730,7 @@
         "users",
         "windows",
         "ps",
+        "powershell",
         "info"
       ],
       "guideRef": "support-net-user"
@@ -794,6 +796,7 @@
         "disk",
         "windows",
         "ps",
+        "powershell",
         "info"
       ]
     },
@@ -806,6 +809,7 @@
         "disk",
         "windows",
         "ps",
+        "powershell",
         "info"
       ]
     },
@@ -813,7 +817,7 @@
       "id": "disk-winre-enable",
       "name": "WinRE aktivieren",
       "cmd": "reagentc /enable",
-      "desc": "Windows Recovery Environment aktivieren. Notwendig für \"Beim Start\" Reparaturoptionen. Status: reagentc /info",
+      "desc": "Windows Recovery Environment aktivieren. Notwendig für \"Beim Start\" Reparaturoptionen. Status: reagentc /info.",
       "tags": [
         "disk",
         "windows",
@@ -840,7 +844,8 @@
       "tags": [
         "process",
         "windows",
-        "admin"
+        "admin",
+        "caution"
       ]
     },
     {
@@ -857,7 +862,7 @@
     {
       "id": "proc-prozess-mit-netzwerk-pid",
       "name": "Prozess mit Netzwerk-PID",
-      "cmd": "tasklist /FI \\\"PID eq 1234\\\"",
+      "cmd": "tasklist /FI \"PID eq 1234\"",
       "desc": "Prozessname zu einer PID aus netstat ermitteln. Kombiniere mit netstat -ano um Verbindungen zuzuordnen.",
       "tags": [
         "process",
@@ -924,7 +929,7 @@
     {
       "id": "remote-rdp-zu-host-verbinden",
       "name": "RDP zu Host verbinden",
-      "cmd": "mstsc /v:HOSTNAME",
+      "cmd": "mstsc /v:{hostname}",
       "desc": "Direkt zu Host verbinden. /v:HOST:PORT für nicht-Standard-Port. /f für Vollbild. /w:1920 /h:1080 für Auflösung.",
       "tags": [
         "remote",
@@ -958,12 +963,13 @@
     {
       "id": "remote-rdp-aktivieren-ps",
       "name": "RDP aktivieren (PS)",
-      "cmd": "Set-ItemProperty -Path \\\"HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server\\\" -Name \\\"fDenyTSConnections\\\" -Value 0",
-      "desc": "Fernzugriff per Registry aktivieren. Danach Firewall-Regel: netsh advfirewall firewall set rule \"Remote Desktop\" new enable=yes",
+      "cmd": "Set-ItemProperty -Path \"HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server\" -Name \"fDenyTSConnections\" -Value 0",
+      "desc": "Fernzugriff per Registry aktivieren. Danach Firewall-Regel: netsh advfirewall firewall set rule \"Remote Desktop\" new enable=yes.",
       "tags": [
         "remote",
         "windows",
         "ps",
+        "powershell",
         "admin"
       ],
       "guideRef": "support-powershell-admin"
@@ -977,7 +983,9 @@
         "remote",
         "windows",
         "ps",
-        "admin"
+        "powershell",
+        "admin",
+        "caution"
       ],
       "guideRef": "support-powershell-admin"
     },
@@ -996,12 +1004,13 @@
     {
       "id": "remote-ping-mit-timestamp-ps",
       "name": "Ping mit Timestamp (PS)",
-      "cmd": "ping -t HOSTNAME | Foreach{\\\"$(Get-Date -f HH:mm:ss): $_\\\"}",
+      "cmd": "ping -t {hostname} | Foreach{\"$(Get-Date -f HH:mm:ss): $_\"}",
       "desc": "Ping mit Uhrzeit je Zeile – ideal für Verbindungsüberwachung und Protokollierung von Ausfallzeiten.",
       "tags": [
         "remote",
         "windows",
         "ps",
+        "powershell",
         "network",
         "info"
       ],
@@ -1024,7 +1033,7 @@
     {
       "id": "gpo-gpo-report-als-html",
       "name": "GPO-Report als HTML",
-      "cmd": "gpresult /h \\\"%USERPROFILE%\\Desktop\\gpo.html\\\"",
+      "cmd": "gpresult /h \"%USERPROFILE%\\Desktop\\gpo.html\"",
       "desc": "Vollständiger GPO-Report als HTML-Datei. Zeigt alle angewendeten Richtlinien mit Quelle und Wert. Für Audits ideal.",
       "tags": [
         "gpo",
@@ -1038,7 +1047,7 @@
     {
       "id": "gpo-gpo-remote-report",
       "name": "GPO Remote-Report",
-      "cmd": "gpresult /h \\\"%USERPROFILE%\\Desktop\\gpo.html\\\" /s HOSTNAME /u DOMAIN\\USER",
+      "cmd": "gpresult /h \"%USERPROFILE%\\Desktop\\gpo.html\" /s {hostname} /u {domain}\\{username}",
       "desc": "GPO-Report für Remote-Rechner erstellen. Nützlich wenn kein direkter Zugriff auf den PC möglich ist.",
       "tags": [
         "gpo",
@@ -1274,7 +1283,7 @@
     {
       "id": "registry-remote-abfrage",
       "name": "Registry auf Remote-Rechner abfragen",
-      "cmd": "reg query \"\\\\SERVER01\\HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\" /v ProductName",
+      "cmd": "reg query \"\\\\{server}\\HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\" /v ProductName",
       "desc": "Fragt einen Wert auf einem anderen Rechner ab, ohne RDP oder Remote-Registry-GUI zu öffnen. Benötigt Remote-Registry-Dienst auf dem Zielsystem und passende Firewall-/Berechtigungsfreigabe.",
       "tags": [
         "registry",
@@ -1626,7 +1635,7 @@
       "id": "ad-sync-anstoessen",
       "name": "AD-Sync anstoßen",
       "cmd": "Start-ADSyncSyncCycle",
-      "desc": "Entra ID Connect Sync manuell starten. Auf dem AAD-Connect-Server ausführen. Delta: -PolicyType Delta",
+      "desc": "Entra ID Connect Sync manuell starten. Auf dem AAD-Connect-Server ausführen. Delta: -PolicyType Delta.",
       "tags": [
         "active-directory",
         "powershell",
@@ -1654,12 +1663,13 @@
       "id": "printer-spooler-reset",
       "name": "Druckspooler zurücksetzen",
       "cmd": "net stop spooler\ndel /Q /F /S \"%SystemRoot%\\system32\\spool\\PRINTERS\\*.*\"\nnet start spooler",
-      "desc": "Klassischer Fix bei Druckproblemen. Löscht hängende Jobs und startet den Spooler neu.",
+      "desc": "Klassischer Fix bei Druckproblemen. Achtung: löscht alle wartenden Druckaufträge (auch die anderer Benutzer) und startet den Spooler neu.",
       "tags": [
         "printer",
         "windows",
         "admin",
-        "quick"
+        "quick",
+        "caution"
       ],
       "guideRef": "support-drucker-spooler"
     },
@@ -1678,8 +1688,8 @@
     },
     {
       "id": "printer-warteschlange",
-      "name": "Druckerwarteschlange anzeigen",
-      "cmd": "Get-PrintJob -PrinterName 'DRUCKERNAME' | Select Id, JobStatus, UserName, Document, TotalPages",
+      "name": "Druckerwarteschlange anzeigen (lokal)",
+      "cmd": "Get-PrintJob -PrinterName '{printer}' | Select Id, JobStatus, UserName, Document, TotalPages",
       "desc": "Aktive Druckjobs eines Druckers. DRUCKERNAME anpassen.",
       "tags": [
         "printer",
@@ -1693,7 +1703,7 @@
     {
       "id": "printer-jobs-loeschen",
       "name": "Druckjobs löschen",
-      "cmd": "Get-PrintJob -PrinterName 'DRUCKERNAME' | Remove-PrintJob",
+      "cmd": "Get-PrintJob -PrinterName '{printer}' | Remove-PrintJob",
       "desc": "Alle hängenden Druckjobs eines Druckers löschen.",
       "tags": [
         "printer",
@@ -1979,7 +1989,7 @@
       "id": "update-status-pruefen",
       "name": "Windows Update Status prüfen",
       "cmd": "Get-WUInstallHistory -Last 10 | Select Date, Title, Result | Format-Table -AutoSize",
-      "desc": "Letzte 10 installierte Updates mit Ergebnis. Benötigt PSWindowsUpdate Modul. Ohne Modul: Get-HotFix | Sort InstalledOn -Desc | Select -First 10",
+      "desc": "Letzte 10 installierte Updates mit Ergebnis. Benötigt PSWindowsUpdate Modul. Ohne Modul: Get-HotFix | Sort InstalledOn -Desc | Select -First 10.",
       "tags": [
         "update",
         "powershell",
@@ -2114,8 +2124,8 @@
     {
       "id": "rds-lizenz-status",
       "name": "RDS-Lizenzstatus prüfen",
-      "cmd": "Get-WmiObject -Namespace root\\cimv2 -Class Win32_TerminalServiceSetting | Select TerminalServerMode, LicensingType, LicensingDescription",
-      "desc": "Lizenzierungsmodus und Typ. LicensingType 2=Geräte-CAL, 4=Benutzer-CAL. Gibt Hinweis ob RDS korrekt lizenziert ist.",
+      "cmd": "Get-CimInstance -Namespace root\\cimv2\\TerminalServices -ClassName Win32_TerminalServiceSetting | Select-Object TerminalServerMode, LicensingType, LicensingName, LicensingDescription",
+      "desc": "Lizenzierungsmodus und Typ. Maßgeblich ist der Text in LicensingName und LicensingDescription, die Zahl in LicensingType wird in der Microsoft-Dokumentation uneinheitlich angegeben. Namespace root\\cimv2\\TerminalServices, nur auf einem Computer mit Remotedesktop-Sitzungshost-Rolle aussagekräftig.",
       "tags": [
         "rds",
         "powershell",
@@ -2434,7 +2444,7 @@
     {
       "id": "schtasks-remote-abfrage",
       "name": "Geplante Aufgaben auf Remote-Rechner abfragen",
-      "cmd": "schtasks /query /s SERVER01 /u DOMAIN\\Admin /p * /fo table",
+      "cmd": "schtasks /query /s {server} /u {domain}\\Admin /p * /fo table",
       "desc": "Fragt die Task-Liste eines anderen Rechners ab, ohne RDP zu öffnen. /p * fragt das Passwort interaktiv ab, statt es im Klartext in der Befehlszeile zu hinterlegen.",
       "tags": [
         "scheduled-task",
@@ -2564,7 +2574,7 @@
     {
       "id": "winget-export",
       "name": "Installierte Software exportieren",
-      "cmd": "winget export -o {path}",
+      "cmd": "winget export -o \"{path}\"",
       "desc": "Alle winget-verwalteten Programme als JSON exportieren. Kann auf einem neuen PC mit 'winget import' wiederhergestellt werden. Ideal für Neuinstallationen oder wenn ein PC ausgetauscht wird. Pfad z.B. C:\\Temp\\winget-packages.json",
       "tags": [
         "winget",
@@ -2577,7 +2587,7 @@
     {
       "id": "winget-import",
       "name": "Software-Liste importieren",
-      "cmd": "winget import -i {path} --ignore-unavailable --accept-package-agreements --accept-source-agreements",
+      "cmd": "winget import -i \"{path}\" --ignore-unavailable --accept-package-agreements --accept-source-agreements",
       "desc": "Alle Programme aus einer exportierten JSON-Liste installieren. --ignore-unavailable überspringt nicht mehr verfügbare Pakete. --accept-*-agreements verhindert Rückfragen bei der Masseninstallation. Perfekt für die Einrichtung eines neuen PCs.",
       "tags": [
         "winget",
@@ -2697,7 +2707,7 @@
     },
     {
       "id": "printer-jobs-anzeigen",
-      "name": "Druckerwarteschlange anzeigen",
+      "name": "Druckerwarteschlange anzeigen (Print-Server)",
       "cmd": "Get-PrintJob -PrinterName '{printer}' -ComputerName '{server}' | Select Id, JobStatus, UserName, Document, TotalPages, SubmittedTime | Format-Table -AutoSize",
       "desc": "Alle Jobs in der Warteschlange eines Druckers. JobStatus: Printing, Deleting, Error, Paused. Hängende Jobs identifizieren bevor man den Spooler neu startet.",
       "tags": [
@@ -2916,7 +2926,8 @@
         "remote",
         "powershell",
         "windows",
-        "admin"
+        "admin",
+        "caution"
       ],
       "guideRef": "support-powershell-admin"
     },
@@ -3571,7 +3582,7 @@
     {
       "id": "sys-disk2vhd-erstellen",
       "name": "Disk2vhd – Physische Disk zu VHD konvertieren",
-      "cmd": "disk2vhd.exe C: D: {zielpfad}\\backup.vhdx",
+      "cmd": "disk2vhd.exe C: D: \"{zielpfad}\\backup.vhdx\"",
       "desc": "Erstellt eine VHD/VHDX-Datei einer laufenden physischen Festplatte (Volume Shadow Copy). Gut für P2V-Migration oder Backup. System muss nicht angehalten werden.",
       "tags": [
         "sysinternals",
@@ -3597,7 +3608,7 @@
     {
       "id": "sys-sysmon-mit-config",
       "name": "Sysmon mit Konfigurations-Datei installieren",
-      "cmd": "Sysmon64.exe -accepteula -i {konfig}.xml",
+      "cmd": "Sysmon64.exe -accepteula -i \"{konfig}.xml\"",
       "desc": "Installiert Sysmon mit eigener XML-Konfiguration. Empfohlene Basis-Config: SwiftOnSecurity/sysmon-config auf GitHub. Konfiguration bestimmt welche Events geloggt werden.",
       "tags": [
         "sysinternals",
@@ -3659,6 +3670,360 @@
         "quick"
       ],
       "guideRef": "support-sysinternals-procexp"
+    },
+    {
+      "id": "ad-dcdiag-fehler",
+      "name": "DC-Diagnose (nur Fehler)",
+      "cmd": "dcdiag /q",
+      "desc": "Führt die Standardtests von dcdiag aus und gibt nur Fehlermeldungen aus. Erfordert eine administrative Eingabeaufforderung auf einem Domänencontroller oder mit installierten AD-DS-Tools.",
+      "tags": [
+        "active-directory",
+        "windows",
+        "admin",
+        "diag"
+      ],
+      "guideRef": "support-active-directory"
+    },
+    {
+      "id": "ad-replikation-zusammenfassung",
+      "name": "Replikationsübersicht",
+      "cmd": "repadmin /replsummary",
+      "desc": "Zeigt eine Zusammenfassung der Active-Directory-Replikation und nennt Domänencontroller mit fehlerhafter eingehender oder ausgehender Replikation. Benötigt die AD-DS-Tools (RSAT) oder einen Domänencontroller.",
+      "tags": [
+        "active-directory",
+        "windows",
+        "admin",
+        "diag"
+      ],
+      "guideRef": "support-active-directory"
+    },
+    {
+      "id": "ad-dc-ermitteln",
+      "name": "Domänencontroller ermitteln (nltest)",
+      "cmd": "nltest /dsgetdc:{domain} /force",
+      "desc": "Sucht einen Domänencontroller der angegebenen Domäne und erzwingt dabei eine neue Ermittlung (/force). Zeigt, ob der Client per DNS einen Domänencontroller findet; als Domäne den DNS- oder NetBIOS-Namen eintragen.",
+      "tags": [
+        "active-directory",
+        "windows",
+        "diag"
+      ],
+      "guideRef": "support-active-directory"
+    },
+    {
+      "id": "ad-fsmo-rollen",
+      "name": "FSMO-Rollen anzeigen",
+      "cmd": "netdom query fsmo",
+      "desc": "Zeigt, welche Domänencontroller die FSMO-Rollen halten. Erfordert eine administrative Eingabeaufforderung und die AD-DS-Tools oder die Serverrolle AD DS.",
+      "tags": [
+        "active-directory",
+        "windows",
+        "admin",
+        "info"
+      ],
+      "guideRef": "support-active-directory"
+    },
+    {
+      "id": "ad-domaincontroller-liste",
+      "name": "Domänencontroller auflisten",
+      "cmd": "Get-ADDomainController -Filter *",
+      "desc": "Listet alle Domänencontroller der Domäne mit ihren Eigenschaften auf. Benötigt das PowerShell-Modul ActiveDirectory (RSAT) und Zugriff auf die Domäne.",
+      "tags": [
+        "active-directory",
+        "powershell",
+        "windows",
+        "admin",
+        "info"
+      ],
+      "guideRef": "support-active-directory"
+    },
+    {
+      "id": "ad-replikationsfehler",
+      "name": "Replikationsfehler eines DC",
+      "cmd": "Get-ADReplicationFailure -Target {server}",
+      "desc": "Zeigt die aktuellen Replikationsfehler des angegebenen Domänencontrollers. Als Server den Namen des Domänencontrollers eintragen; benötigt das Modul ActiveDirectory.",
+      "tags": [
+        "active-directory",
+        "powershell",
+        "windows",
+        "admin",
+        "diag"
+      ],
+      "guideRef": "support-active-directory"
+    },
+    {
+      "id": "ad-zeitstatus",
+      "name": "Zeitdienst-Status",
+      "cmd": "w32tm /query /status",
+      "desc": "Zeigt den Status des Windows-Zeitdienstes mit Stratum, Zeitquelle und letzter erfolgreicher Synchronisierung. Bei Domänenmitgliedern lässt sich so die Zeitquelle prüfen.",
+      "tags": [
+        "active-directory",
+        "windows",
+        "info"
+      ],
+      "guideRef": "support-active-directory"
+    },
+    {
+      "id": "rds-qwinsta-server",
+      "name": "Sitzungen per qwinsta",
+      "cmd": "qwinsta /server:{server}",
+      "desc": "Listet die Sitzungen eines Remotedesktop-Sitzungshosts mit Sitzungsname, Benutzer, ID und Status auf. Entspricht query session; beim Kopieren wird nach dem Server gefragt.",
+      "tags": [
+        "rds",
+        "windows",
+        "server",
+        "info"
+      ],
+      "guideRef": "support-rds"
+    },
+    {
+      "id": "rds-quser-server",
+      "name": "Benutzer per quser",
+      "cmd": "quser /server:{server}",
+      "desc": "Zeigt die angemeldeten Benutzer eines Remotedesktop-Sitzungshosts mit Sitzung, ID, Status, Leerlaufzeit und Anmeldezeit. Entspricht query user; beim Kopieren wird nach dem Server gefragt.",
+      "tags": [
+        "rds",
+        "windows",
+        "server",
+        "info"
+      ],
+      "guideRef": "support-rds"
+    },
+    {
+      "id": "rds-benutzersitzungen-broker",
+      "name": "RDS-Benutzersitzungen (Broker)",
+      "cmd": "Get-RDUserSession -ConnectionBroker {server}",
+      "desc": "Listet die Benutzersitzungen einer Remotedesktop-Bereitstellung über den Verbindungsbroker auf. Benötigt das PowerShell-Modul RemoteDesktop; als Server den RD Connection Broker eintragen.",
+      "tags": [
+        "rds",
+        "powershell",
+        "windows",
+        "server",
+        "info"
+      ],
+      "guideRef": "support-rds"
+    },
+    {
+      "id": "rds-lizenzkonfiguration-broker",
+      "name": "RDS-Lizenzkonfiguration (Broker)",
+      "cmd": "Get-RDLicenseConfiguration -ConnectionBroker {server}",
+      "desc": "Zeigt den eingestellten RD-Lizenzserver und den Lizenzierungsmodus der Remotedesktop-Bereitstellung. Benötigt das PowerShell-Modul RemoteDesktop; als Server den RD Connection Broker eintragen.",
+      "tags": [
+        "rds",
+        "powershell",
+        "windows",
+        "server",
+        "info"
+      ],
+      "guideRef": "support-rds"
+    },
+    {
+      "id": "security-bitlocker-status",
+      "name": "BitLocker-Status (manage-bde)",
+      "cmd": "manage-bde -status",
+      "desc": "Zeigt Größe, BitLocker-Version, Verschlüsselungsstatus, Schutzstatus und Schlüsselschutzvorrichtungen aller Laufwerke. Benötigt Administratorrechte.",
+      "tags": [
+        "security",
+        "windows",
+        "admin",
+        "info"
+      ]
+    },
+    {
+      "id": "disk-bitlocker-volumes",
+      "name": "BitLocker-Volumes (PowerShell)",
+      "cmd": "Get-BitLockerVolume | Select-Object MountPoint, VolumeStatus, ProtectionStatus, EncryptionPercentage",
+      "desc": "Zeigt je BitLocker-Volume Laufwerk, Status, Schutzstatus und Verschlüsselungsgrad in Prozent. Benötigt Administratorrechte und das BitLocker-Modul.",
+      "tags": [
+        "disk",
+        "powershell",
+        "windows",
+        "admin",
+        "security",
+        "info"
+      ]
+    },
+    {
+      "id": "system-tpm-status",
+      "name": "TPM-Status",
+      "cmd": "Get-Tpm",
+      "desc": "Zeigt Informationen zum Trusted Platform Module, darunter TpmPresent und TpmReady. Ohne Administratorrechte bleiben die Werte leer.",
+      "tags": [
+        "system",
+        "powershell",
+        "windows",
+        "admin",
+        "security",
+        "info"
+      ]
+    },
+    {
+      "id": "cert-computerspeicher-anzeigen",
+      "name": "Computer-Zertifikate anzeigen",
+      "cmd": "certutil -store My",
+      "desc": "Zeigt die Zertifikate im persönlichen Speicher (My) des Computers. Der Speicher des angemeldeten Benutzers wird mit der Option -user abgefragt.",
+      "tags": [
+        "certificates",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "security-gespeicherte-anmeldedaten",
+      "name": "Gespeicherte Anmeldedaten anzeigen",
+      "cmd": "cmdkey /list",
+      "desc": "Listet die in Windows gespeicherten Anmeldedaten mit Ziel und Benutzername auf. Passwörter werden nicht angezeigt.",
+      "tags": [
+        "security",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "disk-volumes-uebersicht",
+      "name": "Volumes mit Zustand und Platz",
+      "cmd": "Get-Volume | Select-Object DriveLetter, FileSystemLabel, FileSystem, HealthStatus, SizeRemaining, Size",
+      "desc": "Zeigt je Volume Laufwerksbuchstabe, Bezeichnung, Dateisystem, Gesundheitszustand sowie freien und gesamten Platz. Die Größen erscheinen in Byte.",
+      "tags": [
+        "disk",
+        "powershell",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "disk-chkdsk-scan",
+      "name": "Datenträger online prüfen",
+      "cmd": "chkdsk C: /scan",
+      "desc": "Prüft das NTFS-Laufwerk C: online und kann gefundene Fehler dabei online beheben (mit /forceofflinefix nur zur Offline-Reparatur vormerken). Benötigt Administratorrechte; Laufwerk bei Bedarf anpassen.",
+      "tags": [
+        "disk",
+        "windows",
+        "admin",
+        "repair",
+        "caution"
+      ]
+    },
+    {
+      "id": "network-smb-freigaben",
+      "name": "SMB-Freigaben anzeigen",
+      "cmd": "Get-SmbShare",
+      "desc": "Listet die SMB-Freigaben dieses Computers mit Name, Bereich, Pfad und Beschreibung auf. Mit -IncludeHidden erscheinen auch intern genutzte Freigaben.",
+      "tags": [
+        "network",
+        "powershell",
+        "windows",
+        "server",
+        "info"
+      ]
+    },
+    {
+      "id": "network-smb-offene-dateien",
+      "name": "Offene SMB-Dateien anzeigen",
+      "cmd": "Get-SmbOpenFile",
+      "desc": "Listet die Dateien auf, die Clients auf diesem SMB-Server geöffnet haben, mit Pfad, Clientcomputer und Benutzer. Benötigt Administratorrechte.",
+      "tags": [
+        "network",
+        "powershell",
+        "windows",
+        "server",
+        "admin",
+        "info"
+      ]
+    },
+    {
+      "id": "files-robocopy-kopieren",
+      "name": "Ordner kopieren (robocopy)",
+      "cmd": "robocopy \"{pfad}\" \"{zielpfad}\" /e /copy:dat /r:2 /w:5 /log:robocopy.log /tee",
+      "desc": "Kopiert die Quelle samt Unterordnern mit Daten, Attributen und Zeitstempeln ins Ziel (zwei Wiederholungen, fünf Sekunden Wartezeit) und überschreibt abweichende Dateien. Das Protokoll robocopy.log wird im aktuellen Ordner angelegt (als Administrator meist im Systemordner); Wurzelpfade als D:\\. statt D:\\ eingeben, weil der Backslash vor dem Anführungszeichen sonst als Escape gilt.",
+      "tags": [
+        "files",
+        "windows",
+        "caution"
+      ]
+    },
+    {
+      "id": "files-robocopy-spiegeln",
+      "name": "Ordner spiegeln (robocopy)",
+      "cmd": "robocopy \"{pfad}\" \"{zielpfad}\" /mir /r:2 /w:5 /log:robocopy.log /tee",
+      "desc": "Spiegelt die Quelle ins Ziel (/mir ist /e plus /purge): Dateien und Ordner, die nur im Ziel liegen, werden gelöscht, deshalb zuerst mit zusätzlichem /l testen (listet nur). Das Protokoll robocopy.log wird im aktuellen Ordner angelegt (als Administrator meist im Systemordner); Wurzelpfade als D:\\. statt D:\\ eingeben, weil der Backslash vor dem Anführungszeichen sonst als Escape gilt.",
+      "tags": [
+        "files",
+        "windows",
+        "caution"
+      ]
+    },
+    {
+      "id": "files-icacls-anzeigen",
+      "name": "Berechtigungen anzeigen (icacls)",
+      "cmd": "icacls \"{pfad}\"",
+      "desc": "Zeigt die Zugriffsrechte (DACL) einer Datei oder eines Ordners an. Ändert nichts, weil keine Option zum Ändern angegeben ist.",
+      "tags": [
+        "files",
+        "windows",
+        "info"
+      ]
+    },
+    {
+      "id": "files-takeown-datei",
+      "name": "Besitz übernehmen (takeown)",
+      "cmd": "takeown /f \"{pfad}\" /a",
+      "desc": "Macht die Gruppe Administratoren zum Besitzer der Datei oder des Ordners (/a). Benötigt Administratorrechte; danach müssen die Rechte meist noch mit icacls oder dem Explorer angepasst werden.",
+      "tags": [
+        "files",
+        "windows",
+        "admin",
+        "caution"
+      ]
+    },
+    {
+      "id": "network-firewall-eingehend-erlaubt",
+      "name": "Eingehende Firewallregeln (erlaubt)",
+      "cmd": "Get-NetFirewallRule -Enabled True -Direction Inbound -Action Allow | Select-Object DisplayName, Profile, Direction, Action",
+      "desc": "Zeigt alle aktivierten eingehenden Firewallregeln mit der Aktion Allow, mit Anzeigename, Profil, Richtung und Aktion. Zum Lesen sind keine Administratorrechte nötig.",
+      "tags": [
+        "network",
+        "powershell",
+        "windows",
+        "security",
+        "info"
+      ]
+    },
+    {
+      "id": "network-pathping",
+      "name": "Pfadanalyse (pathping)",
+      "cmd": "pathping {hostname}",
+      "desc": "Zeigt den Weg zum Ziel und misst Latenz und Paketverlust an jedem Zwischenknoten. Mit den Standardwerten dauert die Statistik rund 25 Sekunden je Zwischenknoten, bei vielen Hops mehrere Minuten.",
+      "tags": [
+        "network",
+        "windows",
+        "diag"
+      ],
+      "guideRef": "support-tracert"
+    },
+    {
+      "id": "system-computerinfo-auswahl",
+      "name": "Systemdaten im Überblick",
+      "cmd": "Get-ComputerInfo -Property OsName, OsVersion, OsBuildNumber, CsName, CsDomain, CsTotalPhysicalMemory, BiosVersion",
+      "desc": "Zeigt Windows-Name, Version, Build, Computername, Domäne, Arbeitsspeicher in Byte und BIOS-Version. Verfügbar ab Windows PowerShell 5.1 und nur unter Windows.",
+      "tags": [
+        "system",
+        "powershell",
+        "windows",
+        "info"
+      ],
+      "guideRef": "support-systeminfo"
+    },
+    {
+      "id": "system-geraeteprobleme",
+      "name": "Geräte mit Problemen",
+      "cmd": "pnputil /enum-devices /problem",
+      "desc": "Listet Geräte mit einem Problemcode im Geräte-Manager auf, mit Instanz-ID, Beschreibung und Problemcode. Der Schalter /problem steht ab Windows 10, Version 1903 zur Verfügung.",
+      "tags": [
+        "system",
+        "windows",
+        "diag",
+        "info"
+      ]
     }
   ]
 }
