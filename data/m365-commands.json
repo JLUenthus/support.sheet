@@ -1,0 +1,393 @@
+[
+  {
+    "id": "m365-modul-installieren",
+    "name": "Graph-Modul installieren",
+    "cmd": "Install-Module Microsoft.Graph -Scope CurrentUser",
+    "desc": "Installiert das Microsoft Graph PowerShell SDK für den aktuellen Benutzer aus der PowerShell Gallery. Erfordert Internetzugang und läuft in Windows PowerShell 5.1 oder PowerShell 7.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "connect",
+      "caution"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-verbinden",
+    "name": "Mit Graph verbinden",
+    "cmd": "Connect-MgGraph -TenantId \"{tenantid}\" -Scopes \"User.Read.All\"",
+    "desc": "Meldet sich interaktiv am Mandanten an und fragt beim ersten Mal die Einwilligung für den Bereich ab. Berechtigung: User.Read.All, für andere Befehle die passenden Bereiche in -Scopes ergänzen.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "connect"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-verbinden-geraetecode",
+    "name": "Mit Graph verbinden (Gerätecode)",
+    "cmd": "Connect-MgGraph -TenantId \"{tenantid}\" -Scopes \"User.Read.All\" -UseDeviceCode",
+    "desc": "Meldet sich ohne Browser auf dem Rechner an: Der Befehl zeigt Code und Adresse, die Anmeldung erfolgt auf einem anderen Gerät. Berechtigung: User.Read.All.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "connect"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-sitzung-anzeigen",
+    "name": "Graph-Sitzung anzeigen",
+    "cmd": "Get-MgContext | Format-List TenantId, Account, Scopes",
+    "desc": "Zeigt Mandant, Konto und die erteilten Berechtigungsbereiche der aktuellen Graph-Sitzung. Hilft zu prüfen, ob für einen Befehl der nötige Bereich erteilt ist.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "connect"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-trennen",
+    "name": "Von Graph trennen",
+    "cmd": "Disconnect-MgGraph",
+    "desc": "Meldet die Graph-Sitzung ab und leert den Zwischenspeicher der Anmeldetoken, bei Kontext CurrentUser auch auf dem Datenträger. Danach ist für weitere Befehle eine neue Anmeldung nötig.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "connect"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-mandant-anzeigen",
+    "name": "Mandant anzeigen",
+    "cmd": "Get-MgOrganization -Property Id,DisplayName,OnPremisesSyncEnabled,OnPremisesLastSyncDateTime | Select-Object DisplayName, Id, OnPremisesSyncEnabled, OnPremisesLastSyncDateTime",
+    "desc": "Zeigt Name und ID des Mandanten, ob er mit einem lokalen Verzeichnis synchronisiert wird, und den Zeitpunkt der letzten Synchronisierung. Berechtigung: Organization.Read.All.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "tenant"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-domaenen-anzeigen",
+    "name": "Domänen anzeigen",
+    "cmd": "Get-MgDomain | Select-Object Id, IsDefault, IsVerified, AuthenticationType",
+    "desc": "Listet die Domänen des Mandanten mit Standardkennzeichen, Überprüfungsstatus und Authentifizierungstyp. Berechtigung: Domain.Read.All.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "tenant"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-benutzer-details",
+    "name": "Benutzer anzeigen",
+    "cmd": "Get-MgUser -UserId '{upn}' -Property Id,DisplayName,UserPrincipalName,AccountEnabled,UserType,CreatedDateTime,OnPremisesSyncEnabled,LastPasswordChangeDateTime | Format-List",
+    "desc": "Zeigt wichtige Eigenschaften eines Benutzers, darunter Status, Typ, Erstellungsdatum und letzte Kennwortänderung. Berechtigung: User.Read.All.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "users"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-benutzer-deaktiviert",
+    "name": "Deaktivierte Benutzer",
+    "cmd": "Get-MgUser -Filter \"accountEnabled eq false\" -All -Property Id,DisplayName,UserPrincipalName,AccountEnabled | Select-Object DisplayName, UserPrincipalName",
+    "desc": "Listet alle Benutzer, deren Konto deaktiviert ist (Anmeldung gesperrt). Berechtigung: User.Read.All.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "users"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-gastbenutzer",
+    "name": "Gastbenutzer anzeigen",
+    "cmd": "Get-MgUser -Filter \"userType eq 'Guest'\" -All -Property Id,DisplayName,Mail,UserPrincipalName,UserType,CreatedDateTime | Select-Object DisplayName, Mail, CreatedDateTime",
+    "desc": "Listet alle Gastbenutzer des Mandanten mit E-Mail-Adresse und Erstellungsdatum. Berechtigung: User.Read.All.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "users"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-benutzer-gruppen-rollen",
+    "name": "Gruppen und Rollen eines Benutzers",
+    "cmd": "Get-MgUserMemberOfAsGroup -UserId '{upn}' -All | Select-Object DisplayName, Id\nGet-MgUserMemberOfAsDirectoryRole -UserId '{upn}' -All | Select-Object DisplayName, Id",
+    "desc": "Zeigt die Gruppen und die aktivierten Verzeichnisrollen, in denen ein Benutzer direkt Mitglied ist. Berechtigung: User.Read.All.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "users"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-benutzer-lizenzen",
+    "name": "Lizenzen eines Benutzers",
+    "cmd": "Get-MgUserLicenseDetail -UserId '{upn}' | Select-Object SkuPartNumber, SkuId",
+    "desc": "Zeigt die einem Benutzer zugewiesenen Lizenzen mit Produktkürzel und SKU-ID. Berechtigung: LicenseAssignment.Read.All oder User.Read.All.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "users"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-benutzer-inaktiv",
+    "name": "Benutzer ohne Anmeldung seit 90 Tagen",
+    "cmd": "Get-MgUser -All -Property Id,DisplayName,UserPrincipalName,SignInActivity | Where-Object { $_.SignInActivity.LastSuccessfulSignInDateTime -lt (Get-Date).AddDays(-90) } | Select-Object DisplayName, UserPrincipalName, @{n='LetzteAnmeldung';e={$_.SignInActivity.LastSuccessfulSignInDateTime}}",
+    "desc": "Listet Benutzer, deren letzte erfolgreiche Anmeldung länger als 90 Tage zurückliegt oder fehlt. Berechtigung: User.Read.All und AuditLog.Read.All, Lizenz Entra ID P1 oder P2.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "users"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-lizenzen-verbrauch",
+    "name": "Lizenzverbrauch anzeigen",
+    "cmd": "Get-MgSubscribedSku | Select-Object SkuPartNumber, ConsumedUnits, @{n='Gekauft';e={$_.PrepaidUnits.Enabled}}",
+    "desc": "Zeigt je Lizenzprodukt des Mandanten die verbrauchten und die gekauften Lizenzen. Berechtigung: LicenseAssignment.Read.All oder Organization.Read.All.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "licenses"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-gruppe-suchen",
+    "name": "Gruppe nach Namen suchen",
+    "cmd": "Get-MgGroup -ConsistencyLevel eventual -CountVariable groupCount -Search '\"displayName:{gruppe}\"' -All -Property Id,DisplayName,GroupTypes,Mail | Select-Object DisplayName, Id, Mail, GroupTypes",
+    "desc": "Sucht Gruppen, deren Anzeigename den Suchbegriff enthält, und zeigt Name, ID und Mailadresse. Berechtigung: Group.Read.All.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "entra-groups"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-gruppe-mitglieder",
+    "name": "Mitglieder einer Gruppe",
+    "cmd": "$g = Get-MgGroup -Filter \"displayName eq '{gruppe}'\" -Property Id\nGet-MgGroupMemberAsUser -GroupId $g.Id -All | Select-Object DisplayName, UserPrincipalName",
+    "desc": "Zeigt die Benutzer, die direkt Mitglied einer Gruppe sind, in zwei Schritten über die Gruppen-ID. Berechtigung: GroupMember.Read.All, der Gruppenname muss eindeutig sein.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "entra-groups"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-anmeldungen-benutzer",
+    "name": "Anmeldungen eines Benutzers",
+    "cmd": "Get-MgAuditLogSignIn -Filter \"userPrincipalName eq '{upn}'\" -Top 20 | Select-Object CreatedDateTime, AppDisplayName, IPAddress, @{n='Fehlercode';e={$_.Status.ErrorCode}}",
+    "desc": "Zeigt die letzten 20 Anmeldungen eines Benutzers mit App, IP-Adresse und Fehlercode, den es laut Seite nur bei Fehlschlägen gibt. Berechtigung: AuditLog.Read.All, Rolle Reports Reader oder Security Reader.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "signin"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-anmeldungen-fehlgeschlagen",
+    "name": "Fehlgeschlagene Anmeldungen",
+    "cmd": "Get-MgAuditLogSignIn -Filter \"createdDateTime ge {startzeit}\" -All | Where-Object { $_.Status.ErrorCode } | Select-Object CreatedDateTime, UserPrincipalName, AppDisplayName, IPAddress, @{n='Fehlercode';e={$_.Status.ErrorCode}}",
+    "desc": "Zeigt fehlgeschlagene Anmeldungen seit dem angegebenen Zeitpunkt (Format 2026-10-01T00:00:00Z). Berechtigung: AuditLog.Read.All, Rolle Reports Reader oder Security Reader.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "signin"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-audit-verzeichnis",
+    "name": "Verzeichnis-Audit anzeigen",
+    "cmd": "Get-MgAuditLogDirectoryAudit -Top 20 | Select-Object ActivityDateTime, ActivityDisplayName, Result, Category",
+    "desc": "Zeigt die letzten 20 Einträge des Verzeichnis-Audits mit Zeitpunkt, Aktivität, Ergebnis und Kategorie. Berechtigung: AuditLog.Read.All, Rolle Reports Reader oder Security Reader.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "signin"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-mfa-methoden",
+    "name": "MFA-Methoden eines Benutzers",
+    "cmd": "Get-MgUserAuthenticationMethod -UserId '{upn}' | Format-List Id, AdditionalProperties",
+    "desc": "Zeigt die für einen Benutzer registrierten Authentifizierungsmethoden, der Typ steht in AdditionalProperties. Berechtigung: UserAuthenticationMethod.Read.All, Rolle Authentication Administrator oder Global Reader.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "mfa"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-mfa-nicht-registriert",
+    "name": "Benutzer ohne MFA-Registrierung",
+    "cmd": "Get-MgReportAuthenticationMethodUserRegistrationDetail -Filter \"isMfaRegistered eq false\" -All | Select-Object UserPrincipalName, IsMfaRegistered, IsAdmin, MethodsRegistered",
+    "desc": "Listet Benutzer ohne registrierte MFA-Methode, auch mit Kennzeichen für Administratoren. Berechtigung: AuditLog.Read.All, Rolle Reports Reader oder Security Reader.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "mfa"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-bedingter-zugriff",
+    "name": "Richtlinien für bedingten Zugriff",
+    "cmd": "Get-MgIdentityConditionalAccessPolicy | Select-Object DisplayName, State",
+    "desc": "Listet die Richtlinien für bedingten Zugriff mit Name und Status. Berechtigung: Policy.Read.All, Rolle Conditional Access Administrator, Security Reader oder Global Reader.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "conditional-access"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-global-admins",
+    "name": "Mitglieder Global Administrator",
+    "cmd": "$r = Get-MgDirectoryRole -Filter \"displayName eq 'Global Administrator'\"\nGet-MgDirectoryRoleMemberAsUser -DirectoryRoleId $r.Id | Select-Object DisplayName, UserPrincipalName",
+    "desc": "Zeigt die Benutzer mit der Rolle Global Administrator in zwei Schritten über die Rollen-ID. Berechtigung: RoleManagement.Read.Directory.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "roles"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-geraete-entra",
+    "name": "Entra-Geräte anzeigen",
+    "cmd": "Get-MgDevice -All -Property Id,DisplayName,OperatingSystem,OperatingSystemVersion,TrustType,IsCompliant,ApproximateLastSignInDateTime | Select-Object DisplayName, OperatingSystem, TrustType, IsCompliant, ApproximateLastSignInDateTime",
+    "desc": "Listet die in Entra ID registrierten Geräte mit Betriebssystem, Vertrauensart, Konformität und letzter Anmeldung. Berechtigung: Device.Read.All.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "devices"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-geraete-intune",
+    "name": "Intune-Geräte anzeigen",
+    "cmd": "Get-MgDeviceManagementManagedDevice -All -Property DeviceName,ComplianceState,LastSyncDateTime,UserPrincipalName | Select-Object DeviceName, ComplianceState, LastSyncDateTime, UserPrincipalName",
+    "desc": "Listet die in Intune verwalteten Geräte mit Konformitätsstatus, letzter Synchronisierung und Benutzer. Berechtigung: DeviceManagementManagedDevices.Read.All, Intune-Lizenz nötig.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "devices"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-app-geheimnisse",
+    "name": "App-Registrierungen nach Ablauf",
+    "cmd": "Get-MgApplication -All -Property Id,DisplayName,AppId,PasswordCredentials | Select-Object DisplayName, AppId, @{n='FruehesterAblauf';e={($_.PasswordCredentials.EndDateTime | Sort-Object | Select-Object -First 1)}} | Where-Object FruehesterAblauf | Sort-Object FruehesterAblauf",
+    "desc": "Zeigt App-Registrierungen mit dem frühesten Ablaufdatum eines Clientgeheimnisses, die frühesten zuerst. Berechtigung: Application.Read.All.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "apps"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-benutzer-deaktivieren",
+    "name": "Benutzer deaktivieren",
+    "cmd": "Update-MgUser -UserId '{upn}' -AccountEnabled:$false",
+    "desc": "Deaktiviert das Konto eines Benutzers, die Anmeldung ist danach gesperrt. Berechtigung: User.EnableDisableAccount.All und User.Read.All, Rolle je nach Zielkonto.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "users",
+      "caution"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-benutzer-aktivieren",
+    "name": "Benutzer aktivieren",
+    "cmd": "Update-MgUser -UserId '{upn}' -AccountEnabled:$true",
+    "desc": "Aktiviert das Konto eines Benutzers wieder, die Anmeldung ist danach möglich. Berechtigung: User.EnableDisableAccount.All und User.Read.All, Rolle je nach Zielkonto.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "users",
+      "caution"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-sitzungen-widerrufen",
+    "name": "Anmeldesitzungen widerrufen",
+    "cmd": "Revoke-MgUserSignInSession -UserId '{upn}'",
+    "desc": "Macht alle Aktualisierungstoken und Browser-Sitzungen eines Benutzers ungültig, er muss sich neu anmelden. Berechtigung: User.RevokeSessions.All.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "users",
+      "caution"
+    ],
+    "product": "graph"
+  },
+  {
+    "id": "m365-sync-planer",
+    "name": "Synchronisierungsplaner anzeigen",
+    "cmd": "Get-ADSyncScheduler",
+    "desc": "Zeigt die Einstellungen des Synchronisierungsplaners von Entra Connect, etwa Intervall und nächste Ausführung. Läuft auf dem Entra-Connect-Server in einer PowerShell mit Administratorrechten.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "sync",
+      "admin"
+    ],
+    "product": "sync"
+  },
+  {
+    "id": "m365-sync-delta",
+    "name": "Delta-Synchronisierung starten",
+    "cmd": "Start-ADSyncSyncCycle -PolicyType Delta",
+    "desc": "Startet auf dem Entra-Connect-Server sofort einen Delta-Zyklus, der nur Änderungen überträgt (kein Initial-Sync). Läuft in einer PowerShell mit Administratorrechten auf dem Server.",
+    "tags": [
+      "microsoft365",
+      "powershell",
+      "sync",
+      "admin",
+      "caution"
+    ],
+    "product": "sync"
+  },
+  {
+    "id": "m365-dsregcmd-status",
+    "name": "Geräteanmeldung prüfen (dsregcmd)",
+    "cmd": "dsregcmd /status",
+    "desc": "Zeigt den Verknüpfungszustand des Geräts mit Entra ID (AzureAdJoined, DomainJoined) und den Zustand des primären Aktualisierungstokens (AzureAdPrt). Die Seite verlangt den Aufruf als Domänenbenutzer.",
+    "tags": [
+      "microsoft365",
+      "windows",
+      "client"
+    ],
+    "product": "client"
+  }
+]

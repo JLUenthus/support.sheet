@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-10-27",
+  "lastUpdated": "2026-10-28",
   "commands": [
     {
       "id": "msc-computerverwaltung",
@@ -595,7 +595,7 @@
     {
       "id": "ps-remote-invoke",
       "name": "Remote-Befehl ausführen",
-      "cmd": "Invoke-Command -ComputerName {hostname} -ScriptBlock { Get-Process }",
+      "cmd": "Invoke-Command -ComputerName '{hostname}' -ScriptBlock { Get-Process }",
       "desc": "Befehl auf Remote-PC ausführen. WinRM muss aktiv sein. -Credential für andere Anmeldedaten. Mehrere PCs möglich.",
       "tags": [
         "powershell",
@@ -609,7 +609,7 @@
     {
       "id": "ps-pssession-open",
       "name": "PSSession öffnen",
-      "cmd": "Enter-PSSession -ComputerName {hostname}",
+      "cmd": "Enter-PSSession -ComputerName '{hostname}'",
       "desc": "Interaktive Remote-PowerShell-Sitzung. Prompt wechselt auf Remote-PC. Exit-PSSession zum Beenden.",
       "tags": [
         "powershell",
@@ -1004,7 +1004,7 @@
     {
       "id": "remote-ping-mit-timestamp-ps",
       "name": "Ping mit Timestamp (PS)",
-      "cmd": "ping -t {hostname} | Foreach{\"$(Get-Date -f HH:mm:ss): $_\"}",
+      "cmd": "ping -t '{hostname}' | Foreach{\"$(Get-Date -f HH:mm:ss): $_\"}",
       "desc": "Ping mit Uhrzeit je Zeile – ideal für Verbindungsüberwachung und Protokollierung von Ausfallzeiten.",
       "tags": [
         "remote",
@@ -3739,7 +3739,7 @@
     {
       "id": "ad-replikationsfehler",
       "name": "Replikationsfehler eines DC",
-      "cmd": "Get-ADReplicationFailure -Target {server}",
+      "cmd": "Get-ADReplicationFailure -Target '{server}'",
       "desc": "Zeigt die aktuellen Replikationsfehler des angegebenen Domänencontrollers. Als Server den Namen des Domänencontrollers eintragen; benötigt das Modul ActiveDirectory.",
       "tags": [
         "active-directory",
@@ -3791,7 +3791,7 @@
     {
       "id": "rds-benutzersitzungen-broker",
       "name": "RDS-Benutzersitzungen (Broker)",
-      "cmd": "Get-RDUserSession -ConnectionBroker {server}",
+      "cmd": "Get-RDUserSession -ConnectionBroker '{server}'",
       "desc": "Listet die Benutzersitzungen einer Remotedesktop-Bereitstellung über den Verbindungsbroker auf. Benötigt das PowerShell-Modul RemoteDesktop; als Server den RD Connection Broker eintragen.",
       "tags": [
         "rds",
@@ -3805,7 +3805,7 @@
     {
       "id": "rds-lizenzkonfiguration-broker",
       "name": "RDS-Lizenzkonfiguration (Broker)",
-      "cmd": "Get-RDLicenseConfiguration -ConnectionBroker {server}",
+      "cmd": "Get-RDLicenseConfiguration -ConnectionBroker '{server}'",
       "desc": "Zeigt den eingestellten RD-Lizenzserver und den Lizenzierungsmodus der Remotedesktop-Bereitstellung. Benötigt das PowerShell-Modul RemoteDesktop; als Server den RD Connection Broker eintragen.",
       "tags": [
         "rds",

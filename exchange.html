@@ -41,6 +41,7 @@
     <button class="product-btn active" data-product="all">Alle</button>
     <button class="product-btn" data-product="onprem">🏢 On-Premises</button>
     <button class="product-btn" data-product="exo">☁️ Exchange Online</button>
+    <button class="product-btn" data-product="hybrid">🔀 Hybrid</button>
   </div>
 
   <!-- ── TEMPLATE ────────────────────────────────────────── -->
@@ -149,6 +150,14 @@
         navigator.serviceWorker.register('./sw.js').catch(() => {});
       });
     }
+
+    // Abschnitte dieser Seite: getPrimaryTag() (js/render.js) kennt nur die Basiskarte CATEGORY_MAP; ein Abschnittstag (tags[2]), der dort fehlt, wird vom nächsten bekannten Tag (exchange) verdrängt.
+    // Die Abschnitte der Befehle ab Etappe 5b werden hier eingetragen (Beschriftung und Symbol aus cpCategoryMap()); die bisherigen Abschnitte bleiben unverändert.
+    // cpCategoryMap() wird zuerst aufgerufen und merkt sich seine Reihenfolge, die Ergänzung von CATEGORY_MAP ändert sie nicht.
+    (function () {
+      const cp = cpCategoryMap();
+      ['security', 'mailflow', 'hybrid', 'server'].forEach(k => { if (cp[k] && !CATEGORY_MAP[k]) CATEGORY_MAP[k] = cp[k]; });
+    })();
 
     // Load exchange-specific JSON
     // Remap: use tag[2] (connect/mailbox/tracking etc.) as first tag for grouping

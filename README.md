@@ -16,8 +16,9 @@ Mittlerweile mehr als nur Commands: Log-/Sign-In-/HAR-Analyzer, ein Ticketassist
 | Seite | Inhalt | Commands |
 |-------|--------|----------|
 | [Windows](windows.html) | CMD, PowerShell, MSC-Konsolen, AD, Netzwerk, DHCP, Hyper-V, RDS, Zertifikate, Winget u.v.m. | 241 |
-| [Exchange](exchange.html) | On-Premises 2016/2019 & Exchange Online | 69 |
+| [Exchange](exchange.html) | On-Premises 2016/2019, Exchange Online & Hybrid | 102 |
 | [Fortinet](forti.html) | FortiGate, FortiManager, FortiAnalyzer CLI | 78 |
+| [M365 / Entra](m365.html) | Microsoft Graph PowerShell, Entra Connect, Entra-Geräteanmeldung (`dsregcmd`) | 32 |
 | [PS Scripts](scripts.html) | Fertige .ps1 Skripte zum Download | 9 |
 | [Event Log Analyzer](eventlog.html) | Event Log JSON hochladen → automatische Analyse mit Correlation Engine | – |
 | [Event-Referenz](eventlog-referenz.html) | Event-IDs nach Thema, Einstufung und Provider nachschlagen (liest `data/eventlog-codes.json`) | – |
@@ -94,8 +95,9 @@ Alle Commands liegen in `/data/*.json`. Einfach einen Eintrag hinzufügen:
 | Datei | Inhalt |
 |-------|--------|
 | `data/commands.json` | Windows-Commands (241) |
-| `data/exchange-commands.json` | Exchange-Commands (69) |
+| `data/exchange-commands.json` | Exchange-Commands (102) |
 | `data/forti-commands.json` | Fortinet-Commands (78) |
+| `data/m365-commands.json` | M365-/Entra-Commands (32) |
 | `data/eventlog-rules.json` | Event Log Analyzer Erkennungsregeln |
 | `data/correlation-rules.json` | Correlation Engine Regeln (19) |
 | `data/improvement-rules.json` | Proaktive Systemchecks (12) |
@@ -126,7 +128,7 @@ Platzhalter in geschweiften Klammern werden beim Kopieren per Dialog ersetzt:
 ```
 support.sheet/
 ├── index.html          ← Startseite / Kachel-Übersicht
-├── windows.html / exchange.html / forti.html / scripts.html
+├── windows.html / exchange.html / forti.html / m365.html / scripts.html
 ├── eventlog.html / eventlog-referenz.html / entra.html / har.html
 ├── ticketassistent.html / guides*.html / quicknotes.html / private.html
 ├── mitmachen.html / tools.html

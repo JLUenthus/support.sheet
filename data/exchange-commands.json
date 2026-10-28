@@ -15,8 +15,8 @@
   {
     "id": "op-connect-remote",
     "name": "Remote-Session zu Exchange",
-    "cmd": "$Session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri http://EXCHANGE-SERVER/PowerShell/ -Authentication Kerberos\nImport-PSSession $Session -DisableNameChecking",
-    "desc": "Exchange-Session von einem anderen PC aus aufbauen. EXCHANGE-SERVER durch den Hostnamen ersetzen. Kerberos-Auth für interne Nutzung.",
+    "cmd": "$Session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri 'http://{server}/PowerShell/' -Authentication Kerberos\nImport-PSSession $Session -DisableNameChecking",
+    "desc": "Exchange-Session von einem anderen PC aus aufbauen. Beim Kopieren wird nach dem Servernamen gefragt. Kerberos-Auth für interne Nutzung.",
     "tags": [
       "exchange",
       "on-premises",
@@ -40,7 +40,7 @@
   {
     "id": "op-mailbox-get",
     "name": "Postfach anzeigen",
-    "cmd": "Get-Mailbox -Identity 'user@domain.de' | Select Name, RecipientTypeDetails, Database, PrimarySmtpAddress",
+    "cmd": "Get-Mailbox -Identity '{postfach}' | Select Name, RecipientTypeDetails, Database, PrimarySmtpAddress",
     "desc": "Grundlegende Postfach-Infos. RecipientTypeDetails zeigt ob UserMailbox, SharedMailbox oder RemoteMailbox. Database zeigt wo das Postfach liegt.",
     "tags": [
       "exchange",
@@ -66,7 +66,7 @@
   {
     "id": "op-mailbox-size",
     "name": "Postfachgröße prüfen",
-    "cmd": "Get-MailboxStatistics -Identity 'user@domain.de' | Select DisplayName, TotalItemSize, ItemCount, LastLogonTime",
+    "cmd": "Get-MailboxStatistics -Identity '{postfach}' | Select DisplayName, TotalItemSize, ItemCount, LastLogonTime",
     "desc": "Postfachgröße, Anzahl Elemente und letzter Login. Gut für Kapazitätsplanung und Diagnose bei vollen Postfächern.",
     "tags": [
       "exchange",
@@ -79,7 +79,7 @@
   {
     "id": "op-mailbox-enable",
     "name": "Postfach anlegen (UserMailbox)",
-    "cmd": "Enable-Mailbox -Identity 'user@domain.de'",
+    "cmd": "Enable-Mailbox -Identity '{postfach}'",
     "desc": "Vorhandenen AD-User mit Postfach verknüpfen. Der User muss bereits im AD existieren. Für neue User: New-Mailbox.",
     "tags": [
       "exchange",
@@ -91,8 +91,8 @@
   {
     "id": "op-mailbox-shared",
     "name": "Shared Mailbox anlegen",
-    "cmd": "New-Mailbox -Shared -Name 'Shared Mailbox' -Alias 'shared.mailbox' -UserPrincipalName 'shared@domain.de'",
-    "desc": "Freigegebenes Postfach anlegen. Shared Mailboxen benötigen keine Lizenz unter 50 GB.",
+    "cmd": "New-Mailbox -Shared -Name '{anzeigename}' -Alias '{alias}' -UserPrincipalName '{email}'",
+    "desc": "Freigegebenes Postfach anlegen. Shared Mailboxen benötigen keine Lizenz unter 50 GB. Beim Kopieren wird nach dem Anzeigenamen gefragt.",
     "tags": [
       "exchange",
       "on-premises",
@@ -116,7 +116,7 @@
   {
     "id": "op-mailbox-alias",
     "name": "E-Mail-Adresse hinzufügen (On-Premises)",
-    "cmd": "Set-Mailbox -Identity 'user@domain.de' -EmailAddresses @{add='alias@domain.de'}",
+    "cmd": "Set-Mailbox -Identity '{postfach}' -EmailAddresses @{add='{email}'}",
     "desc": "Zusätzliche SMTP-Adresse/Alias hinzufügen. Bestehende Adressen bleiben erhalten.",
     "tags": [
       "exchange",
@@ -180,7 +180,7 @@
   {
     "id": "op-perms-fullaccess",
     "name": "FullAccess vergeben (On-Premises)",
-    "cmd": "Add-MailboxPermission -Identity 'postfach@domain.de' -User 'user@domain.de' -AccessRights FullAccess -AutoMapping $true",
+    "cmd": "Add-MailboxPermission -Identity '{postfach}' -User '{benutzer}' -AccessRights FullAccess -AutoMapping $true",
     "desc": "Vollzugriff auf ein Postfach. AutoMapping $true = erscheint automatisch in Outlook. AutoMapping $false = manuell hinzufügen.",
     "tags": [
       "exchange",
@@ -192,7 +192,7 @@
   {
     "id": "op-perms-sendas",
     "name": "SendAs vergeben",
-    "cmd": "Add-ADPermission -Identity 'postfach' -User 'user@domain.de' -ExtendedRights 'Send As'",
+    "cmd": "Add-ADPermission -Identity '{postfach}' -User '{benutzer}' -ExtendedRights 'Send As'",
     "desc": "Berechtigung im Namen des Postfachs zu senden. On-Prem wird über AD-Berechtigungen gesetzt.",
     "tags": [
       "exchange",
@@ -204,7 +204,7 @@
   {
     "id": "op-perms-sendonbehalf",
     "name": "SendOnBehalf vergeben (On-Premises)",
-    "cmd": "Set-Mailbox -Identity 'postfach@domain.de' -GrantSendOnBehalfTo @{add='user@domain.de'}",
+    "cmd": "Set-Mailbox -Identity '{postfach}' -GrantSendOnBehalfTo @{add='{benutzer}'}",
     "desc": "Im Auftrag von senden. Mail zeigt 'Gesendet von user im Auftrag von postfach'.",
     "tags": [
       "exchange",
@@ -216,7 +216,7 @@
   {
     "id": "op-perms-show",
     "name": "Postfachberechtigungen anzeigen",
-    "cmd": "Get-MailboxPermission -Identity 'postfach@domain.de' | Where-Object {$_.IsInherited -eq $false} | Select User, AccessRights",
+    "cmd": "Get-MailboxPermission -Identity '{postfach}' | Where-Object {$_.IsInherited -eq $false} | Select User, AccessRights",
     "desc": "Explizit gesetzte Berechtigungen anzeigen (ohne Standardberechtigungen).",
     "tags": [
       "exchange",
@@ -241,7 +241,7 @@
   {
     "id": "op-mig-moverequest",
     "name": "Move Request anlegen (→ EXO)",
-    "cmd": "New-MoveRequest -Identity 'user@domain.de' -Remote -RemoteHostName 'outlook.office365.com' -TargetDeliveryDomain 'domain.mail.onmicrosoft.com' -RemoteCredential (Get-Credential)",
+    "cmd": "New-MoveRequest -Identity '{postfach}' -Remote -RemoteHostName 'outlook.office365.com' -TargetDeliveryDomain '{zieldomain}' -RemoteCredential (Get-Credential)",
     "desc": "Postfach von On-Prem nach Exchange Online migrieren (Hybrid). MRS Proxy muss aktiv sein.",
     "tags": [
       "exchange",
@@ -254,7 +254,7 @@
   {
     "id": "op-mig-movestate",
     "name": "Move Request Status",
-    "cmd": "Get-MoveRequest -Mailbox 'user@domain.de' | Select DisplayName, Status, PercentComplete",
+    "cmd": "Get-MoveRequest -Mailbox '{postfach}' | Select DisplayName, Status, PercentComplete",
     "desc": "Status einer laufenden Postfach-Migration. Status: Queued, InProgress, Completed, Failed.",
     "tags": [
       "exchange",
@@ -267,7 +267,7 @@
   {
     "id": "op-mig-mrsproxy",
     "name": "MRS Proxy aktivieren",
-    "cmd": "Set-WebServicesVirtualDirectory -Identity 'EX01\\EWS (Default Web Site)' -MRSProxyEnabled $true\niisreset /noforce",
+    "cmd": "Set-WebServicesVirtualDirectory -Identity '{server}\\EWS (Default Web Site)' -MRSProxyEnabled $true\niisreset /noforce",
     "desc": "MRS Proxy für Hybrid-Migrationen aktivieren. Ohne MRS Proxy schlägt New-MoveRequest fehl.",
     "tags": [
       "exchange",
@@ -279,7 +279,7 @@
   {
     "id": "exo-connect-main",
     "name": "Mit Exchange Online verbinden",
-    "cmd": "Connect-ExchangeOnline -UserPrincipalName admin@domain.de",
+    "cmd": "Connect-ExchangeOnline -UserPrincipalName '{admin_upn}'",
     "desc": "Verbindung zu Exchange Online herstellen. ExchangeOnlineManagement Modul muss installiert sein. MFA-Login öffnet Browser.",
     "tags": [
       "exchange",
@@ -317,7 +317,7 @@
   {
     "id": "exo-connect-compliance",
     "name": "Security & Compliance verbinden",
-    "cmd": "Connect-IPPSSession -UserPrincipalName admin@domain.de",
+    "cmd": "Connect-IPPSSession -UserPrincipalName '{admin_upn}'",
     "desc": "Für Compliance-Befehle wie New-ComplianceSearch. Separates Modul – zusätzlich zu Connect-ExchangeOnline.",
     "tags": [
       "exchange",
@@ -330,7 +330,7 @@
   {
     "id": "exo-mailbox-get",
     "name": "Postfach prüfen",
-    "cmd": "Get-Mailbox -Identity 'user@domain.de' | Select DisplayName, RecipientTypeDetails, IsDirSynced, PrimarySmtpAddress",
+    "cmd": "Get-Mailbox -Identity '{postfach}' | Select DisplayName, RecipientTypeDetails, IsDirSynced, PrimarySmtpAddress",
     "desc": "Postfach-Info in EXO. IsDirSynced=True = kommt aus AD-Sync. False = direkt in EXO angelegt.",
     "tags": [
       "exchange",
@@ -343,8 +343,8 @@
   {
     "id": "exo-mailbox-shared",
     "name": "Shared Mailbox anlegen (EXO)",
-    "cmd": "New-Mailbox -Shared -Name 'Shared Name' -Alias 'shared.alias' -PrimarySmtpAddress 'shared@domain.de'",
-    "desc": "Shared Mailbox direkt in Exchange Online anlegen. In Hybrid-Umgebungen besser On-Prem anlegen und syncen.",
+    "cmd": "New-Mailbox -Shared -Name '{anzeigename}' -Alias '{alias}' -PrimarySmtpAddress '{email}'",
+    "desc": "Shared Mailbox direkt in Exchange Online anlegen. In Hybrid-Umgebungen besser On-Prem anlegen und syncen. Beim Kopieren wird nach dem Anzeigenamen gefragt.",
     "tags": [
       "exchange",
       "exo",
@@ -355,7 +355,7 @@
   {
     "id": "exo-mailbox-convert",
     "name": "In Shared Mailbox konvertieren",
-    "cmd": "Set-Mailbox -Identity 'user@domain.de' -Type Shared",
+    "cmd": "Set-Mailbox -Identity '{postfach}' -Type Shared",
     "desc": "Reguläres Postfach in Shared Mailbox umwandeln. Lizenz kann danach entfernt werden (unter 50 GB).",
     "tags": [
       "exchange",
@@ -368,7 +368,7 @@
   {
     "id": "exo-mailbox-alias",
     "name": "E-Mail-Adresse hinzufügen (Online)",
-    "cmd": "Set-Mailbox -Identity 'user@domain.de' -EmailAddresses @{add='alias@domain.de'}",
+    "cmd": "Set-Mailbox -Identity '{postfach}' -EmailAddresses @{add='{email}'}",
     "desc": "Alias/SMTP-Adresse hinzufügen. Bestehende Adressen bleiben erhalten.",
     "tags": [
       "exchange",
@@ -380,7 +380,7 @@
   {
     "id": "exo-perms-fullaccess",
     "name": "FullAccess vergeben (Online)",
-    "cmd": "Add-MailboxPermission -Identity 'shared@domain.de' -User 'user@domain.de' -AccessRights FullAccess -AutoMapping $true",
+    "cmd": "Add-MailboxPermission -Identity '{postfach}' -User '{benutzer}' -AccessRights FullAccess -AutoMapping $true",
     "desc": "Vollzugriff auf Postfach. AutoMapping $true = erscheint automatisch in Outlook.",
     "tags": [
       "exchange",
@@ -392,7 +392,7 @@
   {
     "id": "exo-perms-sendas",
     "name": "SendAs vergeben (EXO)",
-    "cmd": "Add-RecipientPermission -Identity 'shared@domain.de' -Trustee 'user@domain.de' -AccessRights SendAs",
+    "cmd": "Add-RecipientPermission -Identity '{postfach}' -Trustee '{benutzer}' -AccessRights SendAs",
     "desc": "Im Namen der Adresse senden. In EXO über Add-RecipientPermission (nicht Add-ADPermission wie On-Prem).",
     "tags": [
       "exchange",
@@ -404,7 +404,7 @@
   {
     "id": "exo-perms-sendonbehalf",
     "name": "SendOnBehalf vergeben (Online)",
-    "cmd": "Set-Mailbox -Identity 'shared@domain.de' -GrantSendOnBehalfTo @{add='user@domain.de'}",
+    "cmd": "Set-Mailbox -Identity '{postfach}' -GrantSendOnBehalfTo @{add='{benutzer}'}",
     "desc": "Im Auftrag von senden. Unterschied: Absender ist sichtbar.",
     "tags": [
       "exchange",
@@ -416,7 +416,7 @@
   {
     "id": "exo-perms-show",
     "name": "FullAccess Berechtigungen anzeigen",
-    "cmd": "Get-MailboxPermission -Identity 'shared@domain.de' | Where-Object {$_.IsInherited -eq $false} | Select User, AccessRights",
+    "cmd": "Get-MailboxPermission -Identity '{postfach}' | Where-Object {$_.IsInherited -eq $false} | Select User, AccessRights",
     "desc": "Explizit gesetzte FullAccess-Berechtigungen anzeigen.",
     "tags": [
       "exchange",
@@ -429,7 +429,7 @@
   {
     "id": "exo-perms-sendas-show",
     "name": "SendAs Berechtigungen anzeigen",
-    "cmd": "Get-RecipientPermission -Identity 'shared@domain.de' | Select Trustee, AccessRights",
+    "cmd": "Get-RecipientPermission -Identity '{postfach}' | Select Trustee, AccessRights",
     "desc": "Wer darf SendAs nutzen? In EXO über Get-RecipientPermission.",
     "tags": [
       "exchange",
@@ -442,7 +442,7 @@
   {
     "id": "exo-trace-recipient",
     "name": "Nachrichtenfluss prüfen (EXO)",
-    "cmd": "Get-MessageTraceV2 -RecipientAddress 'user@domain.de' -StartDate (Get-Date).AddDays(-7) -EndDate (Get-Date) | Select Received, SenderAddress, RecipientAddress, Status, Subject",
+    "cmd": "Get-MessageTraceV2 -RecipientAddress '{email}' -StartDate (Get-Date).AddDays(-7) -EndDate (Get-Date) | Select Received, SenderAddress, RecipientAddress, Status, Subject",
     "desc": "Mailfluss der letzten 7 Tage. Status: Delivered, Failed, Pending, FilteredAsSpam.",
     "tags": [
       "exchange",
@@ -455,7 +455,7 @@
   {
     "id": "exo-trace-sender",
     "name": "Gesendete Mails prüfen",
-    "cmd": "Get-MessageTraceV2 -SenderAddress 'user@domain.de' -StartDate (Get-Date).AddDays(-3) -EndDate (Get-Date) | Select Received, RecipientAddress, Status, Subject",
+    "cmd": "Get-MessageTraceV2 -SenderAddress '{email}' -StartDate (Get-Date).AddDays(-3) -EndDate (Get-Date) | Select Received, RecipientAddress, Status, Subject",
     "desc": "Gesendete Mails eines Absenders in EXO prüfen.",
     "tags": [
       "exchange",
@@ -481,7 +481,7 @@
   {
     "id": "exo-compliance-sir",
     "name": "Single Item Recovery aktivieren",
-    "cmd": "Set-Mailbox -Identity 'user@domain.de' -SingleItemRecoveryEnabled $true -RetainDeletedItemsFor 30",
+    "cmd": "Set-Mailbox -Identity '{postfach}' -SingleItemRecoveryEnabled $true -RetainDeletedItemsFor 30",
     "desc": "Aktivieren mit 30 Tagen Aufbewahrung (Maximum). Für alle Postfächer: Get-Mailbox -ResultSize Unlimited | Set-Mailbox ...",
     "tags": [
       "exchange",
@@ -493,7 +493,7 @@
   {
     "id": "exo-compliance-litighold",
     "name": "Litigation Hold aktivieren (Online)",
-    "cmd": "Set-Mailbox -Identity 'user@domain.de' -LitigationHoldEnabled $true -LitigationHoldDuration 365",
+    "cmd": "Set-Mailbox -Identity '{postfach}' -LitigationHoldEnabled $true -LitigationHoldDuration 365",
     "desc": "Alle Postfachdaten für 365 Tage einfrieren. User kann Mails löschen aber sie bleiben in Recoverable Items.",
     "tags": [
       "exchange",
@@ -517,7 +517,7 @@
   {
     "id": "exo-groups-get",
     "name": "Verteilergruppe anzeigen",
-    "cmd": "Get-DistributionGroup -Identity 'gruppe@domain.de' | Select Name, PrimarySmtpAddress, ManagedBy",
+    "cmd": "Get-DistributionGroup -Identity '{gruppe}' | Select Name, PrimarySmtpAddress, ManagedBy",
     "desc": "Infos zur Verteilergruppe. ManagedBy = wer darf Mitglieder verwalten.",
     "tags": [
       "exchange",
@@ -530,7 +530,7 @@
   {
     "id": "exo-groups-members",
     "name": "Mitglieder anzeigen",
-    "cmd": "Get-DistributionGroupMember -Identity 'gruppe@domain.de' | Select Name, PrimarySmtpAddress, RecipientType",
+    "cmd": "Get-DistributionGroupMember -Identity '{gruppe}' | Select Name, PrimarySmtpAddress, RecipientType",
     "desc": "Alle Mitglieder einer Verteilergruppe.",
     "tags": [
       "exchange",
@@ -543,7 +543,7 @@
   {
     "id": "exo-groups-add",
     "name": "Mitglied hinzufügen",
-    "cmd": "Add-DistributionGroupMember -Identity 'gruppe@domain.de' -Member 'user@domain.de'",
+    "cmd": "Add-DistributionGroupMember -Identity '{gruppe}' -Member '{benutzer}'",
     "desc": "User zu Verteilergruppe hinzufügen. Funktioniert für Distribution Groups und Mail-enabled Security Groups.",
     "tags": [
       "exchange",
@@ -555,7 +555,7 @@
   {
     "id": "exo-groups-external",
     "name": "Externe Absender erlauben",
-    "cmd": "Set-DistributionGroup -Identity 'gruppe@domain.de' -RequireSenderAuthenticationEnabled $false",
+    "cmd": "Set-DistributionGroup -Identity '{gruppe}' -RequireSenderAuthenticationEnabled $false",
     "desc": "Verteilergruppe erlaubt externe Absender. Standard ist True (nur interne).",
     "tags": [
       "exchange",
@@ -877,6 +877,436 @@
       "on-premises",
       "diag",
       "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-sec-inbox-regeln",
+    "name": "Posteingangsregeln eines Postfachs (On-Premises)",
+    "cmd": "Get-InboxRule -Mailbox '{postfach}' -IncludeHidden | Format-Table Name,Enabled,Priority,ForwardTo,ForwardAsAttachmentTo,RedirectTo,DeleteMessage,MoveToFolder -AutoSize",
+    "desc": "In der Exchange Management Shell. Zeigt auch versteckte Regeln, die Mails weiterleiten, umleiten, löschen oder verschieben, ein typisches Zeichen für ein kompromittiertes Postfach (nicht für die Rolle View-Only Organization Management).",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "security",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "exo-sec-inbox-regeln",
+    "name": "Posteingangsregeln eines Postfachs (Online)",
+    "cmd": "Get-InboxRule -Mailbox '{postfach}' -IncludeHidden | Format-Table Name,Enabled,Priority,ForwardTo,ForwardAsAttachmentTo,RedirectTo,DeleteMessage,MoveToFolder -AutoSize",
+    "desc": "In Exchange Online PowerShell. Zeigt auch versteckte Regeln, die Mails weiterleiten, umleiten, löschen oder verschieben, ein typisches Zeichen für ein kompromittiertes Postfach (nicht für die Rolle View-Only Organization Management).",
+    "tags": [
+      "exchange",
+      "exo",
+      "security",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "op-sec-weiterleitungen",
+    "name": "Postfächer mit Weiterleitung (On-Premises)",
+    "cmd": "Get-Mailbox -ResultSize Unlimited | Where-Object { $_.ForwardingAddress -or $_.ForwardingSmtpAddress } | Select DisplayName,PrimarySmtpAddress,ForwardingAddress,ForwardingSmtpAddress,DeliverToMailboxAndForward",
+    "desc": "In der Exchange Management Shell. Listet alle Postfächer mit eingerichteter Weiterleitung auf eine Adresse oder einen Empfänger, auch bei großen Organisationen dank ResultSize Unlimited.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "security",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "exo-sec-weiterleitungen",
+    "name": "Postfächer mit Weiterleitung (Online)",
+    "cmd": "Get-Mailbox -ResultSize Unlimited | Where-Object { $_.ForwardingAddress -or $_.ForwardingSmtpAddress } | Select DisplayName,PrimarySmtpAddress,ForwardingAddress,ForwardingSmtpAddress,DeliverToMailboxAndForward",
+    "desc": "In Exchange Online PowerShell. Listet alle Postfächer mit eingerichteter Weiterleitung auf eine Adresse oder einen Empfänger, auch bei großen Organisationen dank ResultSize Unlimited.",
+    "tags": [
+      "exchange",
+      "exo",
+      "security",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "op-sec-transportregeln",
+    "name": "Transportregeln anzeigen (On-Premises)",
+    "cmd": "Get-TransportRule | Sort-Object Priority | Format-Table Name,State,Priority,Mode -AutoSize",
+    "desc": "In der Exchange Management Shell. Zeigt alle Transportregeln mit Status, Priorität und Modus, zum Beispiel um versteckte Weiterleitungen oder Umleitungen zu finden.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "security",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "exo-sec-transportregeln",
+    "name": "Transportregeln anzeigen (Online)",
+    "cmd": "Get-TransportRule | Sort-Object Priority | Format-Table Name,State,Priority,Mode -AutoSize",
+    "desc": "In Exchange Online PowerShell. Zeigt alle Transportregeln mit Status, Priorität und Modus, zum Beispiel um versteckte Weiterleitungen oder Umleitungen zu finden.",
+    "tags": [
+      "exchange",
+      "exo",
+      "security",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "op-sec-kalenderrechte",
+    "name": "Kalenderberechtigungen eines Postfachs (On-Premises)",
+    "cmd": "Get-MailboxFolderPermission -Identity '{postfach}:\\Calendar'",
+    "desc": "In der Exchange Management Shell. Zeigt, wer den Kalenderordner sehen oder bearbeiten darf; der Ordnername folgt der Sprache des Postfachs (Calendar oder Kalender).",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "security",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "exo-sec-kalenderrechte",
+    "name": "Kalenderberechtigungen eines Postfachs (Online)",
+    "cmd": "Get-MailboxFolderPermission -Identity '{postfach}:\\Calendar'",
+    "desc": "In Exchange Online PowerShell. Zeigt, wer den Kalenderordner sehen oder bearbeiten darf; der Ordnername folgt der Sprache des Postfachs (Calendar oder Kalender).",
+    "tags": [
+      "exchange",
+      "exo",
+      "security",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-sec-audit-regeln",
+    "name": "Audit: Regeländerungen eines Postfachs suchen",
+    "cmd": "Search-UnifiedAuditLog -StartDate (Get-Date).AddDays(-7) -EndDate (Get-Date) -UserIds '{postfach}' -Operations New-InboxRule,Set-InboxRule -ResultSize 100 | Select UserIds,Operations,AuditData",
+    "desc": "In Exchange Online PowerShell. Findet neu angelegte oder geänderte Posteingangsregeln der letzten 7 Tage; die Auditierung muss aktiv sein und die Rolle View-Only Audit Logs oder Audit Logs zugewiesen sein.",
+    "tags": [
+      "exchange",
+      "exo",
+      "security",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "op-sec-mobilgeraete",
+    "name": "Mobilgeräte eines Postfachs (On-Premises)",
+    "cmd": "Get-MobileDeviceStatistics -Mailbox '{postfach}' | Select DeviceModel,DeviceOS,DeviceType,DeviceAccessState,FirstSyncTime",
+    "desc": "In der Exchange Management Shell. Zeigt die mit dem Postfach synchronisierten Mobilgeräte mit Zugriffsstatus und erster Synchronisierung, um unbekannte Geräte zu erkennen.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "security",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "exo-sec-mobilgeraete",
+    "name": "Mobilgeräte eines Postfachs (Online)",
+    "cmd": "Get-MobileDeviceStatistics -Mailbox '{postfach}' | Select DeviceModel,DeviceOS,DeviceType,DeviceAccessState,FirstSyncTime",
+    "desc": "In Exchange Online PowerShell. Zeigt die mit dem Postfach synchronisierten Mobilgeräte mit Zugriffsstatus und erster Synchronisierung, um unbekannte Geräte zu erkennen.",
+    "tags": [
+      "exchange",
+      "exo",
+      "security",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "op-mailflow-domaenen",
+    "name": "Akzeptierte Domänen (On-Premises)",
+    "cmd": "Get-AcceptedDomain | Format-Table Name,DomainName,DomainType,Default -AutoSize",
+    "desc": "In der Exchange Management Shell. Zeigt alle akzeptierten Domänen mit Typ und Standarddomäne, wichtig bei Mails, die nicht ankommen, und bei der Hybridkonfiguration.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "mailflow",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "exo-mailflow-domaenen",
+    "name": "Akzeptierte Domänen (Online)",
+    "cmd": "Get-AcceptedDomain | Format-Table Name,DomainName,DomainType,Default -AutoSize",
+    "desc": "In Exchange Online PowerShell. Zeigt alle akzeptierten Domänen mit Typ und Standarddomäne, wichtig bei Mails, die nicht ankommen, und bei der Hybridkonfiguration.",
+    "tags": [
+      "exchange",
+      "exo",
+      "mailflow",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-mailflow-eingehende-connectoren",
+    "name": "Eingehende Connectoren anzeigen",
+    "cmd": "Get-InboundConnector | Format-Table Name,Enabled,ConnectorType,SenderDomains,SenderIPAddresses,RequireTls -AutoSize",
+    "desc": "In Exchange Online PowerShell. Zeigt die eingehenden Connectoren mit Absenderdomänen, Absenderadressen und TLS-Pflicht, etwa bei Hybridmailfluss oder Partnerverbindungen.",
+    "tags": [
+      "exchange",
+      "exo",
+      "mailflow",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-mailflow-ausgehende-connectoren",
+    "name": "Ausgehende Connectoren anzeigen",
+    "cmd": "Get-OutboundConnector | Format-Table Name,Enabled,ConnectorType,RecipientDomains,SmartHosts,UseMXRecord -AutoSize",
+    "desc": "In Exchange Online PowerShell. Zeigt die ausgehenden Connectoren mit Zieldomänen und Smarthosts, zum Beispiel wenn Mails an eine Domäne nicht ausgeliefert werden.",
+    "tags": [
+      "exchange",
+      "exo",
+      "mailflow",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "op-mailflow-empfangsconnectoren",
+    "name": "Empfangsconnectoren eines Servers",
+    "cmd": "Get-ReceiveConnector -Server '{server}' | Format-Table Name,Enabled,Bindings,RemoteIPRanges,AuthMechanism,PermissionGroups -AutoSize",
+    "desc": "In der Exchange Management Shell. Zeigt die Empfangsconnectoren eines Servers mit Ports, erlaubten Absenderadressen und Berechtigungen, etwa wenn ein Drucker oder eine Anwendung nicht relayen darf.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "mailflow",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-mailflow-sendeconnectoren",
+    "name": "Sendeconnectoren anzeigen",
+    "cmd": "Get-SendConnector | Format-Table Name,Enabled,AddressSpaces,SmartHosts,SourceTransportServers -AutoSize",
+    "desc": "In der Exchange Management Shell. Zeigt die Sendeconnectoren mit Adressräumen und Smarthosts, wichtig wenn ausgehende Mails nicht ankommen.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "mailflow",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "exo-mailflow-dkim",
+    "name": "DKIM-Konfiguration anzeigen",
+    "cmd": "Get-DkimSigningConfig | Format-Table Domain,Enabled,Status,Selector1CNAME,Selector2CNAME -AutoSize",
+    "desc": "In Exchange Online PowerShell. Zeigt je Domäne, ob DKIM aktiv ist, und die CNAME-Einträge, die im DNS stehen müssen.",
+    "tags": [
+      "exchange",
+      "exo",
+      "mailflow",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "exo-mailflow-quarantaene",
+    "name": "Quarantäne der letzten 3 Tage",
+    "cmd": "Get-QuarantineMessage -StartReceivedDate (Get-Date).AddDays(-3) -EndReceivedDate (Get-Date) -PageSize 100 | Select SenderAddress,RecipientAddress,Subject,Type,Released",
+    "desc": "In Exchange Online PowerShell. Zeigt die in Quarantäne gelegten Mails der letzten 3 Tage (höchstens 100), zum Beispiel wenn ein Benutzer eine erwartete Mail vermisst.",
+    "tags": [
+      "exchange",
+      "exo",
+      "mailflow",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "op-mailbox-kalenderverarbeitung",
+    "name": "Kalenderverarbeitung eines Ressourcenpostfachs (On-Premises)",
+    "cmd": "Get-CalendarProcessing -Identity '{postfach}' | Format-List AutomateProcessing,AllowConflicts,AllBookInPolicy,BookInPolicy,ResourceDelegates",
+    "desc": "In der Exchange Management Shell. Zeigt, wie ein Raum- oder Gerätepostfach Buchungen annimmt, wer automatisch buchen darf und wer Delegat ist.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "mailbox",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "exo-mailbox-kalenderverarbeitung",
+    "name": "Kalenderverarbeitung eines Ressourcenpostfachs (Online)",
+    "cmd": "Get-CalendarProcessing -Identity '{postfach}' | Format-List AutomateProcessing,AllowConflicts,AllBookInPolicy,BookInPolicy,ResourceDelegates",
+    "desc": "In Exchange Online PowerShell. Zeigt, wie ein Raum- oder Gerätepostfach Buchungen annimmt, wer automatisch buchen darf und wer Delegat ist.",
+    "tags": [
+      "exchange",
+      "exo",
+      "mailbox",
+      "info"
+    ],
+    "product": "exo"
+  },
+  {
+    "id": "op-mailbox-export-pst",
+    "name": "Postfach als PST exportieren",
+    "cmd": "New-MailboxExportRequest -Mailbox '{postfach}' -FilePath '\\\\{server}\\export\\{postfach}.pst'",
+    "desc": "In der Exchange Management Shell. Schreibt das Postfach in eine PST-Datei auf einer Freigabe; die Rolle Mailbox Import Export muss zugewiesen sein und die Gruppe Exchange Trusted Subsystem braucht Lese- und Schreibrechte auf der Freigabe.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "mailbox",
+      "admin",
+      "caution"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-mailbox-export-status",
+    "name": "Stand der PST-Exporte anzeigen",
+    "cmd": "Get-MailboxExportRequest | Format-Table Name,Mailbox,Status,FilePath -AutoSize",
+    "desc": "In der Exchange Management Shell. Zeigt die Exportaufträge mit Postfach, Status und Zieldatei, zum Beispiel nach dem Start eines PST-Exports.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "mailbox",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "hyb-konfiguration",
+    "name": "Hybridkonfiguration anzeigen",
+    "cmd": "Get-HybridConfiguration | Format-List Domains,Features,ClientAccessServers,TransportServers,ExternalIPAddresses,ServiceInstance,TlsCertificateName",
+    "desc": "In der Exchange Management Shell auf dem Hybridserver. Zeigt, welche Domänen, Server und Funktionen die Hybridkonfiguration umfasst.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "hybrid",
+      "info"
+    ],
+    "product": "hybrid"
+  },
+  {
+    "id": "hyb-organisationsbeziehung",
+    "name": "Organisationsbeziehung anzeigen",
+    "cmd": "Get-OrganizationRelationship | Format-List Name,DomainNames,Enabled,FreeBusyAccessEnabled,FreeBusyAccessLevel,TargetApplicationUri,TargetAutodiscoverEpr",
+    "desc": "In der Exchange Management Shell auf dem Hybridserver. Zeigt die Beziehung zu Exchange Online für den Frei/Gebucht-Austausch; dasselbe Cmdlet zeigt in Exchange Online PowerShell die Gegenseite.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "hybrid",
+      "info"
+    ],
+    "product": "hybrid"
+  },
+  {
+    "id": "hyb-intra-organisation-connector",
+    "name": "Intra-Organization-Connector anzeigen",
+    "cmd": "Get-IntraOrganizationConnector | Format-List Name,TargetAddressDomains,DiscoveryEndpoint,Enabled",
+    "desc": "In der Exchange Management Shell auf dem Hybridserver. Zeigt den Connector, über den Exchange On-Premises und Exchange Online Dienste wie Autodiscover und Frei/Gebucht abfragen.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "hybrid",
+      "info"
+    ],
+    "product": "hybrid"
+  },
+  {
+    "id": "hyb-oauth-test",
+    "name": "OAuth-Verbindung zu Exchange Online testen",
+    "cmd": "Test-OAuthConnectivity -Service EWS -TargetUri 'https://outlook.office365.com/ews/exchange.asmx' -Mailbox '{postfach}' | Format-List",
+    "desc": "In der Exchange Management Shell auf dem Hybridserver. Prüft, ob die OAuth-Authentifizierung zwischen Exchange On-Premises und Exchange Online für das Postfach funktioniert.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "hybrid",
+      "diag"
+    ],
+    "product": "hybrid"
+  },
+  {
+    "id": "hyb-authconfig",
+    "name": "OAuth-Zertifikat der Organisation anzeigen",
+    "cmd": "Get-AuthConfig | Format-List",
+    "desc": "In der Exchange Management Shell auf dem Hybridserver. Zeigt die Authentifizierungskonfiguration mit den Fingerabdrücken des Zertifikats, mit dem Exchange OAuth-Token signiert, etwa bei abgelaufenem Zertifikat.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "hybrid",
+      "info"
+    ],
+    "product": "hybrid"
+  },
+  {
+    "id": "hyb-remotepostfach",
+    "name": "RemoteMailbox anzeigen",
+    "cmd": "Get-RemoteMailbox -Identity '{postfach}' | Format-List Name,RemoteRoutingAddress,PrimarySmtpAddress,RemoteRecipientType",
+    "desc": "In der Exchange Management Shell auf dem Hybridserver. Zeigt den lokalen Verweis auf ein Postfach in Exchange Online mit Routingadresse und Empfängertyp.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "hybrid",
+      "info"
+    ],
+    "product": "hybrid"
+  },
+  {
+    "id": "hyb-migrationsbatches",
+    "name": "Migrationsbatches anzeigen",
+    "cmd": "Get-MigrationBatch | Format-Table Identity,Status,Type -AutoSize",
+    "desc": "In Exchange Online PowerShell. Zeigt die Migrationsbatches mit Status und Typ, auch bei der Hybridmigration.",
+    "tags": [
+      "exchange",
+      "exo",
+      "hybrid",
+      "info"
+    ],
+    "product": "hybrid"
+  },
+  {
+    "id": "hyb-migrationsstand-benutzer",
+    "name": "Migrationsstand eines Benutzers",
+    "cmd": "Get-MigrationUserStatistics -Identity '{postfach}' | Format-List Identity,Status,BatchId,SkippedItemCount",
+    "desc": "In Exchange Online PowerShell. Zeigt den Stand der Migration eines einzelnen Postfachs mit Status und Zahl der übersprungenen Elemente.",
+    "tags": [
+      "exchange",
+      "exo",
+      "hybrid",
+      "info"
+    ],
+    "product": "hybrid"
+  },
+  {
+    "id": "op-server-zertifikate",
+    "name": "Exchange-Zertifikate eines Servers",
+    "cmd": "Get-ExchangeCertificate -Server '{server}' | Sort-Object NotAfter | Format-Table Thumbprint,Services,NotAfter,IsSelfSigned,Subject -AutoSize",
+    "desc": "In der Exchange Management Shell. Zeigt Zertifikate mit zugewiesenen Diensten und Ablaufdatum, um abgelaufene oder bald ablaufende Zertifikate zu finden.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "server",
+      "info"
+    ],
+    "product": "onprem"
+  },
+  {
+    "id": "op-server-dienste-pruefen",
+    "name": "Exchange-Dienste eines Servers testen",
+    "cmd": "Test-ServiceHealth -Server '{server}'",
+    "desc": "In der Exchange Management Shell. Prüft je Serverrolle, ob alle erforderlichen Exchange-Dienste laufen, und nennt fehlende.",
+    "tags": [
+      "exchange",
+      "on-premises",
+      "server",
+      "diag"
     ],
     "product": "onprem"
   }

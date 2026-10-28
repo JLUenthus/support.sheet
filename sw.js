@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20261027-dat-24';
+const CACHE_VERSION = '20261028-dat-27';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -9,6 +9,7 @@ const ASSETS = [
   './windows.html',
   './linux.html',
   './exchange.html',
+  './m365.html',
   './forti.html',
   './scripts.html',
   './mitmachen.html',
@@ -28,6 +29,7 @@ const ASSETS = [
   './data/support-guides.json',
   './data/forti-commands.json',
   './data/exchange-commands.json',
+  './data/m365-commands.json',
   './nav.js',
   './sw.js',
   './manifest.json',

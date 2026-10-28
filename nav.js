@@ -11,6 +11,7 @@
         { id:'linux',    href:'linux.html',    label:'Linux',    icon:'🐧', color:'#2dd4bf', desc:'69 Befehle · Debian/Ubuntu & Arch' },
         { id:'exchange', href:'exchange.html', label:'Exchange', icon:'📧', color:'#e8b339', desc:'On-Prem & Exchange Online' },
         { id:'forti',    href:'forti.html',    label:'Fortinet', icon:'🔥', color:'#fb7124', desc:'FG · FMG · FAZ' },
+        { id:'m365',     href:'m365.html',     label:'M365 / Entra', icon:'🔷', color:'#38bdf8', desc:'Graph · Entra Connect · Geräteanmeldung' },
       ]
     },
     { id:'scripts',  href:'scripts.html',  label:'PS Scripts',     icon:'💚', color:'#4ade80', desc:'Fertige .ps1 Skripte' },
@@ -198,6 +199,7 @@
                  : currentPage.id === 'windows'         ? '.windows'
                  : currentPage.id === 'linux'           ? '.linux'
                  : currentPage.id === 'exchange'        ? '.exchange'
+                 : currentPage.id === 'm365'            ? '.m365'
                  : currentPage.id === 'forti'           ? '.forti'
                  : currentPage.id === 'commands'        ? '.commands'
                  : currentPage.id === 'scripts'         ? '.scripts'
@@ -294,6 +296,7 @@
       { id: 'linux',    url: './data/linux-commands.json',    label: (n)    => `${n} Befehle · Debian/Ubuntu & Arch` },
       { id: 'exchange', url: './data/exchange-commands.json', label: (n)    => `${n} Befehle · On-Prem & EXO` },
       { id: 'forti',    url: './data/forti-commands.json',    label: (n)    => `${n} Befehle · FG · FMG · FAZ` },
+      { id: 'm365',     url: './data/m365-commands.json',     label: (n)    => `${n} Befehle · Graph & Entra Connect` },
     ];
 
     COUNT_SOURCES.forEach(({ id, url, label }) => {

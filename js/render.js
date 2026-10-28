@@ -96,6 +96,22 @@ const CP_EXTRA_CATEGORIES = {
   server:           { label: 'Server',                  dot: '#60a5fa', icon: '🏗️' },
   transport:        { label: 'Transport',               dot: '#2dd4bf', icon: '✉️' },
   windows:          { label: 'Windows',                 dot: '#60a5fa', icon: '🪟' },
+  // m365.html (M365 / Entra): Abschnitte der Befehlsseite; users und connect gibt es schon in CATEGORY_MAP, groups heißt dort Verteilergruppen und passt nicht, deshalb entra-groups
+  microsoft365:     { label: 'Microsoft 365',           dot: '#38bdf8', icon: '🟦' },
+  tenant:           { label: 'Mandant',                 dot: '#38bdf8', icon: '🏛️' },
+  licenses:         { label: 'Lizenzen',                dot: '#4ade80', icon: '🎟️' },
+  'entra-groups':   { label: 'Gruppen',                 dot: '#a78bfa', icon: '👪' },
+  signin:           { label: 'Anmeldung & Audit',       dot: '#fbbf24', icon: '🚦' },
+  mfa:              { label: 'MFA',                     dot: '#2dd4bf', icon: '📲' },
+  'conditional-access': { label: 'Bedingter Zugriff',   dot: '#f87171', icon: '🚧' },
+  roles:            { label: 'Rollen',                  dot: '#fb7124', icon: '🎖️' },
+  devices:          { label: 'Geräte',                  dot: '#60a5fa', icon: '📱' },
+  apps:             { label: 'App-Registrierungen',     dot: '#f472b6', icon: '🧩' },
+  sync:             { label: 'Entra Connect',           dot: '#7c8cf8', icon: '🔗' },
+  client:           { label: 'Windows-Client',          dot: '#94a3b8', icon: '🧑‍💻' },
+  // exchange.html (Etappe 5b): security, server und certificates gibt es schon, mailflow und hybrid sind neu
+  mailflow:         { label: 'Mailfluss & Domänen',     dot: '#2dd4bf', icon: '📨' },
+  hybrid:           { label: 'Hybrid',                  dot: '#7c8cf8', icon: '🔀' },
 };
 // Position der ergänzten Abschnitte in der Reihenfolge (Seite und Filterleiste folgen derselben Reihenfolge); der Rest steht am Ende
 const CP_AFTER = { registry: 'gpo', 'scheduled-task': 'process' };

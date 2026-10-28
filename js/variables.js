@@ -6,11 +6,13 @@
 // Zentrale Regex – einmal definiert, überall verwendet
 const VARIABLE_REGEX = /\{([a-z][a-z0-9_]*)\}/g;
 
-// Erlaubte Zeichen für Variablenwerte: Buchstaben, Ziffern, Leerzeichen und . _ @ - \ : / sowie die feste Folge (x86)
+// Erlaubte Zeichen für Variablenwerte: Buchstaben der lateinischen Schrift (auch Umlaute, ß und Akzentbuchstaben), Ziffern, Leerzeichen und . _ @ - \ : / sowie die feste Folge (x86)
 // (Laufwerke D:\Daten, C:\Program Files (x86)\App, UNC- und URL-Pfade). Verhindert Command-Injection wie: max && del c:\
 // Klammern sind nur als (x86) erlaubt: In PowerShell ist ein Wert in Klammern ohne Anführungszeichen ein Unterausdruck und würde ausgeführt.
-// Abgelehnt bleiben alle Zeichen, die in einem Befehl etwas auslösen: ; & | " ' ` < > $ * ? ^ % { } [ ] ! , = ( ) (außer als (x86)) und Steuerzeichen
-const SAFE_VALUE_REGEX = /^(?:[a-zA-Z0-9._@\-\\:\/ ]|\(x86\))+$/i;
+// Abgelehnt bleiben alle Zeichen, die in einem Befehl etwas auslösen: ; & | " ' ` < > $ * ? ^ % { } [ ] ! , = ( ) (außer als (x86)) und Steuerzeichen,
+// dazu Buchstaben anderer Schriften (kyrillische und griechische Lookalikes), typografische Anführungszeichen (‘ ’ “ ”), Gedanken- und Minuszeichen (– — ― −, PowerShell behandelt sie wie -)
+// und Leerzeichen-Varianten (geschütztes Leerzeichen u. a.); erlaubt ist nur das normale Leerzeichen. \p{Script=Latin} mit dem Flag u: Chrome 64, Edge 79, Firefox 78, Safari 11.1.
+const SAFE_VALUE_REGEX = /^(?:[\p{Script=Latin}0-9._@\-\\:\/ ]|\(x86\))+$/iu;
 
 
 // ── Variablen erkennen ────────────────────────────────────
@@ -60,7 +62,7 @@ function validateValue(value) {
     return { ok: false, reason: 'Wert darf nicht leer sein' };
   }
   if (!SAFE_VALUE_REGEX.test(value)) {
-    return { ok: false, reason: `Ungültige Zeichen in "${value}". Erlaubt sind Buchstaben, Ziffern, Leerzeichen und . _ @ - \\ : / sowie (x86).` };
+    return { ok: false, reason: `Ungültige Zeichen in "${value}". Erlaubt sind Buchstaben (auch Umlaute und Akzentbuchstaben), Ziffern, Leerzeichen und . _ @ - \\ : / sowie (x86).` };
   }
   return { ok: true };
 }

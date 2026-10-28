@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>support.sheet – M365 / Entra Befehle</title>
+
+  <link rel="stylesheet" href="fonts/fonts.css">
+
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/recent.css">
+  <link rel="stylesheet" href="css/favorites.css">
+  <link rel="stylesheet" href="css/search.css">
+  <link rel="stylesheet" href="css/commands-page.css">
+</head>
+<body class="commands-page">
+
+  <!-- ── HEADER ──────────────────────────────────────────── -->
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-icon" id="as-logo-icon">🔷</div>
+      <div class="logo-text" id="as-logo-label">support<span>.sheet</span></div>
+    </a>
+    <div class="header-right">
+      <div class="pill pill-count" id="cmd-count">0 Befehle</div>
+    </div>
+  </header>
+
+
+  <!-- ── PRODUKT-FILTER ───────────────────────────────────── -->
+  <div class="product-filter-wrap">
+    <button class="product-btn active" data-product="all">Alle</button>
+    <button class="product-btn" data-product="graph">🔷 Microsoft Graph</button>
+    <button class="product-btn" data-product="sync">🔗 Entra Connect</button>
+    <button class="product-btn" data-product="client">🖥️ Windows-Client</button>
+  </div>
+
+  <!-- ── TEMPLATE ────────────────────────────────────────── -->
+  <template id="command-template">
+    <div class="command-card">
+      <div class="card-header">
+        <h3 data-field="name"></h3>
+        <button class="star-btn" data-action="star"
+                aria-label="Zu Favoriten hinzufügen"
+                aria-pressed="false">★</button>
+      </div>
+      <p data-field="desc"></p>
+      <code data-field="cmd"></code>
+      <div class="card-footer">
+        <div data-field="tags"></div>
+        <button class="copy-btn" data-action="copy">📋 Kopieren</button>
+      </div>
+    </div>
+  </template>
+
+  <!-- ── MAIN ────────────────────────────────────────────── -->
+  <main>
+    <section id="favorites-section" hidden>
+      <h2 class="section-title">⭐ Meine Favoriten</h2>
+      <div id="favorites-container"></div>
+    </section>
+    <section id="recent-section" hidden>
+      <h2 class="section-title">🕐 Zuletzt verwendet</h2>
+      <div id="recent-container"></div>
+    </section>
+    <div id="search-filter-bar">
+      <div class="search-wrap-inline">
+        <span class="search-icon">🔍</span>
+        <input type="text"
+               id="search-input"
+               class="search-input-inline"
+               placeholder="M365-Befehle suchen... (Ctrl+K)"
+               autocomplete="off"
+               spellcheck="false">
+        <button class="search-clear" id="search-clear"
+                aria-label="Suche leeren" hidden>✕</button>
+      </div>
+      <div class="safe-mode-bar" id="safe-mode-bar">
+        <label class="safe-mode-toggle" id="safe-mode-label">
+          <div class="safe-mode-switch" id="safe-mode-switch">
+            <input type="checkbox" id="safe-mode-checkbox"
+                   aria-label="Sicherheitsmodus">
+            <div class="safe-mode-track">
+              <div class="safe-mode-thumb"></div>
+            </div>
+          </div>
+          <span class="safe-mode-text">Sicherheitsmodus</span>
+          <span class="safe-mode-desc" id="safe-mode-desc">
+            aus
+          </span>
+        </label>
+        <span class="safe-mode-hint" id="safe-mode-hint"
+              hidden>
+          🛡️ Sicherheitsmodus: Befehle mit hohem Risiko ausgeblendet
+        </span>
+      </div>
+      <div id="filter-bar"></div>
+    </div>
+    <div id="commands-container"></div>
+  </main>
+
+  <!-- Guide Overlay -->
+  <div id="guide-overlay" class="guide-overlay" hidden aria-modal="true" role="dialog">
+    <div class="guide-overlay-backdrop"></div>
+    <div class="guide-overlay-panel">
+      <div class="guide-overlay-header">
+        <div class="guide-overlay-title" id="guide-overlay-title"></div>
+        <div class="guide-overlay-actions">
+          <a href="#" id="guide-overlay-open"
+             class="guide-overlay-open-btn"
+             target="_blank" rel="noopener">
+            ↗ In guide.sheet oeffnen
+          </a>
+          <button class="guide-overlay-close" id="guide-overlay-close"
+                  aria-label="Schliessen" title="Schliessen">✕</button>
+        </div>
+      </div>
+      <div class="guide-overlay-content" id="guide-overlay-content">
+        <!-- Markdown wird hier gerendert -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCRIPTS ─────────────────────────────────────────── -->
+  <script src="js/fuse.min.js"></script>
+  <script src="js/loader.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/settings-store.js"></script>
+  <script src="js/variables.js"></script>
+  <script src="js/recent.js"></script>
+  <script src="js/favorites.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/marked.min.js"></script>
+  <script src="js/safe-markdown.js"></script>
+  <script src="js/guide-overlay.js"></script>
+  <script src="js/render.js"></script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+
+    // Abschnitte dieser Seite: getPrimaryTag() (js/render.js) berücksichtigt nur Tags aus CATEGORY_MAP. Ohne diese Zeilen zöge das Tag powershell
+    // jeden PowerShell-Befehl in den Abschnitt "PowerShell". Beschriftung und Symbol stammen aus cpCategoryMap() (CP_EXTRA_CATEGORIES in js/render.js);
+    // cpCategoryMap() wird zuerst aufgerufen und merkt sich seine Reihenfolge, die Ergänzung von CATEGORY_MAP ändert sie nicht.
+    (function () {
+      const cp = cpCategoryMap();
+      ['tenant', 'licenses', 'entra-groups', 'signin', 'mfa', 'conditional-access', 'roles', 'devices', 'apps', 'sync', 'client']
+        .forEach(k => { if (cp[k] && !CATEGORY_MAP[k]) CATEGORY_MAP[k] = cp[k]; });
+    })();
+
+    // Load M365-specific JSON
+    // Remap: use tag[2] (connect/users/signin etc.) as first tag for grouping
+    async function loadCommands() {
+      const response = await fetch('./data/m365-commands.json');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const commands = await response.json();
+      if (!Array.isArray(commands)) return [];
+      return commands.map(cmd => {
+        const tags = Array.isArray(cmd.tags) ? cmd.tags : [];
+        // tags[2] = subcategory (connect, users, signin, ...)
+        // Move subcategory to front so getPrimaryTag() picks it up
+        const sub = tags[2];
+        const reordered = sub ? [sub, ...tags.filter(t => t !== sub)] : tags;
+        return { ...cmd, tags: reordered };
+      });
+    }
+
+    function updateCommandCount(n) {
+      const stat  = document.getElementById('stat-total');
+      const count = document.getElementById('cmd-count');
+      if (stat)  stat.textContent  = n;
+      if (count) count.textContent = n + ' Befehle';
+    }
+
+    // Product filter
+    let _currentProduct = 'all';
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.product-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          _currentProduct = btn.dataset.product;
+          document.querySelectorAll('.product-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const filtered = _currentProduct === 'all'
+            ? _allCommands
+            : _allCommands.filter(c => c.product === _currentProduct);
+          renderFilterBar(filtered);    // Unterkategorien neu aufbauen
+          renderCommandGroups(filtered);
+        });
+      });
+    });
+  </script>
+
+  <script src="nav.js"></script>
+</body>
+</html>
