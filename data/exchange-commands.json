@@ -904,7 +904,8 @@
       "security",
       "info"
     ],
-    "product": "exo"
+    "product": "exo",
+    "guideRef": "support-m365-konto-kompromittiert"
   },
   {
     "id": "op-sec-weiterleitungen",
@@ -930,7 +931,8 @@
       "security",
       "info"
     ],
-    "product": "exo"
+    "product": "exo",
+    "guideRef": "support-m365-konto-kompromittiert"
   },
   {
     "id": "op-sec-transportregeln",
@@ -956,7 +958,8 @@
       "security",
       "info"
     ],
-    "product": "exo"
+    "product": "exo",
+    "guideRef": "support-m365-konto-kompromittiert"
   },
   {
     "id": "op-sec-kalenderrechte",
@@ -995,7 +998,8 @@
       "security",
       "info"
     ],
-    "product": "exo"
+    "product": "exo",
+    "guideRef": "support-m365-konto-kompromittiert"
   },
   {
     "id": "op-sec-mobilgeraete",
@@ -1021,7 +1025,8 @@
       "security",
       "info"
     ],
-    "product": "exo"
+    "product": "exo",
+    "guideRef": "support-m365-konto-kompromittiert"
   },
   {
     "id": "op-mailflow-domaenen",

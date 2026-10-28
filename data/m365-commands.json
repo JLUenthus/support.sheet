@@ -10,7 +10,8 @@
       "connect",
       "caution"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-graph-verbinden"
   },
   {
     "id": "m365-verbinden",
@@ -22,7 +23,8 @@
       "powershell",
       "connect"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-graph-verbinden"
   },
   {
     "id": "m365-verbinden-geraetecode",
@@ -34,7 +36,8 @@
       "powershell",
       "connect"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-graph-verbinden"
   },
   {
     "id": "m365-sitzung-anzeigen",
@@ -46,7 +49,8 @@
       "powershell",
       "connect"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-graph-verbinden"
   },
   {
     "id": "m365-trennen",
@@ -58,7 +62,8 @@
       "powershell",
       "connect"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-graph-verbinden"
   },
   {
     "id": "m365-mandant-anzeigen",
@@ -130,7 +135,8 @@
       "powershell",
       "users"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-konto-kompromittiert"
   },
   {
     "id": "m365-benutzer-lizenzen",
@@ -202,7 +208,8 @@
       "powershell",
       "signin"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-konto-kompromittiert"
   },
   {
     "id": "m365-anmeldungen-fehlgeschlagen",
@@ -238,7 +245,8 @@
       "powershell",
       "mfa"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-konto-kompromittiert"
   },
   {
     "id": "m365-mfa-nicht-registriert",
@@ -323,7 +331,8 @@
       "users",
       "caution"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-konto-kompromittiert"
   },
   {
     "id": "m365-benutzer-aktivieren",
@@ -336,7 +345,8 @@
       "users",
       "caution"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-konto-kompromittiert"
   },
   {
     "id": "m365-sitzungen-widerrufen",
@@ -349,7 +359,8 @@
       "users",
       "caution"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-konto-kompromittiert"
   },
   {
     "id": "m365-sync-planer",
