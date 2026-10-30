@@ -1,7 +1,7 @@
 /* ============================================================
    guides-toc.css – Inhaltsverzeichnis-Panel der Guide-Ansicht und des Editors (guides-view.html, guides-create.html)
    Alle Selektoren beginnen mit .gv-toc (Panel, Knopf, Sprungziele). Das Panel (js/guides-toc-core.js) steht angedockt im normalen Fluss links neben dem Text
-   (ab 1100 px, sticky, eigener Scrollbereich) oder als Überlagerung (unter 1100 px, position: fixed, Lage setzt das Skript). Geschlossen belegt es keinen Platz.
+   (sticky, eigener Scrollbereich) oder als Überlagerung (position: fixed, Lage setzt das Skript); die Schwelle zwischen beiden steht nur als Konstante DOCK_MIN in js/guides-toc-core.js (1280 px), das Stylesheet hat keine Medienabfrage dafür. Geschlossen belegt es keinen Platz.
    ============================================================ */
 
 /* ── Sprungziele: Überschriften im Guide (Abstand unter der Navigation; bis 900 px rollt die Seite, die Navigation ist fest) ── */
@@ -12,8 +12,15 @@
 .gv-toc-target:focus { outline: none; }
 .gv-toc-flash { background: rgba(124, 140, 248, .22); outline: 2px solid var(--accent, #7c8cf8); outline-offset: 3px; border-radius: 4px; transition: background .4s ease-out; }
 
-/* Knopf im Editor: neben "Gespeicherte Bilder anzeigen" */
-.ge-images-row .gv-toc-btn { margin-left: 8px; }
+/* Knöpfe: dieselbe Breite für beide Beschriftungen (anzeigen und ausblenden), kein Umbruch; die Maße (Höhe, Schrift, Rahmen, Radius, Innenabstand) kommen unverändert aus .gs-folder-btn */
+.gv-toc-btn { min-width: 220px; white-space: nowrap; }
+
+/* Ansicht: eigene Zeile unter der Meta-Zeile der Kopfkarte, linksbündig; die Knopfzeile (.gv-actions) folgt darunter */
+.gv-toc-row { margin: 0 0 10px; }
+
+/* Editor: Knopf untereinander und linksbündig mit "Gespeicherte Bilder anzeigen", beide gleich breit */
+.ge-images-row { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.ge-images-row .gs-folder-btn { min-width: 220px; white-space: nowrap; margin: 0; }
 
 /* ── Panel ── */
 .gv-toc-panel {

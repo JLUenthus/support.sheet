@@ -32,11 +32,15 @@
     body.guides-wide .gs-layout { height: calc(100vh - 94px); }
     body.guides-wide main[style*="padding-top"] .gs-layout { height: calc(100vh - 106px); }   /* guides-view.html: 20 px statt 8 px Abstand */
 
-    /* ── Hochscroll-Knopf (nav.js): sitzt fest bei right: (100vw − 1200px) / 4, bottom: 32px, 64 × 64 px, passend zur früheren 1200-px-Spalte, in der er neben dem Inhalt lag.
-          In der breiten Spalte liegt er über dem Inhalt und deckt Bedienelemente ab (im Editor „Speichern“, in der Ansicht „Kopieren“ eines Links).
-          Er zieht deshalb als 40-px-Knopf in die untere linke Ecke unter die Seitenleiste; die Seitenleiste endet dafür 52 px höher (sie rollt ohnehin), der Knopf schneidet weder sie noch die Hauptspalte. ── */
-    body.guides-wide .as-scroll-top { right: auto; left: 30px; bottom: 12px; width: 40px; height: 40px; font-size: 20px; border-radius: 10px; }
-    body.guides-wide .gs-sidebar { height: calc(100% - 52px); }
+    /* ── Hochscroll-Knopf (nav.js, 64 × 64 px): nav.js setzt ihn bei right: (100vw − 1200px) / 4, passend zur früheren 1200-px-Spalte; in der breiten Spalte läge er dadurch mitten im Inhalt.
+          Er steht hier rechts unten im Fenster (24 px vom Rand, Größe und Aussehen aus nav.js). .gs-main bekommt unten Platz für ihn (64 px Knopf + 32 px = 96 px), damit am Ende des Rollbereichs kein Inhalt darunter liegt;
+          die Fußzeile "Ähnliche Guides" (guides.css: margin-bottom −24 px) zieht deshalb mit −96 px nach. Der Platz kommt erst, wenn der Pfeil sichtbar ist (nach 300 px Rollen): sonst würde jeder kurze Guide durch die 72 px mehr unnötig scrollbar
+          (gemessen: kurzer Guide bei 1920×1000 Rollweg 0 px, mit dauerhaftem Abstand 105 px). Im Editor entfällt der Innenabstand (die klebende Fußleiste mit Speichern bezieht sich auf die Inhaltsfläche):
+          dort steht der Knopf direkt über der Fußleiste, bottom = Höhe der Leiste (js/guides-scrolltop.js setzt --gs-bar-h, Rückfall 60 px) + 57 px (16 px Abstand des Layouts, 25 px Innenabstand und Rahmen, 16 px Luft). ── */
+    body.guides-wide .as-scroll-top { right: 24px; bottom: 24px; }
+    body.guides-wide:has(.as-scroll-top.visible) .gs-main:not(.ge-main) { padding-bottom: 96px; }
+    body.guides-wide:has(.as-scroll-top.visible) .gv-related { margin-bottom: -96px; padding-bottom: 96px; }
+    body.guides-wide[data-gs-page="create"] .as-scroll-top { bottom: calc(var(--gs-bar-h, 60px) + 57px); }
   }
 
   /* ── Übersicht: Kachelraster nutzt die Breite (vorher feste drei Spalten); die Listenansicht (.gg-grid--list) bleibt eine Spalte ── */

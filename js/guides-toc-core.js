@@ -1,8 +1,8 @@
 // ============================================================
 // guide.sheet – guides-toc-core.js (gemeinsames Inhaltsverzeichnis-Panel für Guide-Ansicht und Editor)
 // Baut ein Panel links neben dem Text: Kopf mit Schließen, Filter, Zählung, Liste (Einrückung nach Ebene), Platz für zusätzliche Bedienelemente (Editor: Formular).
-//   - Angedockt (ab 1100 px): im normalen Fluss, position: sticky, eigener Scrollbereich; geschlossen belegt es keinen Platz.
-//   - Überlagerung (unter 1100 px): position: fixed über der Seitenleiste (901 bis 1099 px) beziehungsweise links unter der Navigation (bis 900 px), mit Schließen-Knopf, Esc und Schließen nach einem Sprung.
+//   - Angedockt (ab 1280 px, Konstante DOCK_MIN, die einzige Stelle mit dieser Zahl): im normalen Fluss, position: sticky, eigener Scrollbereich; geschlossen belegt es keinen Platz.
+//   - Überlagerung (unter 1280 px): position: fixed über der Seitenleiste (901 bis 1279 px) beziehungsweise links unter der Navigation (bis 900 px), mit Schließen-Knopf, Esc und Schließen nach einem Sprung.
 //   - Zustand: localStorage['gs-toc-open'] ('true' oder 'false', Standard und bei jedem anderen Wert: geschlossen) ist der einzige Speicherzugriff dieses Moduls.
 // Alle Texte nur über textContent. Kein IndexedDB, keine Adressänderung.
 // Verwendung: const p = GuidesTocCore.create({ mode: 'view' | 'editor', button, dock: () => ({ parent, before }), onJump(index, ev), emptyText });
@@ -12,7 +12,7 @@ window.GuidesTocCore = (function () {
   'use strict';
 
   const KEY = 'gs-toc-open';
-  const DOCK_MIN = 1100;          // ab dieser Fensterbreite angedockt
+  const DOCK_MIN = 1280;          // ab dieser Fensterbreite angedockt (bei 1280 px bleiben dem Text der Ansicht 652 px, dem Eingabefeld und der Vorschau je 332 px)
   const STACK_MAX = 900;          // bis zu dieser Breite gestapeltes Layout (css/guides.css)
 
   const norm = (s) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim().toLowerCase();
@@ -116,7 +116,7 @@ window.GuidesTocCore = (function () {
         if (w > STACK_MAX && lay) {                    // 901 bis 1099 px: über der Seitenleiste, bündig an der linken Kante des Layouts, nicht über dem Text
           const r = lay.getBoundingClientRect();
           s.left = Math.round(r.left) + 'px'; s.top = Math.round(Math.max(r.top, navBottom + 4)) + 'px'; s.width = '262px';
-          s.height = Math.max(160, Math.round(vh - Math.max(r.top, navBottom + 4) - 64)) + 'px';   // unten Platz für den Pfeil nach oben (unter der Seitenleiste)
+          s.height = Math.max(160, Math.round(vh - Math.max(r.top, navBottom + 4) - 16)) + 'px';   // bis zum unteren Rand des Layouts (der Pfeil nach oben steht rechts unten, nicht unter der Seitenleiste)
         } else {                                       // bis 900 px: links unter der Navigation, bei schmalen Fenstern volle Breite
           const reserve = mode === 'editor' ? 8 : 60;     // Ansicht: unten Platz für den Pfeil nach oben (rechts unten); im Editor gibt es dort keinen Seitenpfeil, die Fußleiste wird unten gesucht
           let top = navBottom + 8, bottom = vh - reserve;

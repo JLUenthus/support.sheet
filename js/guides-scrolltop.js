@@ -41,6 +41,9 @@
     window.addEventListener('resize', update);
     const m = main(); if (m) m.addEventListener('scroll', update, { passive: true });
     update();
+    // Editor: Höhe der festen Fußleiste für die Lage des Pfeils (css/guides-wide.css: bottom = --gs-bar-h + 57 px)
+    const bar = document.getElementById('ge-bottom-bar');
+    if (bar) { const sync = () => document.documentElement.style.setProperty('--gs-bar-h', bar.offsetHeight + 'px'); sync(); window.addEventListener('resize', sync); if (window.ResizeObserver) new ResizeObserver(sync).observe(bar); }
     return true;
   }
 
