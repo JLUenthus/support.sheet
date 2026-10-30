@@ -253,7 +253,8 @@
         "system",
         "windows",
         "info"
-      ]
+      ],
+      "guideRef": "support-m365-dsregcmd-status"
     },
     {
       "id": "system-windows-version-gui",

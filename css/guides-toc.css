@@ -1,0 +1,82 @@
+/* ============================================================
+   guides-toc.css – Inhaltsverzeichnis der Guide-Ansicht (nur guides-view.html bindet diese Datei ein)
+   Alle Selektoren beginnen mit .gv-toc; das Fenster ist ein nicht blockierendes <dialog> (js/guides-toc.js).
+   ============================================================ */
+
+/* ── Sprungziele: Überschriften im Guide (Abstand unter der Navigation; bis 900 px rollt die Seite, die Navigation ist fest) ── */
+.gv-toc-target { scroll-margin-top: 16px; }
+@media (max-width: 900px) {
+  .gv-toc-target { scroll-margin-top: 140px; }
+}
+.gv-toc-target:focus { outline: none; }
+.gv-toc-flash { background: rgba(124, 140, 248, .22); outline: 2px solid var(--accent, #7c8cf8); outline-offset: 3px; border-radius: 4px; transition: background .4s ease-out; }
+
+/* ── Fenster ── */
+.gv-toc-panel {
+  position: fixed; margin: 0; padding: 0; z-index: 900;
+  width: min(420px, calc(100vw - 16px)); max-height: 70vh;
+  flex-direction: column;
+  background: var(--panel, #161925); color: var(--text, #e0e4f0);
+  border: 1px solid var(--border, #2a2f45); border-radius: var(--r-lg, 12px);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, .55);
+  font-family: var(--font-ui, inherit); font-size: .82rem;
+}
+.gv-toc-panel[open] { display: flex; }
+.gv-toc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px 8px; border-bottom: 1px solid var(--border, #2a2f45); }
+.gv-toc-heading { font-weight: 700; font-size: .9rem; }
+.gv-toc-close { background: none; border: none; color: var(--muted, #8890aa); font-size: 1rem; cursor: pointer; padding: 2px 8px; border-radius: 6px; min-width: 28px; min-height: 28px; }
+.gv-toc-close:hover { color: var(--text, #e0e4f0); background: rgba(255, 255, 255, .06); }
+.gv-toc-filter, .gv-toc-title, .gv-toc-level {
+  background: var(--bg, #0f1117); color: var(--text, #e0e4f0); border: 1px solid var(--border, #2a2f45); border-radius: 8px;
+  padding: 7px 10px; font: inherit; min-width: 0; outline: none;
+}
+.gv-toc-filter { margin: 10px 12px 0; }
+.gv-toc-filter:focus, .gv-toc-title:focus, .gv-toc-level:focus { border-color: var(--accent, #7c8cf8); }
+.gv-toc-count { padding: 6px 14px 4px; color: var(--muted, #8890aa); font-size: .74rem; }
+.gv-toc-list { list-style: none; margin: 0; padding: 2px 6px 6px; overflow-y: auto; flex: 1 1 auto; min-height: 60px; }
+.gv-toc-list[hidden], .gv-toc-empty[hidden], .gv-toc-msg[hidden], .gv-toc-add[hidden], .gv-toc-filter[hidden], .gv-toc-count[hidden],
+.gv-toc-btn-small[hidden], .gv-toc-msg-hint[hidden] { display: none; }
+.gv-toc-li { margin: 0; }
+.gv-toc-li[hidden] { display: none; }
+.gv-toc-item {
+  display: block; width: 100%; text-align: left; background: none; border: none; color: var(--text, #e0e4f0); font: inherit; cursor: pointer;
+  padding: 5px 8px; border-radius: 6px; line-height: 1.35; overflow-wrap: anywhere;
+}
+.gv-toc-item:hover, .gv-toc-item:focus-visible { background: rgba(124, 140, 248, .14); outline: none; }
+.gv-toc-item:focus-visible { box-shadow: inset 0 0 0 1px var(--accent, #7c8cf8); }
+.gv-toc-d0 { font-weight: 700; }
+.gv-toc-d1 { padding-left: 22px; }
+.gv-toc-d2 { padding-left: 36px; color: var(--muted, #8890aa); }
+.gv-toc-d3 { padding-left: 50px; color: var(--muted, #8890aa); font-size: .78rem; }
+.gv-toc-current { background: rgba(74, 222, 128, .14); color: var(--text, #e0e4f0); box-shadow: inset 3px 0 0 var(--green, #4ade80); }
+.gv-toc-empty { padding: 16px 14px; color: var(--muted, #8890aa); }
+
+/* ── Meldung und Anlegen ── */
+.gv-toc-msg { margin: 0 12px 8px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border, #2a2f45); background: rgba(124, 140, 248, .08); line-height: 1.4; }
+.gv-toc-msg--ok { border-color: rgba(74, 222, 128, .5); background: rgba(74, 222, 128, .08); }
+.gv-toc-msg--error { border-color: rgba(248, 113, 113, .6); background: rgba(248, 113, 113, .1); }
+.gv-toc-msg-hint { margin-top: 4px; color: var(--muted, #8890aa); font-size: .76rem; }
+.gv-toc-msg-actions { display: flex; gap: 8px; margin-top: 6px; }
+.gv-toc-btn-small { background: var(--panel2, #1d2133); color: var(--text, #e0e4f0); border: 1px solid var(--border, #2a2f45); border-radius: 7px; padding: 4px 10px; font: inherit; cursor: pointer; min-height: 28px; }
+.gv-toc-btn-small:hover:not(:disabled) { border-color: var(--accent, #7c8cf8); }
+.gv-toc-add { border-top: 1px solid var(--border, #2a2f45); padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+.gv-toc-add-head { font-weight: 700; font-size: .78rem; color: var(--muted, #8890aa); }
+.gv-toc-add-row { display: flex; gap: 8px; }
+.gv-toc-title { flex: 1 1 auto; }
+.gv-toc-level { flex: 0 0 auto; }
+.gv-toc-append { align-self: flex-start; background: var(--accent-bg, rgba(124, 140, 248, .18)); color: var(--accent, #7c8cf8); border: 1px solid var(--accent, #7c8cf8); border-radius: 8px; padding: 6px 14px; font: inherit; font-weight: 600; cursor: pointer; min-height: 30px; }
+.gv-toc-append:hover:not(:disabled) { background: rgba(124, 140, 248, .3); }
+.gv-toc-panel :disabled { opacity: .55; cursor: not-allowed; }
+
+@media (max-width: 480px) {
+  .gv-toc-add-row { flex-direction: column; }
+  .gv-toc-level { align-self: flex-start; }
+}
+
+/* ── Druck: Schaltfläche und Fenster nicht ausgeben ── */
+@media print {
+  .gv-toc-panel, .gv-toc-btn { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gv-toc-flash { transition: none; }
+}

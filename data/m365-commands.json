@@ -75,7 +75,8 @@
       "powershell",
       "tenant"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-entra-connect-sync"
   },
   {
     "id": "m365-domaenen-anzeigen",
@@ -99,7 +100,8 @@
       "powershell",
       "users"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-benutzer-untersuchen"
   },
   {
     "id": "m365-benutzer-deaktiviert",
@@ -111,7 +113,8 @@
       "powershell",
       "users"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-benutzer-untersuchen"
   },
   {
     "id": "m365-gastbenutzer",
@@ -123,7 +126,8 @@
       "powershell",
       "users"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-benutzer-untersuchen"
   },
   {
     "id": "m365-benutzer-gruppen-rollen",
@@ -148,7 +152,8 @@
       "powershell",
       "users"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-benutzer-untersuchen"
   },
   {
     "id": "m365-benutzer-inaktiv",
@@ -160,7 +165,8 @@
       "powershell",
       "users"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-benutzer-untersuchen"
   },
   {
     "id": "m365-lizenzen-verbrauch",
@@ -172,7 +178,8 @@
       "powershell",
       "licenses"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-benutzer-untersuchen"
   },
   {
     "id": "m365-gruppe-suchen",
@@ -221,7 +228,8 @@
       "powershell",
       "signin"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-anmeldeprobleme"
   },
   {
     "id": "m365-audit-verzeichnis",
@@ -258,7 +266,8 @@
       "powershell",
       "mfa"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-anmeldeprobleme"
   },
   {
     "id": "m365-bedingter-zugriff",
@@ -270,7 +279,8 @@
       "powershell",
       "conditional-access"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-anmeldeprobleme"
   },
   {
     "id": "m365-global-admins",
@@ -294,7 +304,8 @@
       "powershell",
       "devices"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-dsregcmd-status"
   },
   {
     "id": "m365-geraete-intune",
@@ -306,7 +317,8 @@
       "powershell",
       "devices"
     ],
-    "product": "graph"
+    "product": "graph",
+    "guideRef": "support-m365-dsregcmd-status"
   },
   {
     "id": "m365-app-geheimnisse",
@@ -373,7 +385,8 @@
       "sync",
       "admin"
     ],
-    "product": "sync"
+    "product": "sync",
+    "guideRef": "support-m365-entra-connect-sync"
   },
   {
     "id": "m365-sync-delta",
@@ -387,7 +400,8 @@
       "admin",
       "caution"
     ],
-    "product": "sync"
+    "product": "sync",
+    "guideRef": "support-m365-entra-connect-sync"
   },
   {
     "id": "m365-dsregcmd-status",
@@ -399,6 +413,7 @@
       "windows",
       "client"
     ],
-    "product": "client"
+    "product": "client",
+    "guideRef": "support-m365-dsregcmd-status"
   }
 ]

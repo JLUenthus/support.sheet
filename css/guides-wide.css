@@ -1,0 +1,47 @@
+/* ============================================================
+   guides-wide.css – Guide-Seiten in der Breite der Quicknotes
+   Nur guides.html, guides-view.html und guides-create.html binden diese Datei ein und tragen die Klasse guides-wide am <body>.
+   Alle Regeln beginnen mit body.guides-wide und stehen im @media screen-Block ab 900 px: Druck und kleine Fenster bleiben unberührt,
+   css/main.css, css/guides.css und nav.js sind unverändert (Aufbau wie body.qn-page in css/quicknotes.css).
+   Selektoren mit body.guides-wide schlagen die gleichrangigen Regeln aus main.css, guides.css und dem <style> von nav.js
+   (diese Datei steht als letztes Stylesheet im Dokument, die Spezifität ist höher).
+   ============================================================ */
+@media screen and (min-width: 900px) {
+
+  /* ── Breite: main ohne Maximalbreite, 14 px Rand wie bei den Quicknotes; die Seitenleiste behält 250 px, .gs-main nimmt den Rest ── */
+  body.guides-wide main { max-width: none; padding-left: 14px; padding-right: 14px; }
+
+  /* ── Kompakte Navigation (wie body.qn-page): Kopfzeile 40 px + Tab-Leiste 30 px = 70 px statt 101 px; nav.js bleibt unberührt ── */
+  body.guides-wide { min-height: 0; }                                /* main.css: 100vh, sonst liefe die Seite mit Rollleiste über */
+  body.guides-wide header { height: 40px; padding: 0 16px; gap: 12px; flex-wrap: nowrap; }
+  body.guides-wide .logo-icon { width: 26px; height: 26px; font-size: 14px; border-radius: 7px; }
+  body.guides-wide .logo-text { font-size: .92rem; }
+  body.guides-wide .as-logo-wrap { gap: 8px; }
+  body.guides-wide .pill { padding: 2px 9px; font-size: .7rem; }
+  body.guides-wide .as-refresh-btn { width: 28px; height: 28px; font-size: 15px; }
+  body.guides-wide .as-tab-bar { top: 40px; height: 30px; padding: 0 16px; }
+  body.guides-wide.has-update .as-tab-bar { top: 82px; }             /* Update-Leiste von nav.js (42 px) + Kopfzeile */
+  body.guides-wide .as-tab:not(.as-tab--group) { height: 30px; padding: 0 12px; font-size: .78rem; }
+  body.guides-wide .as-tab--group { min-height: 28px; }
+  body.guides-wide .as-subtab-menu { top: calc(100% + 3px); }
+  body.guides-wide main { padding-top: 8px; padding-bottom: 0; }     /* guides-view.html: die Inline-Angabe padding-top:20px an main bleibt */
+
+  /* ── Höhe: .gs-layout füllt den Rest (100vh − 70 Navigation − 8 Abstand − 16 unten; die 16 px reichen auch für eine waagerechte Rollleiste).
+        Genau 900 px zählt in guides.css noch als gestapeltes Mobil-Layout (max-width: 900px, Höhe auto): dort gilt die Höhenregel nicht. ── */
+  @media (min-width: 901px) {
+    body.guides-wide .gs-layout { height: calc(100vh - 94px); }
+    body.guides-wide main[style*="padding-top"] .gs-layout { height: calc(100vh - 106px); }   /* guides-view.html: 20 px statt 8 px Abstand */
+  }
+
+  /* ── Übersicht: Kachelraster nutzt die Breite (vorher feste drei Spalten); die Listenansicht (.gg-grid--list) bleibt eine Spalte ── */
+  body.guides-wide .gg-grid:not(.gg-grid--list),
+  body.guides-wide .gg-skeleton:not(.gg-grid--list) { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+
+  /* ── Ansicht: Fließtext, Listen und Zitate bekommen eine Lesebreite (84ch sind in dieser Schrift rund 118 Zeichen je Zeile);
+        Überschriften, Bilder, Tabellen und Codeblöcke füllen die Breite des Inhalts ── */
+  body.guides-wide #gv-content p,
+  body.guides-wide #gv-content ul,
+  body.guides-wide #gv-content ol,
+  body.guides-wide #gv-content blockquote { max-width: 84ch; }
+  body.guides-wide #gv-content p:has(img) { max-width: none; }   /* ein Bild steht im Absatz: ausgenommen, es füllt höchstens die Breite des Inhalts (img: max-width 100 %) */
+}

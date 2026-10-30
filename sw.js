@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20261028-dat-28';
+const CACHE_VERSION = '20261029-dat-31';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -102,11 +102,14 @@ const ASSETS = [
   './js/quicknotes-overview.js',
   './guides-view.html',
   './css/guides.css',
+  './css/guides-wide.css',
+  './css/guides-toc.css',
   './js/guides.js',
   './js/guides-db.js',
   './js/guides-backup.js',
   './js/guides-drafts.js',
   './js/guides-view.js',
+  './js/guides-toc.js',
   './js/guides-overview.js',
   './js/guides-editor.js',
   './js/guides-manage.js',

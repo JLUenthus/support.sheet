@@ -236,7 +236,8 @@
       "on-premises",
       "migration"
     ],
-    "product": "onprem"
+    "product": "onprem",
+    "guideRef": "support-m365-entra-connect-sync"
   },
   {
     "id": "op-mig-moverequest",

@@ -1095,6 +1095,7 @@
 
     renderLinks();
     if (!isSupportGuide) renderAttachments();
+    if (window.GuidesToc) window.GuidesToc.refresh();   // Inhaltsverzeichnis: Überschriften des neuen Renderings sammeln
   }
 
   // Fallback fuer Support-Guides: liegen nicht in GuidesDB (Ordner/IndexedDB),
@@ -1215,6 +1216,12 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     loadGuide();
+    // Inhaltsverzeichnis (js/guides-toc.js): bekommt den vorhandenen Schreibhelfer und den aktuellen Guide, schreibt nie selbst
+    if (window.GuidesToc) window.GuidesToc.init({
+      state: () => ({ id: currentId, title: currentMeta && currentMeta.title, readonly: isSupportGuide, version: currentVersion }),
+      writeFields, afterAdopt, render: renderGuide, notify,
+      edit: () => { if (currentId) window.location.href = 'guides-create.html?id=' + encodeURIComponent(currentId); },
+    });
 
     document.getElementById('gv-fav-btn')?.addEventListener('click', toggleFavorite);
     document.getElementById('gv-edit-btn')?.addEventListener('click', () => {

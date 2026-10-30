@@ -15,8 +15,10 @@
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toast.css">
   <link rel="stylesheet" href="css/guides.css">
+  <link rel="stylesheet" href="css/guides-wide.css">
+  <link rel="stylesheet" href="css/guides-toc.css">
 </head>
-<body data-gs-page="overview">
+<body data-gs-page="overview" class="guides-wide">
 
   <header>
     <a href="index.html" class="logo">
@@ -127,6 +129,7 @@
                   <button type="button" id="gv-export-docx">📝 Als Word (.docx)</button>
                 </div>
               </div>
+              <button class="gs-folder-btn gv-toc-btn" id="gv-toc-btn" type="button" aria-haspopup="dialog" aria-expanded="false">📑 Inhaltsverzeichnis anzeigen</button>
               <button class="gs-folder-btn" id="gv-edit-btn">✏️ Bearbeiten</button>
               <button class="gs-folder-btn gv-delete-btn" id="gv-delete-btn">🗑️ Löschen</button>
             </div>
@@ -193,6 +196,7 @@
   <script src="js/guides-db.js"></script>
   <script src="js/guides-backup.js"></script>
   <script src="js/guides.js"></script>
+  <script src="js/guides-toc.js"></script>
   <script src="js/guides-view.js"></script>
   <script src="nav.js"></script>
 
