@@ -13,7 +13,7 @@
 
   /* ── Kompakte Navigation (wie body.qn-page): Kopfzeile 40 px + Tab-Leiste 30 px = 70 px statt 101 px; nav.js bleibt unberührt ── */
   body.guides-wide { min-height: 0; }                                /* main.css: 100vh, sonst liefe die Seite mit Rollleiste über */
-  body.guides-wide header { height: 40px; padding: 0 16px; gap: 12px; flex-wrap: nowrap; }
+  body.guides-wide > header { height: 40px; padding: 0 16px; gap: 12px; flex-wrap: nowrap; }   /* nur die Kopfzeile unter <body>: guides-view.html enthält mit .gv-header ein zweites <header> (die Kopfkarte des Guides), das hier nicht gemeint ist */
   body.guides-wide .logo-icon { width: 26px; height: 26px; font-size: 14px; border-radius: 7px; }
   body.guides-wide .logo-text { font-size: .92rem; }
   body.guides-wide .as-logo-wrap { gap: 8px; }
@@ -31,6 +31,12 @@
   @media (min-width: 901px) {
     body.guides-wide .gs-layout { height: calc(100vh - 94px); }
     body.guides-wide main[style*="padding-top"] .gs-layout { height: calc(100vh - 106px); }   /* guides-view.html: 20 px statt 8 px Abstand */
+
+    /* ── Hochscroll-Knopf (nav.js): sitzt fest bei right: (100vw − 1200px) / 4, bottom: 32px, 64 × 64 px, passend zur früheren 1200-px-Spalte, in der er neben dem Inhalt lag.
+          In der breiten Spalte liegt er über dem Inhalt und deckt Bedienelemente ab (im Editor „Speichern“, in der Ansicht „Kopieren“ eines Links).
+          Er zieht deshalb als 40-px-Knopf in die untere linke Ecke unter die Seitenleiste; die Seitenleiste endet dafür 52 px höher (sie rollt ohnehin), der Knopf schneidet weder sie noch die Hauptspalte. ── */
+    body.guides-wide .as-scroll-top { right: auto; left: 30px; bottom: 12px; width: 40px; height: 40px; font-size: 20px; border-radius: 10px; }
+    body.guides-wide .gs-sidebar { height: calc(100% - 52px); }
   }
 
   /* ── Übersicht: Kachelraster nutzt die Breite (vorher feste drei Spalten); die Listenansicht (.gg-grid--list) bleibt eine Spalte ── */
