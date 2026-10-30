@@ -1216,10 +1216,9 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     loadGuide();
-    // Inhaltsverzeichnis (js/guides-toc.js): bekommt den vorhandenen Schreibhelfer und den aktuellen Guide, schreibt nie selbst
+    // Inhaltsverzeichnis (js/guides-toc.js): nur Anzeigen und Springen, bekommt den aktuellen Guide und den Weg in den Editor, schreibt nie
     if (window.GuidesToc) window.GuidesToc.init({
-      state: () => ({ id: currentId, title: currentMeta && currentMeta.title, readonly: isSupportGuide, version: currentVersion }),
-      writeFields, afterAdopt, render: renderGuide, notify,
+      state: () => ({ id: currentId, title: currentMeta && currentMeta.title, readonly: isSupportGuide }),
       edit: () => { if (currentId) window.location.href = 'guides-create.html?id=' + encodeURIComponent(currentId); },
     });
 

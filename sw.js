@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20261030-klick-1';
+const CACHE_VERSION = '20261030-toc-2';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -104,12 +104,16 @@ const ASSETS = [
   './css/guides.css',
   './css/guides-wide.css',
   './css/guides-toc.css',
+  './css/guides-scrolltop.css',
   './js/guides.js',
   './js/guides-db.js',
   './js/guides-backup.js',
   './js/guides-drafts.js',
   './js/guides-view.js',
+  './js/guides-toc-core.js',
   './js/guides-toc.js',
+  './js/guides-toc-editor.js',
+  './js/guides-scrolltop.js',
   './js/guides-overview.js',
   './js/guides-editor.js',
   './js/guides-manage.js',

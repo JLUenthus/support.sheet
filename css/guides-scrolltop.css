@@ -1,0 +1,10 @@
+/* ============================================================
+   guides-scrolltop.css – Lage des Pfeils nach oben (.as-scroll-top aus nav.js) auf den Guide-Seiten bis 900 px Fensterbreite
+   Ab 901 px steht die Lage in css/guides-wide.css (unter der Seitenleiste). Bis 900 px rollt die Seite, nav.js setzt den Pfeil bei right: calc((100vw - 1200px) / 4),
+   das ist unter 1200 px negativ und schiebt ihn aus dem Fenster. Hier: kleiner Knopf unten rechts im Fenster; im Editor entfällt er (eigener Pfeil in der festen Leiste).
+   Alle Regeln beginnen mit body.guides-wide.
+   ============================================================ */
+@media screen and (max-width: 900px) {
+  body.guides-wide .as-scroll-top { right: 12px; left: auto; bottom: 12px; width: 40px; height: 40px; font-size: 20px; border-radius: 10px; }
+  body.guides-wide[data-gs-page="create"] .as-scroll-top { display: none; }   /* Editor: die feste Leiste mit Speichern hat einen eigenen Pfeil (#ge-back-top, rollt das Fenster); ein zweiter fester Knopf darüber lässt sich nicht verlässlich frei platzieren: die Leiste steht am Seitenende nicht am Fensterrand */
+}
