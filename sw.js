@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20261030-fein-3';
+const CACHE_VERSION = '20261103-gruppen-1';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -105,6 +105,7 @@ const ASSETS = [
   './css/guides-wide.css',
   './css/guides-toc.css',
   './css/guides-scrolltop.css',
+  './css/guides-heading.css',
   './js/guides.js',
   './js/guides-db.js',
   './js/guides-backup.js',
@@ -114,6 +115,7 @@ const ASSETS = [
   './js/guides-toc.js',
   './js/guides-toc-editor.js',
   './js/guides-scrolltop.js',
+  './js/guides-overview-heading.js',
   './js/guides-overview.js',
   './js/guides-editor.js',
   './js/guides-manage.js',

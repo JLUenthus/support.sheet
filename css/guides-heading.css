@@ -1,0 +1,14 @@
+/* ============================================================
+   guides-heading.css – Gliederung der Guide-Übersicht (guides.html): Überschrift "Guides" und Schalter der Gruppen direkt neben dem Zähler
+   Die Übersicht hat drei Bereiche: Quicknotes, Guides, Support. Die Überschrift "Guides" (#gs-guides-header) nutzt die Klassen der Gruppen-Kopfzeilen
+   (css/guides.css: .gs-support-section, .gs-support-header, .gs-support-title, .gs-support-count) samt deren Trennlinie und Abständen, ohne Schalter und ohne eigene
+   Abstandsregeln (die Höhe unter 900 px bleibt wie ohne guides-wide, geprüft in tests/guides-wide.test.html). Den rechten Rand-Schub des Schalters
+   (justify-content: space-between in .gs-support-header) hebt die Regel unten auf: Symbol, Titel, Zähler und Schalter stehen links zusammen, die Aktionen der
+   Quicknotes-Gruppe (.gs-qn-actions) rechts. Bei schmalen Fenstern umbricht die Kopfzeile: Titel, Zähler und Schalter bleiben in der ersten Zeile, die Aktionen
+   folgen in der zweiten. Die Tab-Reihenfolge entspricht der DOM-Reihenfolge in guides.html (Titel, Schalter, Aktionen), CSS ändert sie nicht.
+   Alle Regeln beginnen mit body.guides-wide und stehen in @media screen. Keine festen Höhen, kein position: fixed.
+   ============================================================ */
+@media screen {
+  body.guides-wide .gs-support-header { justify-content: flex-start; flex-wrap: wrap; gap: 8px 12px; }          /* Abstand Zähler zu Schalter 12 px */
+  body.guides-wide .gs-qn-actions { margin-left: auto; flex: 0 1 auto; min-width: 0; flex-wrap: wrap; justify-content: flex-end; }   /* Aktionen rechts, bei Platzmangel in der zweiten Zeile */
+}

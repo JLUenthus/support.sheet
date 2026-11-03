@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="css/quicknotes.css">
   <link rel="stylesheet" href="css/guides-wide.css">
   <link rel="stylesheet" href="css/guides-scrolltop.css">
+  <link rel="stylesheet" href="css/guides-heading.css">
 </head>
 <body data-gs-page="overview" class="guides-wide">
 
@@ -149,6 +150,10 @@
               <span>Quicknotes</span>
               <span class="gs-support-count" id="gs-qn-count"></span>
             </div>
+            <button type="button" class="gs-support-toggle" id="gs-qn-toggle" aria-expanded="false" aria-controls="gs-qn-body">
+              <span class="gs-support-toggle-label" id="gs-qn-toggle-label">einblenden</span>
+              <span class="gs-support-chevron">▾</span>
+            </button>
             <div class="gs-qn-actions">
               <div class="gs-qn-links" id="gs-qn-links" hidden>
                 <a class="gs-qn-link" id="gs-qn-pagelink" href="quicknotes.html">Zur Quicknotes-Seite</a>
@@ -156,10 +161,6 @@
               </div>
               <button type="button" class="gs-support-toggle" id="gs-qn-select" aria-pressed="false" hidden>Auswählen</button>
               <button type="button" class="gs-support-toggle gs-qn-new" id="gs-qn-new" hidden>+ Neue Quicknote</button>
-              <button type="button" class="gs-support-toggle" id="gs-qn-toggle" aria-expanded="false" aria-controls="gs-qn-body">
-                <span class="gs-support-toggle-label" id="gs-qn-toggle-label">einblenden</span>
-                <span class="gs-support-chevron">▾</span>
-              </button>
             </div>
           </div>
           <div class="gs-qn-body" id="gs-qn-body" hidden>
@@ -180,6 +181,17 @@
             <div class="gs-qn-grid" id="gs-qn-grid"><!-- Kacheln werden per JS eingefügt --></div>
           </div>
         </section>
+
+        <!-- ── GUIDES (Überschrift der eigenen Guides wie die Gruppen Quicknotes und Support, ohne Schalter; Zähler setzt js/guides-overview-heading.js) ── -->
+        <div class="gs-support-section gs-guides-section" id="gs-guides-header">
+          <div class="gs-support-header">
+            <div class="gs-support-title">
+              <span class="gs-support-icon">📚</span>
+              <span>Guides</span>
+              <span class="gs-support-count" id="gs-guides-count">0</span>
+            </div>
+          </div>
+        </div>
 
         <div class="gg-skeleton" id="gg-skeleton">
           <div class="gg-skeleton-tile"></div>
@@ -285,6 +297,7 @@
   <script src="js/quicknotes-overview.js"></script>
   <script src="nav.js"></script>
   <script src="js/guides-scrolltop.js"></script>
+  <script src="js/guides-overview-heading.js"></script>
 
 </body>
 </html>
