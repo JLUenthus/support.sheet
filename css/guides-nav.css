@@ -1,0 +1,24 @@
+/* ============================================================
+   guides-nav.css – kompakte Navigationsleiste für guides-manage.html ("Lokale DB | Einstellungen")
+   Das Menü "Guide" in nav.js führt guides.html, guides-create.html und guides-manage.html. Die ersten beiden (und die Ansicht guides-view.html) tragen die kompakte Leiste
+   über css/guides-wide.css, quicknotes.html über css/quicknotes.css: Kopfzeile 40 px und Reiterleiste 30 px statt 58 px und 43 px. Hier steht dieselbe Leiste mit denselben
+   Werten für guides-manage.html, damit sie beim Seitenwechsel im Menü nicht springt. Nur die Navigation, nicht die Breite, die Höhe von .gs-layout und der Abstand
+   von main: der Inhalt der Seite bleibt, wie er ist, und rückt um die Höhendifferenz der Leiste nach oben.
+   Die Klasse guides-nav trägt nur <body> von guides-manage.html. Alle Selektoren beginnen mit body.guides-nav > (Kinder von <body>: die Kopfzeile und die Reiterleiste aus nav.js),
+   nie als Nachfahrenselektor auf header, nav oder main: die Seite hat eigene Elemente (<nav class="gs-nav"> in der Seitenleiste, Karten, Dialoge), die nicht gemeint sind.
+   Die Medienabfrage ist dieselbe wie in css/guides-wide.css (ab 900 px; darunter bleibt die Leiste auf allen Seiten in der alten Höhe).
+   Selektoren mit body.guides-nav > schlagen die gleichrangigen Regeln aus main.css und dem <style> von nav.js (höhere Spezifität).
+   ============================================================ */
+@media screen and (min-width: 900px) {
+  body.guides-nav > header { height: 40px; padding: 0 16px; gap: 12px; flex-wrap: nowrap; }
+  body.guides-nav > header .logo-icon { width: 26px; height: 26px; font-size: 14px; border-radius: 7px; }
+  body.guides-nav > header .logo-text { font-size: .92rem; }
+  body.guides-nav > header .as-logo-wrap { gap: 8px; }
+  body.guides-nav > header .pill { padding: 2px 9px; font-size: .7rem; }
+  body.guides-nav > header .as-refresh-btn { width: 28px; height: 28px; font-size: 15px; }
+  body.guides-nav > .as-tab-bar { top: 40px; height: 30px; padding: 0 16px; }
+  body.guides-nav.has-update > .as-tab-bar { top: 82px; }             /* Update-Leiste von nav.js (42 px) + Kopfzeile */
+  body.guides-nav > .as-tab-bar .as-tab:not(.as-tab--group) { height: 30px; padding: 0 12px; font-size: .78rem; }
+  body.guides-nav > .as-tab-bar .as-tab--group { min-height: 28px; }
+  body.guides-nav > .as-tab-bar .as-subtab-menu { top: calc(100% + 3px); }
+}
