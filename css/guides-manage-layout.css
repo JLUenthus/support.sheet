@@ -1,0 +1,13 @@
+/* ============================================================
+   guides-manage-layout.css – Breite der Karten auf guides-manage.html ("Lokale DB | Einstellungen")
+   guides-manage.html trägt wie guides.html die Klasse guides-wide (css/guides-wide.css: Breitenlayout mit 14 px Rand, kompakte Leiste, Pfeil nach oben), damit die Seitenleiste beim
+   Wechsel zwischen den Seiten des Menüs "Guide" an derselben Stelle steht. Die Karten (.gm-main) behalten dabei ihre bisherige Breite. In der alten, zentrierten 1200-px-Spalte
+   (main aus css/main.css, 24 px Rand je Seite) war .gm-main höchstens 882 px breit (1200 - 2 x 24 - Seitenleiste 250 - Abstand 20), bei schmaleren Fenstern (und im gestapelten
+   Layout bei genau 900 px) so breit wie die Spalte abzüglich der Seitenleiste. Mit 14 px Rand je Seite wäre .gm-main um die Differenz der Ränder (2 x 10 = 20 px) breiter:
+   der Rand rechts von 20 px gleicht das aus (unabhängig von einer Rollleiste, anders als eine feste Breite), die Obergrenze von 882 px hält sie in breiten Fenstern.
+   Eine Verbreiterung wäre eine eigene Entscheidung. Die Regel beginnt mit body.guides-wide .gm-main und steht im @media screen-Block ab 900 px (wie css/guides-wide.css);
+   darunter gilt keine Regel.
+   ============================================================ */
+@media screen and (min-width: 900px) {
+  body.guides-wide .gm-main { max-width: 882px; margin-right: 20px; }
+}
