@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>support.tools – Diagnose</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/tools.css">
+  <link rel="stylesheet" href="css/diagnose.css">
+</head>
+<body class="diagnose-page">
+
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-icon" id="as-logo-icon">🩺</div>
+      <div class="logo-text" id="as-logo-label">support<span>.tools</span></div>
+    </a>
+    <div class="header-right">
+      <div class="pill pill-count" style="border-color:rgba(148,163,184,.25);background:rgba(148,163,184,.08);color:#94a3b8;">🩺 Diagnose</div>
+    </div>
+  </header>
+
+  <main>
+
+    <section class="tools-section dg-intro">
+      <h1 class="dg-title">🩺 Diagnose</h1>
+      <p class="tools-intro">
+        Zeigt den Zustand der App auf einen Blick und lässt sich als Text kopieren. Der Bericht enthält nur Versionen, Zustände und Zahlen,
+        keine Guide-Titel, Notizen, Ordnernamen oder Zugangsdaten. Die Seite liest nur; verändert wird nichts außer durch die zwei Knöpfe
+        „Dauerhaften Speicher anfordern“ und „App-Dateien neu laden“.
+      </p>
+      <p class="dg-back"><a href="tools.html">← zurück zu den Einstellungen</a></p>
+    </section>
+
+    <!-- ── 1. STAND DER APP ──────────────────────────────── -->
+    <section class="tools-section" id="dg-app" aria-labelledby="dg-app-title">
+      <h2 class="section-title" id="dg-app-title">1. Stand der App</h2>
+      <div class="tools-card">
+        <div class="dg-head"><span class="dg-ampel-slot" id="dg-app-ampel"></span><span class="dg-todo" id="dg-app-todo">Prüfe …</span></div>
+        <div class="dg-rows" id="dg-app-rows" aria-live="polite"></div>
+        <div class="tools-btn-row"><button type="button" class="tools-btn" id="dg-app-refresh">↻ Neu prüfen</button></div>
+      </div>
+    </section>
+
+    <!-- ── 2. DATEIEN AUF DEM SERVER ─────────────────────── -->
+    <section class="tools-section" id="dg-files" aria-labelledby="dg-files-title">
+      <h2 class="section-title" id="dg-files-title">2. Dateien auf dem Server prüfen</h2>
+      <div class="tools-card">
+        <p class="tools-intro">Fragt jede Datei der App (Liste aus <code>sw.js</code>) beim Server an, am Cache vorbei, und nennt fehlende Dateien.</p>
+        <div class="dg-head"><span class="dg-ampel-slot" id="dg-files-ampel"></span><span class="dg-todo" id="dg-files-todo">Noch nicht geprüft.</span></div>
+        <div class="tools-btn-row">
+          <button type="button" class="tools-btn tools-btn--primary" id="dg-files-run">▶ Dateien prüfen</button>
+          <button type="button" class="tools-btn" id="dg-files-cancel" disabled>■ Abbrechen</button>
+        </div>
+        <div class="dg-progress-row"><progress id="dg-files-progress" value="0" max="1" aria-label="Fortschritt der Dateiprüfung"></progress><span id="dg-files-count"></span></div>
+        <div class="dg-rows" id="dg-files-rows" aria-live="polite"></div>
+        <ul class="dg-list" id="dg-files-missing"></ul>
+      </div>
+    </section>
+
+    <!-- ── 3. SPEICHER ───────────────────────────────────── -->
+    <section class="tools-section" id="dg-storage" aria-labelledby="dg-storage-title">
+      <h2 class="section-title" id="dg-storage-title">3. Speicher</h2>
+      <div class="tools-card">
+        <div class="dg-head"><span class="dg-ampel-slot" id="dg-storage-ampel"></span><span class="dg-todo" id="dg-storage-todo">Prüfe …</span></div>
+        <div class="dg-rows" id="dg-storage-rows" aria-live="polite"></div>
+        <div class="tools-btn-row">
+          <button type="button" class="tools-btn" id="dg-persist-btn">🔒 Dauerhaften Speicher anfordern</button>
+          <button type="button" class="tools-btn" id="dg-storage-refresh">↻ Neu prüfen</button>
+        </div>
+        <div class="dg-result" id="dg-persist-result" role="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- ── 4. UMGEBUNG ───────────────────────────────────── -->
+    <section class="tools-section" id="dg-env" aria-labelledby="dg-env-title">
+      <h2 class="section-title" id="dg-env-title">4. Umgebung</h2>
+      <div class="tools-card">
+        <div class="dg-head"><span class="dg-ampel-slot" id="dg-env-ampel"></span><span class="dg-todo" id="dg-env-todo">Prüfe …</span></div>
+        <div class="dg-rows" id="dg-env-rows"></div>
+      </div>
+    </section>
+
+    <!-- ── 5. SELBSTTEST BEDIENBARKEIT ───────────────────── -->
+    <section class="tools-section" id="dg-selftest" aria-labelledby="dg-selftest-title">
+      <h2 class="section-title" id="dg-selftest-title">5. Selbsttest Bedienbarkeit</h2>
+      <div class="tools-card">
+        <p class="tools-intro">
+          Lädt jede Seite der App unsichtbar in einem eigenen Rahmen und prüft, ob jedes sichtbare Bedienelement von einem Klick getroffen würde.
+          Es wird nichts geklickt. Seiten, die beim Laden etwas schreiben oder nach außen verbinden, werden übersprungen (Grund in der Liste).
+        </p>
+        <div class="dg-head"><span class="dg-ampel-slot" id="dg-st-ampel"></span><span class="dg-todo" id="dg-st-todo">Noch nicht geprüft.</span></div>
+        <div class="dg-form-row">
+          <label class="settings-label" for="dg-st-size">Fenstergröße des Tests</label>
+          <select class="settings-input dg-select" id="dg-st-size">
+            <option value="own">Größe dieses Fensters</option>
+            <option value="1280x720">1280 × 720</option>
+            <option value="375x800">375 × 800</option>
+          </select>
+        </div>
+        <div class="tools-btn-row">
+          <button type="button" class="tools-btn tools-btn--primary" id="dg-st-run">▶ Alle Seiten prüfen</button>
+          <button type="button" class="tools-btn" id="dg-st-cancel" disabled>■ Abbrechen</button>
+        </div>
+        <div class="dg-progress-row"><progress id="dg-st-progress" value="0" max="1" aria-label="Fortschritt des Selbsttests"></progress><span id="dg-st-count"></span></div>
+        <ul class="dg-list dg-list--pages" id="dg-st-list" aria-live="polite"></ul>
+      </div>
+    </section>
+
+    <!-- ── 6. APP-DATEIEN NEU LADEN ──────────────────────── -->
+    <section class="tools-section" id="dg-action" aria-labelledby="dg-action-title">
+      <h2 class="section-title" id="dg-action-title">6. App-Dateien neu laden</h2>
+      <div class="tools-card">
+        <p class="tools-intro">
+          Entfernt die Service-Worker-Registrierungen und die gespeicherten App-Dateien (Cache) dieser Seite, sonst nichts.
+          <strong>Deine Daten bleiben erhalten</strong> (Guides, Notizen, Vorlagen, Einstellungen). Danach alle Tabs der App schließen und neu öffnen.
+        </p>
+        <div class="tools-btn-row"><button type="button" class="tools-btn tools-btn--danger" id="dg-clear-btn">🗑 App-Dateien neu laden (Cache leeren)</button></div>
+        <div class="dg-result" id="dg-clear-result" role="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- ── 7. BERICHT ────────────────────────────────────── -->
+    <section class="tools-section" id="dg-report" aria-labelledby="dg-report-title">
+      <h2 class="section-title" id="dg-report-title">7. Bericht</h2>
+      <div class="tools-card">
+        <p class="tools-intro">Der Text unten ist genau das, was kopiert oder gespeichert wird. Er enthält nur Versionen, Zustände, Zahlen und Namen der App-Dateien.</p>
+        <div class="tools-btn-row">
+          <button type="button" class="tools-btn tools-btn--green" id="dg-copy-btn">📋 Bericht kopieren</button>
+          <button type="button" class="tools-btn" id="dg-save-btn">💾 Als Datei speichern (.txt)</button>
+        </div>
+        <div class="dg-result" id="dg-report-status" role="status" aria-live="polite"></div>
+        <label class="settings-label" for="dg-report-text">Berichtstext</label>
+        <textarea class="dg-report-text" id="dg-report-text" rows="14" readonly spellcheck="false"></textarea>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="js/diagnose-core.js"></script>
+  <script src="js/diagnose.js"></script>
+  <script src="nav.js"></script>
+</body>
+</html>

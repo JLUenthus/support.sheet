@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>support.mail – Mail-Header-Analyzer</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/mailheader.css">
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-icon" id="as-logo-icon">✉️</div>
+      <div class="logo-text" id="as-logo-label">support<span>.mail</span></div>
+    </a>
+    <div class="header-right">
+      <div class="pill pill-count" style="border-color:rgba(192,132,252,.3);background:rgba(192,132,252,.08);color:#c084fc;">✉️ Mail-Header-Analyzer</div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ── ANLEITUNG UND DATENSCHUTZ ──────────────────────── -->
+    <section class="mh-section" id="mh-intro">
+      <h2 class="section-title">Mail-Header lesbar machen</h2>
+      <p class="mh-lead">Fügt die Header einer Nachricht ein und zeigt die Hops mit Verzögerung, die Ergebnisse von SPF, DKIM und DMARC, Abweichungen beim Absender und die Microsoft-Spam-Header. Auffälligkeiten stehen als Hinweis mit Begründung, nie als Urteil.</p>
+      <div class="mh-howto" id="mh-howto">
+        <div class="mh-howto-title">So kommst du an die Header</div>
+        <ul>
+          <li><strong>Outlook (klassisch):</strong> Nachricht doppelt anklicken, Datei, Eigenschaften, Feld „Internetheader“.</li>
+          <li><strong>OWA und neues Outlook:</strong> Nachricht öffnen, Menü „…“, Anzeigen, Quelltext anzeigen.</li>
+          <li><strong>Exchange Admin Center:</strong> Die Nachrichtenablaufverfolgung ist dafür nicht nötig.</li>
+          <li><strong>Datei:</strong> Eine <code>.eml</code>- oder <code>.txt</code>-Datei kann abgelegt werden (kein <code>.msg</code>, das ist ein Binärformat). Der Nachrichtentext wird verworfen, nur die Header zählen.</li>
+        </ul>
+      </div>
+      <div class="mh-disclaimer" id="mh-disclaimer">
+        <span class="mh-disclaimer-icon">⚠️</span>
+        <div>
+          <strong>Datenschutz:</strong> Header enthalten Adressen und interne IP-Adressen. Alles wird ausschließlich lokal im Browser verarbeitet: keine Netzwerkabfragen (kein DNS, WHOIS, keine Blocklisten),
+          nichts wird gespeichert (kein Verlauf, kein <code>localStorage</code>), nichts wird gesendet. „Alles löschen“ leert Eingabe und Ausgabe.
+        </div>
+      </div>
+    </section>
+
+    <!-- ── EINGABE ────────────────────────────────────────── -->
+    <section class="mh-section" id="mh-input-section">
+      <h2 class="section-title">Header einfügen oder Datei ablegen</h2>
+      <label class="mh-label" for="mh-input">Header der Nachricht</label>
+      <textarea id="mh-input" class="mh-input" rows="10" spellcheck="false" autocomplete="off" placeholder="Received: from …&#10;Authentication-Results: …&#10;From: …"></textarea>
+      <div class="mh-drop" id="mh-drop" tabindex="0" role="button" aria-label="Datei ablegen oder auswählen">
+        <span class="mh-drop-text">📂 <code>.eml</code> oder <code>.txt</code> hier ablegen oder klicken</span>
+        <input type="file" id="mh-file" accept=".eml,.txt,.msg" hidden>
+      </div>
+      <div class="mh-btn-row">
+        <button type="button" class="mh-btn mh-btn--primary" id="mh-run">▶ Auswerten</button>
+        <button type="button" class="mh-btn mh-btn--danger" id="mh-clear">🗑 Alles löschen</button>
+      </div>
+      <div class="mh-msg" id="mh-msg" role="status" aria-live="polite"></div>
+    </section>
+
+    <!-- ── ERGEBNISSE ─────────────────────────────────────── -->
+    <div id="mh-results" hidden>
+
+      <section class="mh-section">
+        <div class="mh-btn-row">
+          <button type="button" class="mh-btn mh-btn--green" id="mh-copy-summary">📋 Zusammenfassung kopieren</button>
+          <span class="mh-msg" id="mh-copy-msg" role="status" aria-live="polite"></span>
+        </div>
+      </section>
+
+      <section class="mh-section">
+        <h2 class="section-title">Zusammenfassung</h2>
+        <div class="mh-rows" id="mh-summary"></div>
+      </section>
+
+      <section class="mh-section">
+        <h2 class="section-title">Hinweise</h2>
+        <ul class="mh-hints" id="mh-hints"></ul>
+      </section>
+
+      <section class="mh-section">
+        <h2 class="section-title">Hops (von der ältesten zur neuesten Received-Zeile)</h2>
+        <div class="mh-table-wrap" id="mh-hops-wrap">
+          <table class="mh-table" id="mh-hops">
+            <thead><tr><th>Nr.</th><th>von</th><th>nach</th><th>Protokoll</th><th>Zeit (UTC)</th><th>Verzögerung</th><th>Anmerkung</th></tr></thead>
+            <tbody id="mh-hops-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="mh-section">
+        <h2 class="section-title">Authentifizierung</h2>
+        <div class="mh-rows" id="mh-auth"></div>
+      </section>
+
+      <section class="mh-section">
+        <h2 class="section-title">Microsoft-Spamauswertung</h2>
+        <p class="mh-note">Nur Angaben, die in der Dokumentation von Microsoft Learn belegt sind. Alles andere steht als „ohne Erklärung“ mit dem Rohwert da.</p>
+        <div class="mh-rows" id="mh-ms"></div>
+      </section>
+
+      <section class="mh-section">
+        <h2 class="section-title">Rohansicht</h2>
+        <div class="mh-btn-row">
+          <label class="mh-label mh-label--inline" for="mh-search">Suche</label>
+          <input type="search" id="mh-search" class="mh-search" autocomplete="off" spellcheck="false" placeholder="Text in den Headern">
+          <span class="mh-msg" id="mh-search-count" aria-live="polite"></span>
+          <button type="button" class="mh-btn" id="mh-copy-raw">📋 Rohdaten kopieren</button>
+        </div>
+        <div class="mh-raw" id="mh-raw"></div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="js/mailheader-core.js"></script>
+  <script src="nav.js"></script>
+  <script src="js/mailheader.js"></script>
+</body>
+</html>

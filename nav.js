@@ -40,12 +40,14 @@
         { id:'entra',    href:'entra.html',    label:'Entra Analyzer', icon:'🔐', color:'#7c8cf8', desc:'Sign-In Logs analysieren' },
         { id:'har',      href:'har.html',      label:'HAR Analyzer',   icon:'🌐', color:'#60a5fa', desc:'Browser Sessions analysieren' },
         { id:'gpo',      href:'gpo.html',      label:'GPO Analyzer',   icon:'🗂️', color:'#2dd4bf', desc:'GPO-Snapshots analysieren' },
+        { id:'mailheader', href:'mailheader.html', label:'Mail-Header-Analyzer', icon:'✉️', color:'#c084fc', desc:'Hops, SPF/DKIM/DMARC, Spam-Header' },
       ]
     },
     { id:'private',  href:'private.html',  label:'Privat',          icon:'🔒', color:'#f87171', desc:'Lokaler privater Bereich' },
     { id:'news',     href:'news.html',     label:'News Curator',    icon:'📰', color:'#fbbf24', desc:'Kuratierter Themenfeed statt zehn offener Tabs' },
     { id:'mitmachen',href:'mitmachen.html',label:'Mitmachen',    icon:'🤝', color:'#a78bfa', desc:'Ideen & Befehle einreichen' },
     { id:'tools',     href:'tools.html',     label:'support.tools', icon:'⚙️',  color:'#94a3b8', desc:'App installieren · Offline · Einstellungen', tools:true },
+    { id:'diagnose', href:'diagnose.html', label:'Diagnose', icon:'🩺', color:'#94a3b8', desc:'Zustand der App prüfen', hidden:true },
   ];
 
   // Detail-Seiten ohne eigenen Tab (z.B. Guide-Ansicht) auf ihre

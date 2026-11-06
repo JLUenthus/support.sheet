@@ -1070,3 +1070,11 @@ body.page-tools    .hero h1 { background: linear-gradient(135deg, #e0e4f0 0%, #9
   border-color: rgba(124,140,248,.4);
   background: rgba(124,140,248,.08);
 }
+
+/* ── Pfeil nach oben (.as-scroll-top aus nav.js) unter 1200 px ──────────────────────────────────────────────
+   nav.js setzt ihn bei right: calc((100vw - 1200px) / 4), passend zur 1200-px-Spalte. Unter 1200 px ist der Wert negativ und der Pfeil ragt rechts aus dem Fenster.
+   Dort steht er 16 px vom Rand (wie auf den Guide-Seiten). Ab 1200 px gilt unverändert die Regel aus nav.js (jede Lage pixelgleich).
+   body davor: gleicher Rang wie die Regel im <style> von nav.js hätte dort das letzte Wort; die Guide-Seiten (body.guides-wide ...) und css/diagnose.css sind spezifischer und behalten ihre Lage. */
+@media screen and (max-width: 1199px) {
+  body .as-scroll-top { right: 16px; }
+}

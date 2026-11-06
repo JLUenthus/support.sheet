@@ -1,7 +1,7 @@
 // ===========================================================
 // support.sheet – Service Worker v2
 // ===========================================================
-const CACHE_VERSION = '20261104-layout-1';
+const CACHE_VERSION = '20261106-bildeditor-1';
 const CACHE_NAME = `support.sheet-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -15,6 +15,7 @@ const ASSETS = [
   './mitmachen.html',
   './mitmachen-merge.html',
   './tools.html',
+  './diagnose.html',
   './eventlog.html',
   './eventlog-referenz.html',
   './js/eventlog-referenz.js',
@@ -81,6 +82,10 @@ const ASSETS = [
   './data/entra-rules.json',
   './har.html',
   './entra.html',
+  './mailheader.html',
+  './js/mailheader-core.js',
+  './js/mailheader.js',
+  './css/mailheader.css',
   './guides.html',
   './guides-howto.html',
   './guides-create.html',
@@ -104,9 +109,11 @@ const ASSETS = [
   './css/guides.css',
   './css/guides-wide.css',
   './css/guides-toc.css',
+  './css/image-editor.css',
   './css/guides-scrolltop.css',
   './css/guides-heading.css',
   './css/guides-manage-layout.css',
+  './css/guides-print.css',
   './js/guides.js',
   './js/guides-db.js',
   './js/guides-backup.js',
@@ -115,7 +122,12 @@ const ASSETS = [
   './js/guides-toc-core.js',
   './js/guides-toc.js',
   './js/guides-toc-editor.js',
+  './js/image-editor-core.js',
+  './js/image-editor.js',
+  './js/guides-image-hook.js',
   './js/guides-scrolltop.js',
+  './js/guides-print.js',
+  './js/guides-export-docx.js',
   './js/guides-overview-heading.js',
   './js/guides-overview.js',
   './js/guides-editor.js',
@@ -125,7 +137,6 @@ const ASSETS = [
   './js/mammoth.min.js',
   './js/turndown.min.js',
   './js/jszip.min.js',
-  './js/html-docx.min.js',
   './fonts/fonts.css',
   './fonts/jetbrains-mono-400.ttf',
   './fonts/jetbrains-mono-500.ttf',
@@ -150,6 +161,9 @@ const ASSETS = [
   './css/search.css',
   './css/commands-page.css',
   './css/tools.css',
+  './css/diagnose.css',
+  './js/diagnose-core.js',
+  './js/diagnose.js',
   './js/loader.js',
   './js/toast.js',
   './js/mitmachen.js',

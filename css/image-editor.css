@@ -1,0 +1,51 @@
+/* ============================================================
+   image-editor.css – Dialog des Bildeditors (js/image-editor.js). Alle Regeln hängen an ie-Klassen. Aufbau wie css/guide-templates.css (modales <dialog>).
+   ============================================================ */
+.ie-dialog {
+  width: min(1100px, 96vw); height: min(90vh, 820px); max-width: none; max-height: none;
+  padding: 0; margin: auto; border: 1px solid var(--border2); border-radius: var(--r-lg);
+  background: var(--panel); color: var(--text); box-shadow: 0 24px 64px rgba(0, 0, 0, .65); font-family: var(--font-ui);
+}
+.ie-dialog[open] { display: flex; flex-direction: column; }
+.ie-dialog::backdrop { background: rgba(8, 10, 16, .78); }
+.ie-dialog button:focus-visible, .ie-dialog input:focus-visible, .ie-dialog select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.ie-head { padding: 12px 16px 4px; }
+.ie-heading { font-size: 1.1rem; font-weight: 700; color: var(--text); margin: 0; }
+.ie-note { padding: 0 16px 6px; margin: 0; color: var(--muted); font-size: .76rem; line-height: 1.45; }
+.ie-msgs { padding: 0 16px; display: flex; flex-direction: column; gap: 4px; }
+.ie-msg { font-size: .8rem; color: var(--muted); padding: 4px 0; overflow-wrap: anywhere; }
+.ie-msg--warn { color: var(--amber, #fbbf24); }
+.ie-msg--error { color: var(--red); }
+
+.ie-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 8px 16px; border-bottom: 1px solid var(--border); }
+.ie-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; color: var(--text); font-family: inherit; font-size: .8rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.ie-btn:hover:not(:disabled) { border-color: var(--accent); }
+.ie-btn:disabled { opacity: .45; cursor: not-allowed; }
+.ie-tool[aria-pressed="true"] { border-color: var(--accent); background: rgba(124, 140, 248, .14); color: var(--accent); }
+.ie-btn--primary { border-color: rgba(74, 222, 128, .5); color: var(--green); background: rgba(74, 222, 128, .08); }
+.ie-btn--danger { border-color: rgba(248, 113, 113, .5); color: var(--red); background: rgba(248, 113, 113, .08); }
+.ie-lab { font-size: .7rem; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: .05em; }
+.ie-color { width: 38px; height: 32px; padding: 2px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+.ie-select, .ie-name { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; color: var(--text); font-family: inherit; font-size: .82rem; }
+
+/* Zeichenfläche: Anzeige skaliert auf das Fenster, die Bearbeitung läuft in voller Auflösung; die Fläche scrollt, die Fußzeile bleibt stehen */
+.ie-stage { flex: 1 1 auto; min-height: 0; overflow: auto; background: #0b0d14; padding: 8px; }
+.ie-holder { position: relative; display: inline-block; line-height: 0; margin: 0 auto; }
+.ie-stage { text-align: center; }
+.ie-canvas { display: block; background: repeating-conic-gradient(#1a1d2e 0% 25%, #14172a 0% 50%) 50% / 16px 16px; }
+.ie-overlay { position: absolute; left: 0; top: 0; touch-action: none; cursor: crosshair; }
+
+.ie-foot { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 16px; padding: 10px 16px 12px; border-top: 1px solid var(--border); }
+.ie-name-wrap { display: flex; flex-direction: column; gap: 4px; flex: 1 1 260px; min-width: 0; }
+.ie-name { width: 100%; box-sizing: border-box; }
+.ie-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.ie-confirm { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; background: rgba(8, 10, 16, .88); z-index: 5; }
+.ie-confirm[hidden] { display: none; }
+.ie-confirm-text { max-width: 520px; text-align: center; font-size: .95rem; line-height: 1.5; margin: 0; color: var(--text); }
+.ie-confirm-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+@media (max-width: 900px) {
+  .ie-dialog { position: fixed; inset: 0; margin: 0; width: 100%; height: 100%; max-height: none; border-radius: 0; border-left: 0; border-right: 0; }
+}

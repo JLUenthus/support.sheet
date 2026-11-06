@@ -1,0 +1,81 @@
+/* ============================================================
+   mailheader.css – Mail-Header-Analyzer (mailheader.html). Alle Regeln hängen an mh-Klassen.
+   ============================================================ */
+
+.mh-section { margin-bottom: 32px; }
+.mh-lead { font-size: .88rem; color: var(--muted); line-height: 1.6; margin: 0 0 14px; max-width: 80ch; }
+.mh-note { font-size: .78rem; color: var(--muted); margin: 0 0 10px; }
+.mh-howto { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; font-size: .82rem; color: var(--muted); line-height: 1.6; }
+.mh-howto-title { font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.mh-howto ul { margin: 0; padding-left: 18px; }
+.mh-howto li { margin-bottom: 3px; overflow-wrap: anywhere; }
+.mh-disclaimer { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; padding: 12px 14px; background: rgba(248,113,113,.05); border: 1px solid rgba(248,113,113,.25); border-radius: var(--r); font-size: .78rem; color: var(--muted); line-height: 1.6; }
+.mh-disclaimer strong { color: var(--text); }
+.mh-disclaimer-icon { flex-shrink: 0; }
+
+.mh-label { display: block; font-size: .72rem; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.mh-label--inline { display: inline-block; margin: 0; }
+.mh-input { width: 100%; box-sizing: border-box; resize: vertical; min-height: 140px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-family: var(--font-mono, monospace); font-size: .76rem; line-height: 1.5; white-space: pre; overflow: auto; }
+.mh-input:focus { border-color: var(--accent); outline: none; }
+.mh-drop { margin-top: 10px; border: 2px dashed var(--border2, var(--border)); border-radius: var(--r-lg, 12px); padding: 18px 16px; text-align: center; cursor: pointer; color: var(--muted); font-size: .84rem; transition: border-color .15s, background .15s; }
+.mh-drop:hover, .mh-drop:focus-visible, .mh-drop.drag { border-color: #c084fc; background: rgba(192,132,252,.05); outline: none; }
+.mh-btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.mh-btn { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; color: var(--text); font-family: inherit; font-size: .82rem; font-weight: 600; cursor: pointer; transition: border-color .15s, background .15s; }
+.mh-btn:hover { border-color: var(--accent); }
+.mh-btn--primary { border-color: rgba(192,132,252,.5); color: #c084fc; background: rgba(192,132,252,.08); }
+.mh-btn--green { border-color: rgba(74,222,128,.4); color: var(--green); background: rgba(74,222,128,.06); }
+.mh-btn--danger { border-color: rgba(248,113,113,.4); color: var(--red); background: rgba(248,113,113,.05); }
+.mh-msg { font-size: .82rem; color: var(--muted); min-height: 1.2em; overflow-wrap: anywhere; }
+.mh-msg.mh-msg--err { color: var(--red); }
+.mh-search { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; color: var(--text); font-family: inherit; font-size: .82rem; min-width: 0; flex: 1 1 180px; max-width: 360px; }
+
+/* Zeilen Schlüssel / Wert */
+.mh-rows { display: flex; flex-direction: column; gap: 6px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; }
+.mh-row { display: grid; grid-template-columns: minmax(130px, 220px) 1fr; gap: 4px 14px; font-size: .82rem; align-items: baseline; }
+.mh-row-key { color: var(--dim); font-weight: 700; text-transform: uppercase; font-size: .68rem; letter-spacing: .05em; overflow-wrap: anywhere; }
+.mh-row-val { color: var(--text); min-width: 0; overflow-wrap: anywhere; }
+.mh-row-sub { display: block; color: var(--muted); font-size: .74rem; margin-top: 2px; }
+.mh-row--head { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+.mh-row--head:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+@media (max-width: 600px) { .mh-row { grid-template-columns: 1fr; } }
+
+/* Hinweise */
+.mh-hints { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.mh-hint { min-width: 0; overflow-wrap: anywhere; background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--border); border-radius: var(--r); padding: 10px 14px; font-size: .82rem; }
+.mh-hint--warnung { border-left-color: var(--red); }
+.mh-hint--hinweis { border-left-color: var(--amber, #fbbf24); }
+.mh-hint--info { border-left-color: #60a5fa; }
+.mh-hint-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.mh-badge { font-size: .66rem; font-weight: 700; letter-spacing: .04em; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--border); white-space: nowrap; }
+.mh-badge--warnung { color: var(--red); border-color: rgba(248,113,113,.45); }
+.mh-badge--hinweis { color: var(--amber, #fbbf24); border-color: rgba(251,191,36,.45); }
+.mh-badge--info { color: #60a5fa; border-color: rgba(96,165,250,.45); }
+.mh-hint-title { font-weight: 700; color: var(--text); overflow-wrap: anywhere; }
+.mh-hint-why { color: var(--muted); margin-top: 4px; line-height: 1.5; overflow-wrap: anywhere; }
+.mh-hint-vals { margin-top: 4px; font-family: var(--font-mono, monospace); font-size: .72rem; color: var(--dim); overflow-wrap: anywhere; }
+.mh-empty { color: var(--muted); font-size: .84rem; padding: 6px 0; }
+
+/* Tabelle der Hops: breite Tabelle rollt nur in ihrem Rahmen, nie die Seite */
+.mh-table-wrap { overflow-x: auto; max-width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: var(--r); }
+.mh-table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: .78rem; }
+.mh-table th { text-align: left; font-size: .66rem; text-transform: uppercase; letter-spacing: .05em; color: var(--dim); padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.mh-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; overflow-wrap: anywhere; }
+.mh-table tr:last-child td { border-bottom: 0; }
+.mh-table td.mh-num { white-space: nowrap; font-family: var(--font-mono, monospace); }
+.mh-row-max td { background: rgba(251,191,36,.07); }
+.mh-row-skew td { background: rgba(248,113,113,.06); }
+.mh-row-bad td { color: var(--muted); }
+.mh-sub { display: block; color: var(--muted); font-size: .72rem; }
+
+/* Rohansicht */
+.mh-raw { margin-top: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r); max-height: 60vh; overflow: auto; font-family: var(--font-mono, monospace); font-size: .72rem; line-height: 1.5; }
+.mh-raw-line { padding: 2px 10px; white-space: pre-wrap; overflow-wrap: anywhere; border-left: 3px solid transparent; }
+.mh-raw-line--key { border-left-color: rgba(192,132,252,.6); }
+.mh-raw-line.mh-hit { background: rgba(251,191,36,.14); }
+.mh-raw-name { color: #c084fc; font-weight: 700; }
+
+/* Update-Leiste von nav.js: bei schmalem Fenster bricht sie in zwei Zeilen um und überdeckt das Logo (die Kopfzeile rutscht nur um 42 px nach unten); nur für diese Seite kompakt */
+@media (max-width: 600px) {
+  body.page-mailheader .as-update-bar { padding: 5px 10px; gap: 8px; font-size: .72rem; flex-wrap: nowrap; }
+  body.page-mailheader .as-update-bar .as-update-btn { padding: 5px 10px; font-size: .72rem; white-space: nowrap; }
+}

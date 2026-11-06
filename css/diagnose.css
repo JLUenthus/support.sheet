@@ -1,0 +1,63 @@
+/* ============================================================
+   diagnose.css – Diagnoseseite (diagnose.html). Baut auf tools.css auf (tools-section, tools-card, tools-btn, settings-*).
+   Alle Regeln hängen an body.diagnose-page oder an dg-Klassen, damit keine andere Seite berührt wird.
+   ============================================================ */
+
+body.diagnose-page main { max-width: 960px; }
+.diagnose-page .dg-title { font-size: 1.5rem; margin: 0 0 8px; }
+.diagnose-page .dg-intro { margin-bottom: 24px; }
+.diagnose-page .dg-back { font-size: .8rem; margin-top: 6px; }
+
+/* Kopfzeile je Abschnitt: Ampel und ein Satz, was zu tun ist */
+.dg-head { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.dg-todo { font-size: .86rem; color: var(--muted); line-height: 1.5; flex: 1 1 240px; min-width: 0; overflow-wrap: anywhere; }
+
+/* Ampel: Farbe und Wort (nie nur Farbe) */
+.dg-ampel { display: inline-flex; align-items: center; gap: 7px; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; letter-spacing: .03em; border: 1px solid var(--border); white-space: nowrap; }
+.dg-ampel::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.dg-ampel--ok   { color: #4ade80; border-color: rgba(74,222,128,.35); background: rgba(74,222,128,.08); }
+.dg-ampel--warn { color: #fbbf24; border-color: rgba(251,191,36,.4);  background: rgba(251,191,36,.08); }
+.dg-ampel--err  { color: #f87171; border-color: rgba(248,113,113,.4); background: rgba(248,113,113,.08); }
+.dg-ampel--na   { color: #94a3b8; border-color: rgba(148,163,184,.3); background: rgba(148,163,184,.06); }
+
+/* Zeilen Schlüssel / Wert */
+.dg-rows { display: flex; flex-direction: column; gap: 6px; }
+.dg-row { display: grid; grid-template-columns: minmax(150px, 240px) 1fr; gap: 4px 14px; font-size: .82rem; align-items: baseline; }
+.dg-row-key { color: var(--dim); font-weight: 700; text-transform: uppercase; font-size: .68rem; letter-spacing: .05em; overflow-wrap: anywhere; }
+.dg-row-val { color: var(--text); min-width: 0; overflow-wrap: anywhere; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.dg-row-val .dg-ampel { font-size: .66rem; padding: 1px 8px; }
+@media (max-width: 600px) { .dg-row { grid-template-columns: 1fr; } }
+
+.dg-progress-row { display: flex; align-items: center; gap: 12px; font-size: .78rem; color: var(--muted); }
+.dg-progress-row progress { flex: 1 1 200px; min-width: 0; max-width: 480px; height: 10px; }
+.dg-result { font-size: .84rem; color: var(--muted); min-height: 1.2em; overflow-wrap: anywhere; }
+.dg-form-row { display: flex; flex-direction: column; gap: 5px; max-width: 320px; }
+.dg-select { width: 100%; }
+
+.dg-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: .8rem; color: var(--text); }
+.dg-list li { overflow-wrap: anywhere; padding: 5px 9px; border-radius: 7px; background: var(--bg); border: 1px solid var(--border); }
+.dg-list li.dg-li--err  { border-color: rgba(248,113,113,.45); }
+.dg-list li.dg-li--warn { border-color: rgba(251,191,36,.4); }
+.dg-list li.dg-li--skip { color: var(--muted); }
+.dg-list .dg-li-sub { display: block; color: var(--muted); margin-top: 2px; font-size: .74rem; }
+.dg-list:empty { display: none; }
+
+.dg-report-text {
+  width: 100%; box-sizing: border-box; resize: vertical; min-height: 180px; max-height: 60vh;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+  color: var(--text); font-family: var(--font-mono, monospace); font-size: .76rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+
+/* Rahmen des Selbsttests: unsichtbar außerhalb des Fensters, volle Größe (Breite und Höhe setzt das Skript), nie bedienbar */
+.dg-testframe { position: fixed; left: -99999px; top: 0; border: 0; pointer-events: none; }
+
+/* Gemeinsame Teile aus nav.js, nur für diese Seite angepasst (nav.js bleibt unverändert):
+   - Pfeil nach oben: nav.js setzt right: calc((100vw - 1200px) / 4), unter 1200 px Breite liegt er damit außerhalb des Fensters und ist nicht bedienbar.
+   - Update-Leiste: bei schmalem Fenster bricht sie in zwei Zeilen um und überdeckt dann das Logo (die Kopfzeile rutscht nur um 42 px nach unten). */
+@media (max-width: 1200px) {
+  body.diagnose-page .as-scroll-top { right: 16px; bottom: 16px; width: 48px; height: 48px; }
+}
+@media (max-width: 600px) {
+  body.diagnose-page .as-update-bar { padding: 5px 10px; gap: 8px; font-size: .72rem; flex-wrap: nowrap; }
+  body.diagnose-page .as-update-bar .as-update-btn { padding: 5px 10px; font-size: .72rem; white-space: nowrap; }
+}

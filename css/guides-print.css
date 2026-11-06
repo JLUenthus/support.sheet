@@ -1,0 +1,46 @@
+/* ============================================================
+   guides-print.css – Druckansicht (PDF über den Druckdialog) von guides-view.html, nur @media print
+   css/guides.css hat schon eine Druckregel (Seitenleiste, Aktionen, private Notiz aus, heller Hintergrund). Hier steht, was für den Druck mit Bildern fehlt:
+     - die Kopfkarte (<header class="gv-header">) mit dem Titel wurde von der Regel "header { display: none }" mitversteckt: sie wird wieder ausgegeben (ohne Knöpfe und Metazeile)
+     - Seitenleiste, Navigation, Update-Leiste, Knopfzeilen, Inhaltsverzeichnis-Panel und -Knopf, Pfeil nach oben, Hinweisbanner, "Ähnliche Guides", Kopierknöpfe, Meldungen: aus
+     - .gs-layout, .gs-main, Kopfkarte und Artikel ohne feste Höhe und ohne Rollen (sonst druckt der Browser nur den sichtbaren Ausschnitt)
+     - Bilder: Block, höchstens Seitenbreite, Seitenverhältnis erhalten, nicht über einen Seitenumbruch zerschneiden
+     - Tabellen und Codeblöcke brechen um, Überschriften stehen nicht am Seitenende
+     - Textfarbe schwarz (das helle Theme der Bildschirmansicht wäre auf Papier unleserlich), Hintergrundfarben nur für Codeblöcke und Tabellenköpfe (tragen Information)
+   Die Bildschirmdarstellung bleibt unverändert: alle Regeln stehen in @media print. Das Laden der Bilder vor dem Druck erledigt js/guides-print.js.
+   ============================================================ */
+@media print {
+  @page { margin: 14mm; }
+
+  /* nicht ausgeben (zusätzlich zur Regel in css/guides.css) */
+  body > header, body > .as-tab-bar, .as-update-bar, .gs-sidebar, .gv-back-link, .gv-actions, .gv-toc-row, .gv-toc-btn, .gv-toc-panel, .as-scroll-top,
+  .gg-howto-hint, .gg-howto-hint-reopen, .gv-related, .gv-private-note, .gv-meta-row, .gv-code-copy, .toast, .gv-confirm-overlay, #gv-loading, #gv-error { display: none !important; }
+
+  /* Kopfkarte mit Titel wieder ausgeben (css/guides.css blendet jedes <header> aus) */
+  main .gv-header { display: block !important; }
+
+  /* keine festen Höhen, kein Rollen: der ganze Guide fließt über die Seiten */
+  html, body, main, .gs-layout, .gs-main, .gv-header, #gv-article { height: auto !important; min-height: 0 !important; max-height: none !important; overflow: visible !important; position: static !important; }
+  main { max-width: none !important; padding: 0 !important; margin: 0 !important; }
+  .gs-layout { display: block !important; }
+  .gs-main { display: block !important; width: auto !important; max-width: none !important; margin: 0 !important; }
+
+  /* Bilder */
+  .gv-content img { display: block !important; max-width: 100% !important; height: auto !important; break-inside: avoid; page-break-inside: avoid; }
+
+  /* Tabellen und Codeblöcke brechen um */
+  .gv-content table { width: 100%; border-collapse: collapse; }
+  .gv-content thead { display: table-header-group; }
+  .gv-content tr { break-inside: avoid; page-break-inside: avoid; }
+  .gv-content th, .gv-content td { border: 1px solid #888 !important; color: #000 !important; word-break: break-word; overflow-wrap: anywhere; }
+  .gv-content th { background: #eceef5 !important; }
+  .gv-content pre, .gv-content code { white-space: pre-wrap !important; word-break: break-word; overflow: visible !important; }
+  .gv-content .gv-code-block { overflow: visible !important; }
+  .gv-content pre span { color: #000 !important; }
+
+  /* Überschriften nicht am Seitenende */
+  .gv-content h1, .gv-content h2, .gv-content h3, .gv-content h4 { break-after: avoid; page-break-after: avoid; }
+
+  /* Textfarbe */
+  .gv-content, .gv-content p, .gv-content li, .gv-content blockquote, .gv-content h1, .gv-content h2, .gv-content h3, .gv-content h4, .gv-header h1 { color: #000 !important; }
+}

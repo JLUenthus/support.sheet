@@ -84,75 +84,41 @@
     window.print();
   }
 
-  // blob:-URLs (aus resolveAssetUrls) gelten nur innerhalb der aktuellen
-  // Seite/Session – eine gespeicherte .docx, die später (oder auf einem
-  // anderen Gerät) geöffnet wird, kann sie nicht mehr auflösen und zeigt
-  // ein kaputtes Bild-Symbol. Deshalb hier jedes <img> auf ein
-  // eigenständiges Base64-Data-URL umstellen, bevor das Dokument gebaut
-  // wird – das Bild ist dann fest im Dokument eingebettet.
-  async function inlineImagesAsDataUrls(container) {
-    const imgs = [...container.querySelectorAll('img[src^="blob:"]')];
-    await Promise.all(imgs.map(async (img) => {
-      try {
-        const blob = await (await fetch(img.src)).blob();
-        const dataUrl = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
-        img.src = dataUrl;
-      } catch { /* einzelnes Bild überspringen, Rest des Dokuments trotzdem exportieren */ }
-    }));
-  }
-
-  // Baut aus dem bereits gerenderten Guide-Inhalt ein eigenständiges
-  // HTML-Dokument und lässt html-docx-js daraus eine echte .docx-Datei
-  // erzeugen. Die private Notiz ist hier nie Teil der Quelle (steht nur
-  // im Header, nicht in #gv-content), wird also nie mit exportiert.
+  // Word-Export: baut aus dem Markdown des Guides ein echtes Word-Dokument (js/guides-export-docx.js, JSZip + eigenes XML) statt aus dem fertigen HTML.
+  // Bilder stehen als wp:inline in eigenen Absätzen, höchstens 600 x 1000 px (Confluence lehnt beim Word-Import Bilder über 900 x 1200 px ab), die
+  // Originaldateien bleiben unverändert eingebettet (WEBP und SVG werden in PNG umgewandelt). Kein Netzwerkzugriff: es werden nur Bilder aus assets/
+  // des Guides gelesen (über GuidesDB.getAssetUrl). Die private Notiz ist nie Teil der Quelle (steht nur im Header, nicht im Markdown).
   async function exportDocx() {
-    if (typeof htmlDocx === 'undefined') {
-      notify('Word-Export ist gerade nicht verfügbar (html-docx.min.js nicht geladen).', 'error');
+    if (typeof GuidesExportDocx === 'undefined' || typeof JSZip === 'undefined') {
+      notify('Word-Export ist gerade nicht verfügbar (js/guides-export-docx.js oder js/jszip.min.js nicht geladen).', 'error');
       return;
     }
-    const contentEl = document.getElementById('gv-content');
     const title = currentMeta.title || '(Ohne Titel)';
-    // Klon statt Original: UI-Elemente, die nur in der Live-Ansicht Sinn
-    // ergeben (Code-Kopieren-Button), gehören nicht in ein statisches
-    // Dokument und werden vor dem Export entfernt.
-    const clone = contentEl.cloneNode(true);
-    clone.querySelectorAll('.gv-code-copy').forEach(btn => btn.remove());
-    await inlineImagesAsDataUrls(clone);
-
-    const escapeHtml = (str) => str.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-
-    // Links/Dateien stehen nur in meta, nicht in #gv-content – ohne diesen
-    // Anhang würden sie beim Word-Export unsichtbar verloren gehen.
-    let extraHtml = '';
-    const links = Array.isArray(currentMeta.links) ? currentMeta.links.filter((l) => l.url) : [];
-    if (links.length) {
-      extraHtml += '<h2>Links</h2><ul>' + links.map((l) => {
-        const label = l.text && l.text.trim() ? l.text.trim() : l.url;
-        return '<li><a href="' + escapeHtml(l.url) + '">' + escapeHtml(label) + '</a></li>';
-      }).join('') + '</ul>';
-    }
-    const attachments = Array.isArray(currentMeta.attachments) ? currentMeta.attachments : [];
-    if (attachments.length) {
-      extraHtml += '<h2>Dateien</h2><ul>' + attachments.map((a) =>
-        '<li>' + escapeHtml(a.name) + '</li>').join('') + '</ul>';
-    }
-
-    const html = '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>'
-      + '<h1>' + escapeHtml(title) + '</h1>'
-      + clone.innerHTML
-      + extraHtml
-      + '</body></html>';
+    const urls = [];
+    const getImage = async (href) => {
+      const m = /^assets\/(.+)$/.exec(href || '');
+      if (!m) return null;
+      const res = await window.GuidesDB.getAssetUrl(currentId, m[1]);
+      if (!res || !res.success) return null;
+      urls.push(res.url);
+      const blob = await (await fetch(res.url)).blob();
+      return { bytes: new Uint8Array(await blob.arrayBuffer()), type: blob.type, name: m[1] };
+    };
     try {
-      const blob = htmlDocx.asBlob(html);
+      const { bytes, stats } = await GuidesExportDocx.build({ title, markdown: currentContent || '', links: currentMeta.links, attachments: currentMeta.attachments, getImage });
+      const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
       downloadBlob(blob, sanitizeForFilename(title) + '.docx');
-      notify('Als Word-Dokument exportiert.', 'success');
+      const mb = bytes.length / 1048576;
+      let msg = 'Als Word-Dokument exportiert: ' + stats.images + (stats.images === 1 ? ' Bild, ' : ' Bilder, ') + mb.toFixed(1).replace('.', ',') + ' MB.';
+      if (stats.skipped.length) msg += ' Nicht übernommen: ' + [...new Set(stats.skipped)].join(', ') + '.';
+      msg += ' In Confluence: Seite erstellen, Menü „Word-Dokument importieren“.';
+      if (mb > 90) msg += ' Achtung: Die Datei ist größer als 90 MB (Grenze von Confluence: 100 MB).';
+      // die Meldung ist lang und enthält den nächsten Schritt: stehen lassen, bis sie geschlossen wird
+      if (typeof showToast === 'function') showToast(msg, stats.skipped.length || mb > 90 ? 'warning' : 'success', { persistent: true });
     } catch (err) {
       notify('Word-Export fehlgeschlagen: ' + (err?.message || err), 'error');
+    } finally {
+      urls.forEach((u) => URL.revokeObjectURL(u));
     }
   }
 
